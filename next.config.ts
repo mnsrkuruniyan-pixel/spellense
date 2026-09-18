@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/api/**/*": [
+      "./dictionaries/**/*",
+      "./eng.traineddata",
+      "./node_modules/pdfjs-dist/**/*",
+    ],
+  },
   serverExternalPackages: [
     "tesseract.js",
     "tesseract.js-core",
@@ -10,8 +17,6 @@ const nextConfig: NextConfig = {
     "pptx2json",
     "xlsx",
     "nspell",
-    "dictionary-en",
-    "dictionary-en-gb",
   ],
 };
 

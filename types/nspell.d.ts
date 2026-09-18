@@ -6,7 +6,10 @@ declare module "nspell" {
     suggest(word: string): string[];
   };
 
-  const nspell: (dictionary: NSpellDictionary) => NSpellInstance;
+  const nspell: (
+    dictionaryOrAff: NSpellDictionary | Buffer,
+    dic?: string | Buffer
+  ) => NSpellInstance;
 
   export default nspell;
 }

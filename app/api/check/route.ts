@@ -5,14 +5,21 @@ import { createCanvas, loadImage } from "@napi-rs/canvas";
 import mammoth from "mammoth";
 import PPTX2Json from "pptx2json";
 import * as XLSX from "xlsx";
-import { readFileSync } from "node:fs";
+import { readFileSync, copyFileSync, existsSync } from "node:fs";
 import { mkdtemp, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-function loadDictionary(packageName: string) {
+
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
+function loadDictionary(subFolder: string, packageName: string) {
   const candidates = [
+    join(process.cwd(), "dictionaries", subFolder),
     join(process.cwd(), "node_modules", packageName),
-    join(process.cwd(), "..", "node_modules", packageName),
+    join(__dirname, "..", "..", "..", "dictionaries", subFolder),
+    join(__dirname, "..", "..", "dictionaries", subFolder),
+    join(__dirname, "..", "dictionaries", subFolder),
   ];
 
   for (const dir of candidates) {
@@ -25,11 +32,19 @@ function loadDictionary(packageName: string) {
     }
   }
 
-  throw new Error(`Failed to load dictionary files for ${packageName}`);
+  console.warn(`[Spellense] Dictionary files not found for ${subFolder}, using safe fallback.`);
+  try {
+    return nspell({ aff: "SET UTF-8\nTRY esianrtolcdugmphbyfvkwz'\n", dic: "0\n" });
+  } catch {
+    return {
+      correct: () => true,
+      suggest: () => [],
+    } as unknown as ReturnType<typeof nspell>;
+  }
 }
 
-const spellUS = loadDictionary("dictionary-en");
-const spellGB = loadDictionary("dictionary-en-gb");
+const spellUS = loadDictionary("en", "dictionary-en");
+const spellGB = loadDictionary("en-gb", "dictionary-en-gb");
 
 type SpellError = {
   word: string;
@@ -2095,11 +2110,28 @@ type PdfOcrWord = {
 
 type SpellWorker = Awaited<ReturnType<typeof createWorker>>;
 
+async function getOcrWorker(): Promise<SpellWorker> {
+  const tmpDir = tmpdir();
+  const tmpTrainedData = join(tmpDir, "eng.traineddata");
+  const localTrainedData = join(process.cwd(), "eng.traineddata");
+
+  if (!existsSync(tmpTrainedData) && existsSync(localTrainedData)) {
+    try {
+      copyFileSync(localTrainedData, tmpTrainedData);
+    } catch (e) {
+      console.warn("[Spellense] Could not copy traineddata to tmp", e);
+    }
+  }
+
+  return await createWorker("eng", 1, {
+    cachePath: tmpDir,
+  });
+}
+
 async function extractPdfText(
   buffer: Buffer
 ): Promise<PdfTextResult> {
   const { getDocument } = await import(
-    /* webpackIgnore: true */
     "pdfjs-dist/legacy/build/pdf.mjs"
   );
   const pdf = await getDocument({
@@ -2134,7 +2166,6 @@ async function extractPdfOcrText(
   worker: SpellWorker
 ): Promise<PdfTextResult> {
   const { getDocument } = await import(
-    /* webpackIgnore: true */
     "pdfjs-dist/legacy/build/pdf.mjs"
   );
   const pdf = await getDocument({
@@ -2292,13 +2323,7 @@ function extractXlsxText(buffer: Buffer): string {
 export async function POST(
   request: Request
 ) {
-  let worker:
-    | Awaited<
-        ReturnType<
-          typeof createWorker
-        >
-      >
-    | null = null;
+  let worker: SpellWorker | null = null;
 
   try {
     /* -----------------------------------------------------
@@ -2419,7 +2444,7 @@ export async function POST(
       let pdfText = await extractPdfText(buffer);
 
       if (!pdfText.text.trim()) {
-        worker = await createWorker("eng");
+        worker = await getOcrWorker();
         pdfText = await extractPdfOcrText(buffer, worker);
       }
 
@@ -2428,7 +2453,7 @@ export async function POST(
       pdfHasTextLayer = pdfText.hasTextLayer;
       pdfOcrWords = pdfText.ocrWords ?? [];
     } else {
-      worker = await createWorker("eng");
+      worker = await getOcrWorker();
 
       const result = await worker.recognize(
         buffer,
