@@ -1,0 +1,2806 @@
+"use client";
+
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import Link from "next/link";
+
+type SpellError = {
+  word: string;
+  suggestion: string | null;
+  index: number;
+  page?: number;
+};
+
+type CheckResult = {
+  success: boolean;
+  filename?: string;
+  text?: string;
+  errors?: SpellError[];
+  wordCount?: number;
+  errorCount?: number;
+  pdfHasTextLayer?: boolean;
+  pdfMarks?: PdfMark[];
+  imageMarks?: ImageMark[];
+  message?: string;
+  error?: string;
+};
+
+type PdfMark = {
+  word: string;
+  page: number;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+type ImageMark = {
+  word: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+function renderMarkedText(
+  text: string,
+  errors: SpellError[]
+): ReactNode[] {
+  const parts: ReactNode[] = [];
+  let cursor = 0;
+
+  for (const [index, error] of errors.entries()) {
+    const start = Math.max(cursor, error.index);
+    const end = Math.min(
+      text.length,
+      start + error.word.length
+    );
+
+    if (start >= text.length || end <= start) {
+      continue;
+    }
+
+    if (start > cursor) {
+      parts.push(text.slice(cursor, start));
+    }
+
+    parts.push(
+      <mark
+        key={`${error.word}-${index}`}
+        className="rounded border border-red-500 bg-transparent px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-4"
+        title={error.suggestion ? `Suggestion: ${error.suggestion}` : "Possible spelling mistake"}
+      >
+        {text.slice(start, end)}
+      </mark>
+    );
+
+    cursor = end;
+  }
+
+  if (cursor < text.length) {
+    parts.push(text.slice(cursor));
+  }
+
+  return parts;
+}
+
+function PdfMarkedPreview({
+  file,
+  errors,
+  selectedPage,
+  onPageChange,
+  markErrors,
+  pdfMarks,
+}: {
+  file: File;
+  errors: SpellError[];
+  selectedPage: number;
+  onPageChange: (page: number) => void;
+  markErrors: boolean;
+  pdfMarks: PdfMark[];
+}) {
+  const [pageCount, setPageCount] = useState(0);
+  const [zoom, setZoom] = useState(1);
+  const [panning, setPanning] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const layerRef = useRef<HTMLDivElement | null>(null);
+  const previewRef = useRef<HTMLDivElement | null>(null);
+  const panStartRef = useRef<{
+    x: number;
+    y: number;
+    left: number;
+    top: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+      pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+
+      const pdf = await pdfjs.getDocument({
+        data: new Uint8Array(await file.arrayBuffer()),
+      }).promise;
+
+      if (!cancelled) {
+        setPageCount(pdf.numPages);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [errors, file]);
+
+  useEffect(() => {
+    if (!pageCount) return;
+    let cancelled = false;
+
+    void (async () => {
+      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+      pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+      const pdf = await pdfjs.getDocument({
+        data: new Uint8Array(await file.arrayBuffer()),
+      }).promise;
+
+        if (cancelled || !canvasRef.current || !layerRef.current) return;
+
+        const page = await pdf.getPage(selectedPage);
+        const baseViewport = page.getViewport({ scale: 1 });
+        const availableWidth = Math.max(
+          (previewRef.current?.clientWidth ?? 680) - 32,
+          280
+        );
+        const availableHeight = 588;
+        const fitScale = Math.min(
+          availableWidth / baseViewport.width,
+          availableHeight / baseViewport.height
+        );
+        const scale = fitScale * zoom;
+        const viewport = page.getViewport({ scale });
+        const canvas = canvasRef.current;
+        const layer = layerRef.current;
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.width = `${viewport.width}px`;
+        canvas.style.height = `${viewport.height}px`;
+        layer.style.width = `${viewport.width}px`;
+        layer.style.height = `${viewport.height}px`;
+
+        await page.render({
+          canvas,
+          canvasContext: canvas.getContext("2d")!,
+          viewport,
+        }).promise;
+
+        const content = await page.getTextContent();
+        layer.replaceChildren();
+
+        for (const item of content.items) {
+          if (!("str" in item) || !item.str) continue;
+
+          const transform = pdfjs.Util.transform(
+            viewport.transform,
+            item.transform
+          );
+          const fontSize = Math.max(
+            8,
+            Math.hypot(transform[2], transform[3])
+          );
+          const span = document.createElement("span");
+
+          span.style.left = `${transform[4]}px`;
+          span.style.top = `${transform[5] - fontSize}px`;
+          span.style.fontSize = `${fontSize}px`;
+          span.style.width = `${Math.max(item.width * scale, 2)}px`;
+          span.style.height = `${fontSize * 1.2}px`;
+          span.className = "absolute overflow-visible whitespace-nowrap text-transparent";
+
+          let tokenOffset = 0;
+
+          for (const token of item.str.split(/(\s+)/)) {
+            const normalizedToken = token
+              .toLowerCase()
+              .replace(/^[^a-z]+|[^a-z]+$/g, "");
+            const matchingError = markErrors
+              ? errors.find((error) =>
+                  normalizedToken === error.word.toLowerCase()
+                )
+              : undefined;
+            const tokenSpan = document.createElement("span");
+
+            if (matchingError) {
+              const itemWidth = Math.max(item.width * scale, 2);
+
+              tokenSpan.style.position = "absolute";
+              tokenSpan.style.left = `${
+                (tokenOffset / item.str.length) * itemWidth
+              }px`;
+              tokenSpan.style.top = "0px";
+              tokenSpan.style.width = `${Math.max(
+                (token.length / item.str.length) * itemWidth,
+                4
+              )}px`;
+              tokenSpan.style.height = `${fontSize * 1.2}px`;
+              tokenSpan.className =
+                "rounded border border-red-500 bg-transparent underline decoration-red-500 decoration-2 underline-offset-2";
+              tokenSpan.title = matchingError.suggestion
+                ? `Suggestion: ${matchingError.suggestion}`
+                : "Possible spelling mistake";
+              span.appendChild(tokenSpan);
+            }
+
+            tokenOffset += token.length;
+          }
+
+          layer.appendChild(span);
+      }
+
+      if (!markErrors) {
+        for (const mark of pdfMarks.filter(
+          (item) => item.page === selectedPage
+        )) {
+          const outline = document.createElement("span");
+          outline.style.position = "absolute";
+          outline.style.left = `${mark.left * viewport.width}px`;
+          outline.style.top = `${mark.top * viewport.height}px`;
+          outline.style.width = `${mark.width * viewport.width}px`;
+          outline.style.height = `${mark.height * viewport.height}px`;
+          outline.className =
+            "rounded border-2 border-red-500 bg-transparent";
+          outline.title = "Possible spelling mistake";
+          layer.appendChild(outline);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [errors, file, markErrors, pageCount, pdfMarks, selectedPage, zoom]);
+
+  if (!pageCount) {
+    return (
+      <div className="flex h-[620px] items-center justify-center text-sm text-slate-400">
+        Loading PDF preview...
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-slate-200 p-4">
+      <div
+        ref={previewRef}
+        className={`flex h-[588px] items-center justify-center overflow-auto ${
+          zoom > 1 ? (panning ? "cursor-grabbing" : "cursor-grab") : ""
+        }`}
+        onPointerDown={(event) => {
+          if (zoom <= 1 || !previewRef.current) return;
+
+          panStartRef.current = {
+            x: event.clientX,
+            y: event.clientY,
+            left: previewRef.current.scrollLeft,
+            top: previewRef.current.scrollTop,
+          };
+          setPanning(true);
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          const start = panStartRef.current;
+          if (!start || !previewRef.current) return;
+
+          previewRef.current.scrollLeft =
+            start.left - (event.clientX - start.x);
+          previewRef.current.scrollTop =
+            start.top - (event.clientY - start.y);
+        }}
+        onPointerUp={(event) => {
+          panStartRef.current = null;
+          setPanning(false);
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        }}
+        onPointerCancel={() => {
+          panStartRef.current = null;
+          setPanning(false);
+        }}
+      >
+        <div className="relative w-fit bg-white shadow-md">
+          <canvas ref={canvasRef} />
+          <div
+            ref={layerRef}
+            className="pointer-events-none absolute left-0 top-0"
+          />
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
+        <button
+          type="button"
+          disabled={selectedPage === 1}
+          onClick={() => onPageChange(selectedPage - 1)}
+          className="rounded-lg px-3 py-2 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          Previous
+        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Zoom out"
+            disabled={zoom <= 0.75}
+            onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))}
+            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(1)}
+            className="min-w-12 rounded-lg px-2 py-1 text-[11px] transition hover:bg-slate-100"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            disabled={zoom >= 2}
+            onClick={() => setZoom((value) => Math.min(2, value + 0.25))}
+            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            +
+          </button>
+        </div>
+        <span>Page {selectedPage} of {pageCount}</span>
+        <button
+          type="button"
+          disabled={selectedPage === pageCount}
+          onClick={() => onPageChange(selectedPage + 1)}
+          className="rounded-lg px-3 py-2 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DocxPreview({
+  file,
+  errors,
+}: {
+  file: File;
+  errors: SpellError[];
+}) {
+  const [pageCount, setPageCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [zoom, setZoom] = useState(1);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const previewRef = useRef<HTMLDivElement | null>(null);
+  const [panning, setPanning] = useState(false);
+  const panStartRef = useRef<{
+    x: number;
+    y: number;
+    left: number;
+    top: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const { renderAsync } = await import("docx-preview");
+      const container = containerRef.current;
+      if (!container) return;
+
+      container.replaceChildren();
+      await renderAsync(
+        await file.arrayBuffer(),
+        container,
+        undefined,
+        { breakPages: true }
+      );
+
+      const textNodes = Array.from(
+        container.querySelectorAll("section p, section span")
+      );
+      for (const node of textNodes) {
+        if (!node.textContent) continue;
+        const text = node.textContent;
+        const fragment = document.createDocumentFragment();
+        let cursor = 0;
+        const matches = errors
+          .map((error) => ({
+            word: error.word,
+            start: text.toLowerCase().indexOf(error.word.toLowerCase()),
+          }))
+          .filter((match) => match.start >= 0)
+          .sort((a, b) => a.start - b.start);
+
+        for (const match of matches) {
+          if (match.start < cursor) continue;
+          fragment.append(text.slice(cursor, match.start));
+          const mark = document.createElement("span");
+          mark.textContent = text.slice(
+            match.start,
+            match.start + match.word.length
+          );
+          mark.className =
+            "rounded border border-red-500 bg-transparent text-red-600";
+          mark.title = "Possible spelling mistake";
+          fragment.append(mark);
+          cursor = match.start + match.word.length;
+        }
+
+        if (cursor > 0) {
+          fragment.append(text.slice(cursor));
+          node.replaceChildren(fragment);
+        }
+      }
+
+      const pages = Array.from(container.querySelectorAll("section"));
+      if (!cancelled) {
+        setPageCount(Math.max(pages.length, 1));
+        setCurrentPage(1);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [errors, file]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !pageCount) return;
+
+    const pages = Array.from(container.querySelectorAll("section"));
+    container.style.width = `${Math.max(100, zoom * 100)}%`;
+    container.style.minWidth = `${Math.max(100, zoom * 100)}%`;
+    pages.forEach((page, index) => {
+      page.style.display = index + 1 === currentPage ? "block" : "none";
+      page.style.transform = `scale(${zoom})`;
+      page.style.transformOrigin = "top left";
+      page.style.marginLeft = zoom > 1 ? "0" : "auto";
+      page.style.marginBottom = index + 1 === currentPage
+        ? `${(zoom - 1) * 100}%`
+        : "0";
+    });
+  }, [currentPage, pageCount, zoom]);
+
+  return (
+    <div className="bg-slate-200 p-4">
+      <div
+        ref={previewRef}
+        className={`relative flex h-[588px] items-start justify-start overflow-auto touch-none ${
+          zoom > 1 ? (panning ? "cursor-grabbing" : "cursor-grab") : ""
+        }`}
+        onPointerDown={(event) => {
+          if (zoom <= 1 || !previewRef.current) return;
+          panStartRef.current = {
+            x: event.clientX,
+            y: event.clientY,
+            left: previewRef.current.scrollLeft,
+            top: previewRef.current.scrollTop,
+          };
+          setPanning(true);
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          const start = panStartRef.current;
+          if (!start || !previewRef.current) return;
+          previewRef.current.scrollLeft = start.left - (event.clientX - start.x);
+          previewRef.current.scrollTop = start.top - (event.clientY - start.y);
+        }}
+        onPointerUp={(event) => {
+          panStartRef.current = null;
+          setPanning(false);
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        }}
+        onPointerCancel={() => {
+          panStartRef.current = null;
+          setPanning(false);
+        }}
+      >
+        <div ref={containerRef} className="docx-preview-container w-full" />
+        {!pageCount && (
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
+            Loading DOCX preview...
+          </div>
+        )}
+      </div>
+      <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
+        <button
+          type="button"
+          disabled={!pageCount || currentPage === 1}
+          onClick={() => setCurrentPage((page) => page - 1)}
+          className="rounded-lg px-3 py-2 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          Previous
+        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Zoom out"
+            disabled={!pageCount || zoom <= 0.75}
+            onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))}
+            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(1)}
+            className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            disabled={!pageCount || zoom >= 2}
+            onClick={() => setZoom((value) => Math.min(2, value + 0.25))}
+            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            +
+          </button>
+        </div>
+        <span>{pageCount ? `Page ${currentPage} of ${pageCount}` : "Preparing pages..."}</span>
+        <button
+          type="button"
+          disabled={!pageCount || currentPage === pageCount}
+          onClick={() => setCurrentPage((page) => page + 1)}
+          className="rounded-lg px-3 py-2 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PptxPreview({
+  file,
+  errors,
+}: {
+  file: File;
+  errors: SpellError[];
+}) {
+  const [slideCount, setSlideCount] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(1);
+  const [zoom, setZoom] = useState(1);
+  const [panning, setPanning] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const panStartRef = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const { init } = await import("pptx-preview");
+      const container = containerRef.current;
+      if (!container) return;
+
+      container.replaceChildren();
+      const previewer = init(container, {
+        width: 960,
+        height: 540,
+        mode: "list",
+      });
+      await previewer.preview(await file.arrayBuffer());
+
+      const slides = Array.from(container.children) as HTMLElement[];
+      slides.forEach((slide) => {
+        slide.style.position = "relative";
+        const textElements = Array.from(slide.querySelectorAll("*")).filter(
+          (element) => element.children.length === 0 && element.textContent
+        );
+
+        textElements.forEach((element) => {
+          const text = element.textContent ?? "";
+          const tokens = text.split(/(\s+)/);
+          const hasMatch = tokens.some((token) => {
+            const normalized = token
+              .toLowerCase()
+              .replace(/^[^a-z]+|[^a-z]+$/g, "");
+            return errors.some(
+              (error) => normalized === error.word.toLowerCase()
+            );
+          });
+
+          if (!hasMatch) return;
+
+          const fragment = document.createDocumentFragment();
+          tokens.forEach((token) => {
+            const normalized = token
+              .toLowerCase()
+              .replace(/^[^a-z]+|[^a-z]+$/g, "");
+            const matchingError = errors.find(
+              (error) => normalized === error.word.toLowerCase()
+            );
+
+            if (!matchingError) {
+              fragment.append(token);
+              return;
+            }
+
+            const mark = document.createElement("span");
+            mark.textContent = token;
+            mark.style.outline = "2px solid #ef4444";
+            mark.style.outlineOffset = "2px";
+            mark.style.borderRadius = "2px";
+            mark.title = matchingError.suggestion
+              ? `Suggestion: ${matchingError.suggestion}`
+              : "Possible spelling mistake";
+            fragment.append(mark);
+          });
+
+          element.replaceChildren(fragment);
+        });
+      });
+
+      if (!cancelled) {
+        setSlideCount(Math.max(slides.length, 1));
+        setCurrentSlide(1);
+      }
+    })().catch(() => {
+      if (!cancelled) setSlideCount(0);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [errors, file]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !slideCount) return;
+
+    const slides = Array.from(container.children) as HTMLElement[];
+    const activeSlide = slides[currentSlide - 1];
+    const baseWidth = activeSlide?.offsetWidth ?? 960;
+    const baseHeight = activeSlide?.offsetHeight ?? 540;
+
+    container.style.width = `${baseWidth * zoom}px`;
+    container.style.minWidth = `${baseWidth * zoom}px`;
+    container.style.height = `${baseHeight * zoom}px`;
+    container.style.minHeight = `${baseHeight * zoom}px`;
+
+    slides.forEach((slide, index) => {
+      slide.style.display = index + 1 === currentSlide ? "block" : "none";
+      slide.style.transform = `scale(${zoom})`;
+      slide.style.transformOrigin = "top left";
+      slide.style.margin = "0";
+    });
+  }, [currentSlide, slideCount, zoom]);
+
+  return (
+    <div className="bg-slate-200 p-4">
+      <div
+        ref={viewportRef}
+        className={`relative flex h-[588px] items-start justify-start overflow-auto touch-none ${
+          zoom > 1 ? (panning ? "cursor-grabbing" : "cursor-grab") : ""
+        }`}
+        onPointerDown={(event) => {
+          if (zoom <= 1 || !viewportRef.current) return;
+          panStartRef.current = {
+            x: event.clientX,
+            y: event.clientY,
+            left: viewportRef.current.scrollLeft,
+            top: viewportRef.current.scrollTop,
+          };
+          setPanning(true);
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          const start = panStartRef.current;
+          if (!start || !viewportRef.current) return;
+          viewportRef.current.scrollLeft = start.left - (event.clientX - start.x);
+          viewportRef.current.scrollTop = start.top - (event.clientY - start.y);
+        }}
+        onPointerUp={(event) => {
+          panStartRef.current = null;
+          setPanning(false);
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        }}
+        onPointerCancel={() => {
+          panStartRef.current = null;
+          setPanning(false);
+        }}
+      >
+        {!slideCount && (
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
+            Loading PPTX preview...
+          </div>
+        )}
+        <div ref={containerRef} className="pptx-preview-container" />
+      </div>
+
+      <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
+        <button type="button" disabled={!slideCount || currentSlide === 1} onClick={() => setCurrentSlide((slide) => slide - 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Previous</button>
+        <div className="flex items-center gap-1">
+          <button type="button" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
+          <button type="button" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
+          <button type="button" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
+        </div>
+        <span>{slideCount ? `Slide ${currentSlide} of ${slideCount}` : "Preparing slides..."}</span>
+        <button type="button" disabled={!slideCount || currentSlide === slideCount} onClick={() => setCurrentSlide((slide) => slide + 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Next</button>
+      </div>
+    </div>
+  );
+}
+
+function XlsxPreview({
+  file,
+  errors,
+}: {
+  file: File;
+  errors: SpellError[];
+}) {
+  const [sheets, setSheets] = useState<{ name: string; rows: string[][] }[]>([]);
+  const [currentSheet, setCurrentSheet] = useState(0);
+  const [zoom, setZoom] = useState(1);
+  const [panning, setPanning] = useState(false);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const panStartRef = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const XLSX = await import("xlsx");
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", raw: false });
+      const parsed = workbook.SheetNames.map((name) => ({
+        name,
+        rows: XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[name], {
+          header: 1,
+          raw: false,
+          defval: "",
+        }).map((row) => row.map((cell) => String(cell))),
+      }));
+
+      if (!cancelled) {
+        setSheets(parsed);
+        setCurrentSheet(0);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [file]);
+
+  const rows = sheets[currentSheet]?.rows ?? [];
+  const maxColumns = Math.max(1, ...rows.map((row) => row.length));
+
+  return (
+    <div className="bg-slate-200 p-4">
+      <div
+        ref={viewportRef}
+        className={`relative flex h-[588px] items-start justify-start overflow-auto touch-none ${
+          zoom > 1 ? (panning ? "cursor-grabbing" : "cursor-grab") : ""
+        }`}
+        onPointerDown={(event) => {
+          if (zoom <= 1 || !viewportRef.current) return;
+          panStartRef.current = {
+            x: event.clientX,
+            y: event.clientY,
+            left: viewportRef.current.scrollLeft,
+            top: viewportRef.current.scrollTop,
+          };
+          setPanning(true);
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          const start = panStartRef.current;
+          if (!start || !viewportRef.current) return;
+          viewportRef.current.scrollLeft = start.left - (event.clientX - start.x);
+          viewportRef.current.scrollTop = start.top - (event.clientY - start.y);
+        }}
+        onPointerUp={(event) => {
+          panStartRef.current = null;
+          setPanning(false);
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        }}
+        onPointerCancel={() => {
+          panStartRef.current = null;
+          setPanning(false);
+        }}
+      >
+        {!sheets.length ? (
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
+            Loading XLSX preview...
+          </div>
+        ) : (
+          <div
+            className="origin-top-left bg-white shadow-md"
+            style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}
+          >
+            <table className="border-collapse text-left text-sm">
+              <tbody>
+                {rows.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {Array.from({ length: maxColumns }, (_, columnIndex) => {
+                      const value = row[columnIndex] ?? "";
+                      const tokens = value.split(/(\s+)/);
+
+                      return (
+                        <td
+                          key={columnIndex}
+                          className="min-w-32 max-w-72 whitespace-pre-wrap border border-slate-200 px-3 py-2 align-top text-slate-700"
+                        >
+                          {tokens.map((token, tokenIndex) => {
+                            const normalized = token
+                              .toLowerCase()
+                              .replace(/^[^a-z]+|[^a-z]+$/g, "");
+                            const matchingError = errors.find(
+                              (error) => normalized === error.word.toLowerCase()
+                            );
+
+                            if (!matchingError) return token;
+
+                            return (
+                              <span
+                                key={`${token}-${tokenIndex}`}
+                                className="rounded border-2 border-red-500 bg-transparent text-red-600"
+                                title={matchingError.suggestion
+                                  ? `Suggestion: ${matchingError.suggestion}`
+                                  : "Possible spelling mistake"}
+                              >
+                                {token}
+                              </span>
+                            );
+                          })}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
+        <button type="button" disabled={currentSheet === 0} onClick={() => setCurrentSheet((sheet) => sheet - 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Previous</button>
+        <div className="flex items-center gap-1">
+          <button type="button" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
+          <button type="button" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
+          <button type="button" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
+        </div>
+        <span>{sheets.length ? `Sheet ${currentSheet + 1} of ${sheets.length}` : "Preparing sheets..."}</span>
+        <button type="button" disabled={!sheets.length || currentSheet === sheets.length - 1} onClick={() => setCurrentSheet((sheet) => sheet + 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Next</button>
+      </div>
+    </div>
+  );
+}
+
+function ImagePreview({
+  file,
+  errors,
+  marks,
+}: {
+  file: File;
+  errors: SpellError[];
+  marks: ImageMark[];
+}) {
+  const [zoom, setZoom] = useState(1);
+  const [panning, setPanning] = useState(false);
+  const imageUrl = useMemo(() => URL.createObjectURL(file), [file]);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const panStartRef = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+
+  const markedWords = new Set(errors.map((error) => error.word.toLowerCase()));
+
+  return (
+    <div className="bg-slate-200 p-4">
+      <div
+        ref={viewportRef}
+        className={`relative flex h-[588px] items-start justify-start overflow-auto touch-none ${
+          zoom > 1 ? (panning ? "cursor-grabbing" : "cursor-grab") : ""
+        }`}
+        onPointerDown={(event) => {
+          if (zoom <= 1 || !viewportRef.current) return;
+          panStartRef.current = {
+            x: event.clientX,
+            y: event.clientY,
+            left: viewportRef.current.scrollLeft,
+            top: viewportRef.current.scrollTop,
+          };
+          setPanning(true);
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          const start = panStartRef.current;
+          if (!start || !viewportRef.current) return;
+          viewportRef.current.scrollLeft = start.left - (event.clientX - start.x);
+          viewportRef.current.scrollTop = start.top - (event.clientY - start.y);
+        }}
+        onPointerUp={(event) => {
+          panStartRef.current = null;
+          setPanning(false);
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        }}
+        onPointerCancel={() => {
+          panStartRef.current = null;
+          setPanning(false);
+        }}
+      >
+        <div className="relative h-fit w-fit">
+          {/* Blob URLs cannot use Next image optimization. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt="Uploaded file preview"
+            className="block max-h-[588px] max-w-none object-contain"
+            style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}
+          />
+          {marks
+            .filter((mark) => markedWords.has(mark.word.toLowerCase()))
+            .map((mark, index) => (
+              <span
+                key={`${mark.word}-${index}`}
+                className="pointer-events-none absolute rounded border-2 border-red-500 bg-transparent"
+                style={{
+                  left: `${mark.left * 100}%`,
+                  top: `${mark.top * 100}%`,
+                  width: `${mark.width * 100}%`,
+                  height: `${mark.height * 100}%`,
+                  transform: `scale(${zoom})`,
+                  transformOrigin: "top left",
+                }}
+                title="Possible spelling mistake"
+              />
+            ))}
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
+        <button type="button" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
+        <button type="button" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
+        <button type="button" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
+      </div>
+      {imageUrl && <ImageUrlCleanup url={imageUrl} />}
+    </div>
+  );
+}
+
+function ImageUrlCleanup({ url }: { url: string }) {
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  return null;
+}
+
+export default function Home() {
+
+  const fileInput =
+    useRef<HTMLInputElement>(null);
+
+  const [files, setFiles] =
+    useState<File[]>([]);
+
+  const [dragging, setDragging] =
+    useState(false);
+
+  const [checking, setChecking] =
+    useState(false);
+
+  const [checkingMessage, setCheckingMessage] =
+    useState("Checking your file...");
+
+  const [result, setResult] =
+    useState<CheckResult | null>(null);
+
+  const [pdfPreviewUrl, setPdfPreviewUrl] =
+    useState<string | null>(null);
+
+  const [pdfSelectedPage, setPdfSelectedPage] =
+    useState(1);
+
+  const [copiedWord, setCopiedWord] =
+    useState<string | null>(null);
+
+  const [uploadError, setUploadError] =
+    useState<string | null>(null);
+
+  const [loadingSample, setLoadingSample] =
+    useState(false);
+
+  const [copiedReport, setCopiedReport] =
+    useState(false);
+
+  const [copiedCorrected, setCopiedCorrected] =
+    useState(false);
+
+  const [copiedRaw, setCopiedRaw] =
+    useState(false);
+
+
+  // ==========================================
+  // FILE SELECTION & VALIDATION
+  // ==========================================
+
+  const handleFiles = (
+    selected: FileList | File[] | null
+  ) => {
+    if (!selected) return;
+
+    const fileList = Array.from(selected);
+    if (fileList.length === 0) return;
+
+    const file = fileList[0];
+    if (!file) return;
+
+    // 1. Max size limit: 25 MB
+    const MAX_SIZE_BYTES = 25 * 1024 * 1024;
+    if (file.size > MAX_SIZE_BYTES) {
+      setUploadError(
+        `"${file.name}" exceeds the 25 MB limit (${(file.size / 1024 / 1024).toFixed(1)} MB). Please select a smaller document.`
+      );
+      return;
+    }
+
+    // 2. Format validation (extensions & mime types)
+    const allowedExtensions = [".pdf", ".docx", ".pptx", ".xlsx", ".jpg", ".jpeg", ".png", ".webp"];
+    const allowedMimeTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ];
+
+    const fileNameLower = file.name.toLowerCase();
+    const hasValidExt = allowedExtensions.some((ext) => fileNameLower.endsWith(ext));
+    const hasValidMime = allowedMimeTypes.includes(file.type);
+
+    if (!hasValidExt && !hasValidMime) {
+      setUploadError(
+        "Unsupported file format. Please upload a PDF, DOCX, PPTX, XLSX, JPG, PNG, or WEBP file."
+      );
+      return;
+    }
+
+    // Clear any previous error and setup file
+    setUploadError(null);
+
+    if (pdfPreviewUrl) {
+      URL.revokeObjectURL(pdfPreviewUrl);
+    }
+
+    setPdfPreviewUrl(
+      fileNameLower.endsWith(".pdf")
+        ? URL.createObjectURL(file)
+        : null
+    );
+    setPdfSelectedPage(1);
+    setFiles([file]);
+    setResult(null);
+  };
+
+
+  const openFilePicker = () => {
+    fileInput.current?.click();
+  };
+
+
+  const removeFiles = () => {
+    if (pdfPreviewUrl) {
+      URL.revokeObjectURL(pdfPreviewUrl);
+    }
+
+    setFiles([]);
+    setUploadError(null);
+    setPdfPreviewUrl(null);
+    setPdfSelectedPage(1);
+    setResult(null);
+
+    if (fileInput.current) {
+      fileInput.current.value = "";
+    }
+  };
+
+  const loadSampleFile = async () => {
+    try {
+      setLoadingSample(true);
+      setUploadError(null);
+      const res = await fetch("/sample-document.png");
+      if (!res.ok) {
+        throw new Error("Failed to fetch sample document");
+      }
+      const blob = await res.blob();
+      const sampleFile = new File([blob], "sample-document.png", {
+        type: "image/png",
+      });
+      handleFiles([sampleFile]);
+    } catch (err) {
+      console.error(err);
+      setUploadError("Could not load sample document. Please try choosing a local file.");
+    } finally {
+      setLoadingSample(false);
+    }
+  };
+
+  const ignoreError = (errorToIgnore: SpellError) => {
+    setResult((currentResult) => {
+      if (!currentResult || !currentResult.errors) {
+        return currentResult;
+      }
+
+      const errors = currentResult.errors.filter(
+        (error) =>
+          !(
+            error.index === errorToIgnore.index &&
+            error.word === errorToIgnore.word
+          )
+      );
+
+      return {
+        ...currentResult,
+        errors,
+        errorCount: errors.length,
+      };
+    });
+  };
+
+  const ignoreAllInstances = (wordToIgnore: string) => {
+    setResult((currentResult) => {
+      if (!currentResult || !currentResult.errors) {
+        return currentResult;
+      }
+
+      const lower = wordToIgnore.toLowerCase();
+      const errors = currentResult.errors.filter(
+        (error) => error.word.toLowerCase() !== lower
+      );
+
+      return {
+        ...currentResult,
+        errors,
+        errorCount: errors.length,
+      };
+    });
+  };
+
+  const getCorrectedText = (text: string, errors: SpellError[]): string => {
+    if (!text || !errors || errors.length === 0) return text;
+
+    const sorted = [...errors]
+      .filter((e) => Boolean(e.suggestion))
+      .sort((a, b) => b.index - a.index);
+
+    let output = text;
+    for (const err of sorted) {
+      if (!err.suggestion) continue;
+      const start = err.index;
+      const end = start + err.word.length;
+      if (
+        start >= 0 &&
+        end <= output.length &&
+        output.slice(start, end).toLowerCase() === err.word.toLowerCase()
+      ) {
+        output = output.slice(0, start) + err.suggestion + output.slice(end);
+      }
+    }
+    return output;
+  };
+
+  const copyCorrectedText = async () => {
+    if (!result?.text) return;
+    const corrected = getCorrectedText(result.text, result.errors ?? []);
+    await navigator.clipboard.writeText(corrected);
+    setCopiedCorrected(true);
+    setTimeout(() => setCopiedCorrected(false), 2000);
+  };
+
+  const copyRawText = async () => {
+    if (!result?.text) return;
+    await navigator.clipboard.writeText(result.text);
+    setCopiedRaw(true);
+    setTimeout(() => setCopiedRaw(false), 2000);
+  };
+
+
+  // ==========================================
+  // SPELL CHECK
+  // ==========================================
+
+  const checkFile = async () => {
+
+    if (files.length === 0) {
+      return;
+    }
+
+    setChecking(true);
+    setCheckingMessage(
+      files[0]?.name.toLowerCase().endsWith(".pdf")
+        ? "Reading your PDF..."
+        : "Reading your image..."
+    );
+
+    setResult(null);
+
+    try {
+
+      const file = files[0];
+
+      if (file.name.toLowerCase().endsWith(".pdf")) {
+        setCheckingMessage("Running OCR and checking spelling...");
+      } else {
+        setCheckingMessage("Checking spelling...");
+      }
+
+      const formData = new FormData();
+
+      formData.append("file", file);
+
+
+      const response =
+        await fetch("/api/check", {
+          method: "POST",
+          body: formData,
+        });
+
+
+      let data: CheckResult | null = null;
+      try {
+        data = await response.json();
+      } catch {
+        // Handle non-JSON or HTML error responses
+      }
+
+      if (!response.ok || !data) {
+        setResult({
+          success: false,
+          error:
+            data?.error ||
+            "Unable to check the file. Please try again.",
+        });
+        return;
+      }
+
+
+      setResult(data);
+
+    } catch (error) {
+
+      console.error(error);
+
+      setResult({
+        success: false,
+        error:
+          "Unable to connect to the spell checker.",
+      });
+
+    } finally {
+
+      setChecking(false);
+      setCheckingMessage("Checking your file...");
+    }
+  };
+
+  const downloadReport = () => {
+    if (!result) return;
+
+    const lines = [
+      "Spellense spelling report",
+      `File: ${result.filename ?? files[0]?.name ?? "Unknown"}`,
+      `Words checked: ${result.wordCount ?? 0}`,
+      `Possible mistakes: ${result.errorCount ?? 0}`,
+      "",
+      ...(result.errors && result.errors.length > 0
+        ? result.errors.map((error, index) =>
+            `${error.page ? `Page ${error.page}` : `#${index + 1}`} | ${error.word} -> ${error.suggestion ?? "No suggestion"}`
+          )
+        : ["No possible spelling mistakes found."]),
+    ];
+    const url = URL.createObjectURL(
+      new Blob([lines.join("\n")], { type: "text/plain" })
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "spellense-report.txt";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyReport = async () => {
+    if (!result) return;
+
+    const lines = [
+      "Spellense spelling report",
+      `File: ${result.filename ?? files[0]?.name ?? "Unknown"}`,
+      `Words checked: ${result.wordCount ?? 0}`,
+      `Possible mistakes: ${result.errorCount ?? 0}`,
+      "",
+      ...(result.errors && result.errors.length > 0
+        ? result.errors.map((error, index) =>
+            `${error.page ? `Page ${error.page}` : `#${index + 1}`} | ${error.word} -> ${error.suggestion ?? "No suggestion"}`
+          )
+        : ["No possible spelling mistakes found."]),
+    ];
+    await navigator.clipboard.writeText(lines.join("\n"));
+    setCopiedReport(true);
+    setTimeout(() => {
+      setCopiedReport(false);
+    }, 2000);
+  };
+
+
+  // ==========================================
+  // RESULTS SCREEN
+  // ==========================================
+
+  if (result) {
+
+    const isPdfResult =
+      files[0]?.name.toLowerCase().endsWith(".pdf") ?? false;
+    const isDocxResult =
+      files[0]?.name.toLowerCase().endsWith(".docx") ?? false;
+    const isPptxResult =
+      files[0]?.name.toLowerCase().endsWith(".pptx") ?? false;
+    const isXlsxResult =
+      files[0]?.name.toLowerCase().endsWith(".xlsx") ?? false;
+    const isImageResult =
+      !isPdfResult &&
+      !isDocxResult &&
+      !isPptxResult &&
+      !isXlsxResult;
+
+    const fileName = files[0]?.name ?? result.filename ?? "Uploaded Document";
+    const wordCount = result.wordCount ?? 0;
+    const errorCount = result.errorCount ?? result.errors?.length ?? 0;
+    const hasErrors = errorCount > 0;
+    const accuracyRate = wordCount > 0
+      ? Math.max(0, Math.min(100, Math.round(((wordCount - errorCount) / wordCount) * 100)))
+      : (errorCount === 0 ? 100 : 0);
+
+    return (
+      <main className="min-h-screen bg-[#f8fafc] text-[#101828]">
+
+        {/* NAVBAR */}
+        <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
+          <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-6 lg:px-10">
+            <Link
+              href="/"
+              className="flex items-center gap-3"
+              onClick={() => {
+                setResult(null);
+                setFiles([]);
+              }}
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-600/25">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6" />
+                  <path d="M8 13h5" />
+                  <path d="M8 17h3" />
+                  <circle cx="17.5" cy="16.5" r="2.7" />
+                  <path d="m19.5 18.5 1.8 1.8" />
+                </svg>
+              </div>
+
+              <div>
+                <div className="text-[21px] font-bold tracking-[-0.8px]">
+                  Spell<span className="text-blue-600">ense</span>
+                </div>
+                <div className="text-[9px] font-medium tracking-[1.5px] text-gray-400">
+                  SMART SPELL CHECKING
+                </div>
+              </div>
+            </Link>
+
+            {/* Current file pill */}
+            <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50/80 px-3.5 py-1.5 text-xs font-semibold text-slate-700 max-w-[260px]">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="truncate">{fileName}</span>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={downloadReport}
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-xs transition hover:border-slate-300 hover:bg-slate-50"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" x2="12" y1="15" y2="3" />
+                </svg>
+                <span>Report</span>
+              </button>
+
+              <button
+                onClick={removeFiles}
+                className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 active:translate-y-0"
+              >
+                + Check another file
+              </button>
+            </div>
+          </nav>
+        </header>
+
+        {/* RESULTS HERO */}
+        <section className="relative overflow-hidden bg-dot-pattern">
+          {/* Ambient lighting */}
+          <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[900px] rounded-full bg-gradient-to-tr from-blue-400/15 via-indigo-400/15 to-purple-400/10 blur-[120px] opacity-75 animate-pulse-glow" />
+
+          <div className="relative mx-auto max-w-7xl px-5 pb-20 pt-10 sm:px-6 lg:px-10">
+
+            {/* STATUS BANNER & HEADER */}
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/85 px-4 py-1.5 shadow-2xs backdrop-blur-md">
+                {hasErrors ? (
+                  <>
+                    <span className="flex h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-rose-600">
+                      SPELL ANALYSIS COMPLETE • {errorCount} POTENTIAL ISSUE{errorCount === 1 ? "" : "S"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+                      SPELL ANALYSIS COMPLETE • ALL CLEAN
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <h1 className="mt-4 text-3xl font-extrabold tracking-[-1.2px] text-slate-900 sm:text-4xl lg:text-[42px]">
+                {hasErrors ? "Spelling issues detected in your file" : "Your document is error-free!"}
+              </h1>
+
+              <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-slate-500">
+                {hasErrors
+                  ? "We inspected the English text in your file. Review the suggestions and marked positions below."
+                  : "Every English token detected was cross-referenced against standard dictionaries with zero mistakes found."}
+              </p>
+            </div>
+
+            {/* METRICS SUMMARY KPI BAR (4 Cards) */}
+            <div className="mx-auto mt-8 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4">
+
+              {/* Words Checked */}
+              <div className="group relative overflow-hidden rounded-2xl border border-white/90 bg-white/80 p-4 text-center shadow-xs backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                    <path d="M10 9H8" />
+                    <path d="M16 13H8" />
+                    <path d="M16 17H8" />
+                  </svg>
+                </div>
+                <p className="text-2xl font-extrabold tracking-tight text-slate-900">{wordCount}</p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-400">Words Scanned</p>
+              </div>
+
+              {/* Mistakes Flagged */}
+              <div className="group relative overflow-hidden rounded-2xl border border-white/90 bg-white/80 p-4 text-center shadow-xs backdrop-blur-md transition-all hover:-translate-y-0.5 hover:shadow-md">
+                <div className={`mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-xl ring-1 ${hasErrors ? "bg-rose-50 text-rose-600 ring-rose-100" : "bg-emerald-50 text-emerald-600 ring-emerald-100"}`}>
+                  {hasErrors ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="m9 12 2 2 4-4" />
+                    </svg>
+                  )}
+                </div>
+                <p className={`text-2xl font-extrabold tracking-tight ${hasErrors ? "text-rose-600" : "text-emerald-600"}`}>
+                  {errorCount}
+                </p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-400">Mistakes Flagged</p>
+              </div>
+
+              {/* Spelling Score */}
+              <div className="group relative overflow-hidden rounded-2xl border border-white/90 bg-white/80 p-4 text-center shadow-xs backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md">
+                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <circle cx="12" cy="12" r="6" />
+                    <circle cx="12" cy="12" r="2" />
+                  </svg>
+                </div>
+                <p className="text-2xl font-extrabold tracking-tight text-indigo-600">{accuracyRate}%</p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-400">Spelling Score</p>
+              </div>
+
+              {/* File Info */}
+              <div className="group relative overflow-hidden rounded-2xl border border-white/90 bg-white/80 p-4 text-center shadow-xs backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
+                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 text-[11px] font-black tracking-wider ring-1 ring-slate-200">
+                  {isPdfResult ? "PDF" : isDocxResult ? "DOCX" : isPptxResult ? "PPTX" : isXlsxResult ? "XLSX" : "IMG"}
+                </div>
+                <p className="truncate text-sm font-bold tracking-tight text-slate-800 px-1" title={fileName}>
+                  {files[0]?.size ? (files[0].size / 1024 / 1024).toFixed(2) + " MB" : "Verified"}
+                </p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-400">In-Memory OCR</p>
+              </div>
+
+            </div>
+
+            {/* ERROR MESSAGE */}
+            {result.success === false && (
+              <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-red-200/80 bg-red-50/80 p-5 text-center text-sm font-semibold text-red-600 shadow-sm backdrop-blur-sm">
+                {result.error}
+              </div>
+            )}
+
+            {/* NO TEXT FOUND */}
+            {result.success && !result.text && (
+              <div className="mx-auto mt-6 max-w-2xl rounded-3xl border border-slate-200/80 bg-white/90 p-8 text-center shadow-sm backdrop-blur-md">
+                <p className="text-base font-bold text-slate-800">
+                  No readable English text detected.
+                </p>
+                <p className="mt-2 text-sm text-slate-400">
+                  The OCR scanner could not find text in this file. Try uploading an image or document with higher contrast or clearer resolution.
+                </p>
+              </div>
+            )}
+
+            {/* MAIN INSPECTION INTERFACE (PREVIEW + SUGGESTIONS) */}
+            {(isImageResult || isPdfResult || isDocxResult || isPptxResult || isXlsxResult) && (
+              <div
+                className={`mt-8 gap-6 ${
+                  result.errors && result.errors.length > 0
+                    ? "grid lg:grid-cols-[minmax(0,1.3fr)_minmax(340px,0.7fr)]"
+                    : "flex flex-col items-center"
+                }`}
+              >
+                {/* PREVIEW CARD */}
+                <div className="w-full overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-200/40 backdrop-blur-xl">
+
+                  {/* PREVIEW HEADER */}
+                  <div className="flex items-center justify-between border-b border-slate-100 bg-white/95 px-5 py-4 sm:px-6">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-2.5 w-2.5 rounded-full bg-blue-600 animate-pulse" />
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">
+                          {isPdfResult
+                            ? "PDF Document Viewer"
+                            : isDocxResult
+                              ? "Word Document Preview"
+                              : isPptxResult
+                                ? "PowerPoint Slide Viewer"
+                                : isXlsxResult
+                                  ? "Spreadsheet Grid Viewer"
+                                  : "Visual Asset Canvas"}
+                        </p>
+                        <p className="text-[11px] text-slate-400">Interactive OCR overlay</p>
+                      </div>
+                    </div>
+
+                    <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${hasErrors ? "border border-rose-200 bg-rose-50 text-rose-600" : "border border-emerald-200 bg-emerald-50 text-emerald-600"}`}>
+                      {hasErrors ? `${errorCount} MARKED ERROR${errorCount === 1 ? "" : "S"}` : "ALL CLEAR"}
+                    </span>
+                  </div>
+
+                  {files[0] ? (
+                    isPdfResult ? (
+                      <PdfMarkedPreview
+                        key={files[0].name}
+                        file={files[0]}
+                        errors={result.errors ?? []}
+                        selectedPage={pdfSelectedPage}
+                        onPageChange={setPdfSelectedPage}
+                        markErrors={result.pdfHasTextLayer ?? false}
+                        pdfMarks={result.pdfMarks ?? []}
+                      />
+                    ) : isDocxResult ? (
+                      <DocxPreview
+                        key={files[0].name}
+                        file={files[0]}
+                        errors={result.errors ?? []}
+                      />
+                    ) : isPptxResult ? (
+                      <PptxPreview
+                        key={files[0].name}
+                        file={files[0]}
+                        errors={result.errors ?? []}
+                      />
+                    ) : isXlsxResult ? (
+                      <XlsxPreview
+                        key={files[0].name}
+                        file={files[0]}
+                        errors={result.errors ?? []}
+                      />
+                    ) : (
+                      <ImagePreview
+                        key={files[0].name}
+                        file={files[0]}
+                        errors={result.errors ?? []}
+                        marks={result.imageMarks ?? []}
+                      />
+                    )
+                  ) : (
+                    <div className="flex h-[588px] items-center justify-center text-sm text-slate-400">
+                      Preview unavailable
+                    </div>
+                  )}
+                </div>
+
+                {/* RIGHT COLUMN: SUGGESTIONS PANEL */}
+                {result.errors && result.errors.length > 0 ? (
+                  <div className="w-full overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-200/40 backdrop-blur-xl">
+                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+                      <div>
+                        <h2 className="text-sm font-bold text-slate-900">
+                          Suggested Corrections
+                        </h2>
+                        <p className="mt-0.5 text-xs text-slate-400">
+                          Click to inspect page location
+                        </p>
+                      </div>
+
+                      <span className="rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-bold text-rose-600">
+                        {result.errors.length} TO REVIEW
+                      </span>
+                    </div>
+
+                    <div className="divide-y divide-slate-100 max-h-[588px] overflow-y-auto">
+                      {result.errors.map((error, index) => (
+                        <div
+                          key={`${error.word}-${index}`}
+                          className={`group flex items-center justify-between gap-3 px-5 py-3.5 transition-all hover:bg-blue-50/40 sm:px-6 ${
+                            error.page ? "cursor-pointer" : ""
+                          }`}
+                          onClick={() => {
+                            if (error.page) {
+                              setPdfSelectedPage(error.page);
+                            }
+                          }}
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-xs font-black text-rose-500 ring-1 ring-rose-100">
+                              {error.page
+                                ? `P${error.page}`
+                                : String(index + 1).padStart(2, "0")}
+                            </span>
+
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-bold text-rose-600">
+                                {error.word}
+                              </p>
+                              <p className="text-[11px] text-slate-400">
+                                {error.suggestion
+                                  ? "Suggested correction available"
+                                  : "Possible typo or brand name"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex shrink-0 items-center gap-2">
+                            {error.suggestion && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (error.suggestion) {
+                                    navigator.clipboard.writeText(error.suggestion);
+                                    setCopiedWord(error.suggestion);
+                                    setTimeout(() => {
+                                      setCopiedWord((prev) =>
+                                        prev === error.suggestion ? null : prev
+                                      );
+                                    }, 2000);
+                                  }
+                                }}
+                                title="Click to copy suggested correction"
+                                className="group/btn flex items-center gap-1.5 rounded-xl border border-emerald-200/80 bg-emerald-50/90 px-2.5 py-1.5 text-xs font-bold text-emerald-700 shadow-2xs transition hover:border-emerald-300 hover:bg-emerald-100 hover:scale-105 active:scale-95 cursor-pointer"
+                              >
+                                <span className="text-emerald-500">→</span>
+                                <span>
+                                  {copiedWord === error.suggestion
+                                    ? "Copied!"
+                                    : error.suggestion}
+                                </span>
+                              </button>
+                            )}
+
+                            {(() => {
+                              const occurrences = (result.errors ?? []).filter(
+                                (e) => e.word.toLowerCase() === error.word.toLowerCase()
+                              ).length;
+
+                              return (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      ignoreError(error);
+                                    }}
+                                    className="rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                                    title="Ignore this spelling suggestion"
+                                  >
+                                    Ignore
+                                  </button>
+
+                                  {occurrences > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        ignoreAllInstances(error.word);
+                                      }}
+                                      className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                                      title={`Ignore all ${occurrences} occurrences of "${error.word}"`}
+                                    >
+                                      Ignore all ({occurrences})
+                                    </button>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  /* ZERO ERRORS CELEBRATION CARD */
+                  <div className="mt-6 w-full max-w-2xl rounded-3xl border border-emerald-100 bg-gradient-to-b from-emerald-50/50 via-white to-white p-8 text-center shadow-lg shadow-emerald-500/5 backdrop-blur-md">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 shadow-md shadow-emerald-500/10 ring-4 ring-emerald-50">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+
+                    <h3 className="mt-4 text-xl font-extrabold text-slate-900">
+                      Flawless! No spelling mistakes found.
+                    </h3>
+
+                    <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">
+                      All readable text tokens in <span className="font-semibold text-slate-700">{fileName}</span> were checked and verified. Your document is ready to publish.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* DETECTED TEXT COLLAPSIBLE */}
+            {result.text && (
+              <details className="group mt-8 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm transition-all">
+                <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-4 text-sm font-bold text-slate-800 transition hover:bg-slate-50/60">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-xs font-bold text-blue-600 transition group-open:rotate-90">
+                      ›
+                    </span>
+                    <span>View Detected OCR Text Stream</span>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
+                    {wordCount} words
+                  </span>
+                </summary>
+
+                <div className="border-t border-slate-100 bg-slate-50/40 p-6">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-xs font-semibold text-slate-400">
+                      Underlined words indicate potential spelling mistakes:
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={copyRawText}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-2xs transition hover:bg-slate-50 hover:text-slate-900 active:scale-95 cursor-pointer"
+                        title="Copy original extracted text"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg>
+                        <span>{copiedRaw ? "Copied Raw!" : "Copy Raw"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={copyCorrectedText}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 shadow-2xs transition hover:bg-blue-100 hover:text-blue-800 active:scale-95 cursor-pointer"
+                        title="Copy text with all suggestions automatically applied"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>{copiedCorrected ? "Copied Corrected!" : "Copy Corrected Text"}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-slate-600">
+                    {renderMarkedText(result.text, result.errors ?? [])}
+                  </p>
+                </div>
+              </details>
+            )}
+
+            {/* BOTTOM ACTIONS */}
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={copyReport}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/30 hover:text-blue-600 cursor-pointer"
+                title="Copy entire spelling report to clipboard"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                <span>{copiedReport ? "Report Copied!" : "Copy Report"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={downloadReport}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/30 hover:text-blue-600 cursor-pointer"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" x2="12" y1="15" y2="3" />
+                </svg>
+                <span>Download Report (.txt)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={removeFiles}
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-blue-600/40 active:translate-y-0 cursor-pointer"
+              >
+                <span>Check Another File</span>
+                <span>→</span>
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+        {/* FOOTER */}
+        <footer className="border-t border-slate-200/70 bg-white px-5 py-8">
+          <div className="mx-auto max-w-7xl text-center">
+            <div className="text-lg font-bold">
+              Spell<span className="text-blue-600">ense</span>
+            </div>
+            <p className="mt-1 text-xs text-gray-400">
+              Simple English spell checking for visual content.
+            </p>
+            <div className="mt-5 text-[11px] text-gray-300">
+              © 2026 Spellense. All rights reserved.
+            </div>
+          </div>
+        </footer>
+
+      </main>
+    );
+  }
+
+
+  // ==========================================
+  // MAIN UPLOAD PAGE
+  // ==========================================
+
+  return (
+
+    <main className="min-h-screen bg-[#f8fafc] text-[#101828]">
+
+      {/* NAVBAR */}
+
+      <header className="border-b border-slate-200/70 bg-white/85 backdrop-blur-xl">
+
+        <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-10">
+
+          <Link
+            href="/"
+            className="flex items-center gap-3"
+          >
+
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-600/25">
+
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+
+                <path d="M14 2v6h6" />
+
+                <path d="M8 13h5" />
+
+                <path d="M8 17h3" />
+
+                <circle
+                  cx="17.5"
+                  cy="16.5"
+                  r="2.7"
+                />
+
+                <path d="m19.5 18.5 1.8 1.8" />
+
+              </svg>
+
+            </div>
+
+
+            <div>
+
+              <div className="text-[21px] font-bold tracking-[-0.8px]">
+                Spell<span className="text-blue-600">
+                  ense
+                </span>
+              </div>
+
+              <div className="text-[9px] font-medium tracking-[1.5px] text-gray-400">
+                SMART SPELL CHECKING
+              </div>
+
+            </div>
+
+          </Link>
+
+
+          <div className="hidden items-center gap-1 rounded-full border border-slate-100 bg-slate-50/70 p-1 text-[13px] font-semibold text-slate-500 md:flex">
+
+            <Link
+              href="/"
+              className="rounded-full bg-white px-4 py-2 text-blue-600 shadow-sm"
+            >
+              Home
+            </Link>
+
+            <Link
+              href="/privacy"
+              className="rounded-full px-4 py-2 transition hover:bg-white hover:text-blue-600"
+            >
+              Privacy
+            </Link>
+
+            <Link
+              href="/faq"
+              className="rounded-full px-4 py-2 transition hover:bg-white hover:text-blue-600"
+            >
+              FAQ
+            </Link>
+
+          </div>
+
+
+          <button
+            onClick={openFilePicker}
+            className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-600/25 transition hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700"
+          >
+            Check a file
+          </button>
+
+        </nav>
+
+      </header>
+
+
+      {/* FILE INPUT */}
+
+      <input
+        ref={fileInput}
+        type="file"
+        accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.pptx,.xlsx"
+        className="hidden"
+        onChange={(e) =>
+          handleFiles(e.target.files)
+        }
+      />
+
+
+      {/* HERO */}
+
+      <section className="relative overflow-hidden bg-dot-pattern">
+
+        {/* Ambient background glows / mesh */}
+        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
+        <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
+        <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
+
+
+        <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-5 sm:px-6 sm:pt-7 lg:px-10 lg:pt-8">
+
+          {/* HERO */}
+
+          <div className="mx-auto max-w-4xl text-center">
+
+            {/* TOP ANNOUNCEMENT PILL */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3.5 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md transition-all hover:border-blue-300">
+              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+              <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 bg-clip-text text-[11px] font-bold uppercase tracking-wider text-transparent">
+                Intelligent OCR & Spell Checker
+              </span>
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+                v1.0
+              </span>
+            </div>
+
+            <h1 className="mt-5 text-[44px] font-extrabold leading-[1.04] tracking-[-2.5px] text-slate-900 sm:text-[62px] lg:text-[76px]">
+
+              Great design deserves
+
+              <br />
+
+              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                flawless spelling.
+              </span>
+
+            </h1>
+
+
+            <p className="mx-auto mt-6 max-w-[640px] text-[15px] leading-relaxed text-slate-600 sm:text-[17px]">
+              AI &amp; OCR-powered spell checking for images, documents, slides, and sheets.
+              <br className="hidden sm:inline" />
+              Catch hidden English typos across your visual designs before going live.
+            </p>
+
+            {/* QUICK HIGHLIGHT PILLS */}
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 text-xs font-medium text-slate-500">
+              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
+                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <span>100% In-Memory Safe</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
+                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <span>Instant OCR Parsing</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
+                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <span>No Sign-up Needed</span>
+              </div>
+            </div>
+
+          </div>
+
+
+          {/* UPLOAD */}
+
+          <div className="mx-auto mt-7 max-w-[920px]">
+
+            {/* UPLOAD VALIDATION ERROR BANNER */}
+            {uploadError && (
+              <div className="mx-auto mb-4 flex items-center justify-between rounded-2xl border border-rose-200/90 bg-rose-50/95 px-5 py-3.5 text-sm font-semibold text-rose-700 shadow-sm backdrop-blur-md animate-in fade-in duration-200">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                  </div>
+                  <p>{uploadError}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUploadError(null)}
+                  className="ml-3 rounded-lg p-1.5 text-rose-400 transition hover:bg-rose-100 hover:text-rose-700 cursor-pointer"
+                  title="Dismiss error"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            <div
+              onDragEnter={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                setDragging(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                handleFiles(
+                  e.dataTransfer.files
+                );
+              }}
+              onClick={() => {
+
+                if (files.length === 0) {
+                  openFilePicker();
+                }
+
+              }}
+              className={`group relative rounded-[32px] p-[2px] transition-all duration-300 ${
+                dragging
+                  ? "bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 shadow-[0_0_50px_rgba(59,130,246,0.35)] scale-[1.01]"
+                  : "bg-gradient-to-b from-white via-slate-100/70 to-slate-200/50 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.05)] hover:from-blue-200/50 hover:via-indigo-100/40 hover:to-slate-200/60 hover:shadow-[0_25px_70px_-15px_rgba(59,130,246,0.16)]"
+              }`}
+            >
+
+              <div className={`relative rounded-[30px] border border-white/80 backdrop-blur-xl px-6 py-12 text-center transition-all duration-300 sm:px-10 sm:py-15 ${
+                dragging
+                  ? "bg-blue-50/90 border-blue-300"
+                  : "bg-white/85 hover:bg-white/95"
+              }`}>
+
+
+                {/* BEFORE UPLOAD */}
+
+                {files.length === 0 && (
+
+                  <>
+
+                    <div className="relative mx-auto flex h-20 w-20 items-center justify-center">
+
+                      <div className="absolute inset-0 rounded-3xl bg-blue-500/20 blur-xl transition-all duration-300 group-hover:scale-125 group-hover:bg-blue-500/30" />
+
+                      <div className="relative flex h-18 w-18 items-center justify-center rounded-[24px] bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-xl shadow-blue-500/30 ring-4 ring-blue-50 transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-105 group-hover:shadow-blue-500/40">
+
+                        <svg
+                          width="30"
+                          height="30"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+
+                          <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+
+                          <path d="M12 12v9" />
+
+                          <path d="m8 16 4-4 4 4" />
+
+                        </svg>
+
+                      </div>
+
+                    </div>
+
+
+                    <h2 className="mt-6 text-2xl font-extrabold tracking-[-0.6px] text-slate-900 sm:text-3xl">
+                      {dragging ? "Release your file to inspect" : "Drop your image, PDF, or document here"}
+                    </h2>
+
+
+                    <p className="mt-2 text-sm text-slate-500">
+                      Drag and drop anywhere inside, or choose a file from your computer • Max 25 MB
+                    </p>
+
+
+                    <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openFilePicker();
+                        }}
+                        className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35 active:translate-y-0 cursor-pointer"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="17 8 12 3 7 8" />
+                          <line x1="12" x2="12" y1="3" y2="15" />
+                        </svg>
+                        <span>Choose a file</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          loadSampleFile();
+                        }}
+                        disabled={loadingSample}
+                        className="inline-flex items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white/90 px-6 py-3.5 text-sm font-bold text-slate-700 shadow-xs backdrop-blur-xs transition hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 disabled:opacity-60 cursor-pointer"
+                        title="Test immediately with a sample document"
+                      >
+                        {loadingSample ? (
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                          </svg>
+                        )}
+                        <span>Try Sample Document</span>
+                      </button>
+                    </div>
+
+
+                    {/* FORMAT BADGES */}
+                    <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
+
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-rose-100 bg-rose-50/80 px-2.5 py-1 text-[11px] font-bold text-rose-600 shadow-2xs transition hover:scale-105">
+                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                        PDF
+                      </span>
+
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-blue-100 bg-blue-50/80 px-2.5 py-1 text-[11px] font-bold text-blue-600 shadow-2xs transition hover:scale-105">
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                        DOCX
+                      </span>
+
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-amber-100 bg-amber-50/80 px-2.5 py-1 text-[11px] font-bold text-amber-600 shadow-2xs transition hover:scale-105">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                        PPTX
+                      </span>
+
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50/80 px-2.5 py-1 text-[11px] font-bold text-emerald-600 shadow-2xs transition hover:scale-105">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        XLSX
+                      </span>
+
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-purple-100 bg-purple-50/80 px-2.5 py-1 text-[11px] font-bold text-purple-600 shadow-2xs transition hover:scale-105">
+                        <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+                        JPG • PNG • WEBP
+                      </span>
+
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100/80 px-2.5 py-1 text-[11px] font-bold text-slate-600 shadow-2xs transition hover:scale-105">
+                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                        MAX 25 MB
+                      </span>
+
+                    </div>
+
+                  </>
+
+                )}
+
+
+                {/* AFTER UPLOAD */}
+
+                {files.length > 0 && (
+
+                  <div className="mx-auto max-w-[620px]">
+
+                    <div className="relative mx-auto flex h-20 w-20 items-center justify-center">
+
+                      <div className="absolute inset-0 rounded-3xl bg-emerald-500/20 blur-xl" />
+
+                      <div className="relative flex h-18 w-18 items-center justify-center rounded-[24px] bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-xl shadow-emerald-500/30 ring-4 ring-emerald-50">
+
+                        <svg
+                          width="34"
+                          height="34"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+
+                          <path d="m4.5 12.5 5 5L19.5 7.5" />
+
+                        </svg>
+
+                      </div>
+
+                    </div>
+
+
+                    <p className="mt-5 text-[11px] font-bold uppercase tracking-[1.8px] text-emerald-600">
+                      File Loaded & Ready
+                    </p>
+
+
+                    <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.6px] text-slate-900">
+                      Ready for spell analysis
+                    </h2>
+
+
+                    {/* FILE ITEM LIST */}
+
+                    <div className="mt-6 space-y-2.5">
+
+                      {files.map((file) => {
+                        const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+                        const isDocx = file.name.toLowerCase().endsWith(".docx");
+                        const isPptx = file.name.toLowerCase().endsWith(".pptx");
+                        const isXlsx = file.name.toLowerCase().endsWith(".xlsx");
+                        const formatLabel = isPdf ? "PDF" : isDocx ? "DOCX" : isPptx ? "PPTX" : isXlsx ? "XLSX" : "IMAGE";
+                        const formatColor = isPdf
+                          ? "bg-rose-50 text-rose-600 border-rose-200/80"
+                          : isDocx
+                            ? "bg-blue-50 text-blue-600 border-blue-200/80"
+                            : isPptx
+                              ? "bg-amber-50 text-amber-600 border-amber-200/80"
+                              : isXlsx
+                                ? "bg-emerald-50 text-emerald-600 border-emerald-200/80"
+                                : "bg-purple-50 text-purple-600 border-purple-200/80";
+
+                        return (
+                          <div
+                            key={`${file.name}-${file.size}`}
+                            className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white/95 p-4 text-left shadow-xs backdrop-blur-md"
+                          >
+                            <div className="flex min-w-0 items-center gap-3.5">
+                              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-[11px] font-black tracking-tight ${formatColor}`}>
+                                {formatLabel}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-bold text-slate-800">
+                                  {file.name}
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB • Ready
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeFiles();
+                              }}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+                              title="Remove file"
+                            >
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                              </svg>
+                            </button>
+                          </div>
+                        );
+                      })}
+
+                    </div>
+
+
+                    {/* CHECK BUTTON */}
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        checkFile();
+                      }}
+                      disabled={checking}
+                      className="group mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 py-4 text-sm font-bold text-white shadow-xl shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-blue-600/40 disabled:cursor-not-allowed disabled:opacity-75 active:translate-y-0"
+                    >
+
+                      {checking ? (
+                        <>
+                          <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                          </svg>
+                          <span>{checkingMessage}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Check My Words</span>
+                          <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
+                        </>
+                      )}
+
+                    </button>
+
+
+                    {/* CHANGE FILE */}
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFiles();
+                      }}
+                      disabled={checking}
+                      className="mt-3.5 text-xs font-semibold text-slate-400 transition hover:text-blue-600 disabled:cursor-not-allowed"
+                    >
+                      Choose a different file
+                    </button>
+
+                  </div>
+
+                )}
+
+              </div>
+
+            </div>
+
+
+            {/* TRUST BADGES */}
+
+            <div className="mt-6 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+
+              <TrustItem
+                icon="signup"
+                title="No signup"
+                text="Start instantly"
+              />
+
+              <TrustItem
+                icon="free"
+                title="100% Free"
+                text="No payment required"
+              />
+
+              <TrustItem
+                icon="private"
+                title="Zero storage"
+                text="In-memory processing"
+              />
+
+              <TrustItem
+                icon="easy"
+                title="Precise OCR"
+                text="Visual layout aware"
+              />
+
+            </div>
+
+          </div>
+
+          <section className="mx-auto mt-20 max-w-5xl border-t border-slate-200/80 pt-16">
+
+            {/* SECTION HEADER */}
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/90 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-600 shadow-2xs backdrop-blur-xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+                HOW IT WORKS
+              </div>
+
+              <h2 className="mt-4 text-3xl font-extrabold tracking-[-1px] text-slate-900 sm:text-4xl lg:text-[42px] sm:leading-[1.15]">
+                Intelligent visual spell checking for images, documents & slides
+              </h2>
+
+              <p className="mt-4 text-[15px] leading-relaxed text-slate-600 sm:text-base">
+                Spellense combines high-precision OCR (Optical Character Recognition) with deep English dictionaries to pinpoint spelling mistakes buried inside visual designs, graphics, multi-page PDFs, and presentation decks before you publish or print.
+              </p>
+            </div>
+
+            {/* 3-STEP MODERN CARDS */}
+            <div className="mt-10 grid gap-5 md:grid-cols-3">
+
+              {/* STEP 1 */}
+              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
+                <div className="flex items-center justify-between">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-xs font-black text-blue-600 ring-1 ring-blue-100">
+                    01
+                  </span>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 group-hover:text-blue-600 transition">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" x2="12" y1="3" y2="15" />
+                    </svg>
+                  </div>
+                </div>
+
+                <h3 className="mt-5 text-lg font-bold text-slate-900">
+                  Upload any visual asset
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                  Drag and drop JPG, PNG, WebP graphics, multi-page PDFs, Word documents (DOCX), PowerPoint decks (PPTX), or Excel tables (XLSX). No sign-up or installation required.
+                </p>
+              </div>
+
+              {/* STEP 2 */}
+              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
+                <div className="flex items-center justify-between">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-xs font-black text-indigo-600 ring-1 ring-indigo-100">
+                    02
+                  </span>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 group-hover:text-indigo-600 transition">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.3-4.3" />
+                      <path d="M11 8v6" />
+                      <path d="M8 11h6" />
+                    </svg>
+                  </div>
+                </div>
+
+                <h3 className="mt-5 text-lg font-bold text-slate-900">
+                  Precision OCR extraction
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                  Advanced Optical Character Recognition extracts visible English text tokens while mapping coordinates to original pages and slides, keeping layout context intact.
+                </p>
+              </div>
+
+              {/* STEP 3 */}
+              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
+                <div className="flex items-center justify-between">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-xs font-black text-emerald-600 ring-1 ring-emerald-100">
+                    03
+                  </span>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 group-hover:text-emerald-600 transition">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m9 12 2 2 4-4" />
+                      <circle cx="12" cy="12" r="10" />
+                    </svg>
+                  </div>
+                </div>
+
+                <h3 className="mt-5 text-lg font-bold text-slate-900">
+                  Smart visual inspection
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                  Review highlighted spelling errors with instant replacement suggestions, navigate multi-page previews, and whitelist custom brand names or technical jargon.
+                </p>
+              </div>
+
+            </div>
+
+            {/* USE CASES & SEO FEATURE HIGHLIGHTS */}
+            <div className="mt-14 grid gap-6 sm:grid-cols-2">
+
+              <div className="rounded-3xl border border-white/90 bg-gradient-to-br from-white via-white to-slate-50/70 p-7 shadow-xs backdrop-blur-md transition-all hover:border-blue-200">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="18" height="18" x="3" y="3" rx="2" />
+                    <path d="m9 9 6 6" />
+                    <path d="m15 9-6 6" />
+                  </svg>
+                </div>
+                <h3 className="mt-4 text-xl font-bold text-slate-900">
+                  Catch what standard spell-checkers miss
+                </h3>
+                <p className="mt-2.5 text-sm leading-relaxed text-slate-600">
+                  Traditional spellcheck tools only work inside plain text fields. Spellense bridges the gap by proofreading rasterized text in social media flyers, restaurant menus, infographic graphics, certificates, resumes, and PDF brochures.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Photoshop & Canva graphics</span>
+                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Scanned PDF contracts</span>
+                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Ad banners & flyers</span>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/90 bg-gradient-to-br from-white via-white to-slate-50/70 p-7 shadow-xs backdrop-blur-md transition-all hover:border-indigo-200">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                </div>
+                <h3 className="mt-4 text-xl font-bold text-slate-900">
+                  Human-in-the-loop accuracy & privacy
+                </h3>
+                <p className="mt-2.5 text-sm leading-relaxed text-slate-600">
+                  Automated checkers often flag acronyms, brand names, and artistic fonts. Spellense displays suspected typos directly on your document canvas, giving you full control to verify before final sign-off. Everything stays private in memory.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Zero file logging</span>
+                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Side-by-side preview</span>
+                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Exportable report</span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* ACTION LINKS */}
+            <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200/70 pt-8">
+              <div className="flex flex-wrap items-center gap-6 text-sm font-semibold">
+                <Link href="/faq" className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:underline">
+                  <span>Explore Frequently Asked Questions</span>
+                  <span>→</span>
+                </Link>
+                <Link href="/privacy" className="inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 hover:underline">
+                  <span>Read our Zero-Storage Privacy Policy</span>
+                </Link>
+              </div>
+
+              <button
+                type="button"
+                onClick={openFilePicker}
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-600 active:scale-95"
+              >
+                <span>Check your file now</span>
+                <span>↑</span>
+              </button>
+            </div>
+
+          </section>
+
+        </div>
+
+      </section>
+
+
+      {/* FOOTER */}
+
+      <footer
+        id="privacy"
+        className="border-t border-slate-200/70 bg-white px-5 py-8 sm:px-6"
+      >
+
+        <div className="mx-auto max-w-7xl">
+
+          <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+
+            <div>
+
+              <div className="text-lg font-bold">
+                Spell<span className="text-blue-600">
+                  ense
+                </span>
+              </div>
+
+              <p className="mt-1 text-xs text-gray-400">
+                Simple English spell checking for visual content.
+              </p>
+
+            </div>
+
+
+            <div className="flex flex-wrap justify-center gap-5 text-xs text-gray-400">
+
+              <Link
+                href="/privacy"
+                className="transition hover:text-gray-700"
+              >
+                Privacy
+              </Link>
+
+              <Link
+                href="/terms"
+                className="transition hover:text-gray-700"
+              >
+                Terms
+              </Link>
+
+              <Link
+                href="/faq"
+                className="transition hover:text-gray-700"
+              >
+                FAQ
+              </Link>
+
+              <a
+                href="mailto:hello@spellense.com"
+                className="transition hover:text-gray-700"
+              >
+                Contact
+              </a>
+
+            </div>
+
+          </div>
+
+
+          <div className="mt-6 border-t border-gray-100 pt-5 text-center text-[11px] text-gray-300">
+            © 2026 Spellense. All rights reserved.
+          </div>
+
+        </div>
+
+      </footer>
+
+    </main>
+  );
+}
+
+
+/* ==========================================
+   TRUST ITEM
+========================================== */
+
+function TrustItem({
+  icon,
+  title,
+  text,
+}: {
+  icon: "signup" | "free" | "private" | "easy";
+  title: string;
+  text: string;
+}) {
+
+  return (
+
+    <div className="group relative flex items-center gap-3.5 rounded-2xl border border-white/90 bg-white/75 p-3.5 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-200/80 hover:bg-white/95 hover:shadow-md hover:shadow-blue-500/5 sm:p-4">
+
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50/60 to-blue-100/60 text-blue-600 ring-1 ring-blue-100 transition-all duration-300 group-hover:scale-105 group-hover:text-indigo-600 sm:h-13 sm:w-13">
+        <TrustIcon icon={icon} />
+      </div>
+
+
+      <div className="min-w-0">
+
+        <p className="truncate text-xs font-bold text-slate-800 sm:text-[13px]">
+          {title}
+        </p>
+
+        <p className="mt-0.5 truncate text-[10px] font-medium text-slate-400 sm:text-[11px]">
+          {text}
+        </p>
+
+      </div>
+
+    </div>
+
+  );
+}
+
+function TrustIcon({
+  icon,
+}: {
+  icon: "signup" | "free" | "private" | "easy";
+}) {
+  const sharedProps = {
+    width: 24,
+    height: 24,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.9,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+
+  if (icon === "signup") {
+    return (
+      <svg {...sharedProps}>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="m16 11 2 2 4-4" />
+      </svg>
+    );
+  }
+
+  if (icon === "free") {
+    return (
+      <svg {...sharedProps}>
+        <rect x="3" y="8" width="18" height="13" rx="2" />
+        <path d="M12 8v13" />
+        <path d="M3 12h18" />
+        <path d="M12 8H7.5a2.5 2.5 0 1 1 2.5-2.5V8Z" />
+        <path d="M12 8h4.5A2.5 2.5 0 1 0 14 5.5V8Z" />
+      </svg>
+    );
+  }
+
+  if (icon === "private") {
+    return (
+      <svg {...sharedProps}>
+        <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
+        <path d="m8.5 12 2.2 2.2 4.8-4.8" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...sharedProps}>
+      <path d="m13 3-1.2 5.1L7 9.3l4.8 1.2L13 16l1.2-5.5L19 9.3l-4.8-1.2L13 3Z" />
+      <path d="m5 15-.6 2.4L2 18l2.4.6L5 21l.6-2.4L8 18l-2.4-.6L5 15Z" />
+    </svg>
+  );
+}
