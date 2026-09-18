@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://spellense.com";
-  const lastModified = new Date("2026-09-17");
+  const lastModified = new Date();
 
   return [
     {
