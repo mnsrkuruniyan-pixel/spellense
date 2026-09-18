@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  verification: {
+    google: "97113ee971683ad4",
+  },
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
