@@ -2110,6 +2110,27 @@ type PdfOcrWord = {
 
 type SpellWorker = Awaited<ReturnType<typeof createWorker>>;
 
+function getWorkerPath(): string {
+  const candidates = [
+    join(process.cwd(), "node_modules", "tesseract.js", "src", "worker-script", "node", "index.js"),
+    join(__dirname, "..", "..", "..", "node_modules", "tesseract.js", "src", "worker-script", "node", "index.js"),
+    join(__dirname, "..", "..", "node_modules", "tesseract.js", "src", "worker-script", "node", "index.js"),
+    join(__dirname, "..", "node_modules", "tesseract.js", "src", "worker-script", "node", "index.js"),
+  ];
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  try {
+    return require.resolve("tesseract.js/src/worker-script/node/index.js");
+  } catch {
+    return candidates[0];
+  }
+}
+
 async function getOcrWorker(): Promise<SpellWorker> {
   const tmpDir = tmpdir();
   const tmpTrainedData = join(tmpDir, "eng.traineddata");
@@ -2137,7 +2158,10 @@ async function getOcrWorker(): Promise<SpellWorker> {
     }
   }
 
+  const workerPath = getWorkerPath();
+
   return await createWorker("eng", 1, {
+    workerPath,
     cachePath: tmpDir,
     langPath: tmpDir,
     gzip: false,
