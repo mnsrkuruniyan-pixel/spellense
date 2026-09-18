@@ -2113,18 +2113,34 @@ type SpellWorker = Awaited<ReturnType<typeof createWorker>>;
 async function getOcrWorker(): Promise<SpellWorker> {
   const tmpDir = tmpdir();
   const tmpTrainedData = join(tmpDir, "eng.traineddata");
-  const localTrainedData = join(process.cwd(), "eng.traineddata");
 
-  if (!existsSync(tmpTrainedData) && existsSync(localTrainedData)) {
-    try {
-      copyFileSync(localTrainedData, tmpTrainedData);
-    } catch (e) {
-      console.warn("[Spellense] Could not copy traineddata to tmp", e);
+  const candidates = [
+    join(process.cwd(), "dictionaries", "eng.traineddata"),
+    join(process.cwd(), "eng.traineddata"),
+    join(__dirname, "..", "..", "..", "dictionaries", "eng.traineddata"),
+    join(__dirname, "..", "..", "..", "eng.traineddata"),
+    join(__dirname, "..", "..", "dictionaries", "eng.traineddata"),
+    join(__dirname, "..", "dictionaries", "eng.traineddata"),
+    join(__dirname, "eng.traineddata"),
+  ];
+
+  if (!existsSync(tmpTrainedData)) {
+    for (const candidate of candidates) {
+      if (existsSync(candidate)) {
+        try {
+          copyFileSync(candidate, tmpTrainedData);
+          break;
+        } catch (e) {
+          console.warn("[Spellense] Could not copy traineddata to tmp from", candidate, e);
+        }
+      }
     }
   }
 
   return await createWorker("eng", 1, {
     cachePath: tmpDir,
+    langPath: tmpDir,
+    gzip: false,
   });
 }
 

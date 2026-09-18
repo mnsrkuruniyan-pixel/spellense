@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
       "./dictionaries/**/*",
       "./eng.traineddata",
       "./node_modules/pdfjs-dist/**/*",
+      "./node_modules/tesseract.js/**/*",
+      "./node_modules/tesseract.js-core/**/*",
     ],
   },
   serverExternalPackages: [
