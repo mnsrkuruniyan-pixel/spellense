@@ -1122,9 +1122,6 @@ export default function Home() {
   const [copiedShare, setCopiedShare] =
     useState(false);
 
-  const [demoFixed, setDemoFixed] =
-    useState(false);
-
   useEffect(() => {
     const savedDialect = localStorage.getItem("spellense_dialect");
     if (savedDialect === "en-GB" || savedDialect === "en-US") {
@@ -2375,38 +2372,30 @@ export default function Home() {
           </Link>
 
 
-          <div className="hidden items-center gap-1 rounded-full border border-slate-100 bg-slate-50/70 p-1 text-[13px] font-semibold text-slate-500 md:flex">
+          <div className="flex items-center gap-1 rounded-full border border-slate-100 bg-slate-50/70 p-1 text-xs sm:text-[13px] font-semibold text-slate-500">
 
             <Link
               href="/"
-              className="rounded-full bg-white px-4 py-2 text-blue-600 shadow-sm"
+              className="rounded-full bg-white px-3 sm:px-4 py-1.5 sm:py-2 text-blue-600 shadow-sm"
             >
               Home
             </Link>
 
             <Link
               href="/privacy"
-              className="rounded-full px-4 py-2 transition hover:bg-white hover:text-blue-600"
+              className="rounded-full px-3 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
             >
               Privacy
             </Link>
 
             <Link
               href="/faq"
-              className="rounded-full px-4 py-2 transition hover:bg-white hover:text-blue-600"
+              className="rounded-full px-3 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
             >
               FAQ
             </Link>
 
           </div>
-
-
-          <button
-            onClick={openFilePicker}
-            className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-600/25 transition hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700"
-          >
-            Check a file
-          </button>
 
         </nav>
 
@@ -2970,51 +2959,6 @@ export default function Home() {
             </div>
             )}
 
-            {/* LIVE INTERACTIVE DEMO WIDGET */}
-            <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-blue-200/80 bg-white/90 p-4 shadow-xs backdrop-blur-md transition-all hover:shadow-md">
-              <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-                  <span className="text-xs font-bold text-slate-800">⚡ Live Spellense Demo</span>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Interactive Preview</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setDemoFixed(!demoFixed)}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-bold transition cursor-pointer ${
-                    demoFixed ? "bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100" : "bg-blue-600 text-white shadow-xs hover:bg-blue-700 active:scale-95"
-                  }`}
-                >
-                  {demoFixed ? "Fixed! (Reset)" : "Fix All Mistakes ✨"}
-                </button>
-              </div>
-              <div className="pt-3 text-sm leading-relaxed text-slate-700">
-                {demoFixed ? (
-                  <p className="animate-in fade-in duration-300">
-                    &ldquo;We <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">definitely</strong> want to <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">receive</strong> your feedback on the new <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">document</strong>.&rdquo;
-                  </p>
-                ) : (
-                  <p>
-                    &ldquo;We{" "}
-                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: definitely">
-                      definately
-                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ definitely</span>
-                    </span>{" "}
-                    want to{" "}
-                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: receive">
-                      recieve
-                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ receive</span>
-                    </span>{" "}
-                    your feedback on the new{" "}
-                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: document">
-                      documnet
-                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ document</span>
-                    </span>
-                    .&rdquo;
-                  </p>
-                )}
-              </div>
-            </div>
 
             {/* TRUST BADGES */}
 

@@ -44,12 +44,6 @@ export default function NotFound() {
             >
               Privacy
             </Link>
-            <Link
-              href="/"
-              className="ml-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition hover:shadow-lg hover:shadow-blue-500/30"
-            >
-              Check a File
-            </Link>
           </nav>
         </div>
       </header>

@@ -138,33 +138,26 @@ export default function FaqPage() {
           </Link>
 
           {/* Nav Links */}
-          <div className="hidden items-center gap-1 rounded-full border border-slate-100 bg-slate-50/70 p-1 text-[13px] font-semibold text-slate-500 md:flex">
+          <div className="flex items-center gap-1 rounded-full border border-slate-100 bg-slate-50/70 p-1 text-xs sm:text-[13px] font-semibold text-slate-500">
             <Link
               href="/"
-              className="rounded-full px-4 py-2 transition hover:bg-white hover:text-blue-600"
+              className="rounded-full px-3 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
             >
               Home
             </Link>
             <Link
               href="/privacy"
-              className="rounded-full px-4 py-2 transition hover:bg-white hover:text-blue-600"
+              className="rounded-full px-3 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
             >
               Privacy
             </Link>
             <Link
               href="/faq"
-              className="rounded-full bg-white px-4 py-2 text-blue-600 shadow-sm"
+              className="rounded-full bg-white px-3 sm:px-4 py-1.5 sm:py-2 text-blue-600 shadow-sm"
             >
               FAQ
             </Link>
           </div>
-
-          <Link
-            href="/"
-            className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-600/25 transition hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 active:translate-y-0"
-          >
-            Check a file
-          </Link>
         </nav>
       </header>
 
