@@ -1,5 +1,5 @@
 // Lightweight PWA Service Worker for Spellense
-const CACHE_NAME = "spellense-v2";
+const CACHE_NAME = "spellense-v3";
 const STATIC_ASSETS = [
   "/",
   "/manifest.webmanifest",

@@ -2438,7 +2438,7 @@ export default function Home() {
         <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
 
 
-        <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-5 sm:px-6 sm:pt-7 lg:px-10 lg:pt-8">
+        <div className="relative mx-auto max-w-7xl px-5 pb-12 pt-4 sm:px-6 sm:pt-6 lg:px-10 lg:pt-7">
 
           {/* HERO */}
 
@@ -2455,27 +2455,21 @@ export default function Home() {
               </span>
             </div>
 
-            <h1 className="mt-5 text-[44px] font-extrabold leading-[1.04] tracking-[-2.5px] text-slate-900 sm:text-[62px] lg:text-[76px]">
-
-              Great design deserves
-
-              <br />
-
+            <h1 className="mt-3 text-[34px] font-extrabold leading-[1.08] tracking-[-1.8px] text-slate-900 sm:text-[48px] lg:text-[56px]">
+              Great design deserves{" "}
               <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
                 flawless spelling.
               </span>
-
             </h1>
 
-
-            <p className="mx-auto mt-6 max-w-[640px] text-[15px] leading-relaxed text-slate-600 sm:text-[17px]">
+            <p className="mx-auto mt-2.5 max-w-[620px] text-[14px] leading-relaxed text-slate-600 sm:text-[15px]">
               AI &amp; OCR-powered spell checking for images, documents, slides, and sheets.
               <br className="hidden sm:inline" />
               Catch hidden English typos across your visual designs before going live.
             </p>
 
             {/* QUICK HIGHLIGHT PILLS */}
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 text-xs font-medium text-slate-500">
+            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-500">
               <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
                 <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                 <span>100% In-Memory Safe</span>
@@ -2490,70 +2484,24 @@ export default function Home() {
               </div>
             </div>
 
-            {/* HERO LIVE INTERACTIVE DEMO WIDGET */}
-            <div className="mx-auto mt-7 max-w-xl rounded-2xl border border-blue-200/80 bg-white/90 p-4 shadow-sm backdrop-blur-md transition-all hover:shadow-md">
-              <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-                  <span className="text-xs font-bold text-slate-800">⚡ Live Spellense Demo</span>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Interactive Preview</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setDemoFixed(!demoFixed)}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-bold transition cursor-pointer ${
-                    demoFixed ? "bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100" : "bg-blue-600 text-white shadow-xs hover:bg-blue-700 active:scale-95"
-                  }`}
-                >
-                  {demoFixed ? "Fixed! (Reset)" : "Fix All Mistakes ✨"}
-                </button>
-              </div>
-              <div className="pt-3 text-sm leading-relaxed text-slate-700">
-                {demoFixed ? (
-                  <p className="animate-in fade-in duration-300">
-                    &ldquo;We <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">definitely</strong> want to <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">receive</strong> your feedback on the new <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">document</strong>.&rdquo;
-                  </p>
-                ) : (
-                  <p>
-                    &ldquo;We{" "}
-                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: definitely">
-                      definately
-                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ definitely</span>
-                    </span>{" "}
-                    want to{" "}
-                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: receive">
-                      recieve
-                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ receive</span>
-                    </span>{" "}
-                    your feedback on the new{" "}
-                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: document">
-                      documnet
-                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ document</span>
-                    </span>
-                    .&rdquo;
-                  </p>
-                )}
-              </div>
-            </div>
-
           </div>
 
 
           {/* UPLOAD & TEXT CHECK SECTION */}
 
-          <div className="mx-auto mt-7 max-w-[920px]">
+          <div className="mx-auto mt-5 max-w-[920px]">
 
             {/* MODE & DIALECT SELECTOR BAR */}
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2.5 px-1">
               {/* INPUT MODE TABS */}
-              <div className="flex items-center rounded-2xl bg-slate-100/90 p-1 border border-slate-200/80 shadow-2xs">
+              <div className="inline-flex items-center rounded-2xl bg-white/85 p-1 border border-slate-200/80 shadow-xs backdrop-blur-md">
                 <button
                   type="button"
                   onClick={() => setInputMode("upload")}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                     inputMode === "upload"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/60"
                   }`}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -2566,10 +2514,10 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setInputMode("text")}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                     inputMode === "text"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/60"
                   }`}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -2577,36 +2525,40 @@ export default function Home() {
                     <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
                   </svg>
                   <span>Paste or Type Text</span>
-                  <span className="rounded-full bg-blue-100 px-1.5 py-0.2 text-[9px] font-black text-blue-600">NEW</span>
+                  <span className={`rounded-full px-1.5 py-0.2 text-[9px] font-black ${
+                    inputMode === "text" ? "bg-white/20 text-white" : "bg-blue-100 text-blue-600"
+                  }`}>NEW</span>
                 </button>
               </div>
 
               {/* DIALECT SELECTOR TOGGLE */}
-              <div className="flex items-center gap-1.5 rounded-2xl bg-white/90 p-1 border border-slate-200/80 shadow-2xs backdrop-blur-xs">
-                <span className="pl-2.5 pr-1 text-[11px] font-semibold text-slate-500">Dictionary:</span>
+              <div className="inline-flex items-center gap-1 rounded-2xl bg-white/85 p-1 border border-slate-200/80 shadow-xs backdrop-blur-md">
+                <span className="hidden sm:inline-block pl-2.5 pr-1 text-[11px] font-semibold text-slate-400">Dictionary:</span>
                 <button
                   type="button"
                   onClick={() => handleDialectChange("en-US")}
-                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                     dialect === "en-US"
-                      ? "bg-blue-600 text-white shadow-xs"
+                      ? "bg-slate-900 text-white shadow-xs"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
                   }`}
                   title="Check spelling using American English rules (e.g., color, organize)"
                 >
-                  <span>🇺🇸 US English</span>
+                  <span>🇺🇸 US</span>
+                  <span className="hidden sm:inline">English</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDialectChange("en-GB")}
-                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                     dialect === "en-GB"
-                      ? "bg-blue-600 text-white shadow-xs"
+                      ? "bg-slate-900 text-white shadow-xs"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
                   }`}
                   title="Check spelling using British English rules (e.g., colour, organise)"
                 >
-                  <span>🇬🇧 UK English</span>
+                  <span>🇬🇧 UK</span>
+                  <span className="hidden sm:inline">English</span>
                 </button>
               </div>
             </div>
@@ -2747,79 +2699,70 @@ export default function Home() {
                 }
 
               }}
-              className={`group relative rounded-[32px] p-[2px] transition-all duration-300 ${
+              className={`group relative rounded-[32px] p-[2px] transition-all duration-300 cursor-pointer ${
                 dragging
                   ? "bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 shadow-[0_0_50px_rgba(59,130,246,0.35)] scale-[1.01]"
-                  : "bg-gradient-to-b from-white via-slate-100/70 to-slate-200/50 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.05)] hover:from-blue-200/50 hover:via-indigo-100/40 hover:to-slate-200/60 hover:shadow-[0_25px_70px_-15px_rgba(59,130,246,0.16)]"
+                  : "bg-gradient-to-b from-blue-200/60 via-indigo-100/30 to-slate-200/50 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.08),0_0_25px_rgba(59,130,246,0.06)] hover:from-blue-400/60 hover:via-indigo-300/40 hover:to-slate-300/60 hover:shadow-[0_25px_70px_-15px_rgba(59,130,246,0.18)]"
               }`}
             >
 
-              <div className={`relative rounded-[30px] border border-white/80 backdrop-blur-xl px-6 py-12 text-center transition-all duration-300 sm:px-10 sm:py-15 ${
-                dragging
-                  ? "bg-blue-50/90 border-blue-300"
-                  : "bg-white/85 hover:bg-white/95"
+              <div className={`relative rounded-[30px] border border-white/90 backdrop-blur-2xl p-3.5 sm:p-6 text-center transition-all duration-300 ${
+                dragging ? "bg-blue-50/95 border-blue-400" : "bg-white/90 hover:bg-white/98"
               }`}>
-
 
                 {/* BEFORE UPLOAD */}
 
                 {files.length === 0 && (
 
-                  <>
+                  <div className={`relative rounded-[24px] border-2 border-dashed transition-all duration-300 px-5 py-7 sm:px-8 sm:py-9 ${
+                    dragging
+                      ? "border-blue-500 bg-blue-100/40"
+                      : "border-blue-200/80 bg-gradient-to-b from-blue-50/35 via-white/60 to-slate-50/30 group-hover:border-blue-400/90 group-hover:bg-blue-50/25"
+                  }`}>
 
-                    <div className="relative mx-auto flex h-20 w-20 items-center justify-center">
-
-                      <div className="absolute inset-0 rounded-3xl bg-blue-500/20 blur-xl transition-all duration-300 group-hover:scale-125 group-hover:bg-blue-500/30" />
-
-                      <div className="relative flex h-18 w-18 items-center justify-center rounded-[24px] bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-xl shadow-blue-500/30 ring-4 ring-blue-50 transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-105 group-hover:shadow-blue-500/40">
-
+                    {/* FLOATING 3D ICON */}
+                    <div className="relative mx-auto flex h-18 w-18 items-center justify-center">
+                      <div className="absolute inset-0 rounded-3xl bg-blue-500/25 blur-xl transition-all duration-500 group-hover:scale-130 group-hover:bg-blue-500/35" />
+                      <div className="relative flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white shadow-xl shadow-blue-600/35 ring-4 ring-blue-50/90 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:scale-105 group-hover:shadow-blue-600/45">
                         <svg
                           width="30"
                           height="30"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
-                          strokeWidth="2"
+                          strokeWidth="2.2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         >
-
                           <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-
                           <path d="M12 12v9" />
-
                           <path d="m8 16 4-4 4 4" />
-
                         </svg>
-
                       </div>
-
                     </div>
 
-
-                    <h2 className="mt-6 text-2xl font-extrabold tracking-[-0.6px] text-slate-900 sm:text-3xl">
+                    <h2 className="mt-4 text-xl sm:text-2xl font-black tracking-[-0.5px] text-slate-900 group-hover:text-blue-900 transition-colors">
                       {dragging ? "Release your file to inspect" : "Drop your image, PDF, or document here"}
                     </h2>
 
-
-                    <p className="mt-2 text-sm text-slate-500">
+                    <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
                       Drag and drop anywhere inside, or choose a file from your computer • Max 25 MB
                     </p>
 
-
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                    {/* BUTTONS */}
+                    <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           openFilePicker();
                         }}
-                        className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35 active:translate-y-0 cursor-pointer"
+                        className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35 active:translate-y-0 active:scale-98 cursor-pointer"
                       >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                           <polyline points="17 8 12 3 7 8" />
-                          <line x1="12" x2="12" y1="3" y2="15" />
+                          <line x1="12" y1="3" x2="12" y2="15" />
                         </svg>
                         <span>Choose a file</span>
                       </button>
@@ -2831,7 +2774,7 @@ export default function Home() {
                           loadSampleFile();
                         }}
                         disabled={loadingSample}
-                        className="inline-flex items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white/90 px-6 py-3.5 text-sm font-bold text-slate-700 shadow-xs backdrop-blur-xs transition hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 disabled:opacity-60 cursor-pointer"
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200/90 bg-white/95 px-5 py-3 text-sm font-bold text-slate-700 shadow-2xs backdrop-blur-xs transition hover:border-blue-300 hover:bg-blue-50/60 hover:text-blue-600 disabled:opacity-60 cursor-pointer"
                         title="Test immediately with a sample document"
                       >
                         {loadingSample ? (
@@ -2848,43 +2791,35 @@ export default function Home() {
                       </button>
                     </div>
 
-
                     {/* FORMAT BADGES */}
-                    <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
-
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-rose-100 bg-rose-50/80 px-2.5 py-1 text-[11px] font-bold text-rose-600 shadow-2xs transition hover:scale-105">
+                    <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:border-rose-200 hover:text-rose-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
                         PDF
                       </span>
-
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-blue-100 bg-blue-50/80 px-2.5 py-1 text-[11px] font-bold text-blue-600 shadow-2xs transition hover:scale-105">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:border-blue-200 hover:text-blue-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                         DOCX
                       </span>
-
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-amber-100 bg-amber-50/80 px-2.5 py-1 text-[11px] font-bold text-amber-600 shadow-2xs transition hover:scale-105">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:border-amber-200 hover:text-amber-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                         PPTX
                       </span>
-
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50/80 px-2.5 py-1 text-[11px] font-bold text-emerald-600 shadow-2xs transition hover:scale-105">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:border-emerald-200 hover:text-emerald-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         XLSX
                       </span>
-
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-purple-100 bg-purple-50/80 px-2.5 py-1 text-[11px] font-bold text-purple-600 shadow-2xs transition hover:scale-105">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:border-purple-200 hover:text-purple-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
                         JPG • PNG • WEBP
                       </span>
-
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100/80 px-2.5 py-1 text-[11px] font-bold text-slate-600 shadow-2xs transition hover:scale-105">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-100/90 px-3 py-1 text-[11px] font-bold text-slate-500 shadow-2xs">
                         <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
                         MAX 25 MB
                       </span>
-
                     </div>
 
-                  </>
+                  </div>
 
                 )}
 
@@ -3042,6 +2977,51 @@ export default function Home() {
             </div>
             )}
 
+            {/* LIVE INTERACTIVE DEMO WIDGET */}
+            <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-blue-200/80 bg-white/90 p-4 shadow-xs backdrop-blur-md transition-all hover:shadow-md">
+              <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+                  <span className="text-xs font-bold text-slate-800">⚡ Live Spellense Demo</span>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Interactive Preview</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDemoFixed(!demoFixed)}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                    demoFixed ? "bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100" : "bg-blue-600 text-white shadow-xs hover:bg-blue-700 active:scale-95"
+                  }`}
+                >
+                  {demoFixed ? "Fixed! (Reset)" : "Fix All Mistakes ✨"}
+                </button>
+              </div>
+              <div className="pt-3 text-sm leading-relaxed text-slate-700">
+                {demoFixed ? (
+                  <p className="animate-in fade-in duration-300">
+                    &ldquo;We <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">definitely</strong> want to <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">receive</strong> your feedback on the new <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">document</strong>.&rdquo;
+                  </p>
+                ) : (
+                  <p>
+                    &ldquo;We{" "}
+                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: definitely">
+                      definately
+                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ definitely</span>
+                    </span>{" "}
+                    want to{" "}
+                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: receive">
+                      recieve
+                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ receive</span>
+                    </span>{" "}
+                    your feedback on the new{" "}
+                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: document">
+                      documnet
+                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ document</span>
+                    </span>
+                    .&rdquo;
+                  </p>
+                )}
+              </div>
+            </div>
 
             {/* TRUST BADGES */}
 
