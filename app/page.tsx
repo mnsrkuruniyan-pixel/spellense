@@ -110,6 +110,8 @@ function PdfMarkedPreview({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const layerRef = useRef<HTMLDivElement | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
+  const pdfDocRef = useRef<unknown>(null);
+  const loadingTaskRef = useRef<unknown>(null);
   const panStartRef = useRef<{
     x: number;
     y: number;
@@ -117,47 +119,93 @@ function PdfMarkedPreview({
     top: number;
   } | null>(null);
 
+  // Load PDF document once per file
   useEffect(() => {
     let cancelled = false;
 
     void (async () => {
-      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-      pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+      try {
+        const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+        pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
-      const pdf = await pdfjs.getDocument({
-        data: new Uint8Array(await file.arrayBuffer()),
-      }).promise;
+        if (loadingTaskRef.current) {
+          try {
+            await (loadingTaskRef.current as { destroy: () => Promise<void> }).destroy();
+          } catch {}
+        }
 
-      if (!cancelled) {
-        setPageCount(pdf.numPages);
+        const arrayBuffer = await file.arrayBuffer();
+        if (cancelled) return;
+
+        const loadingTask = pdfjs.getDocument({
+          data: new Uint8Array(arrayBuffer),
+        });
+        loadingTaskRef.current = loadingTask;
+        const pdf = await loadingTask.promise;
+
+        if (!cancelled) {
+          pdfDocRef.current = pdf;
+          setPageCount(pdf.numPages);
+        }
+      } catch (err) {
+        console.error("Failed to load PDF preview:", err);
       }
     })();
 
     return () => {
       cancelled = true;
+      if (loadingTaskRef.current) {
+        try {
+          (loadingTaskRef.current as { destroy: () => Promise<void> }).destroy().catch(() => {});
+        } catch {}
+      }
+      pdfDocRef.current = null;
     };
-  }, [errors, file]);
+  }, [file]);
 
+  // Render current page
   useEffect(() => {
-    if (!pageCount) return;
+    const pdf = pdfDocRef.current as {
+      getPage: (num: number) => Promise<{
+        getViewport: (options: { scale: number }) => {
+          width: number;
+          height: number;
+          transform: number[];
+        };
+        render: (options: {
+          canvas: HTMLCanvasElement;
+          canvasContext: CanvasRenderingContext2D;
+          viewport: unknown;
+        }) => { promise: Promise<void> };
+        getTextContent: () => Promise<{
+          items: Array<{
+            str?: string;
+            transform: number[];
+            width: number;
+          }>;
+        }>;
+        cleanup: () => void;
+      }>;
+    } | null;
+
+    if (!pdf || !pageCount) return;
     let cancelled = false;
 
     void (async () => {
-      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-      pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-      const pdf = await pdfjs.getDocument({
-        data: new Uint8Array(await file.arrayBuffer()),
-      }).promise;
-
+      try {
+        const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
         if (cancelled || !canvasRef.current || !layerRef.current) return;
 
         const page = await pdf.getPage(selectedPage);
+        if (cancelled) return;
+
         const baseViewport = page.getViewport({ scale: 1 });
         const availableWidth = Math.max(
           (previewRef.current?.clientWidth ?? 680) - 32,
           280
         );
-        const availableHeight = 588;
+        const containerH = previewRef.current?.clientHeight ?? 480;
+        const availableHeight = Math.max(containerH - 16, 280);
         const fitScale = Math.min(
           availableWidth / baseViewport.width,
           availableHeight / baseViewport.height
@@ -166,6 +214,11 @@ function PdfMarkedPreview({
         const viewport = page.getViewport({ scale });
         const canvas = canvasRef.current;
         const layer = layerRef.current;
+
+        if (!canvas || !layer) {
+          page.cleanup();
+          return;
+        }
 
         canvas.width = viewport.width;
         canvas.height = viewport.height;
@@ -179,6 +232,11 @@ function PdfMarkedPreview({
           canvasContext: canvas.getContext("2d")!,
           viewport,
         }).promise;
+
+        if (cancelled) {
+          page.cleanup();
+          return;
+        }
 
         const content = await page.getTextContent();
         layer.replaceChildren();
@@ -241,22 +299,29 @@ function PdfMarkedPreview({
           }
 
           layer.appendChild(span);
-      }
+        }
 
-      if (!markErrors) {
-        for (const mark of pdfMarks.filter(
-          (item) => item.page === selectedPage
-        )) {
-          const outline = document.createElement("span");
-          outline.style.position = "absolute";
-          outline.style.left = `${mark.left * viewport.width}px`;
-          outline.style.top = `${mark.top * viewport.height}px`;
-          outline.style.width = `${mark.width * viewport.width}px`;
-          outline.style.height = `${mark.height * viewport.height}px`;
-          outline.className =
-            "rounded border-2 border-red-500 bg-transparent";
-          outline.title = "Possible spelling mistake";
-          layer.appendChild(outline);
+        if (!markErrors) {
+          for (const mark of pdfMarks.filter(
+            (item) => item.page === selectedPage
+          )) {
+            const outline = document.createElement("span");
+            outline.style.position = "absolute";
+            outline.style.left = `${mark.left * viewport.width}px`;
+            outline.style.top = `${mark.top * viewport.height}px`;
+            outline.style.width = `${mark.width * viewport.width}px`;
+            outline.style.height = `${mark.height * viewport.height}px`;
+            outline.className =
+              "rounded border-2 border-red-500 bg-transparent";
+            outline.title = "Possible spelling mistake";
+            layer.appendChild(outline);
+          }
+        }
+
+        page.cleanup();
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Error rendering PDF page:", err);
         }
       }
     })();
@@ -264,11 +329,11 @@ function PdfMarkedPreview({
     return () => {
       cancelled = true;
     };
-  }, [errors, file, markErrors, pageCount, pdfMarks, selectedPage, zoom]);
+  }, [errors, markErrors, pageCount, pdfMarks, selectedPage, zoom]);
 
   if (!pageCount) {
     return (
-      <div className="flex h-[620px] items-center justify-center text-sm text-slate-400">
+      <div className="flex h-[360px] sm:h-[480px] lg:h-[588px] items-center justify-center text-sm text-slate-400">
         Loading PDF preview...
       </div>
     );
@@ -278,8 +343,8 @@ function PdfMarkedPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={previewRef}
-        className={`flex h-[588px] items-center justify-center overflow-auto ${
-          zoom > 1 ? (panning ? "cursor-grabbing" : "cursor-grab") : ""
+        className={`flex h-[360px] sm:h-[480px] lg:h-[588px] items-center justify-center overflow-auto ${
+          zoom > 1 ? (panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none") : "touch-pan-y"
         }`}
         onPointerDown={(event) => {
           if (zoom <= 1 || !previewRef.current) return;
@@ -478,8 +543,8 @@ function DocxPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={previewRef}
-        className={`relative flex h-[588px] items-start justify-start overflow-auto touch-none ${
-          zoom > 1 ? (panning ? "cursor-grabbing" : "cursor-grab") : ""
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto ${
+          zoom > 1 ? (panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none") : "touch-pan-y"
         }`}
         onPointerDown={(event) => {
           if (zoom <= 1 || !previewRef.current) return;
@@ -685,8 +750,8 @@ function PptxPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[588px] items-start justify-start overflow-auto touch-none ${
-          zoom > 1 ? (panning ? "cursor-grabbing" : "cursor-grab") : ""
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto ${
+          zoom > 1 ? (panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none") : "touch-pan-y"
         }`}
         onPointerDown={(event) => {
           if (zoom <= 1 || !viewportRef.current) return;
@@ -784,8 +849,8 @@ function XlsxPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[588px] items-start justify-start overflow-auto touch-none ${
-          zoom > 1 ? (panning ? "cursor-grabbing" : "cursor-grab") : ""
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto ${
+          zoom > 1 ? (panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none") : "touch-pan-y"
         }`}
         onPointerDown={(event) => {
           if (zoom <= 1 || !viewportRef.current) return;
@@ -904,8 +969,8 @@ function ImagePreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[588px] items-start justify-start overflow-auto touch-none ${
-          zoom > 1 ? (panning ? "cursor-grabbing" : "cursor-grab") : ""
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto ${
+          zoom > 1 ? (panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none") : "touch-pan-y"
         }`}
         onPointerDown={(event) => {
           if (zoom <= 1 || !viewportRef.current) return;
@@ -940,7 +1005,7 @@ function ImagePreview({
           <img
             src={imageUrl}
             alt="Uploaded file preview"
-            className="block max-h-[588px] max-w-none object-contain"
+            className="block max-h-[360px] sm:max-h-[480px] lg:max-h-[588px] max-w-none object-contain"
             style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}
           />
           {marks
@@ -1214,7 +1279,6 @@ export default function Home() {
   // ==========================================
 
   const checkFile = async () => {
-
     if (files.length === 0) {
       return;
     }
@@ -1223,32 +1287,99 @@ export default function Home() {
     setCheckingMessage(
       files[0]?.name.toLowerCase().endsWith(".pdf")
         ? "Reading your PDF..."
-        : "Reading your image..."
+        : "Reading your file..."
     );
 
     setResult(null);
 
     try {
-
       const file = files[0];
-
-      if (file.name.toLowerCase().endsWith(".pdf")) {
-        setCheckingMessage("Running OCR and checking spelling...");
-      } else {
-        setCheckingMessage("Checking spelling...");
-      }
-
+      const isPdf = file.name.toLowerCase().endsWith(".pdf");
       const formData = new FormData();
 
-      formData.append("file", file);
+      if (isPdf) {
+        setCheckingMessage("Extracting text from PDF...");
+        try {
+          const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+          pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+          const arrayBuffer = await file.arrayBuffer();
+          const loadingTask = pdfjs.getDocument({
+            data: new Uint8Array(arrayBuffer),
+          });
+          const pdf = await loadingTask.promise;
 
+          const textParts: string[] = [];
+          const pageStarts: number[] = [];
+          let currentOffset = 0;
+
+          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            pageStarts.push(currentOffset);
+            setCheckingMessage(`Scanning page ${pageNum} of ${pdf.numPages}...`);
+            const page = await pdf.getPage(pageNum);
+            const content = await page.getTextContent();
+            const pageText = content.items
+              .map((item) => ("str" in item ? item.str : ""))
+              .join(" ")
+              .replace(/\r/g, "")
+              .replace(/[ \t]+/g, " ")
+              .trim();
+
+            page.cleanup();
+
+            textParts.push(pageText);
+            // Joined with "\n\n"
+            currentOffset += pageText.length + 2;
+          }
+
+          await pdf.cleanup();
+          await loadingTask.destroy();
+
+          const extractedText = textParts.join("\n\n").trim();
+          if (extractedText.length > 0) {
+            setCheckingMessage("Checking spelling...");
+            formData.append("text", extractedText);
+            formData.append("pageStarts", JSON.stringify(pageStarts));
+            formData.append("fileName", file.name);
+          } else {
+            // Scanned PDF (images only)
+            if (file.size <= 4.2 * 1024 * 1024) {
+              setCheckingMessage("Running OCR on scanned PDF...");
+              formData.append("file", file);
+            } else {
+              setResult({
+                success: false,
+                error:
+                  "This scanned PDF contains only images without selectable text and exceeds the 4.5MB limit for OCR scanning. Please compress the file or use a digital PDF.",
+              });
+              return;
+            }
+          }
+        } catch (pdfErr) {
+          console.warn(
+            "Client-side PDF extraction failed, falling back to file upload:",
+            pdfErr
+          );
+          if (file.size <= 4.2 * 1024 * 1024) {
+            formData.append("file", file);
+          } else {
+            setResult({
+              success: false,
+              error:
+                "Unable to process this large PDF on the device. Please try a file under 4.5MB.",
+            });
+            return;
+          }
+        }
+      } else {
+        setCheckingMessage("Checking spelling...");
+        formData.append("file", file);
+      }
 
       const response =
         await fetch("/api/check", {
           method: "POST",
           body: formData,
         });
-
 
       let data: CheckResult | null = null;
       try {
@@ -1266,7 +1397,6 @@ export default function Home() {
         });
         return;
       }
-
 
       setResult(data);
 
@@ -1636,7 +1766,7 @@ export default function Home() {
                       />
                     )
                   ) : (
-                    <div className="flex h-[588px] items-center justify-center text-sm text-slate-400">
+                    <div className="flex h-[360px] sm:h-[480px] lg:h-[588px] items-center justify-center text-sm text-slate-400">
                       Preview unavailable
                     </div>
                   )}

@@ -1739,6 +1739,9 @@ function checkWithOurEngine(
   const errors: SpellError[] =
     [];
 
+  // Memoize corrections for unique words to process 50+ pages (20,000+ words) in milliseconds
+  const correctionCache = new Map<string, string | null>();
+
   for (
     const item of words
   ) {
@@ -1782,11 +1785,13 @@ function checkWithOurEngine(
       continue;
     }
 
-    const correction =
-      getBestCorrection(
-        original,
-        cleanWord
-      );
+    const cacheKey = `${original}:${cleanWord}`;
+    let correction: string | null | undefined = correctionCache.get(cacheKey);
+
+    if (correction === undefined) {
+      correction = getBestCorrection(original, cleanWord);
+      correctionCache.set(cacheKey, correction);
+    }
 
     if (!correction) {
       continue;
@@ -2174,9 +2179,12 @@ async function extractPdfText(
   const { getDocument } = await import(
     "pdfjs-dist/legacy/build/pdf.mjs"
   );
-  const pdf = await getDocument({
+  const loadingTask = getDocument({
     data: new Uint8Array(buffer),
-  }).promise;
+    useSystemFonts: true,
+    disableFontFace: true,
+  });
+  const pdf = await loadingTask.promise;
   const pages: string[] = [];
   const pageStarts: number[] = [];
   let textLength = 0;
@@ -2192,7 +2200,13 @@ async function extractPdfText(
     pageStarts.push(textLength);
     pages.push(pageText);
     textLength += pageText.length + 2;
+
+    // Free memory for this page immediately
+    page.cleanup();
   }
+
+  await pdf.cleanup();
+  await loadingTask.destroy();
 
   return {
     text: pages.join("\n\n"),
@@ -2208,15 +2222,21 @@ async function extractPdfOcrText(
   const { getDocument } = await import(
     "pdfjs-dist/legacy/build/pdf.mjs"
   );
-  const pdf = await getDocument({
+  const loadingTask = getDocument({
     data: new Uint8Array(buffer),
-  }).promise;
+    useSystemFonts: true,
+    disableFontFace: true,
+  });
+  const pdf = await loadingTask.promise;
   const pages: string[] = [];
   const pageStarts: number[] = [];
   const ocrWords: PdfOcrWord[] = [];
   let textLength = 0;
 
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+  // Cap scanned PDF OCR to 15 pages to stay safely within serverless timeout
+  const maxOcrPages = Math.min(pdf.numPages, 15);
+
+  for (let pageNumber = 1; pageNumber <= maxOcrPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
     const viewport = page.getViewport({ scale: 2 });
     const canvas = createCanvas(
@@ -2266,7 +2286,12 @@ async function extractPdfOcrText(
     pageStarts.push(textLength);
     pages.push(pageText);
     textLength += pageText.length + 2;
+
+    page.cleanup();
   }
+
+  await pdf.cleanup();
+  await loadingTask.destroy();
 
   return {
     text: pages.join("\n\n"),
@@ -2373,99 +2398,9 @@ export async function POST(
     const formData =
       await request.formData();
 
-    const file =
-      formData.get("file");
-
-    if (
-      !(file instanceof File)
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "No file was uploaded.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const fileName =
-      file.name.toLowerCase();
-
-    /* -----------------------------------------------------
-       FILE SIZE LIMIT (25 MB)
-    ----------------------------------------------------- */
-
-    const MAX_FILE_SIZE = 25 * 1024 * 1024;
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "File size exceeds the 25 MB limit. Please upload a smaller file.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    /* -----------------------------------------------------
-       FILE TYPE
-    ----------------------------------------------------- */
-
-    const isImage =
-      file.type.startsWith(
-        "image/"
-      );
-
-    const isPdf =
-      file.type ===
-        "application/pdf" ||
-      fileName.endsWith(".pdf");
-
-    const isDocx =
-      file.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-      fileName.endsWith(".docx");
-
-    const isPptx =
-      file.type ===
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
-      fileName.endsWith(".pptx");
-
-    const isXlsx =
-      file.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-      fileName.endsWith(".xlsx");
-
-    if (!isImage && !isPdf && !isDocx && !isPptx && !isXlsx) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Please upload a DOCX, PPTX, XLSX, PDF or image file such as JPG, PNG or WEBP.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    /* -----------------------------------------------------
-       READ IMAGE INTO MEMORY
-    ----------------------------------------------------- */
-
-    const buffer =
-      Buffer.from(
-        await file.arrayBuffer()
-      );
-
-    /* -----------------------------------------------------
-       TEXT EXTRACTION
-    ----------------------------------------------------- */
+    const preExtractedText = formData.get("text") as string | null;
+    const preExtractedPageStartsRaw = formData.get("pageStarts") as string | null;
+    const preExtractedFileName = formData.get("fileName") as string | null;
 
     let text = "";
     let blocks: OcrBlock = [];
@@ -2473,52 +2408,161 @@ export async function POST(
     let pdfHasTextLayer = false;
     let pdfOcrWords: PdfOcrWord[] = [];
     let imageMarks: ImageMark[] = [];
+    let fileName = "";
+    let isPdf = false;
+    let isImage = false;
 
-    if (isDocx) {
-      text = await extractDocxText(buffer);
-    } else if (isPptx) {
-      text = await extractPptxText(buffer);
-    } else if (isXlsx) {
-      text = extractXlsxText(buffer);
-    } else if (isPdf) {
-      let pdfText = await extractPdfText(buffer);
+    if (typeof preExtractedText === "string" && preExtractedText.trim()) {
+      text = preExtractedText;
+      fileName = (preExtractedFileName || "document.pdf").toLowerCase();
+      isPdf = fileName.endsWith(".pdf");
+      pdfHasTextLayer = true;
+      try {
+        pdfPageStarts = preExtractedPageStartsRaw ? JSON.parse(preExtractedPageStartsRaw) : [];
+      } catch {
+        pdfPageStarts = [];
+      }
+    } else {
+      const file =
+        formData.get("file");
 
-      if (!pdfText.text.trim()) {
-        worker = await getOcrWorker();
-        pdfText = await extractPdfOcrText(buffer, worker);
+      if (
+        !(file instanceof File)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "No file was uploaded.",
+          },
+          {
+            status: 400,
+          }
+        );
       }
 
-      text = pdfText.text;
-      pdfPageStarts = pdfText.pageStarts;
-      pdfHasTextLayer = pdfText.hasTextLayer;
-      pdfOcrWords = pdfText.ocrWords ?? [];
-    } else {
-      worker = await getOcrWorker();
+      fileName =
+        file.name.toLowerCase();
 
-      const result = await worker.recognize(
-        buffer,
-        {},
-        { blocks: true }
-      );
+      /* -----------------------------------------------------
+         FILE SIZE LIMIT (25 MB)
+      ----------------------------------------------------- */
 
-      text = result.data.text;
-      blocks = result.data.blocks as OcrBlock;
+      const MAX_FILE_SIZE = 25 * 1024 * 1024;
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "File size exceeds the 25 MB limit. Please upload a smaller file.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
 
-      const image = await loadImage(buffer);
-      const ocrWords = (blocks ?? []).flatMap((block) =>
-        block.paragraphs.flatMap((paragraph) =>
-          paragraph.lines.flatMap((line) => line.words)
-        )
-      );
-      imageMarks = ocrWords
-        .filter((word) => word.bbox)
-        .map((word) => ({
-          word: word.text,
-          left: word.bbox!.x0 / image.width,
-          top: word.bbox!.y0 / image.height,
-          width: (word.bbox!.x1 - word.bbox!.x0) / image.width,
-          height: (word.bbox!.y1 - word.bbox!.y0) / image.height,
-        }));
+      /* -----------------------------------------------------
+         FILE TYPE
+      ----------------------------------------------------- */
+
+      isImage =
+        file.type.startsWith(
+          "image/"
+        );
+
+      isPdf =
+        file.type ===
+          "application/pdf" ||
+        fileName.endsWith(".pdf");
+
+      const isDocx =
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        fileName.endsWith(".docx");
+
+      const isPptx =
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
+        fileName.endsWith(".pptx");
+
+      const isXlsx =
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        fileName.endsWith(".xlsx");
+
+      if (!isImage && !isPdf && !isDocx && !isPptx && !isXlsx) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Please upload a DOCX, PPTX, XLSX, PDF or image file such as JPG, PNG or WEBP.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      /* -----------------------------------------------------
+         READ IMAGE INTO MEMORY
+      ----------------------------------------------------- */
+
+      const buffer =
+        Buffer.from(
+          await file.arrayBuffer()
+        );
+
+      /* -----------------------------------------------------
+         TEXT EXTRACTION
+      ----------------------------------------------------- */
+
+      if (isDocx) {
+        text = await extractDocxText(buffer);
+      } else if (isPptx) {
+        text = await extractPptxText(buffer);
+      } else if (isXlsx) {
+        text = extractXlsxText(buffer);
+      } else if (isPdf) {
+        let pdfText = await extractPdfText(buffer);
+
+        if (!pdfText.text.trim()) {
+          worker = await getOcrWorker();
+          pdfText = await extractPdfOcrText(buffer, worker);
+        }
+
+        text = pdfText.text;
+        pdfPageStarts = pdfText.pageStarts;
+        pdfHasTextLayer = pdfText.hasTextLayer;
+        pdfOcrWords = pdfText.ocrWords ?? [];
+      } else {
+        worker = await getOcrWorker();
+
+        const result = await worker.recognize(
+          buffer,
+          {},
+          { blocks: true }
+        );
+
+        text = result.data.text;
+        blocks = result.data.blocks as OcrBlock;
+
+        const image = await loadImage(buffer);
+        const ocrWords = (blocks ?? []).flatMap((block) =>
+          block.paragraphs.flatMap((paragraph) =>
+            paragraph.lines.flatMap((line) => line.words)
+          )
+        );
+        imageMarks = ocrWords
+          .filter((word) => word.bbox)
+          .map((word) => ({
+            word: word.text,
+            left: word.bbox!.x0 / image.width,
+            top: word.bbox!.y0 / image.height,
+            width: (word.bbox!.x1 - word.bbox!.x0) / image.width,
+            height: (word.bbox!.y1 - word.bbox!.y0) / image.height,
+          }));
+      }
     }
 
     /* -----------------------------------------------------
@@ -2546,7 +2590,7 @@ export async function POST(
       return NextResponse.json({
         success: true,
         filename:
-          file.name,
+          fileName,
         text: "",
         errors: [],
         wordCount: 0,
@@ -2675,7 +2719,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       filename:
-        file.name,
+        fileName,
       text: cleanText,
       errors,
       wordCount:
