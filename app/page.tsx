@@ -1682,7 +1682,7 @@ export default function Home() {
 
               <div>
                 <div className="text-[21px] font-bold tracking-[-0.8px]">
-                  Spell<span className="text-blue-600">ense</span>
+                  Spel<span className="text-blue-600">lense</span>
                 </div>
                 <div className="text-[9px] font-medium tracking-[1.5px] text-gray-400">
                   SMART SPELL CHECKING
@@ -2291,7 +2291,7 @@ export default function Home() {
         <footer className="border-t border-slate-200/70 bg-white px-5 py-8">
           <div className="mx-auto max-w-7xl text-center">
             <div className="text-lg font-bold">
-              Spell<span className="text-blue-600">ense</span>
+              Spel<span className="text-blue-600">lense</span>
             </div>
             <p className="mt-1 text-xs text-gray-400">
               Simple English spell checking for visual content.
@@ -2363,9 +2363,7 @@ export default function Home() {
             <div>
 
               <div className="text-[21px] font-bold tracking-[-0.8px]">
-                Spell<span className="text-blue-600">
-                  ense
-                </span>
+                Spel<span className="text-blue-600">lense</span>
               </div>
 
               <div className="text-[9px] font-medium tracking-[1.5px] text-gray-400">
@@ -2455,9 +2453,10 @@ export default function Home() {
               </span>
             </div>
 
-            <h1 className="mt-3 text-[34px] font-extrabold leading-[1.08] tracking-[-1.8px] text-slate-900 sm:text-[48px] lg:text-[56px]">
-              Great design deserves{" "}
-              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+            <h1 className="mt-3 text-[32px] font-extrabold leading-[1.12] tracking-[-1.8px] text-slate-900 sm:text-[46px] lg:text-[54px]">
+              Great design deserves
+              <br />
+              <span className="inline-block whitespace-nowrap bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
                 flawless spelling.
               </span>
             </h1>
@@ -2591,84 +2590,82 @@ export default function Home() {
             )}
 
             {inputMode === "text" ? (
-              <div className="relative rounded-[32px] p-[2px] bg-gradient-to-b from-white via-slate-100/70 to-slate-200/50 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.05)]">
-                <div className="relative rounded-[30px] border border-white/80 bg-white/95 backdrop-blur-xl p-6 sm:p-8">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-2 w-2 rounded-full bg-blue-600" />
-                      <label htmlFor="pasted-text-input" className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Paste or write your English text
-                      </label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPastedText(
-                            "We definately want to recieve your feedback on our new documnet. The acommodation was wonderfull, but the calender had an unecesary error in the schedual."
-                          );
-                        }}
-                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
-                      >
-                        Try Sample Text
-                      </button>
-                      {pastedText && (
-                        <button
-                          type="button"
-                          onClick={() => setPastedText("")}
-                          className="text-xs font-semibold text-slate-400 hover:text-slate-600 cursor-pointer ml-2"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
+              <div className="relative rounded-[32px] bg-white/95 backdrop-blur-xl p-6 sm:p-8 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.04)]">
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-2 w-2 rounded-full bg-blue-600" />
+                    <label htmlFor="pasted-text-input" className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Paste or write your English text
+                    </label>
                   </div>
-
-                  <textarea
-                    id="pasted-text-input"
-                    value={pastedText}
-                    onChange={(e) => setPastedText(e.target.value)}
-                    placeholder="Type or paste any text here (essays, emails, blog posts, articles) to instantly scan for typos and spelling mistakes..."
-                    rows={8}
-                    className="w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 font-mono sm:font-sans"
-                  />
-
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                    <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
-                      <span>
-                        <strong className="text-slate-800">
-                          {pastedText.trim() ? pastedText.trim().split(/\s+/).length : 0}
-                        </strong>{" "}
-                        words
-                      </span>
-                      <span>•</span>
-                      <span>
-                        <strong className="text-slate-800">{pastedText.length}</strong> characters
-                      </span>
-                    </div>
-
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={checkPastedText}
-                      disabled={checking || !pastedText.trim()}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35 disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-0 cursor-pointer"
+                      onClick={() => {
+                        setPastedText(
+                          "We definately want to recieve your feedback on our new documnet. The acommodation was wonderfull, but the calender had an unecesary error in the schedual."
+                        );
+                      }}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                     >
-                      {checking ? (
-                        <>
-                          <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                          </svg>
-                          <span>{checkingMessage}</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Check My Text</span>
-                          <span>→</span>
-                        </>
-                      )}
+                      Try Sample Text
                     </button>
+                    {pastedText && (
+                      <button
+                        type="button"
+                        onClick={() => setPastedText("")}
+                        className="text-xs font-semibold text-slate-400 hover:text-slate-600 cursor-pointer ml-2"
+                      >
+                        Clear
+                      </button>
+                    )}
                   </div>
+                </div>
+
+                <textarea
+                  id="pasted-text-input"
+                  value={pastedText}
+                  onChange={(e) => setPastedText(e.target.value)}
+                  placeholder="Type or paste any text here (essays, emails, blog posts, articles) to instantly scan for typos and spelling mistakes..."
+                  rows={8}
+                  className="w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 font-mono sm:font-sans"
+                />
+
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                  <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
+                    <span>
+                      <strong className="text-slate-800">
+                        {pastedText.trim() ? pastedText.trim().split(/\s+/).length : 0}
+                      </strong>{" "}
+                      words
+                    </span>
+                    <span>•</span>
+                    <span>
+                      <strong className="text-slate-800">{pastedText.length}</strong> characters
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={checkPastedText}
+                    disabled={checking || !pastedText.trim()}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35 disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-0 cursor-pointer"
+                  >
+                    {checking ? (
+                      <>
+                        <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                        <span>{checkingMessage}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Check My Text</span>
+                        <span>→</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             ) : (
@@ -2693,31 +2690,27 @@ export default function Home() {
                 );
               }}
               onClick={() => {
-
                 if (files.length === 0) {
                   openFilePicker();
                 }
-
               }}
-              className={`group relative rounded-[32px] p-[2px] transition-all duration-300 cursor-pointer ${
+              className={`group relative rounded-[32px] transition-all duration-300 cursor-pointer overflow-hidden ${
                 dragging
-                  ? "bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 shadow-[0_0_50px_rgba(59,130,246,0.35)] scale-[1.01]"
-                  : "bg-gradient-to-b from-blue-200/60 via-indigo-100/30 to-slate-200/50 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.08),0_0_25px_rgba(59,130,246,0.06)] hover:from-blue-400/60 hover:via-indigo-300/40 hover:to-slate-300/60 hover:shadow-[0_25px_70px_-15px_rgba(59,130,246,0.18)]"
+                  ? "bg-blue-50/95 shadow-[0_0_60px_rgba(59,130,246,0.25)] scale-[1.01]"
+                  : "bg-white/95 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.04)] hover:shadow-[0_25px_70px_-15px_rgba(59,130,246,0.14)]"
               }`}
             >
 
-              <div className={`relative rounded-[30px] border border-white/90 backdrop-blur-2xl p-3.5 sm:p-6 text-center transition-all duration-300 ${
-                dragging ? "bg-blue-50/95 border-blue-400" : "bg-white/90 hover:bg-white/98"
-              }`}>
+              <div className="relative rounded-[32px] backdrop-blur-2xl p-4 sm:p-7 text-center transition-all duration-300">
 
                 {/* BEFORE UPLOAD */}
 
                 {files.length === 0 && (
 
-                  <div className={`relative rounded-[24px] border-2 border-dashed transition-all duration-300 px-5 py-7 sm:px-8 sm:py-9 ${
+                  <div className={`relative rounded-[24px] transition-all duration-300 px-5 py-7 sm:px-8 sm:py-9 ${
                     dragging
-                      ? "border-blue-500 bg-blue-100/40"
-                      : "border-blue-200/80 bg-gradient-to-b from-blue-50/35 via-white/60 to-slate-50/30 group-hover:border-blue-400/90 group-hover:bg-blue-50/25"
+                      ? "bg-blue-100/40"
+                      : "bg-gradient-to-b from-blue-50/30 via-slate-50/35 to-transparent group-hover:bg-blue-50/20"
                   }`}>
 
                     {/* FLOATING 3D ICON */}
@@ -2774,7 +2767,7 @@ export default function Home() {
                           loadSampleFile();
                         }}
                         disabled={loadingSample}
-                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200/90 bg-white/95 px-5 py-3 text-sm font-bold text-slate-700 shadow-2xs backdrop-blur-xs transition hover:border-blue-300 hover:bg-blue-50/60 hover:text-blue-600 disabled:opacity-60 cursor-pointer"
+                        className="inline-flex items-center gap-2 rounded-2xl bg-slate-100/90 hover:bg-blue-50/70 px-5 py-3 text-sm font-bold text-slate-700 shadow-2xs backdrop-blur-xs transition hover:text-blue-600 disabled:opacity-60 cursor-pointer"
                         title="Test immediately with a sample document"
                       >
                         {loadingSample ? (
@@ -2793,27 +2786,27 @@ export default function Home() {
 
                     {/* FORMAT BADGES */}
                     <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:border-rose-200 hover:text-rose-600">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-rose-50 hover:text-rose-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
                         PDF
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:border-blue-200 hover:text-blue-600">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-blue-50 hover:text-blue-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                         DOCX
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:border-amber-200 hover:text-amber-600">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-amber-50 hover:text-amber-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                         PPTX
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:border-emerald-200 hover:text-emerald-600">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-emerald-50 hover:text-emerald-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         XLSX
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:border-purple-200 hover:text-purple-600">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-purple-50 hover:text-purple-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
                         JPG • PNG • WEBP
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-100/90 px-3 py-1 text-[11px] font-bold text-slate-500 shadow-2xs">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-500 shadow-2xs">
                         <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
                         MAX 25 MB
                       </span>
@@ -3236,9 +3229,7 @@ export default function Home() {
             <div>
 
               <div className="text-lg font-bold">
-                Spell<span className="text-blue-600">
-                  ense
-                </span>
+                Spel<span className="text-blue-600">lense</span>
               </div>
 
               <p className="mt-1 text-xs text-gray-400">

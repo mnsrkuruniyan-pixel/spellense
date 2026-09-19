@@ -37,7 +37,7 @@ export default function TermsPage() {
             </div>
             <div>
               <div className="text-[21px] font-bold tracking-[-0.8px]">
-                Spell<span className="text-blue-600">ense</span>
+                Spel<span className="text-blue-600">lense</span>
               </div>
               <div className="text-[9px] font-medium tracking-[1.5px] text-gray-400">
                 SMART SPELL CHECKING
@@ -157,7 +157,7 @@ export default function TermsPage() {
           <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
             <div>
               <div className="text-lg font-bold">
-                Spell<span className="text-blue-600">ense</span>
+                Spel<span className="text-blue-600">lense</span>
               </div>
               <p className="mt-1 text-xs text-gray-400">
                 Simple English spell checking for visual content.
