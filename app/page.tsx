@@ -1042,6 +1042,66 @@ function ImageUrlCleanup({ url }: { url: string }) {
   return null;
 }
 
+function computeReadability(text: string) {
+  const clean = text.trim();
+  if (!clean) {
+    return {
+      readingTime: "< 1 min read",
+      readabilityLevel: "Standard",
+      readabilityScore: 70,
+      sentenceCount: 0,
+      charCount: 0,
+      charCountNoSpaces: 0,
+    };
+  }
+
+  const words = clean.split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
+  const sentences = clean.split(/[.!?]+/).filter((s) => s.trim().length > 0);
+  const sentenceCount = Math.max(1, sentences.length);
+  const charCount = clean.length;
+  const charCountNoSpaces = clean.replace(/\s+/g, "").length;
+  const readingTime =
+    wordCount <= 200 ? "1 min read" : `${Math.ceil(wordCount / 200)} min read`;
+
+  // Syllables approximation
+  let totalSyllables = 0;
+  for (const word of words) {
+    const w = word.toLowerCase().replace(/[^a-z]/g, "");
+    if (!w) continue;
+    if (w.length <= 3) {
+      totalSyllables += 1;
+      continue;
+    }
+    const syllables = w
+      .replace(/(?:[^laeiouy]|ed|es|e)$/, "")
+      .replace(/^y/, "")
+      .match(/[aeiouy]{1,2}/g);
+    totalSyllables += syllables ? syllables.length : 1;
+  }
+
+  const flesch =
+    206.835 -
+    1.015 * (wordCount / sentenceCount) -
+    84.6 * (totalSyllables / Math.max(1, wordCount));
+  const score = Math.round(Math.max(0, Math.min(100, flesch)));
+
+  let level = "Standard (Grade 8-9)";
+  if (score >= 80) level = "Very Easy (Grade 5-6)";
+  else if (score >= 60) level = "Standard (Grade 8-9)";
+  else if (score >= 40) level = "Fairly Difficult (High School)";
+  else level = "Advanced / Technical";
+
+  return {
+    readingTime,
+    readabilityLevel: level,
+    readabilityScore: score,
+    sentenceCount,
+    charCount,
+    charCountNoSpaces,
+  };
+}
+
 export default function Home() {
 
   const fileInput =
@@ -1049,6 +1109,34 @@ export default function Home() {
 
   const [files, setFiles] =
     useState<File[]>([]);
+
+  const [inputMode, setInputMode] =
+    useState<"upload" | "text">("upload");
+
+  const [pastedText, setPastedText] =
+    useState("");
+
+  const [dialect, setDialect] =
+    useState<"en-US" | "en-GB">("en-US");
+
+  const [copiedShare, setCopiedShare] =
+    useState(false);
+
+  const [demoFixed, setDemoFixed] =
+    useState(false);
+
+  useEffect(() => {
+    const savedDialect = localStorage.getItem("spellense_dialect");
+    if (savedDialect === "en-GB" || savedDialect === "en-US") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDialect(savedDialect);
+    }
+  }, []);
+
+  const handleDialectChange = (newDialect: "en-US" | "en-GB") => {
+    setDialect(newDialect);
+    localStorage.setItem("spellense_dialect", newDialect);
+  };
 
   const [dragging, setDragging] =
     useState(false);
@@ -1340,11 +1428,13 @@ export default function Home() {
             formData.append("text", extractedText);
             formData.append("pageStarts", JSON.stringify(pageStarts));
             formData.append("fileName", file.name);
+            formData.append("dialect", dialect);
           } else {
             // Scanned PDF (images only)
             if (file.size <= 4.2 * 1024 * 1024) {
               setCheckingMessage("Running OCR on scanned PDF...");
               formData.append("file", file);
+              formData.append("dialect", dialect);
             } else {
               setResult({
                 success: false,
@@ -1361,6 +1451,7 @@ export default function Home() {
           );
           if (file.size <= 4.2 * 1024 * 1024) {
             formData.append("file", file);
+            formData.append("dialect", dialect);
           } else {
             setResult({
               success: false,
@@ -1373,6 +1464,7 @@ export default function Home() {
       } else {
         setCheckingMessage("Checking spelling...");
         formData.append("file", file);
+        formData.append("dialect", dialect);
       }
 
       const response =
@@ -1412,6 +1504,62 @@ export default function Home() {
 
     } finally {
 
+      setChecking(false);
+      setCheckingMessage("Checking your file...");
+    }
+  };
+
+  const checkPastedText = async () => {
+    const trimmed = pastedText.trim();
+    if (!trimmed) {
+      setUploadError("Please enter or paste some text to check.");
+      return;
+    }
+
+    setChecking(true);
+    setCheckingMessage("Checking your text...");
+    setResult(null);
+    setUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("text", trimmed);
+      formData.append("fileName", "pasted-text.txt");
+      formData.append("dialect", dialect);
+
+      const response = await fetch("/api/check", {
+        method: "POST",
+        body: formData,
+      });
+
+      let data: CheckResult | null = null;
+      try {
+        data = await response.json();
+      } catch {
+        // Handle non-JSON or HTML error responses
+      }
+
+      if (!response.ok || !data) {
+        setResult({
+          success: false,
+          error:
+            data?.error ||
+            "Unable to check the text. Please try again.",
+        });
+        return;
+      }
+
+      setFiles([
+        new File([trimmed], "pasted-text.txt", { type: "text/plain" }),
+      ]);
+      setResult(data);
+    } catch (err) {
+      console.error(err);
+      setResult({
+        success: false,
+        error: "Unable to connect to the spell checker.",
+      });
+    } finally {
       setChecking(false);
       setCheckingMessage("Checking your file...");
     }
@@ -1471,19 +1619,24 @@ export default function Home() {
 
   if (result) {
 
+    const isTextResult =
+      files[0]?.name === "pasted-text.txt" || !files[0]?.name.includes(".");
     const isPdfResult =
-      files[0]?.name.toLowerCase().endsWith(".pdf") ?? false;
+      !isTextResult && (files[0]?.name.toLowerCase().endsWith(".pdf") ?? false);
     const isDocxResult =
-      files[0]?.name.toLowerCase().endsWith(".docx") ?? false;
+      !isTextResult && (files[0]?.name.toLowerCase().endsWith(".docx") ?? false);
     const isPptxResult =
-      files[0]?.name.toLowerCase().endsWith(".pptx") ?? false;
+      !isTextResult && (files[0]?.name.toLowerCase().endsWith(".pptx") ?? false);
     const isXlsxResult =
-      files[0]?.name.toLowerCase().endsWith(".xlsx") ?? false;
+      !isTextResult && (files[0]?.name.toLowerCase().endsWith(".xlsx") ?? false);
     const isImageResult =
+      !isTextResult &&
       !isPdfResult &&
       !isDocxResult &&
       !isPptxResult &&
       !isXlsxResult;
+
+    const readability = computeReadability(result.text ?? "");
 
     const fileName = files[0]?.name ?? result.filename ?? "Uploaded Document";
     const wordCount = result.wordCount ?? 0;
@@ -1662,7 +1815,7 @@ export default function Home() {
               {/* File Info */}
               <div className="group relative overflow-hidden rounded-2xl border border-white/90 bg-white/80 p-4 text-center shadow-xs backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
                 <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 text-[11px] font-black tracking-wider ring-1 ring-slate-200">
-                  {isPdfResult ? "PDF" : isDocxResult ? "DOCX" : isPptxResult ? "PPTX" : isXlsxResult ? "XLSX" : "IMG"}
+                  {isTextResult ? "TXT" : isPdfResult ? "PDF" : isDocxResult ? "DOCX" : isPptxResult ? "PPTX" : isXlsxResult ? "XLSX" : "IMG"}
                 </div>
                 <p className="truncate text-sm font-bold tracking-tight text-slate-800 px-1" title={fileName}>
                   {files[0]?.size ? (files[0].size / 1024 / 1024).toFixed(2) + " MB" : "Verified"}
@@ -1671,6 +1824,47 @@ export default function Home() {
               </div>
 
             </div>
+
+            {/* WRITING & READABILITY INSIGHTS (4 Cards) */}
+            {result.text && (
+              <div className="mx-auto mt-4 max-w-4xl rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-xs backdrop-blur-md">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100/80">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-2 w-2 rounded-full bg-indigo-500" />
+                    <span className="text-xs font-bold text-slate-800">
+                      Writing &amp; Readability Insights
+                    </span>
+                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600">
+                      {dialect === "en-GB" ? "🇬🇧 UK English" : "🇺🇸 US English"}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-400">
+                    Flesch Reading Ease: {readability.readabilityScore}/100
+                  </span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4 text-center">
+                  <div className="rounded-xl bg-slate-50/80 p-2.5">
+                    <p className="text-base font-extrabold text-slate-800">{readability.readingTime}</p>
+                    <p className="text-[11px] font-semibold text-slate-400">Est. Reading Time</p>
+                  </div>
+                  <div className="rounded-xl bg-slate-50/80 p-2.5">
+                    <p className="truncate text-base font-extrabold text-indigo-600" title={readability.readabilityLevel}>
+                      {readability.readabilityLevel.split(" ")[0]}
+                    </p>
+                    <p className="text-[11px] font-semibold text-slate-400">{readability.readabilityLevel}</p>
+                  </div>
+                  <div className="rounded-xl bg-slate-50/80 p-2.5">
+                    <p className="text-base font-extrabold text-slate-800">{readability.sentenceCount}</p>
+                    <p className="text-[11px] font-semibold text-slate-400">Sentences</p>
+                  </div>
+                  <div className="rounded-xl bg-slate-50/80 p-2.5">
+                    <p className="text-base font-extrabold text-slate-800">{readability.charCount.toLocaleString()}</p>
+                    <p className="text-[11px] font-semibold text-slate-400">Characters ({readability.charCountNoSpaces.toLocaleString()} no spaces)</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ERROR MESSAGE */}
             {result.success === false && (
@@ -1692,7 +1886,7 @@ export default function Home() {
             )}
 
             {/* MAIN INSPECTION INTERFACE (PREVIEW + SUGGESTIONS) */}
-            {(isImageResult || isPdfResult || isDocxResult || isPptxResult || isXlsxResult) && (
+            {(isImageResult || isPdfResult || isDocxResult || isPptxResult || isXlsxResult || isTextResult) && (
               <div
                 className={`mt-8 gap-6 ${
                   result.errors && result.errors.length > 0
@@ -1709,17 +1903,21 @@ export default function Home() {
                       <span className="flex h-2.5 w-2.5 rounded-full bg-blue-600 animate-pulse" />
                       <div>
                         <p className="text-sm font-bold text-slate-800">
-                          {isPdfResult
-                            ? "PDF Document Viewer"
-                            : isDocxResult
-                              ? "Word Document Preview"
-                              : isPptxResult
-                                ? "PowerPoint Slide Viewer"
-                                : isXlsxResult
-                                  ? "Spreadsheet Grid Viewer"
-                                  : "Visual Asset Canvas"}
+                          {isTextResult
+                            ? "Text Analysis Canvas"
+                            : isPdfResult
+                              ? "PDF Document Viewer"
+                              : isDocxResult
+                                ? "Word Document Preview"
+                                : isPptxResult
+                                  ? "PowerPoint Slide Viewer"
+                                  : isXlsxResult
+                                    ? "Spreadsheet Grid Viewer"
+                                    : "Visual Asset Canvas"}
                         </p>
-                        <p className="text-[11px] text-slate-400">Interactive OCR overlay</p>
+                        <p className="text-[11px] text-slate-400">
+                          {isTextResult ? "Interactive spell inspection" : "Interactive OCR overlay"}
+                        </p>
                       </div>
                     </div>
 
@@ -1729,7 +1927,11 @@ export default function Home() {
                   </div>
 
                   {files[0] ? (
-                    isPdfResult ? (
+                    isTextResult ? (
+                      <div className="bg-slate-50 p-6 overflow-auto h-[360px] sm:h-[480px] lg:h-[588px] text-slate-800 leading-relaxed font-sans text-base whitespace-pre-wrap select-text">
+                        {renderMarkedText(result.text ?? "", result.errors ?? [])}
+                      </div>
+                    ) : isPdfResult ? (
                       <PdfMarkedPreview
                         key={files[0].name}
                         file={files[0]}
@@ -2005,6 +2207,83 @@ export default function Home() {
               </button>
             </div>
 
+            {/* ONE-CLICK SHARE & REFERRAL CARD */}
+            <div className="mx-auto mt-12 max-w-4xl rounded-3xl border border-blue-100 bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-violet-50/60 p-6 sm:p-8 shadow-xs backdrop-blur-md text-center">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold text-blue-600 shadow-2xs">
+                <span>📣</span>
+                <span>Share with Friends &amp; Colleagues</span>
+              </div>
+
+              <h3 className="mt-3 text-lg sm:text-xl font-extrabold text-slate-900">
+                Found Spellense helpful? Help others write error-free!
+              </h3>
+              <p className="mx-auto mt-1.5 max-w-lg text-xs sm:text-sm text-slate-500">
+                Share our free, zero-storage visual spell checker with designers, writers, students, and teammates.
+              </p>
+
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                {/* WhatsApp */}
+                <a
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                    "Check your documents, images, and text for spelling mistakes for free with Spellense! https://spellense.com"
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-[#25D366] px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#20bd5a] transition active:scale-95 cursor-pointer"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.04 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 15 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M9.53 7.5C9.36 7.5 9.09 7.57 8.87 7.8C8.64 8.04 8 8.64 8 9.87C8 11.1 8.9 12.28 9.03 12.45C9.15 12.62 10.77 15.11 13.25 16.19C13.84 16.45 14.3 16.6 14.66 16.71C15.25 16.9 15.79 16.87 16.22 16.81C16.7 16.74 17.7 16.2 17.91 15.62C18.12 15.04 18.12 14.54 18.06 14.44C18 14.34 17.82 14.28 17.56 14.15C17.29 14.02 16 13.39 15.76 13.3C15.53 13.21 15.36 13.17 15.2 13.42C15.03 13.66 14.55 14.23 14.4 14.4C14.26 14.58 14.11 14.6 13.85 14.47C13.59 14.34 12.75 14.07 11.75 13.18C10.97 12.48 10.45 11.62 10.3 11.37C10.15 11.12 10.29 10.98 10.42 10.85C10.54 10.73 10.68 10.55 10.82 10.39C10.95 10.23 11 10.11 11.09 9.94C11.17 9.77 11.13 9.63 11.07 9.5C11 9.38 10.54 8.24 10.34 7.78C10.15 7.33 9.96 7.39 9.81 7.38C9.68 7.38 9.53 7.38 9.53 7.5Z" />
+                  </svg>
+                  <span>Share on WhatsApp</span>
+                </a>
+
+                {/* LinkedIn */}
+                <a
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://spellense.com")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-[#0A66C2] px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#095196] transition active:scale-95 cursor-pointer"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.64 1.64 0 1 0 0-3.28 1.64 1.64 0 0 0 0 3.28M7.86 18.5V10.13H5.07V18.5h2.79Z" />
+                  </svg>
+                  <span>Share on LinkedIn</span>
+                </a>
+
+                {/* X / Twitter */}
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                    "Check your documents, PDFs, and images for spelling mistakes for free with Spellense!"
+                  )}&url=${encodeURIComponent("https://spellense.com")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-black transition active:scale-95 cursor-pointer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                  <span>Post on X</span>
+                </a>
+
+                {/* Copy Link */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText("https://spellense.com");
+                    setCopiedShare(true);
+                    setTimeout(() => setCopiedShare(false), 2500);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition active:scale-95 cursor-pointer"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  <span>{copiedShare ? "Copied Link!" : "Copy Link"}</span>
+                </button>
+              </div>
+            </div>
+
           </div>
         </section>
 
@@ -2211,12 +2490,126 @@ export default function Home() {
               </div>
             </div>
 
+            {/* HERO LIVE INTERACTIVE DEMO WIDGET */}
+            <div className="mx-auto mt-7 max-w-xl rounded-2xl border border-blue-200/80 bg-white/90 p-4 shadow-sm backdrop-blur-md transition-all hover:shadow-md">
+              <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+                  <span className="text-xs font-bold text-slate-800">⚡ Live Spellense Demo</span>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Interactive Preview</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDemoFixed(!demoFixed)}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                    demoFixed ? "bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100" : "bg-blue-600 text-white shadow-xs hover:bg-blue-700 active:scale-95"
+                  }`}
+                >
+                  {demoFixed ? "Fixed! (Reset)" : "Fix All Mistakes ✨"}
+                </button>
+              </div>
+              <div className="pt-3 text-sm leading-relaxed text-slate-700">
+                {demoFixed ? (
+                  <p className="animate-in fade-in duration-300">
+                    &ldquo;We <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">definitely</strong> want to <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">receive</strong> your feedback on the new <strong className="font-semibold text-emerald-600 underline decoration-emerald-500 decoration-2 underline-offset-2">document</strong>.&rdquo;
+                  </p>
+                ) : (
+                  <p>
+                    &ldquo;We{" "}
+                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: definitely">
+                      definately
+                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ definitely</span>
+                    </span>{" "}
+                    want to{" "}
+                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: receive">
+                      recieve
+                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ receive</span>
+                    </span>{" "}
+                    your feedback on the new{" "}
+                    <span className="group/demo relative inline-block rounded border border-red-400 bg-red-50/70 px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-2 cursor-pointer" title="Suggestion: document">
+                      documnet
+                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover/demo:flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-lg whitespace-nowrap z-30">→ document</span>
+                    </span>
+                    .&rdquo;
+                  </p>
+                )}
+              </div>
+            </div>
+
           </div>
 
 
-          {/* UPLOAD */}
+          {/* UPLOAD & TEXT CHECK SECTION */}
 
           <div className="mx-auto mt-7 max-w-[920px]">
+
+            {/* MODE & DIALECT SELECTOR BAR */}
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              {/* INPUT MODE TABS */}
+              <div className="flex items-center rounded-2xl bg-slate-100/90 p-1 border border-slate-200/80 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setInputMode("upload")}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                    inputMode === "upload"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <span>Upload Document</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInputMode("text")}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                    inputMode === "text"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
+                  <span>Paste or Type Text</span>
+                  <span className="rounded-full bg-blue-100 px-1.5 py-0.2 text-[9px] font-black text-blue-600">NEW</span>
+                </button>
+              </div>
+
+              {/* DIALECT SELECTOR TOGGLE */}
+              <div className="flex items-center gap-1.5 rounded-2xl bg-white/90 p-1 border border-slate-200/80 shadow-2xs backdrop-blur-xs">
+                <span className="pl-2.5 pr-1 text-[11px] font-semibold text-slate-500">Dictionary:</span>
+                <button
+                  type="button"
+                  onClick={() => handleDialectChange("en-US")}
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                    dialect === "en-US"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                  }`}
+                  title="Check spelling using American English rules (e.g., color, organize)"
+                >
+                  <span>🇺🇸 US English</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDialectChange("en-GB")}
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                    dialect === "en-GB"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                  }`}
+                  title="Check spelling using British English rules (e.g., colour, organise)"
+                >
+                  <span>🇬🇧 UK English</span>
+                </button>
+              </div>
+            </div>
 
             {/* UPLOAD VALIDATION ERROR BANNER */}
             {uploadError && (
@@ -2245,6 +2638,88 @@ export default function Home() {
               </div>
             )}
 
+            {inputMode === "text" ? (
+              <div className="relative rounded-[32px] p-[2px] bg-gradient-to-b from-white via-slate-100/70 to-slate-200/50 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.05)]">
+                <div className="relative rounded-[30px] border border-white/80 bg-white/95 backdrop-blur-xl p-6 sm:p-8">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-2 w-2 rounded-full bg-blue-600" />
+                      <label htmlFor="pasted-text-input" className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Paste or write your English text
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPastedText(
+                            "We definately want to recieve your feedback on our new documnet. The acommodation was wonderfull, but the calender had an unecesary error in the schedual."
+                          );
+                        }}
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                      >
+                        Try Sample Text
+                      </button>
+                      {pastedText && (
+                        <button
+                          type="button"
+                          onClick={() => setPastedText("")}
+                          className="text-xs font-semibold text-slate-400 hover:text-slate-600 cursor-pointer ml-2"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <textarea
+                    id="pasted-text-input"
+                    value={pastedText}
+                    onChange={(e) => setPastedText(e.target.value)}
+                    placeholder="Type or paste any text here (essays, emails, blog posts, articles) to instantly scan for typos and spelling mistakes..."
+                    rows={8}
+                    className="w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 font-mono sm:font-sans"
+                  />
+
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                    <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
+                      <span>
+                        <strong className="text-slate-800">
+                          {pastedText.trim() ? pastedText.trim().split(/\s+/).length : 0}
+                        </strong>{" "}
+                        words
+                      </span>
+                      <span>•</span>
+                      <span>
+                        <strong className="text-slate-800">{pastedText.length}</strong> characters
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={checkPastedText}
+                      disabled={checking || !pastedText.trim()}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35 disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-0 cursor-pointer"
+                    >
+                      {checking ? (
+                        <>
+                          <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                          </svg>
+                          <span>{checkingMessage}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Check My Text</span>
+                          <span>→</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
             <div
               onDragEnter={(e) => {
                 e.preventDefault();
@@ -2565,6 +3040,7 @@ export default function Home() {
               </div>
 
             </div>
+            )}
 
 
             {/* TRUST BADGES */}

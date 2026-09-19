@@ -1188,7 +1188,7 @@ function isSentenceStart(
    HYPHENATED COMPOUND WORD CHECK
    ========================================================= */
 
-function isValidHyphenatedWord(word: string): boolean {
+function isValidHyphenatedWord(word: string, dialect = "en-US"): boolean {
   if (!word.includes("-")) {
     return false;
   }
@@ -1196,22 +1196,22 @@ function isValidHyphenatedWord(word: string): boolean {
   if (parts.length < 2 || parts.some((p) => !p)) {
     return false;
   }
-  return parts.every((p) => isValidEnglishWord(p));
+  return parts.every((p) => isValidEnglishWord(p, dialect));
 }
 
 /* =========================================================
    VALID ENGLISH WORD
    =========================================================
    Accept:
-   - US English
-   - British English
+   - US English (or British English when dialect is en-GB)
    - Known valid words & modern tech vocabulary
    - Valid hyphenated compounds (user-friendly, real-time)
    - Contractions and possessives (user's, company's)
 ========================================================= */
 
 function isValidEnglishWord(
-  word: string
+  word: string,
+  dialect = "en-US"
 ): boolean {
   const clean = normalizeWord(word);
 
@@ -1227,29 +1227,29 @@ function isValidEnglishWord(
   }
 
   /* Hyphenated compound where all parts are valid English words */
-  if (clean.includes("-") && isValidHyphenatedWord(clean)) {
+  if (clean.includes("-") && isValidHyphenatedWord(clean, dialect)) {
     return true;
   }
 
   /* Contraction or possessive check: user's, company's, students' */
   if (clean.endsWith("'s")) {
     const base = clean.slice(0, -2);
-    if (isValidEnglishWord(base)) {
+    if (isValidEnglishWord(base, dialect)) {
       return true;
     }
   }
   if (clean.endsWith("'")) {
     const base = clean.slice(0, -1);
-    if (isValidEnglishWord(base)) {
+    if (isValidEnglishWord(base, dialect)) {
       return true;
     }
   }
 
-  /* US OR British English */
-  return (
-    spellUS.correct(clean) ||
-    spellGB.correct(clean)
-  );
+  /* Check dictionary based on selected dialect */
+  if (dialect === "en-GB") {
+    return spellGB.correct(clean);
+  }
+  return spellUS.correct(clean);
 }
 
 function isLikelyTruncatedKnownWord(
@@ -1353,7 +1353,8 @@ function isLikelyNamedOrAcronym(
    ========================================================= */
 
 function getAllSuggestions(
-  word: string
+  word: string,
+  dialect = "en-US"
 ): string[] {
   const clean =
     normalizeWord(word);
@@ -1361,14 +1362,14 @@ function getAllSuggestions(
   const suggestions =
     new Set<string>();
 
-  const usSuggestions =
-    spellUS.suggest(clean) || [];
+  const primary = dialect === "en-GB" ? spellGB : spellUS;
+  const secondary = dialect === "en-GB" ? spellUS : spellGB;
 
-  const gbSuggestions =
-    spellGB.suggest(clean) || [];
+  const primarySuggestions =
+    primary.suggest(clean) || [];
 
   for (
-    const suggestion of usSuggestions
+    const suggestion of primarySuggestions
   ) {
     const normalized =
       normalizeWord(suggestion);
@@ -1378,14 +1379,19 @@ function getAllSuggestions(
     }
   }
 
-  for (
-    const suggestion of gbSuggestions
-  ) {
-    const normalized =
-      normalizeWord(suggestion);
+  if (suggestions.size < 5) {
+    const secondarySuggestions =
+      secondary.suggest(clean) || [];
 
-    if (normalized) {
-      suggestions.add(normalized);
+    for (
+      const suggestion of secondarySuggestions
+    ) {
+      const normalized =
+        normalizeWord(suggestion);
+
+      if (normalized) {
+        suggestions.add(normalized);
+      }
     }
   }
 
@@ -1400,7 +1406,8 @@ function getAllSuggestions(
 
 function rankSuggestions(
   original: string,
-  suggestions: string[]
+  suggestions: string[],
+  dialect = "en-US"
 ): string | null {
   const cleanOriginal =
     normalizeWord(original);
@@ -1430,7 +1437,8 @@ function rankSuggestions(
        * Candidate itself must be a valid English word.
        */
       return isValidEnglishWord(
-        cleanCandidate
+        cleanCandidate,
+        dialect
       );
     })
     .map((candidate) => {
@@ -1479,7 +1487,8 @@ function rankSuggestions(
        */
       if (
         isValidEnglishWord(
-          cleanCandidate
+          cleanCandidate,
+          dialect
         )
       ) {
         score += 15;
@@ -1529,7 +1538,8 @@ function rankSuggestions(
 
 function getBestCorrection(
   original: string,
-  cleanWord = original
+  cleanWord = original,
+  dialect = "en-US"
 ): string | null {
   const clean =
     normalizeWord(cleanWord);
@@ -1548,11 +1558,10 @@ function getBestCorrection(
   }
 
   /*
-   * Already valid in:
-   * US OR British OR known-word list.
+   * Already valid in selected dialect.
    */
   if (
-    isValidEnglishWord(clean)
+    isValidEnglishWord(clean, dialect)
   ) {
     return null;
   }
@@ -1562,7 +1571,7 @@ function getBestCorrection(
    */
   if (clean.endsWith("'s")) {
     const base = clean.slice(0, -2);
-    const baseCorrection = getBestCorrection(base, base);
+    const baseCorrection = getBestCorrection(base, base, dialect);
     if (baseCorrection) {
       return preserveCase(original, `${baseCorrection}'s`);
     }
@@ -1620,7 +1629,7 @@ function getBestCorrection(
     for (let i = 3; i <= clean.length - 3; i++) {
       const p1 = clean.slice(0, i);
       const p2 = clean.slice(i);
-      if (isValidEnglishWord(p1) && isValidEnglishWord(p2)) {
+      if (isValidEnglishWord(p1, dialect) && isValidEnglishWord(p2, dialect)) {
         return preserveCase(original, `${p1} ${p2}`);
       }
     }
@@ -1630,7 +1639,7 @@ function getBestCorrection(
    * Ask both dictionaries.
    */
   const suggestions =
-    getAllSuggestions(clean);
+    getAllSuggestions(clean, dialect);
 
   if (!suggestions.length) {
     return null;
@@ -1639,7 +1648,8 @@ function getBestCorrection(
   const best =
     rankSuggestions(
       clean,
-      suggestions
+      suggestions,
+      dialect
     );
 
   if (!best) {
@@ -1731,7 +1741,8 @@ function getWords(text: string) {
 
 function checkWithOurEngine(
   text: string,
-  lowConfidenceWords = new Set<string>()
+  lowConfidenceWords = new Set<string>(),
+  dialect = "en-US"
 ): SpellError[] {
   const words =
     getWords(text);
@@ -1785,11 +1796,11 @@ function checkWithOurEngine(
       continue;
     }
 
-    const cacheKey = `${original}:${cleanWord}`;
+    const cacheKey = `${original}:${cleanWord}:${dialect}`;
     let correction: string | null | undefined = correctionCache.get(cacheKey);
 
     if (correction === undefined) {
-      correction = getBestCorrection(original, cleanWord);
+      correction = getBestCorrection(original, cleanWord, dialect);
       correctionCache.set(cacheKey, correction);
     }
 
@@ -1823,7 +1834,8 @@ function checkWithOurEngine(
    ========================================================= */
 
 async function checkWithLanguageTool(
-  text: string
+  text: string,
+  dialect = "en-US"
 ): Promise<SpellError[]> {
   try {
     /*
@@ -1846,7 +1858,7 @@ async function checkWithLanguageTool(
 
     body.append(
       "language",
-      "en-US"
+      dialect === "en-GB" ? "en-GB" : "en-US"
     );
 
     body.append(
@@ -2401,6 +2413,8 @@ export async function POST(
     const preExtractedText = formData.get("text") as string | null;
     const preExtractedPageStartsRaw = formData.get("pageStarts") as string | null;
     const preExtractedFileName = formData.get("fileName") as string | null;
+    const dialectParam = formData.get("dialect") as string | null;
+    const dialect = dialectParam === "en-GB" ? "en-GB" : "en-US";
 
     let text = "";
     let blocks: OcrBlock = [];
@@ -2609,7 +2623,8 @@ export async function POST(
         cleanText,
         getLowConfidenceOcrWords(
           blocks
-        )
+        ),
+        dialect
       );
 
     /* -----------------------------------------------------
@@ -2618,7 +2633,8 @@ export async function POST(
 
     const languageToolErrors =
       await checkWithLanguageTool(
-        cleanText
+        cleanText,
+        dialect
       );
 
     /* -----------------------------------------------------
