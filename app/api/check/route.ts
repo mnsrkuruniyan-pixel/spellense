@@ -53,20 +53,6 @@ type SpellError = {
   page?: number;
 };
 
-type LanguageToolMatch = {
-  message?: string;
-  offset: number;
-  length: number;
-  replacements?: {
-    value: string;
-  }[];
-  rule?: {
-    issueType?: string;
-    category?: {
-      id?: string;
-    };
-  };
-};
 
 type OcrWord = {
   text: string;
@@ -755,6 +741,52 @@ const KNOWN_VALID_WORDS = new Set([
   "malayali",
   "mallu",
   "naadan",
+
+  /* Common Global, Indian, and Arabic Names */
+  "rahul", "rohit", "amit", "anil", "sunil", "suresh", "ramesh", "vijay", "ajay", "raj",
+  "rajesh", "vikram", "vivek", "arun", "varun", "kiran", "manoj", "sanjay", "deepak", "pradeep",
+  "praveen", "sandeep", "anoop", "akhil", "nikhil", "arjun", "karan", "vishnu", "krishna", "shiva",
+  "ganesh", "mahesh", "dinesh", "naresh", "rakesh", "mukesh", "harish", "girish", "satish", "ashok",
+  "vinod", "pramod", "anand", "alok", "sid", "siddharth", "aditya", "abhishek", "anurag", "gaurav",
+  "saurabh", "mayank", "ankit", "sumit", "pankaj", "neeraj", "dheeraj", "suraj", "tarun", "chetan",
+  "hemant", "bharat", "dev", "mohan", "sohan", "rohan", "sooraj", "akash", "prashant", "subhash",
+  "sudhir", "sudhanshu", "shashi", "prakash", "chandra", "ravi", "shyam", "govind", "gopal", "jagdish",
+  "kailash", "madhav", "bhaskar", "kamal", "vimal", "nirmal", "uttam", "kalyan", "harsha", "charan",
+  "teja", "karthik", "kartik", "saravanan", "murugan", "senthil", "vignesh", "venkat", "srinivas", "raghu",
+  "bala", "prasad", "sreejith", "sujith", "renjith", "sanju", "shibu", "biju", "saji", "shaji",
+  "saboo", "vipin", "jithin", "midhun", "nithin", "amal", "anandhu", "athul", "gokul", "vishak",
+  "abijith", "abhijith", "sreerag", "vaisakh", "unni", "nandhu", "priya", "pooja", "neha", "sneha",
+  "anjali", "anita", "sunita", "kavitha", "anitha", "deepa", "divya", "vidya", "ramya", "soumya",
+  "remya", "sandhya", "reshma", "archana", "swathi", "swetha", "meera", "radha", "lakshmi", "parvathi",
+  "saraswati", "durga", "bhavana", "anupama", "malini", "shalini", "rekha", "hema", "seema", "reena",
+  "meena", "tina", "riya", "diya", "siya", "kavya", "navya", "dhanya", "aiswarya", "aishwarya",
+  "athira", "aswathy", "anu", "arya", "ammu", "anju", "aparna", "anagha", "gopika", "devika",
+  "haritha", "surabhi", "keerthi", "shruthi", "sruthi", "saranya",
+  "mohammed", "muhammad", "mohamed", "ahmed", "ahmad", "ali", "hassan", "hussein", "omar", "uthman",
+  "abdul", "abdullah", "ibrahim", "ismail", "yusuf", "tariq", "khalid", "waleed", "rashid", "saeed",
+  "salem", "hamad", "zayed", "farhan", "faisal", "rizwan", "imran", "salman", "irfan", "asif",
+  "arif", "shafiq", "rafiq", "mushtaq", "mustafa", "murtaza", "nabeel", "javed", "naveed", "zaheer",
+  "shahid", "waseem", "tanveer", "kamran", "adnan", "zubair", "bilal", "hamza", "anas", "ayman",
+  "sami", "kareem", "fatima", "ayesha", "khadija", "zainab", "mariam", "maryam", "yasmin", "amira",
+  "layla", "samira", "farida", "bushra", "nadiya", "nadia", "hana", "huda", "reem", "nour",
+  "noor", "dina", "rana", "rania", "maha", "mona",
+]);
+
+/* =========================================================
+   KNOWN ACRONYMS & ABBREVIATIONS
+   ========================================================= */
+
+const KNOWN_ACRONYMS = new Set([
+  // Tech & Computing
+  "pdf", "url", "http", "https", "seo", "json", "api", "html", "css", "xml", "csv", "sql", "svg", "png", "jpg", "jpeg", "webp", "gif", "mp4", "mp3", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "zip", "rar", "tar", "gz", "exe", "apk", "ios", "ai", "ml", "nlp", "llm", "ui", "ux", "gui", "cli", "sdk", "ide", "git", "ssh", "ssl", "tls", "vpn", "dns", "ip", "tcp", "udp", "lan", "wan", "wlan", "wifi", "mac", "pc", "os", "ram", "rom", "cpu", "gpu", "tpu", "ssd", "hdd", "usb", "hdmi", "vga", "sim", "esim", "gps", "nfc", "rfid", "led", "lcd", "oled", "qled", "iot", "saas", "paas", "iaas", "pwa", "spa", "ssr", "ssg", "cdn", "db", "rdbms", "crud", "jwt", "oauth", "rest", "soap", "dom", "bom", "cors", "csrf", "xss", "ddos", "npm", "yarn", "pnpm", "node", "php", "py", "rb", "cpp", "cs", "fs", "go", "rs", "ts", "js",
+  // Business, Finance & Corporate
+  "ceo", "cto", "cfo", "coo", "cmo", "cio", "cso", "cpo", "hr", "pr", "qa", "qc", "rd", "it", "cs", "cx", "b2b", "b2c", "d2c", "kpi", "roi", "okr", "nda", "sla", "sop", "mou", "po", "rfp", "rfq", "gst", "vat", "tin", "pan", "kyc", "ssn", "ein", "cin", "iban", "swift", "bic", "ifsc", "neft", "rtgs", "imps", "upi", "atm", "pin", "otp", "cvv", "pos", "ebitda", "ipo", "pnl", "yoy", "mom", "qoq", "fy", "cy", "corp", "inc", "ltd", "llc", "llp", "plc", "pvt", "gmbh",
+  // Education & Academic Degrees
+  "sslc", "hse", "cbse", "icse", "ba", "bsc", "bcom", "bba", "bca", "btech", "be", "barch", "bed", "bpharm", "ma", "msc", "mcom", "mba", "mca", "mtech", "me", "med", "mphil", "phd", "md", "ms", "mbbs", "bds", "ca", "cma", "cs", "cfa", "cpa", "acca", "ielts", "toefl", "gre", "gmat", "sat", "cat", "gate",
+  // Common Abbreviations & Units
+  "am", "pm", "bc", "ad", "est", "pst", "cst", "mst", "gmt", "utc", "cet", "ist", "id", "ok", "tv", "cv", "resume", "faq", "sms", "mms", "vip", "iq", "eq", "ac", "dc", "hq", "vs", "etc", "eg", "ie", "nb", "ps", "eta", "etd", "tba", "tbd", "fyi", "asap", "diy", "qna",
+  // Organizations & Places
+  "usa", "uk", "uae", "eu", "un", "who", "wto", "imf", "unesco", "unicef", "nasa", "isro", "esa", "nato", "fbi", "cia", "interpol", "iso", "ieee", "ansi", "w3c", "fifa", "icc", "ioc", "bcci", "kseb", "tcs", "cts", "wipro", "ibm", "bhel", "ongc", "lic"
 ]);
 
 /* =========================================================
@@ -939,6 +971,7 @@ const COMMON_TYPO_MAP: Record<string, string> = {
   notifcations: "notifications",
   infomation: "information",
   messge: "message",
+  messges: "messages",
   clcik: "click",
   downlaod: "download",
   uplod: "upload",
@@ -946,6 +979,150 @@ const COMMON_TYPO_MAP: Record<string, string> = {
   uploded: "uploaded",
   prevuew: "preview",
   perview: "preview",
+
+  /* High-frequency business, document, and technical misspellings */
+  documnt: "document",
+  documnts: "documents",
+  reprot: "report",
+  reprots: "reports",
+  mangr: "manager",
+  mngr: "manager",
+  mangers: "managers",
+  finacial: "financial",
+  finace: "finance",
+  suport: "support",
+  suported: "supported",
+  suporting: "supporting",
+  servises: "services",
+  servise: "service",
+  quallity: "quality",
+  qualiti: "quality",
+  asistance: "assistance",
+  asist: "assist",
+  custmer: "customer",
+  custmers: "customers",
+  managment: "management",
+  aplication: "application",
+  aplications: "applications",
+  certifcate: "certificate",
+  certifcates: "certificates",
+  guidlines: "guidelines",
+  guidline: "guideline",
+  conditons: "conditions",
+  conditon: "condition",
+  inconvinience: "inconvenience",
+  inconvienent: "inconvenient",
+  confidensial: "confidential",
+  industery: "industry",
+  industies: "industries",
+  inovation: "innovation",
+  inovative: "innovative",
+  tehnology: "technology",
+  technolgy: "technology",
+  compnay: "company",
+  compnies: "companies",
+  webiste: "website",
+  webistes: "websites",
+  quik: "quick",
+  lazi: "lazy",
+  ovr: "over",
+  jumpd: "jumped",
+  meetng: "meeting",
+  meetngs: "meetings",
+  provid: "provide",
+  provids: "provides",
+  provded: "provided",
+  employes: "employees",
+  employe: "employee",
+  erorr: "error",
+  erorrs: "errors",
+  invois: "invoice",
+  invoise: "invoice",
+  invoices: "invoices",
+  recipt: "receipt",
+  reciept: "receipt",
+  cancle: "cancel",
+  cancled: "canceled",
+  canclled: "cancelled",
+  submited: "submitted",
+  submition: "submission",
+  procced: "proceed",
+  procede: "proceed",
+  conection: "connection",
+  comunication: "communication",
+  experiance: "experience",
+  experence: "experience",
+  descripion: "description",
+  discription: "description",
+  catagory: "category",
+  catagories: "categories",
+  oppurtunity: "opportunity",
+  oppurtunities: "opportunities",
+  oportunity: "opportunity",
+  permenant: "permanent",
+  temporarely: "temporarily",
+  responsiblity: "responsibility",
+  responsibilty: "responsibility",
+  posible: "possible",
+  probly: "probably",
+  definate: "definite",
+  originaly: "originally",
+  seperately: "separately",
+  automaticly: "automatically",
+  basicly: "basically",
+  yesterdy: "yesterday",
+  requirment: "requirement",
+  requirments: "requirements",
+  proffesional: "professional",
+  proffesionals: "professionals",
+  perfomance: "performance",
+  agreemnt: "agreement",
+  agrement: "agreement",
+  devoloper: "developer",
+  developper: "developer",
+  programer: "programmer",
+  computr: "computer",
+  sofware: "software",
+  harware: "hardware",
+  netwok: "network",
+  internt: "internet",
+  platfrom: "platform",
+  soluton: "solution",
+  solutuon: "solution",
+  strategi: "strategy",
+  stradegy: "strategy",
+  plannig: "planning",
+  organazation: "organization",
+  organistion: "organisation",
+  operaton: "operation",
+  operatons: "operations",
+  standars: "standards",
+  acuracy: "accuracy",
+  accurat: "accurate",
+  effecient: "efficient",
+  eficient: "efficient",
+  efective: "effective",
+  avaliable: "available",
+  availabe: "available",
+  avialable: "available",
+  verfication: "verification",
+  authenication: "authentication",
+  welcom: "welcome",
+
+  /* Missing apostrophe contractions */
+  dont: "don't",
+  didnt: "didn't",
+  couldnt: "couldn't",
+  shouldnt: "shouldn't",
+  wouldnt: "wouldn't",
+  doesnt: "doesn't",
+  isnt: "isn't",
+  arent: "aren't",
+  wasnt: "wasn't",
+  werent: "weren't",
+  havent: "haven't",
+  hasnt: "hasn't",
+  hadnt: "hadn't",
 };
 
 /* =========================================================
@@ -979,6 +1156,12 @@ const SAFE_SPLITS: Record<string, string> = {
   asthe: "as the",
   isthe: "is the",
   andthe: "and the",
+  thankyou: "thank you",
+  everytime: "every time",
+  eachother: "each other",
+  infront: "in front",
+  abit: "a bit",
+  atleast: "at least",
 };
 
 /* =========================================================
@@ -1038,12 +1221,14 @@ const COMMON_WORD_SCORES: Record<string, number> = {
   could: 95,
   would: 95,
   should: 95,
+  which: 95,
 
   come: 95,
   here: 95,
   hear: 88,
   leader: 95,
   done: 95,
+  over: 95,
 
   so: 95,
   far: 95,
@@ -1062,11 +1247,41 @@ const COMMON_WORD_SCORES: Record<string, number> = {
   images: 90,
   file: 90,
   files: 90,
-  document: 90,
-  documents: 90,
+  document: 95,
+  documents: 95,
+  report: 95,
+  reports: 95,
   text: 90,
   page: 90,
   pages: 90,
+  service: 95,
+  services: 95,
+  quality: 95,
+  support: 95,
+  financial: 95,
+  assistance: 95,
+  customer: 95,
+  customers: 95,
+  application: 95,
+  management: 95,
+  company: 95,
+  technology: 95,
+  industry: 95,
+  information: 95,
+  meeting: 95,
+  provide: 95,
+  employee: 95,
+  employees: 95,
+  quick: 95,
+  lazy: 95,
+  jumped: 95,
+  website: 95,
+  certificate: 95,
+  guidelines: 95,
+  conditions: 95,
+  error: 95,
+  errors: 95,
+  manager: 95,
 };
 
 /* =========================================================
@@ -1094,25 +1309,25 @@ function preserveCase(
   }
 
   /* ALL CAPS */
-  if (
-    original === original.toUpperCase()
-  ) {
+  if (original === original.toUpperCase() && original.length > 1) {
     return corrected.toUpperCase();
   }
 
   /* First letter uppercase */
   if (
     original.length > 0 &&
-    original[0] ===
-      original[0].toUpperCase()
+    original[0] === original[0].toUpperCase()
   ) {
-    return (
-      corrected.charAt(0).toUpperCase() +
-      corrected.slice(1)
-    );
+    if (corrected.includes(" ")) {
+      return corrected
+        .split(" ")
+        .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : ""))
+        .join(" ");
+    }
+    return corrected.charAt(0).toUpperCase() + corrected.slice(1);
   }
 
-  return corrected;
+  return corrected.toLowerCase();
 }
 
 /* =========================================================
@@ -1184,6 +1399,7 @@ function isSentenceStart(
   return [".", "?", "!", ":", ";", "\"", "'", "“", "‘", "(", "[", "{", "*", "-", "—", "–"].includes(text[i]);
 }
 
+
 /* =========================================================
    HYPHENATED COMPOUND WORD CHECK
    ========================================================= */
@@ -1205,6 +1421,7 @@ function isValidHyphenatedWord(word: string, dialect = "en-US"): boolean {
    Accept:
    - US English (or British English when dialect is en-GB)
    - Known valid words & modern tech vocabulary
+   - Known acronyms & abbreviations
    - Valid hyphenated compounds (user-friendly, real-time)
    - Contractions and possessives (user's, company's)
 ========================================================= */
@@ -1219,10 +1436,17 @@ function isValidEnglishWord(
     return false;
   }
 
-  /* Known valid special words */
-  if (
-    KNOWN_VALID_WORDS.has(clean)
-  ) {
+  if (clean === "a" || clean === "i") {
+    return true;
+  }
+
+  /* Known acronyms (e.g. PDF, URL, API, SEO, USA, UAE, UK, HTML, CSS, FAQ) */
+  if (KNOWN_ACRONYMS.has(clean)) {
+    return true;
+  }
+
+  /* Known valid special words, countries, names */
+  if (KNOWN_VALID_WORDS.has(clean)) {
     return true;
   }
 
@@ -1250,19 +1474,6 @@ function isValidEnglishWord(
     return spellGB.correct(clean);
   }
   return spellUS.correct(clean);
-}
-
-function isLikelyTruncatedKnownWord(
-  word: string
-): boolean {
-  const clean = normalizeWord(word);
-
-  return (
-    clean.length >= 4 &&
-    Array.from(KNOWN_VALID_WORDS).some(
-      (knownWord) => knownWord.startsWith(clean)
-    )
-  );
 }
 
 function getLowConfidenceOcrWords(
@@ -1301,29 +1512,17 @@ function isReasonableWord(
   }
 
   /* Ignore known OCR fragments */
-  if (
-    IGNORE_WORDS.has(clean)
-  ) {
+  if (IGNORE_WORDS.has(clean)) {
     return false;
   }
 
   /* Only alphabetic words & standard punctuation */
-  if (
-    !/^[a-z'-]+$/i.test(clean)
-  ) {
+  if (!/^[a-z'-]+$/i.test(clean)) {
     return false;
   }
 
-  /*
-   * Don't flag random single letters.
-   *
-   * A and I are valid English words.
-   */
-  if (
-    clean.length === 1 &&
-    clean !== "a" &&
-    clean !== "i"
-  ) {
+  /* Don't flag random single letters except A and I */
+  if (clean.length === 1 && clean !== "a" && clean !== "i") {
     return false;
   }
 
@@ -1331,15 +1530,21 @@ function isReasonableWord(
 }
 
 function isLikelyNamedOrAcronym(
-  word: string
+  word: string,
+  dialect = "en-US"
 ): boolean {
-  // All-caps acronyms (2 to 7 letters): PDF, URL, HTTP, SEO, JSON, API, HTML, CSS, UAE, USA
-  if (/^[A-Z]{2,7}$/.test(word)) {
-    return true;
-  }
   // CamelCase or PascalCase (internal capital letter): iPhone, MacBook, YouTube, GitHub, JavaScript, NextJS, PowerPoint
   if (/^[a-zA-Z]*[a-z][A-Z][a-zA-Z]*$/.test(word)) {
     return true;
+  }
+  // All-caps word: if it's a known acronym or a valid English word in dictionary, treat as valid/acronym
+  if (/^[A-Z]{2,}$/.test(word)) {
+    const clean = normalizeWord(word);
+    if (KNOWN_ACRONYMS.has(clean) || isValidEnglishWord(clean, dialect)) {
+      return true;
+    }
+    // If not a known acronym and not a valid English word (e.g. REPROT, DOCUMNT, ERORR), it IS a typo!
+    return false;
   }
   // Contains @ or .
   if (/[@.]/.test(word)) {
@@ -1356,48 +1561,31 @@ function getAllSuggestions(
   word: string,
   dialect = "en-US"
 ): string[] {
-  const clean =
-    normalizeWord(word);
-
-  const suggestions =
-    new Set<string>();
+  const clean = normalizeWord(word);
+  const suggestions = new Set<string>();
 
   const primary = dialect === "en-GB" ? spellGB : spellUS;
   const secondary = dialect === "en-GB" ? spellUS : spellGB;
 
-  const primarySuggestions =
-    primary.suggest(clean) || [];
-
-  for (
-    const suggestion of primarySuggestions
-  ) {
-    const normalized =
-      normalizeWord(suggestion);
-
+  const primarySuggestions = primary.suggest(clean) || [];
+  for (const suggestion of primarySuggestions) {
+    const normalized = normalizeWord(suggestion);
     if (normalized) {
       suggestions.add(normalized);
     }
   }
 
   if (suggestions.size < 5) {
-    const secondarySuggestions =
-      secondary.suggest(clean) || [];
-
-    for (
-      const suggestion of secondarySuggestions
-    ) {
-      const normalized =
-        normalizeWord(suggestion);
-
+    const secondarySuggestions = secondary.suggest(clean) || [];
+    for (const suggestion of secondarySuggestions) {
+      const normalized = normalizeWord(suggestion);
       if (normalized) {
         suggestions.add(normalized);
       }
     }
   }
 
-  return Array.from(
-    suggestions
-  );
+  return Array.from(suggestions);
 }
 
 /* =========================================================
@@ -1409,8 +1597,7 @@ function rankSuggestions(
   suggestions: string[],
   dialect = "en-US"
 ): string | null {
-  const cleanOriginal =
-    normalizeWord(original);
+  const cleanOriginal = normalizeWord(original);
 
   if (!suggestions.length) {
     return null;
@@ -1418,91 +1605,34 @@ function rankSuggestions(
 
   const ranked = suggestions
     .filter((candidate) => {
-      if (!candidate) {
-        return false;
-      }
-
+      if (!candidate) return false;
       const cleanCandidate = normalizeWord(candidate);
-      if (!cleanCandidate || cleanCandidate === cleanOriginal) {
-        return false;
-      }
-
-      if (
-        !/^[a-z'-]+$/i.test(cleanCandidate)
-      ) {
-        return false;
-      }
-
-      /*
-       * Candidate itself must be a valid English word.
-       */
-      return isValidEnglishWord(
-        cleanCandidate,
-        dialect
-      );
+      if (!cleanCandidate || cleanCandidate === cleanOriginal) return false;
+      if (!/^[a-z'-]+$/i.test(cleanCandidate)) return false;
+      return isValidEnglishWord(cleanCandidate, dialect);
     })
     .map((candidate) => {
       const cleanCandidate = normalizeWord(candidate);
-      const distance =
-        damerauLevenshtein(
-          cleanOriginal,
-          cleanCandidate
-        );
+      const distance = damerauLevenshtein(cleanOriginal, cleanCandidate);
 
       let score = 0;
+      score -= distance * 30;
 
-      /*
-       * Edit distance.
-       * Lower distance = much better.
-       */
-      score -=
-        distance * 35;
-
-      /*
-       * Bonus for keeping same first letter (very common in human typing).
-       */
+      // Bonus for keeping same first letter
       if (cleanCandidate[0] === cleanOriginal[0]) {
         score += 15;
       }
 
-      /*
-       * Common English words.
-       */
-      score +=
-        COMMON_WORD_SCORES[
-          cleanCandidate
-        ] ?? 0;
-
-      /*
-       * Similar length.
-       */
-      score -=
-        Math.abs(
-          cleanOriginal.length -
-            cleanCandidate.length
-        ) * 5;
-
-      /*
-       * Valid dictionary word.
-       */
-      if (
-        isValidEnglishWord(
-          cleanCandidate,
-          dialect
-        )
-      ) {
-        score += 15;
+      // Bonus for keeping same last letter
+      if (cleanCandidate.slice(-1) === cleanOriginal.slice(-1)) {
+        score += 10;
       }
 
-      /*
-       * Penalize strange long alternatives.
-       */
-      if (
-        cleanCandidate.length >
-        cleanOriginal.length + 3
-      ) {
-        score -= 25;
-      }
+      // High-frequency common English words bonus
+      score += COMMON_WORD_SCORES[cleanCandidate] ?? 0;
+
+      // Penalize large length differences
+      score -= Math.abs(cleanOriginal.length - cleanCandidate.length) * 5;
 
       return {
         candidate: cleanCandidate,
@@ -1510,20 +1640,7 @@ function rankSuggestions(
         distance,
       };
     })
-    .sort((a, b) => {
-      if (
-        b.score !== a.score
-      ) {
-        return (
-          b.score - a.score
-        );
-      }
-
-      return (
-        a.distance -
-        b.distance
-      );
-    });
+    .sort((a, b) => b.score - a.score || a.distance - b.distance);
 
   if (!ranked.length) {
     return null;
@@ -1541,34 +1658,51 @@ function getBestCorrection(
   cleanWord = original,
   dialect = "en-US"
 ): string | null {
-  const clean =
-    normalizeWord(cleanWord);
+  const clean = normalizeWord(cleanWord);
 
   if (!clean || clean.length < 2) {
     return null;
   }
 
-  /*
-   * Ignore OCR noise.
-   */
-  if (
-    IGNORE_WORDS.has(clean)
-  ) {
+  if (IGNORE_WORDS.has(clean)) {
     return null;
   }
 
-  /*
-   * Already valid in selected dialect.
-   */
-  if (
-    isValidEnglishWord(clean, dialect)
-  ) {
+  if (isValidEnglishWord(clean, dialect)) {
     return null;
   }
 
-  /*
-   * Handle possessives: e.g. "comapny's" -> check "comapny"
-   */
+  // Instant high-confidence correction from typo map
+  if (COMMON_TYPO_MAP[clean]) {
+    return preserveCase(original, COMMON_TYPO_MAP[clean]);
+  }
+
+  // High-confidence OCR correction
+  if (SAFE_CORRECTIONS[clean]) {
+    return preserveCase(original, SAFE_CORRECTIONS[clean]);
+  }
+
+  // Word splitting (e.g. "sofar" -> "so far", "thankyou" -> "thank you")
+  if (SAFE_SPLITS[clean]) {
+    return preserveCase(original, SAFE_SPLITS[clean]);
+  }
+
+  // Handle hyphenated compound parts (e.g. "user-freindly" -> "user-friendly")
+  if (clean.includes("-")) {
+    const parts = clean.split("-");
+    if (parts.length >= 2) {
+      const correctedParts = parts.map((part) => {
+        if (isValidEnglishWord(part, dialect)) return part;
+        return getBestCorrection(part, part, dialect) || part;
+      });
+      const combined = correctedParts.join("-");
+      if (combined !== clean && isValidHyphenatedWord(combined, dialect)) {
+        return preserveCase(original, combined);
+      }
+    }
+  }
+
+  // Handle possessives (e.g. "compnay's" -> check "compnay")
   if (clean.endsWith("'s")) {
     const base = clean.slice(0, -2);
     const baseCorrection = getBestCorrection(base, base, dialect);
@@ -1577,54 +1711,7 @@ function getBestCorrection(
     }
   }
 
-  /*
-   * OCR can clip a brand or proper name when text touches an image or
-   * QR code. Do not flag a substantial prefix of a protected word.
-   */
-  if (isLikelyTruncatedKnownWord(clean)) {
-    return null;
-  }
-
-  /*
-   * Instant high-confidence correction from typo map.
-   */
-  if (COMMON_TYPO_MAP[clean]) {
-    return preserveCase(
-      original,
-      COMMON_TYPO_MAP[clean]
-    );
-  }
-
-  /*
-   * High-confidence OCR correction.
-   */
-  if (
-    SAFE_CORRECTIONS[clean]
-  ) {
-    return preserveCase(
-      original,
-      SAFE_CORRECTIONS[clean]
-    );
-  }
-
-  /*
-   * Word splitting.
-   *
-   * Example:
-   * sofar -> so far
-   */
-  if (
-    SAFE_SPLITS[clean]
-  ) {
-    return preserveCase(
-      original,
-      SAFE_SPLITS[clean]
-    );
-  }
-
-  /*
-   * Split-word check: e.g. "thankyou" -> "thank you", "everytime" -> "every time"
-   */
+  // Split-word check: e.g. "everytime" -> "every time"
   if (clean.length >= 6) {
     for (let i = 3; i <= clean.length - 3; i++) {
       const p1 = clean.slice(0, i);
@@ -1635,56 +1722,25 @@ function getBestCorrection(
     }
   }
 
-  /*
-   * Ask both dictionaries.
-   */
-  const suggestions =
-    getAllSuggestions(clean, dialect);
-
+  // Ask dictionaries
+  const suggestions = getAllSuggestions(clean, dialect);
   if (!suggestions.length) {
     return null;
   }
 
-  const best =
-    rankSuggestions(
-      clean,
-      suggestions,
-      dialect
-    );
-
+  const best = rankSuggestions(clean, suggestions, dialect);
   if (!best) {
     return null;
   }
 
-  const distance =
-    damerauLevenshtein(
-      clean,
-      normalizeWord(best)
-    );
+  const distance = damerauLevenshtein(clean, normalizeWord(best));
+  const maxDistance = clean.length <= 4 ? 2 : clean.length <= 7 ? 3 : 4;
 
-  /*
-   * Conservative correction threshold.
-   *
-   * We don't want:
-   * randomword -> unrelatedword
-   */
-  const maxDistance =
-    clean.length <= 4
-      ? 1
-      : clean.length <= 7
-      ? 2
-      : 3;
-
-  if (
-    distance > maxDistance
-  ) {
+  if (distance > maxDistance) {
     return null;
   }
 
-  return preserveCase(
-    original,
-    best
-  );
+  return preserveCase(original, best);
 }
 
 /* =========================================================
@@ -1707,8 +1763,7 @@ function getWords(text: string) {
   masked = masked.replace(/[\u2018\u2019\u0060\u00B4]/g, "'");
   masked = masked.replace(/[\u2013\u2014]/g, " ");
 
-  const regex =
-    /[A-Za-z]+(?:['-][A-Za-z]+)*/g;
+  const regex = /[A-Za-z]+(?:['-][A-Za-z]+)*/g;
 
   const words: {
     word: string;
@@ -1716,14 +1771,9 @@ function getWords(text: string) {
     index: number;
   }[] = [];
 
-  let match:
-    | RegExpExecArray
-    | null;
+  let match: RegExpExecArray | null;
 
-  while (
-    (match =
-      regex.exec(masked)) !== null
-  ) {
+  while ((match = regex.exec(masked)) !== null) {
     const originalSlice = text.slice(match.index, match.index + match[0].length);
     words.push({
       word: originalSlice,
@@ -1736,377 +1786,92 @@ function getWords(text: string) {
 }
 
 /* =========================================================
-   LOCAL SPELL CHECK
+   LOCAL SPELL CHECK ENGINE
    ========================================================= */
 
 function checkWithOurEngine(
   text: string,
   lowConfidenceWords = new Set<string>(),
-  dialect = "en-US"
+  dialect = "en-US",
+  isDigitalText = true
 ): SpellError[] {
-  const words =
-    getWords(text);
-
-  const errors: SpellError[] =
-    [];
-
-  // Memoize corrections for unique words to process 50+ pages (20,000+ words) in milliseconds
+  const words = getWords(text);
+  const errors: SpellError[] = [];
   const correctionCache = new Map<string, string | null>();
 
-  for (
-    const item of words
-  ) {
-    const original =
-      item.word;
-    const cleanWord =
-      item.clean;
+  for (let i = 0; i < words.length; i++) {
+    const item = words[i];
+    const original = item.word;
+    const cleanWord = item.clean;
+    const clean = normalizeWord(cleanWord);
 
-    if (
-      !isReasonableWord(
-        cleanWord
-      )
-    ) {
+    if (!isReasonableWord(cleanWord)) {
       continue;
     }
 
-    if (isLikelyNamedOrAcronym(original)) {
+    if (isLikelyNamedOrAcronym(original, dialect)) {
       continue;
     }
 
-    // Check if word is TitleCase (capitalized) in the middle of a sentence
+    // Already valid in selected dialect
+    if (isValidEnglishWord(clean, dialect)) {
+      continue;
+    }
+
+    // Check if word is TitleCase (capitalized)
     const isCapitalized = /^[A-Z][a-z]+$/.test(original);
     const atStart = isSentenceStart(text, item.index);
-    const isCommonTypo = Boolean(COMMON_TYPO_MAP[normalizeWord(cleanWord)]);
 
-    if (isCapitalized && !atStart && !isCommonTypo) {
-      // Mid-sentence capitalized word (proper noun, person or place name, brand)
-      continue;
+    // Title / heading context detection:
+    // In titles ("Annual Finacial Reprot" or "High Quallity Servises"), neighboring words are also capitalized.
+    const prevItem = i > 0 ? words[i - 1] : null;
+    const nextItem = i < words.length - 1 ? words[i + 1] : null;
+    const isTitleContext =
+      Boolean(prevItem && /^[A-Z]/.test(prevItem.word)) ||
+      Boolean(nextItem && /^[A-Z]/.test(nextItem.word));
+
+    const isCommonTypo = Boolean(COMMON_TYPO_MAP[clean]);
+
+    if (isCapitalized && !atStart && !isTitleContext && !isCommonTypo) {
+      // Isolated capitalized word mid-sentence.
+      // Only flag if correction exists and has distance <= 1 (e.g. "Quallity" -> "Quality", "Suport" -> "Support")
+      const candidateCorr = getBestCorrection(original, cleanWord, dialect);
+      if (!candidateCorr || damerauLevenshtein(clean, normalizeWord(candidateCorr)) > 1) {
+        // Protect genuine proper names (e.g. personal names or places)
+        continue;
+      }
     }
 
-    /*
-     * QR codes, icons and decorative graphics often produce random
-     * letter-like OCR output. Spellense stays conservative by skipping
-     * tokens Tesseract itself read with low confidence.
-     */
-    if (
-      lowConfidenceWords.has(
-        normalizeWord(cleanWord)
-      )
-    ) {
+    // Skip low-confidence OCR artifacts from graphics/icons
+    if (lowConfidenceWords.has(clean)) {
       continue;
     }
 
     const cacheKey = `${original}:${cleanWord}:${dialect}`;
-    let correction: string | null | undefined = correctionCache.get(cacheKey);
+    let correction = correctionCache.get(cacheKey);
 
     if (correction === undefined) {
       correction = getBestCorrection(original, cleanWord, dialect);
       correctionCache.set(cacheKey, correction);
     }
 
-    if (!correction) {
+    // In digital text, if a word is invalid English, never silently suppress it
+    if (!correction && !isDigitalText) {
       continue;
     }
 
-    /*
-     * Don't show identical correction.
-     */
-    if (
-      correction.toLowerCase() ===
-      original.toLowerCase()
-    ) {
+    if (correction && correction.toLowerCase() === original.toLowerCase()) {
       continue;
     }
 
     errors.push({
       word: original,
-      suggestion:
-        correction,
+      suggestion: correction ?? null,
       index: item.index,
     });
   }
 
   return errors;
-}
-
-/* =========================================================
-   LANGUAGETOOL
-   ========================================================= */
-
-async function checkWithLanguageTool(
-  text: string,
-  dialect = "en-US"
-): Promise<SpellError[]> {
-  try {
-    /*
-     * Public API request size protection.
-     */
-    if (
-      !text.trim() ||
-      text.length > 18000
-    ) {
-      return [];
-    }
-
-    const body =
-      new URLSearchParams();
-
-    body.append(
-      "text",
-      text
-    );
-
-    body.append(
-      "language",
-      dialect === "en-GB" ? "en-GB" : "en-US"
-    );
-
-    body.append(
-      "enabledOnly",
-      "false"
-    );
-
-    const response =
-      await fetch(
-        "https://api.languagetool.org/v2/check",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/x-www-form-urlencoded",
-          },
-          body,
-          signal: AbortSignal.timeout(2500),
-        }
-      );
-
-    if (!response.ok) {
-      return [];
-    }
-
-    const data =
-      await response.json();
-
-    const matches:
-      LanguageToolMatch[] =
-      Array.isArray(
-        data.matches
-      )
-        ? data.matches
-        : [];
-
-    const errors:
-      SpellError[] = [];
-
-    for (
-      const match of matches
-    ) {
-      const issueType =
-        match.rule?.issueType;
-
-      /*
-       * Spellense checks spelling,
-       * not grammar/style.
-       */
-      if (
-        issueType &&
-        issueType !== "misspelling"
-      ) {
-        continue;
-      }
-
-      const word =
-        text.slice(
-          match.offset,
-          match.offset +
-            match.length
-        );
-
-      if (
-        !word ||
-        !/[A-Za-z]/.test(word)
-      ) {
-        continue;
-      }
-
-      const clean =
-        normalizeWord(word);
-
-      if (!clean) {
-        continue;
-      }
-
-      if (isLikelyNamedOrAcronym(word)) {
-        continue;
-      }
-
-      /*
-       * Ignore OCR noise.
-       */
-      if (
-        IGNORE_WORDS.has(clean)
-      ) {
-        continue;
-      }
-
-      /*
-       * VERY IMPORTANT:
-       *
-       * If either dictionary already accepts
-       * the word, LanguageTool must not flag it.
-       *
-       * This prevents:
-       *
-       * recognisable -> recognizable
-       * colourful -> colorful
-       * colours -> colors
-       * analogue -> analog
-       */
-      if (
-        isValidEnglishWord(clean)
-      ) {
-        continue;
-      }
-
-      const replacement =
-        match.replacements?.[0]
-          ?.value ?? null;
-
-      if (!replacement) {
-        continue;
-      }
-
-      /*
-       * If replacement is one word,
-       * make sure it is a real English word.
-       */
-      if (
-        !replacement.includes(" ")
-      ) {
-        if (
-          !isValidEnglishWord(
-            replacement
-          )
-        ) {
-          continue;
-        }
-      }
-
-      errors.push({
-        word,
-        suggestion:
-          replacement,
-        index:
-          match.offset,
-      });
-    }
-
-    return errors;
-  } catch {
-    /*
-     * LanguageTool is optional.
-     * Local spell checking continues
-     * even if LanguageTool fails.
-     */
-    return [];
-  }
-}
-
-/* =========================================================
-   CONTEXT RULES
-   ========================================================= */
-
-function applyContextRules(
-  errors: SpellError[]
-): SpellError[] {
-  return errors.map(
-    (error) => {
-      const word =
-        normalizeWord(
-          error.word
-        );
-
-      /*
-       * High-confidence OCR corrections.
-       */
-
-      if (
-        word === "heare"
-      ) {
-        return {
-          ...error,
-          suggestion:
-            preserveCase(
-              error.word,
-              "here"
-            ),
-        };
-      }
-
-      if (
-        word === "leeder"
-      ) {
-        return {
-          ...error,
-          suggestion:
-            preserveCase(
-              error.word,
-              "leader"
-            ),
-        };
-      }
-
-      if (
-        word === "sofar"
-      ) {
-        return {
-          ...error,
-          suggestion:
-            preserveCase(
-              error.word,
-              "so far"
-            ),
-        };
-      }
-
-      if (
-        word === "thet"
-      ) {
-        return {
-          ...error,
-          suggestion:
-            preserveCase(
-              error.word,
-              "the"
-            ),
-        };
-      }
-
-      return error;
-    }
-  );
-}
-
-/* =========================================================
-   MERGE RESULTS
-   ========================================================= */
-
-function mergeResults(
-  primary: SpellError[],
-  _secondary: SpellError[]
-): SpellError[] {
-  /*
-   * LanguageTool is a secondary signal, not an independent source of
-   * mistakes. Its public en-US service can flag valid British spellings,
-   * names, and borrowed words, so it must never add a standalone result.
-   * The local US/GB dictionary engine remains the final authority.
-   */
-  void _secondary;
-
-  return [...primary].sort(
-    (a, b) =>
-      a.index - b.index
-  );
 }
 
 type PdfTextResult = {
@@ -2618,42 +2383,16 @@ export async function POST(
        LOCAL SPELL ENGINE
     ----------------------------------------------------- */
 
-    const localErrors =
+    const isDigitalText = !isImage && (!isPdf || pdfHasTextLayer);
+
+    let errors =
       checkWithOurEngine(
         cleanText,
         getLowConfidenceOcrWords(
           blocks
         ),
-        dialect
-      );
-
-    /* -----------------------------------------------------
-       LANGUAGETOOL SECONDARY CHECK
-    ----------------------------------------------------- */
-
-    const languageToolErrors =
-      await checkWithLanguageTool(
-        cleanText,
-        dialect
-      );
-
-    /* -----------------------------------------------------
-       MERGE
-    ----------------------------------------------------- */
-
-    let errors =
-      mergeResults(
-        localErrors,
-        languageToolErrors
-      );
-
-    /* -----------------------------------------------------
-       CONTEXT RULES
-    ----------------------------------------------------- */
-
-    errors =
-      applyContextRules(
-        errors
+        dialect,
+        isDigitalText
       );
 
     /* -----------------------------------------------------
