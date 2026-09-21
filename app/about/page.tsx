@@ -138,18 +138,21 @@ export default function AboutPage() {
           {/* MISSION & ORIGIN STORY */}
           <div className="mt-12 space-y-8">
             <div className="rounded-3xl border border-white/90 bg-white/85 p-7 sm:p-9 shadow-xs backdrop-blur-md">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-                Why We Created Spellense
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-2">
+                The Origin Story
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                Born From a Real Workplace Problem
               </h2>
               <div className="mt-4 space-y-4 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
                 <p>
-                  Graphic designers, marketers, and product teams spend hours polishing typography and visual hierarchies in Figma, Photoshop, and Canva. But once artwork is exported as a PNG, JPG, or PDF, the text becomes locked into pixels.
+                  In my daily professional work, nearly <strong className="text-slate-900 font-bold">30% of all quality review issues and revision cycles</strong> were caused by subtle English spelling mistakes hidden across creative banners, presentation decks, and exported documents.
                 </p>
                 <p>
-                  Standard spell checkers and browser extensions cannot inspect images or flattened presentation decks. As a result, embarrassing typos slip through onto billboards, restaurant menus, social media campaigns, investor pitch decks, and printed marketing brochures.
+                  Designers and marketing teammates spend hours perfecting visual hierarchies in Figma, Photoshop, and Canva. But once artwork is exported as a PNG, JPG, or PDF, words become locked into pixels. Traditional spell checkers and browser extensions only inspect plain text input fields—they cannot read pixels or slide layouts. Even a single overlooked typo on a promotional banner, contract, or investor deck meant costly reprint delays, client embarrassment, and hours wasted on re-exports.
                 </p>
                 <p>
-                  We built <strong className="text-slate-900 font-semibold">Spellense</strong> to solve this fundamental problem: an intelligent tool that reads words directly off pixels and pages, highlights suspected mistakes right where they appear, and suggests corrections without forcing you to re-type a single word.
+                  Frustrated by the lack of a modern tool that could actually read words inside visual files, I built <strong className="text-slate-900 font-semibold">Spellense</strong>. It was created from the ground up to solve this exact problem: an intelligent, in-memory OCR proofreading engine that reads text directly off graphics and multi-page documents, draws visual red highlights over typos in place, and suggests corrections without forcing you to re-type a single word.
                 </p>
               </div>
             </div>
@@ -304,3 +307,4 @@ export default function AboutPage() {
     </main>
   );
 }
+
