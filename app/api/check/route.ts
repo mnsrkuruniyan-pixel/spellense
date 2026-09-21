@@ -287,6 +287,18 @@ const KNOWN_VALID_WORDS = new Set([
   "eurasia",
   "qingdao",
 
+  /* Audio, Video, TV & Electronics terms */
+  "atmos",
+  "dolby",
+  "vidaa",
+  "soundbar",
+  "subwoofer",
+  "bluetooth",
+  "chromecast",
+  "airplay",
+  "gameplay",
+  "esports",
+
   /* Months */
   "january",
   "february",
@@ -795,7 +807,7 @@ const KNOWN_VALID_WORDS = new Set([
 
 const KNOWN_ACRONYMS = new Set([
   // Tech & Computing
-  "pdf", "url", "http", "https", "seo", "json", "api", "html", "css", "xml", "csv", "sql", "svg", "png", "jpg", "jpeg", "webp", "gif", "mp4", "mp3", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "zip", "rar", "tar", "gz", "exe", "apk", "ios", "ai", "ml", "nlp", "llm", "ui", "ux", "gui", "cli", "sdk", "ide", "git", "ssh", "ssl", "tls", "vpn", "dns", "ip", "tcp", "udp", "lan", "wan", "wlan", "wifi", "mac", "pc", "os", "ram", "rom", "cpu", "gpu", "tpu", "ssd", "hdd", "usb", "hdmi", "vga", "sim", "esim", "gps", "nfc", "rfid", "led", "lcd", "oled", "qled", "iot", "saas", "paas", "iaas", "pwa", "spa", "ssr", "ssg", "cdn", "db", "rdbms", "crud", "jwt", "oauth", "rest", "soap", "dom", "bom", "cors", "csrf", "xss", "ddos", "npm", "yarn", "pnpm", "node", "php", "py", "rb", "cpp", "cs", "fs", "go", "rs", "ts", "js",
+  "pdf", "url", "http", "https", "seo", "json", "api", "html", "css", "xml", "csv", "sql", "svg", "png", "jpg", "jpeg", "webp", "gif", "mp4", "mp3", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "zip", "rar", "tar", "gz", "exe", "apk", "ios", "ai", "ml", "nlp", "llm", "ui", "ux", "gui", "cli", "sdk", "ide", "git", "ssh", "ssl", "tls", "vpn", "dns", "ip", "tcp", "udp", "lan", "wan", "wlan", "wifi", "mac", "pc", "os", "ram", "rom", "cpu", "gpu", "tpu", "ssd", "hdd", "usb", "hdmi", "vga", "sim", "esim", "gps", "nfc", "rfid", "led", "lcd", "oled", "qled", "dts", "hdr", "hdr10", "uhd", "vrr", "allm", "earc", "arc", "iot", "saas", "paas", "iaas", "pwa", "spa", "ssr", "ssg", "cdn", "db", "rdbms", "crud", "jwt", "oauth", "rest", "soap", "dom", "bom", "cors", "csrf", "xss", "ddos", "npm", "yarn", "pnpm", "node", "php", "py", "rb", "cpp", "cs", "fs", "go", "rs", "ts", "js",
   // Business, Finance & Corporate
   "ceo", "cto", "cfo", "coo", "cmo", "cio", "cso", "cpo", "hr", "pr", "qa", "qc", "rd", "it", "cs", "cx", "b2b", "b2c", "d2c", "kpi", "roi", "okr", "nda", "sla", "sop", "mou", "po", "rfp", "rfq", "gst", "vat", "tin", "pan", "kyc", "ssn", "ein", "cin", "iban", "swift", "bic", "ifsc", "neft", "rtgs", "imps", "upi", "atm", "pin", "otp", "cvv", "pos", "ebitda", "ipo", "pnl", "yoy", "mom", "qoq", "fy", "cy", "corp", "inc", "ltd", "llc", "llp", "plc", "pvt", "gmbh",
   // Education & Academic Degrees
@@ -1578,6 +1590,11 @@ function isReasonableWord(
       return false;
     }
 
+    // Impossible consonant clusters never found in English words (e.g. "cg" in "acgyll", "qk", "qx", etc.)
+    if (/(?:cg|cj|cq|cv|cw|cx|cz|bk|bq|bx|bz|df|dk|dp|dq|dt|dx|dz|fg|fk|fq|fv|fx|fz|gq|gx|gz|hx|hz|jb|jc|jd|jf|jg|jh|jj|jk|jl|jm|jn|jp|jq|jr|js|jt|jv|jw|jx|jy|jz|kq|kx|kz|pq|px|pz|qb|qc|qd|qe|qf|qg|qh|qi|qj|qk|ql|qm|qn|qo|qp|qq|qr|qs|qt|qv|qw|qx|qy|qz|sx|sz|tb|td|tg|tj|tq|tv|tx|tz|vb|vc|vd|vf|vg|vh|vj|vk|vl|vm|vn|vp|vq|vr|vs|vt|vv|vw|vx|vy|vz|wq|wx|wz|xb|xc|xd|xf|xg|xh|xj|xk|xm|xn|xp|xq|xr|xs|xt|xv|xw|xx|xy|xz|zb|zc|zd|zf|zg|zh|zj|zk|zl|zm|zn|zp|zq|zr|zs|zt|zv|zw|zx|zy|zz)/i.test(clean)) {
+      return false;
+    }
+
     // Impossible vowel-consonant combinations from Arabic/foreign OCR noise (e.g. "rouwl")
     if (/(?:ouwl|ouu|aee)/i.test(clean)) {
       return false;
@@ -1873,6 +1890,17 @@ function checkWithOurEngine(
 
     if (!isReasonableWord(cleanWord, isDigitalText, original)) {
       continue;
+    }
+
+    if (!isDigitalText) {
+      // In OCR mode, NEVER flag 2-letter tokens as errors (e.g. sy, ey, ot, nl, oc, yl)
+      if (clean.length <= 2) {
+        continue;
+      }
+      // In OCR mode, do not flag 3-letter tokens unless they are common typos (e.g. teh, adn)
+      if (clean.length === 3 && !COMMON_TYPO_MAP[clean]) {
+        continue;
+      }
     }
 
     if (isLikelyNamedOrAcronym(original, dialect)) {
@@ -2225,6 +2253,95 @@ function extractXlsxText(buffer: Buffer): string {
 }
 
 /* =========================================================
+   FILTER OCR BLOCKS (Eliminate foreign script & photo noise)
+   ========================================================= */
+
+function filterOcrBlocks(
+  rawBlocks: OcrBlock,
+  dialect: string
+): { filteredBlocks: NonNullable<OcrBlock>; cleanText: string } {
+  if (!rawBlocks || rawBlocks.length === 0) {
+    return { filteredBlocks: [], cleanText: "" };
+  }
+
+  const keptBlocks: NonNullable<OcrBlock> = [];
+  const keptTextLines: string[] = [];
+
+  for (const block of rawBlocks) {
+    const keptParagraphs = [];
+
+    for (const paragraph of block.paragraphs) {
+      const keptLines = [];
+
+      for (const line of paragraph.lines) {
+        // 1. Filter out individual words with low confidence or impossible letter clusters
+        const validWordsInLine = line.words.filter((w) => {
+          const clean = normalizeWord(w.text);
+          if (!clean) return false;
+          // In OCR, words <= 3 chars must have high confidence (>= 80)
+          const minConf = clean.length <= 3 ? 80 : 72;
+          if (w.confidence < minConf) return false;
+          // Check reasonable word heuristics
+          return isReasonableWord(w.text, false, w.text);
+        });
+
+        if (validWordsInLine.length === 0) continue;
+
+        // 2. Language density check: count recognizable English words
+        const englishWords = validWordsInLine.filter((w) => {
+          const clean = normalizeWord(w.text);
+          return (
+            isValidEnglishWord(clean, dialect) ||
+            KNOWN_VALID_WORDS.has(clean) ||
+            KNOWN_ACRONYMS.has(clean) ||
+            Boolean(COMMON_TYPO_MAP[clean])
+          );
+        });
+
+        // If line has multiple words, but ZERO recognizable English words:
+        // It is almost certainly Arabic script, foreign text, or photo texture noise.
+        if (validWordsInLine.length >= 2 && englishWords.length === 0) {
+          continue;
+        }
+
+        // If line has a single word:
+        if (validWordsInLine.length === 1) {
+          const singleClean = normalizeWord(validWordsInLine[0].text);
+          const isKnown =
+            isValidEnglishWord(singleClean, dialect) ||
+            KNOWN_VALID_WORDS.has(singleClean) ||
+            KNOWN_ACRONYMS.has(singleClean) ||
+            Boolean(COMMON_TYPO_MAP[singleClean]);
+
+          if (!isKnown) {
+            // Drop short single-word noise tokens like "Sy", "Ey", "yl", "nl", "oc", etc.
+            if (singleClean.length < 4 || validWordsInLine[0].confidence < 82) {
+              continue;
+            }
+          }
+        }
+
+        keptLines.push({ words: validWordsInLine });
+        keptTextLines.push(validWordsInLine.map((w) => w.text).join(" "));
+      }
+
+      if (keptLines.length > 0) {
+        keptParagraphs.push({ lines: keptLines });
+      }
+    }
+
+    if (keptParagraphs.length > 0) {
+      keptBlocks.push({ paragraphs: keptParagraphs });
+    }
+  }
+
+  return {
+    filteredBlocks: keptBlocks,
+    cleanText: keptTextLines.join("\n"),
+  };
+}
+
+/* =========================================================
    POST REQUEST
    ========================================================= */
 
@@ -2261,7 +2378,8 @@ export async function POST(
       text = preExtractedText;
       fileName = (preExtractedFileName || "document.pdf").toLowerCase();
       isPdf = fileName.endsWith(".pdf");
-      pdfHasTextLayer = true;
+      isImage = /\.(png|jpe?g|webp|avif|gif|bmp|tiff|heic)$/i.test(fileName);
+      pdfHasTextLayer = isPdf;
       try {
         pdfPageStarts = preExtractedPageStartsRaw ? JSON.parse(preExtractedPageStartsRaw) : [];
       } catch {
@@ -2314,7 +2432,8 @@ export async function POST(
       isImage =
         file.type.startsWith(
           "image/"
-        );
+        ) ||
+        /\.(png|jpe?g|webp|avif|gif|bmp|tiff|heic)$/i.test(fileName);
 
       isPdf =
         file.type ===
@@ -2390,11 +2509,14 @@ export async function POST(
           { blocks: true }
         );
 
-        text = result.data.text;
-        blocks = result.data.blocks as OcrBlock;
+        const rawBlocks = result.data.blocks as OcrBlock;
+        const filtered = filterOcrBlocks(rawBlocks, dialect);
+
+        text = filtered.cleanText;
+        blocks = filtered.filteredBlocks;
 
         const image = await loadImage(buffer);
-        const ocrWords = (blocks ?? []).flatMap((block) =>
+        const ocrWords = (filtered.filteredBlocks ?? []).flatMap((block) =>
           block.paragraphs.flatMap((paragraph) =>
             paragraph.lines.flatMap((line) => line.words)
           )
@@ -2551,7 +2673,14 @@ export async function POST(
         errors.length,
       pdfHasTextLayer: isPdf ? pdfHasTextLayer : undefined,
       pdfMarks: isPdf ? pdfMarks : undefined,
-      imageMarks: isImage ? imageMarks : undefined,
+      imageMarks: isImage
+        ? imageMarks.filter((mark) => {
+            const cleanMark = normalizeWord(mark.word);
+            return errors.some(
+              (err) => normalizeWord(err.word) === cleanMark
+            );
+          })
+        : undefined,
       pageStarts: isPdf && pdfPageStarts.length > 0 ? pdfPageStarts : undefined,
     });
   } catch (error) {
