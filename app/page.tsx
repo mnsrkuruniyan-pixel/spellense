@@ -27,6 +27,7 @@ type CheckResult = {
   pdfHasTextLayer?: boolean;
   pdfMarks?: PdfMark[];
   imageMarks?: ImageMark[];
+  pageStarts?: number[];
   message?: string;
   error?: string;
 };
@@ -1136,6 +1137,49 @@ export default function Home() {
     localStorage.setItem("spellense_dialect", newDialect);
   };
 
+  const lastPageStartsRef = useRef<number[]>([]);
+
+  const handleRecheckDialect = async (newDialect: "en-US" | "en-GB") => {
+    if (newDialect === dialect || checking || !result?.text) return;
+    handleDialectChange(newDialect);
+    setChecking(true);
+    setCheckingMessage(
+      `Re-checking with ${newDialect === "en-GB" ? "🇬🇧 UK" : "🇺🇸 US"} English...`
+    );
+
+    try {
+      const formData = new FormData();
+      formData.append("text", result.text);
+      if (result.filename) {
+        formData.append("fileName", result.filename);
+      }
+      formData.append("dialect", newDialect);
+      const pageStarts = result.pageStarts || lastPageStartsRef.current;
+      if (pageStarts && pageStarts.length > 0) {
+        formData.append("pageStarts", JSON.stringify(pageStarts));
+      }
+
+      const response = await fetch("/api/check", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data: CheckResult = await response.json();
+      if (data && data.success) {
+        setResult((prev) => ({
+          ...data,
+          pdfMarks: prev?.pdfMarks,
+          imageMarks: prev?.imageMarks,
+          pageStarts: prev?.pageStarts || data.pageStarts,
+        }));
+      }
+    } catch (err) {
+      console.error("Dialect re-check error:", err);
+    } finally {
+      setChecking(false);
+    }
+  };
+
   const [dragging, setDragging] =
     useState(false);
 
@@ -1423,6 +1467,7 @@ export default function Home() {
           const extractedText = textParts.join("\n\n").trim();
           if (extractedText.length > 0) {
             setCheckingMessage("Checking spelling...");
+            lastPageStartsRef.current = pageStarts;
             formData.append("text", extractedText);
             formData.append("pageStarts", JSON.stringify(pageStarts));
             formData.append("fileName", file.name);
@@ -1488,6 +1533,9 @@ export default function Home() {
         return;
       }
 
+      if (data.pageStarts) {
+        lastPageStartsRef.current = data.pageStarts;
+      }
       setResult(data);
 
     } catch (error) {
@@ -1695,6 +1743,50 @@ export default function Home() {
                   ? "We inspected the English text in your file. Review the suggestions and marked positions below."
                   : "Every English token detected was cross-referenced against standard dictionaries with zero mistakes found."}
               </p>
+
+              {/* TARGET DIALECT TOGGLE & RE-CHECK */}
+              {result.text && (
+                <div className="mt-5 inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white/90 px-3.5 py-1.5 shadow-xs backdrop-blur-md">
+                  <span className="text-xs font-semibold text-slate-500">Target Dialect:</span>
+                  <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100/90 p-0.5">
+                    <button
+                      type="button"
+                      disabled={checking}
+                      onClick={() => handleRecheckDialect("en-US")}
+                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                        dialect === "en-US"
+                          ? "bg-white text-slate-900 shadow-xs ring-1 ring-slate-200/60"
+                          : "text-slate-500 hover:text-slate-900"
+                      }`}
+                      title="Check spelling using American English conventions (e.g. Center, Color, Organize)"
+                    >
+                      <span>🇺🇸 US English</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={checking}
+                      onClick={() => handleRecheckDialect("en-GB")}
+                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                        dialect === "en-GB"
+                          ? "bg-white text-slate-900 shadow-xs ring-1 ring-slate-200/60"
+                          : "text-slate-500 hover:text-slate-900"
+                      }`}
+                      title="Check spelling using British English conventions (e.g. Centre, Colour, Organise)"
+                    >
+                      <span>🇬🇧 UK English</span>
+                    </button>
+                  </div>
+                  {checking && (
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 animate-pulse pl-1">
+                      <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Updating...
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* METRICS SUMMARY KPI BAR (4 Cards) */}

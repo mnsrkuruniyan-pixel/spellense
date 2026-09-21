@@ -9,6 +9,7 @@ import { readFileSync, copyFileSync, existsSync } from "node:fs";
 import { mkdtemp, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { US_TO_UK_MAP, UK_TO_US_MAP } from "@/app/us-uk-converter/dialectRules";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -269,6 +270,22 @@ const KNOWN_VALID_WORDS = new Set([
   "dec",
   "satwa",
   "enhance",
+
+  /* Continents & Regions */
+  "africa",
+  "african",
+  "africas",
+  "america",
+  "american",
+  "americas",
+  "asia",
+  "asian",
+  "europe",
+  "european",
+  "antarctica",
+  "oceania",
+  "eurasia",
+  "qingdao",
 
   /* Months */
   "january",
@@ -1470,10 +1487,15 @@ function isValidEnglishWord(
   }
 
   /* Check dictionary based on selected dialect */
-  if (dialect === "en-GB") {
-    return spellGB.correct(clean);
+  const dict = dialect === "en-GB" ? spellGB : spellUS;
+  if (dict.correct(clean)) {
+    return true;
   }
-  return spellUS.correct(clean);
+  const capitalized = clean.charAt(0).toUpperCase() + clean.slice(1);
+  if (dict.correct(capitalized)) {
+    return true;
+  }
+  return false;
 }
 
 const VALID_TWO_LETTER_WORDS = new Set([
@@ -1706,6 +1728,14 @@ function getBestCorrection(
 
   if (isValidEnglishWord(clean, dialect)) {
     return null;
+  }
+
+  // Dialect-specific accurate conversions (e.g. US "center" -> UK "centre", UK "colour" -> US "color")
+  if (dialect === "en-GB" && US_TO_UK_MAP[clean]) {
+    return preserveCase(original, US_TO_UK_MAP[clean]);
+  }
+  if (dialect === "en-US" && UK_TO_US_MAP[clean]) {
+    return preserveCase(original, UK_TO_US_MAP[clean]);
   }
 
   // Instant high-confidence correction from typo map
@@ -2522,6 +2552,7 @@ export async function POST(
       pdfHasTextLayer: isPdf ? pdfHasTextLayer : undefined,
       pdfMarks: isPdf ? pdfMarks : undefined,
       imageMarks: isImage ? imageMarks : undefined,
+      pageStarts: isPdf && pdfPageStarts.length > 0 ? pdfPageStarts : undefined,
     });
   } catch (error) {
     console.error(
