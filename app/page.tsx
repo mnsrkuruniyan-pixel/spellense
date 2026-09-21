@@ -2376,21 +2376,30 @@ export default function Home() {
 
             <Link
               href="/"
-              className="rounded-full bg-white px-3 sm:px-4 py-1.5 sm:py-2 text-blue-600 shadow-sm"
+              className="rounded-full bg-white px-2.5 sm:px-4 py-1.5 sm:py-2 text-blue-600 shadow-sm"
             >
               Home
             </Link>
 
             <Link
-              href="/privacy"
-              className="rounded-full px-3 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
+              href="/case-converter"
+              className="rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
             >
-              Privacy
+              <span className="sm:hidden">Case</span>
+              <span className="hidden sm:inline">Case Converter</span>
+            </Link>
+
+            <Link
+              href="/us-uk-converter"
+              className="rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
+            >
+              <span className="sm:hidden">US/UK</span>
+              <span className="hidden sm:inline">US ↔ UK</span>
             </Link>
 
             <Link
               href="/faq"
-              className="rounded-full px-3 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
+              className="rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
             >
               FAQ
             </Link>
@@ -3183,7 +3192,35 @@ export default function Home() {
             </div>
 
 
-            <div className="flex flex-wrap justify-center gap-5 text-xs text-gray-400">
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-xs text-gray-400">
+
+              <Link
+                href="/"
+                className="transition hover:text-gray-700"
+              >
+                Home
+              </Link>
+
+              <Link
+                href="/case-converter"
+                className="transition hover:text-gray-700"
+              >
+                Case Converter
+              </Link>
+
+              <Link
+                href="/us-uk-converter"
+                className="transition hover:text-gray-700"
+              >
+                US ↔ UK Dialect
+              </Link>
+
+              <Link
+                href="/faq"
+                className="transition hover:text-gray-700"
+              >
+                FAQ
+              </Link>
 
               <Link
                 href="/privacy"
@@ -3197,13 +3234,6 @@ export default function Home() {
                 className="transition hover:text-gray-700"
               >
                 Terms
-              </Link>
-
-              <Link
-                href="/faq"
-                className="transition hover:text-gray-700"
-              >
-                FAQ
               </Link>
 
               <a
