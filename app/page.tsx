@@ -791,9 +791,9 @@ function PptxPreview({
       <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
         <button type="button" disabled={!slideCount || currentSlide === 1} onClick={() => setCurrentSlide((slide) => slide - 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Previous</button>
         <div className="flex items-center gap-1">
-          <button type="button" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
-          <button type="button" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
-          <button type="button" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
+          <button type="button" aria-label="Zoom out" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
+          <button type="button" aria-label="Reset zoom" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
+          <button type="button" aria-label="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
         </div>
         <span>{slideCount ? `Slide ${currentSlide} of ${slideCount}` : "Preparing slides..."}</span>
         <button type="button" disabled={!slideCount || currentSlide === slideCount} onClick={() => setCurrentSlide((slide) => slide + 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Next</button>
@@ -937,9 +937,9 @@ function XlsxPreview({
       <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
         <button type="button" disabled={currentSheet === 0} onClick={() => setCurrentSheet((sheet) => sheet - 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Previous</button>
         <div className="flex items-center gap-1">
-          <button type="button" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
-          <button type="button" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
-          <button type="button" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
+          <button type="button" aria-label="Zoom out" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
+          <button type="button" aria-label="Reset zoom" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
+          <button type="button" aria-label="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
         </div>
         <span>{sheets.length ? `Sheet ${currentSheet + 1} of ${sheets.length}` : "Preparing sheets..."}</span>
         <button type="button" disabled={!sheets.length || currentSheet === sheets.length - 1} onClick={() => setCurrentSheet((sheet) => sheet + 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Next</button>
@@ -1028,9 +1028,9 @@ function ImagePreview({
         </div>
       </div>
       <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
-        <button type="button" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
-        <button type="button" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
-        <button type="button" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
+        <button type="button" aria-label="Zoom out" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
+        <button type="button" aria-label="Reset zoom" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
+        <button type="button" aria-label="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
       </div>
       {imageUrl && <ImageUrlCleanup url={imageUrl} />}
     </div>
@@ -2310,7 +2310,7 @@ export default function Home() {
 
   return (
 
-    <main className="min-h-screen bg-[#f8fafc] text-[#101828]">
+    <main id="main-content" className="min-h-screen bg-[#f8fafc] text-[#101828]">
 
       {/* NAVBAR */}
 
@@ -2414,6 +2414,8 @@ export default function Home() {
       {/* FILE INPUT */}
 
       <input
+        id="file-upload-input"
+        aria-label="Upload document or image file for visual spell checking"
         ref={fileInput}
         type="file"
         accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.pptx,.xlsx"
@@ -2452,7 +2454,7 @@ export default function Home() {
             </div>
 
             <h1 className="mt-3 text-[32px] font-extrabold leading-[1.12] tracking-[-1.8px] text-slate-900 sm:text-[46px] lg:text-[54px]">
-              Great design deserves
+              Great design deserves{" "}
               <br />
               <span className="inline-block whitespace-nowrap bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
                 flawless spelling.
@@ -2576,6 +2578,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setUploadError(null)}
+                  aria-label="Dismiss error message"
                   className="ml-3 rounded-lg p-1.5 text-rose-400 transition hover:bg-rose-100 hover:text-rose-700 cursor-pointer"
                   title="Dismiss error"
                 >
@@ -3137,6 +3140,76 @@ export default function Home() {
                 </div>
               </div>
 
+            </div>
+
+            {/* EXPANDED FORMATS & EDUCATIONAL GUIDE */}
+            <div className="mt-14 space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                  Intelligent visual spell checking for modern media
+                </h2>
+                <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                  Proofread creative banners, corporate documents, and scanned pages in one fast, private workspace.
+                </p>
+              </div>
+
+              <div className="grid gap-6 sm:grid-cols-3">
+                <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all hover:border-blue-200">
+                  <div className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                    Image Spell Check
+                  </div>
+                  <h3 className="mt-2 text-lg font-bold text-slate-900">
+                    PNG, JPG &amp; WebP Graphics
+                  </h3>
+                  <p className="mt-2.5 text-xs leading-relaxed text-slate-600">
+                    Graphic designers export banners, social carousels, and flyers from Figma or Canva where text becomes pixels. Spellense uses optical character recognition to read the letters directly from your artwork and highlights typos in place.
+                  </p>
+                </div>
+
+                <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all hover:border-indigo-200">
+                  <div className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                    Document Inspection
+                  </div>
+                  <h3 className="mt-2 text-lg font-bold text-slate-900">
+                    Multi-Page PDFs &amp; Slides
+                  </h3>
+                  <p className="mt-2.5 text-xs leading-relaxed text-slate-600">
+                    Pitch decks and contracts often mix vector text and scanned pages. Spellense renders a visual multi-page proofing canvas so you can navigate slides, inspect bounding boxes, and confirm suggestions before executive presentations.
+                  </p>
+                </div>
+
+                <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all hover:border-blue-200">
+                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-600">
+                    Dialect Awareness
+                  </div>
+                  <h3 className="mt-2 text-lg font-bold text-slate-900">
+                    US &amp; UK English Rules
+                  </h3>
+                  <p className="mt-2.5 text-xs leading-relaxed text-slate-600">
+                    Target your audience with confidence. Switch seamlessly between American English rules (color, organize, defense) and British English conventions (colour, organise, defence) with dialect-accurate suggestion engines.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/90 bg-white/85 p-7 shadow-xs backdrop-blur-md">
+                <h3 className="text-lg font-bold text-slate-900">
+                  Why visual proofreading matters for creators and businesses
+                </h3>
+                <div className="mt-3 grid gap-5 sm:grid-cols-3 text-xs leading-relaxed text-slate-600">
+                  <div>
+                    <strong className="block text-slate-800 font-bold mb-1">Protect Brand Credibility</strong>
+                    Typographical errors on marketing graphics and resumes undermine credibility. Spellense catches subtle letter swaps before public release.
+                  </div>
+                  <div>
+                    <strong className="block text-slate-800 font-bold mb-1">Avoid Costly Printing Reprints</strong>
+                    Catch mistakes on flyers, restaurant menus, certificates, and brochures before sending large print orders to press.
+                  </div>
+                  <div>
+                    <strong className="block text-slate-800 font-bold mb-1">Zero-Storage Privacy</strong>
+                    Files are held in RAM solely for OCR analysis and immediately discarded. Your proprietary pitch decks and contracts remain strictly private.
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* ACTION LINKS */}

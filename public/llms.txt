@@ -1,0 +1,18 @@
+# Spellense — Free In-Memory English Spell Checker & Writing Utilities
+
+> Spellense (https://spellense.com) is a high-accuracy, privacy-first English visual spell checker and copywriting toolset. It combines Optical Character Recognition (OCR) with dictionary proofreading to detect spelling mistakes in images, documents, presentations, and spreadsheets.
+
+## Core Tools
+
+- **Visual Spell Checker** (https://spellense.com): Upload raster images (PNG, JPG, WebP), PDFs (native and scanned), DOCX, PPTX, or XLSX files to see visual typo bounding boxes mapped over original document layouts with high-confidence suggestions.
+- **Text & Sentence Proofreader** (https://spellense.com?mode=text): Instant text editor for proofreading raw text with word/character counters and dialect toggles.
+- **Case Converter & Text Formatter** (https://spellense.com/case-converter): Convert text between 12 casing styles (Title Case, Sentence case, UPPERCASE, lowercase, camelCase, snake_case, kebab-case, PascalCase, and CONSTANT_CASE) with text cleaners and live readability statistics.
+- **US ↔ UK English Dialect Converter** (https://spellense.com/us-uk-converter): Bidirectional American to British English converter adapting -or/-our, -ize/-ise, -er/-re, double 'l', and vocabulary pairs while preserving original letter casing.
+- **Frequently Asked Questions** (https://spellense.com/faq): Technical and architectural answers regarding file size limits, OCR algorithms, office document parsing, and privacy policies.
+
+## Key Capabilities & Architecture
+
+- **Zero-Storage Privacy Model**: Files are held ephemerally in RAM during OCR and spell checking, then instantly discarded. No user content is stored on disk or used for training.
+- **Dialects Supported**: American English (en-US) and British English (en-GB).
+- **Supported Formats**: JPG, JPEG, PNG, WebP, PDF, DOCX, PPTX, XLSX.
+- **No Sign-up**: 100% free with no registration, no subscription gates, and no credit card required.

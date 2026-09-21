@@ -524,3 +524,4 @@ export function convertDialect(
     changeCount: changes.length,
   };
 }
+

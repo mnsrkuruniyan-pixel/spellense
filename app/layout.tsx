@@ -41,12 +41,21 @@ export const metadata: Metadata = {
     description:
       "Find spelling mistakes in images and documents before your content goes live.",
     url: "/",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Spellense — Free English Spell Checker for Visual Content",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Spellense — Free English Spell Checker",
     description:
       "Check spelling in images, PDFs, DOCX, PPTX and XLSX files online.",
+    images: ["/og-image.png"],
   },
   keywords: [
     "spell checker",
@@ -73,6 +82,13 @@ const jsonLd = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "All",
   browserRequirements: "Requires JavaScript. Requires HTML5.",
+  datePublished: "2026-01-01",
+  dateModified: "2026-09-21",
+  author: {
+    "@type": "Organization",
+    name: "Spellense Team",
+    url: "https://spellense.com",
+  },
   offers: {
     "@type": "Offer",
     price: "0",
@@ -95,6 +111,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${manrope.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-xl focus:bg-blue-600 focus:px-4 focus:py-2.5 focus:text-xs focus:font-bold focus:text-white focus:shadow-xl focus:outline-none"
+        >
+          Skip to main content
+        </a>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
