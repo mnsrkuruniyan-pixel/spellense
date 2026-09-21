@@ -16,3 +16,4 @@
 - **Dialects Supported**: American English (en-US) and British English (en-GB).
 - **Supported Formats**: JPG, JPEG, PNG, WebP, PDF, DOCX, PPTX, XLSX.
 - **No Sign-up**: 100% free with no registration, no subscription gates, and no credit card required.
+
