@@ -1476,6 +1476,12 @@ function isValidEnglishWord(
   return spellUS.correct(clean);
 }
 
+const VALID_TWO_LETTER_WORDS = new Set([
+  "am", "an", "as", "at", "be", "by", "do", "go", "he", "hi", "if", "in", "is", "it",
+  "me", "my", "no", "of", "ok", "on", "or", "ox", "so", "to", "up", "us", "we",
+  "id", "tv", "cv", "ad", "pm", "am", "ai", "hr", "pr", "qa", "ui", "ux", "ip", "os", "pc", "vs", "re"
+]);
+
 function getLowConfidenceOcrWords(
   blocks: OcrBlock
 ): Set<string> {
@@ -1487,7 +1493,7 @@ function getLowConfidenceOcrWords(
         for (const word of line.words) {
           const clean = normalizeWord(word.text);
 
-          if (clean && word.confidence < 65) {
+          if (clean && word.confidence < 70) {
             lowConfidenceWords.add(clean);
           }
         }
@@ -1503,7 +1509,9 @@ function getLowConfidenceOcrWords(
    ========================================================= */
 
 function isReasonableWord(
-  word: string
+  word: string,
+  isDigitalText = true,
+  original = word
 ): boolean {
   const clean = normalizeWord(word);
 
@@ -1524,6 +1532,34 @@ function isReasonableWord(
   /* Don't flag random single letters except A and I */
   if (clean.length === 1 && clean !== "a" && clean !== "i") {
     return false;
+  }
+
+  // In OCR mode (scanned PDFs & raster graphics), aggressively filter out non-word OCR artifacts & foreign script hallucinations:
+  if (!isDigitalText) {
+    // Isolated 2-letter tokens in OCR that are not standard 2-letter English words/abbreviations (e.g. ce, eo, se, ti, fa, lo)
+    if (clean.length === 2 && !VALID_TWO_LETTER_WORDS.has(clean)) {
+      return false;
+    }
+
+    // Capital J followed by lowercase consonant (e.g. "Jto", "Jm", "Jk" from checkboxes, bullets, or Arabic strokes)
+    if (/^[jJ][b-df-hj-np-tv-z]/.test(original)) {
+      return false;
+    }
+
+    // Words of 4+ characters with no vowels at all
+    if (clean.length >= 4 && !/[aeiouy]/i.test(clean)) {
+      return false;
+    }
+
+    // Impossible English consonant cluster endings in OCR (e.g. "usgd", "doasll", "zpt")
+    if (/(?:sgd|sll|zpt|qwt|bcd|fgk)$/i.test(clean)) {
+      return false;
+    }
+
+    // Impossible vowel-consonant combinations from Arabic/foreign OCR noise (e.g. "rouwl")
+    if (/(?:ouwl|ouu|aee)/i.test(clean)) {
+      return false;
+    }
   }
 
   return true;
@@ -1805,7 +1841,7 @@ function checkWithOurEngine(
     const cleanWord = item.clean;
     const clean = normalizeWord(cleanWord);
 
-    if (!isReasonableWord(cleanWord)) {
+    if (!isReasonableWord(cleanWord, isDigitalText, original)) {
       continue;
     }
 
@@ -1879,6 +1915,7 @@ type PdfTextResult = {
   pageStarts: number[];
   hasTextLayer: boolean;
   ocrWords?: PdfOcrWord[];
+  blocks?: OcrBlock;
 };
 
 type PdfOcrWord = {
@@ -2008,6 +2045,7 @@ async function extractPdfOcrText(
   const pages: string[] = [];
   const pageStarts: number[] = [];
   const ocrWords: PdfOcrWord[] = [];
+  const allBlocks: NonNullable<OcrBlock> = [];
   let textLength = 0;
 
   // Cap scanned PDF OCR to 15 pages to stay safely within serverless timeout
@@ -2035,20 +2073,17 @@ async function extractPdfOcrText(
     );
     const pageText = result.data.text.trim();
 
-    const ocrData = result.data as typeof result.data & {
-      words?: {
-        text: string;
-        bbox: {
-          x0: number;
-          y0: number;
-          x1: number;
-          y1: number;
-        };
-      }[];
-    };
+    const pageBlocks = (result.data.blocks || []) as NonNullable<OcrBlock>;
+    allBlocks.push(...pageBlocks);
 
-    for (const word of ocrData.words ?? []) {
-      if (!word.text.trim()) continue;
+    const words = pageBlocks.flatMap((block) =>
+      block.paragraphs.flatMap((paragraph) =>
+        paragraph.lines.flatMap((line) => line.words)
+      )
+    );
+
+    for (const word of words) {
+      if (!word.text.trim() || !word.bbox) continue;
 
       ocrWords.push({
         text: word.text,
@@ -2075,6 +2110,7 @@ async function extractPdfOcrText(
     pageStarts,
     hasTextLayer: false,
     ocrWords,
+    blocks: allBlocks,
   };
 }
 
@@ -2308,6 +2344,7 @@ export async function POST(
         if (!pdfText.text.trim()) {
           worker = await getOcrWorker();
           pdfText = await extractPdfOcrText(buffer, worker);
+          blocks = pdfText.blocks ?? [];
         }
 
         text = pdfText.text;
@@ -2450,6 +2487,7 @@ export async function POST(
         ? errors.flatMap((error) => {
             const match = pdfOcrWords.find(
               (word) =>
+                word.page === error.page &&
                 word.text.toLowerCase().replace(/[^a-z]/g, "") ===
                 error.word.toLowerCase().replace(/[^a-z]/g, "")
             );

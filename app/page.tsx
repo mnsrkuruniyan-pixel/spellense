@@ -289,7 +289,7 @@ function PdfMarkedPreview({
               )}px`;
               tokenSpan.style.height = `${fontSize * 1.2}px`;
               tokenSpan.className =
-                "rounded border border-red-500 bg-transparent underline decoration-red-500 decoration-2 underline-offset-2";
+                "rounded border-2 border-red-500 bg-red-500/15 shadow-xs ring-1 ring-red-500/40 pointer-events-auto";
               tokenSpan.title = matchingError.suggestion
                 ? `Suggestion: ${matchingError.suggestion}`
                 : "Possible spelling mistake";
@@ -302,7 +302,7 @@ function PdfMarkedPreview({
           layer.appendChild(span);
         }
 
-        if (!markErrors) {
+        if (!markErrors || pdfMarks.length > 0) {
           for (const mark of pdfMarks.filter(
             (item) => item.page === selectedPage
           )) {
@@ -313,8 +313,8 @@ function PdfMarkedPreview({
             outline.style.width = `${mark.width * viewport.width}px`;
             outline.style.height = `${mark.height * viewport.height}px`;
             outline.className =
-              "rounded border-2 border-red-500 bg-transparent";
-            outline.title = "Possible spelling mistake";
+              "rounded border-2 border-red-500 bg-red-500/15 shadow-xs ring-1 ring-red-500/40 pointer-events-auto";
+            outline.title = `Possible spelling mistake: ${mark.word}`;
             layer.appendChild(outline);
           }
         }
