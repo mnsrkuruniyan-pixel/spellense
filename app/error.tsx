@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
 export default function Error({
   error,
@@ -22,23 +23,7 @@ export default function Error({
       <div className="animate-pulse-glow pointer-events-none fixed bottom-[10%] right-[15%] h-[450px] w-[450px] rounded-full bg-gradient-to-br from-amber-400/15 to-rose-400/15 blur-[120px]" />
 
       {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5 transition hover:opacity-90">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-sm font-black text-white shadow-md shadow-blue-500/25">
-              S
-            </span>
-            <div className="flex flex-col">
-              <span className="text-base font-extrabold tracking-tight text-slate-900">
-                Spellense
-              </span>
-              <span className="text-[10px] font-semibold text-slate-400">
-                Visual Spell Checker
-              </span>
-            </div>
-          </Link>
-        </div>
-      </header>
+      <Navbar />
 
       {/* ERROR MAIN HERO */}
       <main className="relative z-10 flex min-h-[calc(100vh-160px)] items-center justify-center px-6 py-16">

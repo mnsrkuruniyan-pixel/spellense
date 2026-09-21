@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
 export default function NotFound() {
   return (
@@ -9,44 +10,7 @@ export default function NotFound() {
       <div className="animate-pulse-glow pointer-events-none fixed bottom-[10%] right-[15%] h-[450px] w-[450px] rounded-full bg-gradient-to-br from-violet-400/15 to-blue-400/15 blur-[120px]" />
 
       {/* STICKY NAVBAR */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5 transition hover:opacity-90">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-sm font-black text-white shadow-md shadow-blue-500/25">
-              S
-            </span>
-            <div className="flex flex-col">
-              <span className="text-base font-extrabold tracking-tight text-slate-900">
-                Spellense
-              </span>
-              <span className="text-[10px] font-semibold text-slate-400">
-                Visual Spell Checker
-              </span>
-            </div>
-          </Link>
-
-          <nav className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="rounded-xl px-3.5 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-            >
-              Home
-            </Link>
-            <Link
-              href="/faq"
-              className="rounded-xl px-3.5 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-            >
-              FAQ
-            </Link>
-            <Link
-              href="/privacy"
-              className="rounded-xl px-3.5 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-            >
-              Privacy
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Navbar />
 
       {/* 404 MAIN HERO */}
       <main className="relative z-10 flex min-h-[calc(100vh-160px)] items-center justify-center px-6 py-16">

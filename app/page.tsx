@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
 type SpellError = {
   word: string;
@@ -1647,76 +1648,16 @@ export default function Home() {
       <main className="min-h-screen bg-[#f8fafc] text-[#101828]">
 
         {/* NAVBAR */}
-        <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
-          <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-6 lg:px-10">
-            <Link
-              href="/"
-              className="flex items-center gap-3"
-              onClick={() => {
-                setResult(null);
-                setFiles([]);
-              }}
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-600/25">
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <path d="M14 2v6h6" />
-                  <path d="M8 13h5" />
-                  <path d="M8 17h3" />
-                  <circle cx="17.5" cy="16.5" r="2.7" />
-                  <path d="m19.5 18.5 1.8 1.8" />
-                </svg>
-              </div>
-
-              <div>
-                <div className="text-[21px] font-bold tracking-[-0.8px]">
-                  Spel<span className="text-blue-600">lense</span>
-                </div>
-                <div className="text-[9px] font-medium tracking-[1.5px] text-gray-400">
-                  SMART SPELL CHECKING
-                </div>
-              </div>
-            </Link>
-
-            {/* Current file pill */}
-            <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50/80 px-3.5 py-1.5 text-xs font-semibold text-slate-700 max-w-[260px]">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="truncate">{fileName}</span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={downloadReport}
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-xs transition hover:border-slate-300 hover:bg-slate-50"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" x2="12" y1="15" y2="3" />
-                </svg>
-                <span>Report</span>
-              </button>
-
-              <button
-                onClick={removeFiles}
-                className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 active:translate-y-0"
-              >
-                + Check another file
-              </button>
-            </div>
-          </nav>
-        </header>
+        <Navbar
+          resultMode={{
+            fileName,
+            onReset: () => {
+              setResult(null);
+              setFiles([]);
+            },
+            onDownloadReport: downloadReport,
+          }}
+        />
 
         {/* RESULTS HERO */}
         <section className="relative overflow-hidden bg-dot-pattern">
@@ -2364,102 +2305,7 @@ export default function Home() {
       />
 
       {/* NAVBAR */}
-
-      <header className="border-b border-slate-200/70 bg-white/85 backdrop-blur-xl">
-
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-10">
-
-          <Link
-            href="/"
-            className="flex items-center gap-3"
-          >
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-600/25">
-
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-
-                <path d="M14 2v6h6" />
-
-                <path d="M8 13h5" />
-
-                <path d="M8 17h3" />
-
-                <circle
-                  cx="17.5"
-                  cy="16.5"
-                  r="2.7"
-                />
-
-                <path d="m19.5 18.5 1.8 1.8" />
-
-              </svg>
-
-            </div>
-
-
-            <div>
-
-              <div className="text-[21px] font-bold tracking-[-0.8px]">
-                Spel<span className="text-blue-600">lense</span>
-              </div>
-
-              <div className="text-[9px] font-medium tracking-[1.5px] text-gray-400">
-                SMART SPELL CHECKING
-              </div>
-
-            </div>
-
-          </Link>
-
-
-          <div className="flex items-center gap-1 rounded-full border border-slate-100 bg-slate-50/70 p-1 text-xs sm:text-[13px] font-semibold text-slate-500">
-
-            <Link
-              href="/"
-              className="rounded-full bg-white px-2.5 sm:px-4 py-1.5 sm:py-2 text-blue-600 shadow-sm"
-            >
-              Home
-            </Link>
-
-            <Link
-              href="/case-converter"
-              className="rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
-            >
-              <span className="sm:hidden">Case</span>
-              <span className="hidden sm:inline">Case Converter</span>
-            </Link>
-
-            <Link
-              href="/us-uk-converter"
-              className="rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
-            >
-              <span className="sm:hidden">US/UK</span>
-              <span className="hidden sm:inline">US ↔ UK</span>
-            </Link>
-
-            <Link
-              href="/faq"
-              className="rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
-            >
-              FAQ
-            </Link>
-
-          </div>
-
-        </nav>
-
-      </header>
+      <Navbar onUploadClick={openFilePicker} />
 
 
       {/* FILE INPUT */}

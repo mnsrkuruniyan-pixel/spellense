@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: "About Us | Spellense — Visual Spell Checker & Writing Tools",
@@ -45,69 +46,7 @@ export default function AboutPage() {
       />
 
       {/* NAVBAR */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur-xl">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-10">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-600/25">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <path d="M14 2v6h6" />
-                <path d="M8 13h5" />
-                <path d="M8 17h3" />
-                <circle cx="17.5" cy="16.5" r="2.7" />
-                <path d="m19.5 18.5 1.8 1.8" />
-              </svg>
-            </div>
-            <div>
-              <div className="text-[21px] font-bold tracking-[-0.8px]">
-                Spel<span className="text-blue-600">lense</span>
-              </div>
-              <div className="text-[9px] font-medium tracking-[1.5px] text-gray-400">
-                SMART SPELL CHECKING
-              </div>
-            </div>
-          </Link>
-
-          {/* Nav Links */}
-          <div className="flex items-center gap-1 rounded-full border border-slate-100 bg-slate-50/70 p-1 text-xs sm:text-[13px] font-semibold text-slate-500">
-            <Link
-              href="/"
-              className="rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
-            >
-              Home
-            </Link>
-            <Link
-              href="/case-converter"
-              className="rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
-            >
-              <span className="sm:hidden">Case</span>
-              <span className="hidden sm:inline">Case Converter</span>
-            </Link>
-            <Link
-              href="/us-uk-converter"
-              className="rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
-            >
-              <span className="sm:hidden">US/UK</span>
-              <span className="hidden sm:inline">US ↔ UK</span>
-            </Link>
-            <Link
-              href="/faq"
-              className="rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 transition hover:bg-white hover:text-blue-600"
-            >
-              FAQ
-            </Link>
-          </div>
-        </nav>
-      </header>
+      <Navbar />
 
       {/* HERO & ABOUT CONTENT */}
       <section className="relative overflow-hidden bg-dot-pattern pb-24 pt-12 sm:pt-16">
