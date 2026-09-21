@@ -258,6 +258,9 @@ export default function FaqPage() {
               <Link href="/" className="transition hover:text-gray-700">
                 Home
               </Link>
+              <Link href="/about" className="transition hover:text-gray-700">
+                About
+              </Link>
               <Link href="/case-converter" className="transition hover:text-gray-700">
                 Case Converter
               </Link>

@@ -2,6 +2,7 @@
 const CACHE_NAME = "spellense-v7";
 const STATIC_ASSETS = [
   "/",
+  "/about",
   "/case-converter",
   "/us-uk-converter",
   "/faq",

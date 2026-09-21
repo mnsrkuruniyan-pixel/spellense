@@ -8,6 +8,7 @@
 - **Text & Sentence Proofreader** (https://spellense.com?mode=text): Instant text editor for proofreading raw text with word/character counters and dialect toggles.
 - **Case Converter & Text Formatter** (https://spellense.com/case-converter): Convert text between 12 casing styles (Title Case, Sentence case, UPPERCASE, lowercase, camelCase, snake_case, kebab-case, PascalCase, and CONSTANT_CASE) with text cleaners and live readability statistics.
 - **US ↔ UK English Dialect Converter** (https://spellense.com/us-uk-converter): Bidirectional American to British English converter adapting -or/-our, -ize/-ise, -er/-re, double 'l', and vocabulary pairs while preserving original letter casing.
+- **About Spellense** (https://spellense.com/about): Mission, technical architecture, team, and privacy principles.
 - **Frequently Asked Questions** (https://spellense.com/faq): Technical and architectural answers regarding file size limits, OCR algorithms, office document parsing, and privacy policies.
 
 ## Key Capabilities & Architecture

@@ -2308,9 +2308,60 @@ export default function Home() {
   // MAIN UPLOAD PAGE
   // ==========================================
 
+  const homeFaqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "How does Spellense detect spelling mistakes in images and visual designs?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Spellense applies high-precision Optical Character Recognition (OCR) to detect text tokens inside images (PNG, JPG, WebP) and scanned PDF pages. Each word token is verified against comprehensive English dictionaries, and suspected typos are highlighted with red bounding boxes drawn directly over your original artwork.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Are my uploaded files, contracts, or presentations saved on your server?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "No. Spellense operates on a strict zero-storage, in-memory architecture. Files are processed ephemerally in RAM exclusively for OCR analysis and dictionary checking, then discarded immediately after results are returned. Files are never stored on disk or used to train artificial intelligence models.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Which document formats and file sizes are supported?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Spellense supports PNG, JPG, JPEG, and WebP images, native and scanned multi-page PDF documents, Microsoft Word (DOCX), PowerPoint (PPTX) slide decks, and Excel (XLSX) workbooks up to 25 MB per file.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Does Spellense support both American and British English spelling?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes. You can switch effortlessly between American English (en-US) and British English (en-GB) dictionaries to ensure accurate suggestions for regional variations like color/colour, organize/organise, and center/centre.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Is Spellense completely free to use?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes, Spellense is 100% free with no account creation, no subscriptions, and no paywalls. All features including OCR inspection and case converters are immediately available.",
+        },
+      },
+    ],
+  };
+
   return (
 
     <main id="main-content" className="min-h-screen bg-[#f8fafc] text-[#101828]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }}
+      />
 
       {/* NAVBAR */}
 
@@ -3212,6 +3263,86 @@ export default function Home() {
               </div>
             </div>
 
+            {/* HOMEPAGE FAQ ACCORDION */}
+            <div className="mt-14 space-y-4">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/70 bg-white/80 px-3 py-1 shadow-2xs backdrop-blur-md">
+                  <span className="flex h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+                    Frequently Asked Questions
+                  </span>
+                </div>
+                <h2 className="mt-2.5 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                  Everything you need to know about Spellense
+                </h2>
+                <p className="mx-auto mt-1.5 max-w-xl text-xs text-slate-500 sm:text-sm">
+                  Quick answers about our in-memory OCR proofreading, supported formats, and privacy policies.
+                </p>
+              </div>
+
+              <div className="space-y-3 max-w-3xl mx-auto">
+                <details className="group rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
+                  <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                    <span>How does Spellense detect spelling mistakes in images and visual designs?</span>
+                    <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                    Spellense applies high-precision Optical Character Recognition (OCR) to detect readable text inside raster graphics (PNG, JPG, WebP) and scanned PDF pages. Each word token is verified against comprehensive English dictionaries, and suspected typos are highlighted with red bounding boxes drawn directly over your original artwork.
+                  </p>
+                </details>
+
+                <details className="group rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
+                  <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                    <span>Are my uploaded files, contracts, or presentations saved on your server?</span>
+                    <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                    No. Spellense operates on a strict zero-storage, in-memory architecture. Files are processed ephemerally in RAM exclusively for OCR analysis and dictionary checking, then discarded immediately after results are returned. Files are never stored on disk or used to train artificial intelligence models.
+                  </p>
+                </details>
+
+                <details className="group rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
+                  <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                    <span>Which document formats and file sizes are supported?</span>
+                    <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                    Spellense supports PNG, JPG, JPEG, and WebP images, native and scanned multi-page PDF documents, Microsoft Word (DOCX), PowerPoint (PPTX) slide decks, and Excel (XLSX) workbooks up to 25 MB per file.
+                  </p>
+                </details>
+
+                <details className="group rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
+                  <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                    <span>Does Spellense support both American and British English spelling?</span>
+                    <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                    Yes. You can switch effortlessly between American English (en-US) and British English (en-GB) dictionaries to ensure accurate suggestions for regional variations like color/colour, organize/organise, and center/centre.
+                  </p>
+                </details>
+
+                <details className="group rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
+                  <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                    <span>Is Spellense completely free to use?</span>
+                    <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                    Yes, Spellense is 100% free with no account creation, no subscriptions, and no paywalls. All features including OCR inspection and case converters are immediately available.
+                  </p>
+                </details>
+              </div>
+            </div>
+
             {/* ACTION LINKS */}
             <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200/70 pt-8">
               <div className="flex flex-wrap items-center gap-6 text-sm font-semibold">
@@ -3272,6 +3403,13 @@ export default function Home() {
                 className="transition hover:text-gray-700"
               >
                 Home
+              </Link>
+
+              <Link
+                href="/about"
+                className="transition hover:text-gray-700"
+              >
+                About
               </Link>
 
               <Link
