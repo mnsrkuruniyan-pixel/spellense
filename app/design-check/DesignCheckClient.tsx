@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useMemo, useEffect } from "react";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 interface DesignIssue {
@@ -350,6 +351,126 @@ export default function DesignCheckClient() {
                 {error}
               </div>
             )}
+          </div>
+        )}
+
+        {/* HOW IT WORKS / FEATURE HIGHLIGHTS (WHEN NO FILE UPLOADED) */}
+        {!result && !loading && (
+          <div className="mx-auto mt-16 max-w-5xl space-y-16">
+            {/* 3 CORE PRE-FLIGHT CHECKS */}
+            <div>
+              <div className="text-center">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                  Pre-Flight Automated QA
+                </span>
+                <h3 className="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">
+                  Catch Costly Design Mistakes Before Publishing
+                </h3>
+                <p className="mx-auto mt-2 max-w-2xl text-xs text-slate-500 sm:text-sm">
+                  Spellense runs visual, mathematical, and AI audits across your graphic creatives to ensure print and social media readiness.
+                </p>
+              </div>
+
+              <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
+                {/* Card 1: WCAG Contrast */}
+                <div className="group rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-2xl">
+                    👁️
+                  </div>
+                  <h4 className="mt-4 text-base font-bold text-slate-900">
+                    WCAG Contrast Math
+                  </h4>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                    Measures pixel luminance ratio between text and its underlying background to guarantee readability under harsh sunlight and low-brightness phone screens.
+                  </p>
+                  <div className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold text-blue-600">
+                    <span>4.5:1 AA Standard</span>
+                    <span>•</span>
+                    <span>Instant Math</span>
+                  </div>
+                </div>
+
+                {/* Card 2: Margins & Bleed */}
+                <div className="group rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-md">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-2xl">
+                    📐
+                  </div>
+                  <h4 className="mt-4 text-base font-bold text-slate-900">
+                    Margin &amp; Bleed Safe-Zones
+                  </h4>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                    Identifies critical copy, discount codes, or brand logos placed within 3.5% of canvas borders, preventing accidental cutting or social app UI cropping.
+                  </p>
+                  <div className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold text-amber-700">
+                    <span>Safe-Zone Guard</span>
+                    <span>•</span>
+                    <span>Print Ready</span>
+                  </div>
+                </div>
+
+                {/* Card 3: AI Copy & Grammar */}
+                <div className="group rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-2xl">
+                    ✍️
+                  </div>
+                  <h4 className="mt-4 text-base font-bold text-slate-900">
+                    AI Copy &amp; Headline QA
+                  </h4>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                    Multimodal vision AI proofreads visible slogans, body paragraphs, and promo banners to catch embarrassing grammar errors, typos, and missing articles.
+                  </p>
+                  <div className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
+                    <span>Gemini AI Vision</span>
+                    <span>•</span>
+                    <span>Zero Storage</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* HOW IT WORKS 3-STEP PROCESS */}
+            <div className="rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-50/80 via-white to-blue-50/40 p-8 sm:p-10 shadow-xs">
+              <div className="text-center">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">
+                  Step-by-Step Workflow
+                </span>
+                <h3 className="mt-1 text-xl font-extrabold text-slate-900 sm:text-2xl">
+                  How Design Check Works
+                </h3>
+              </div>
+
+              <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-md shadow-blue-500/20">
+                    1
+                  </div>
+                  <h5 className="mt-3 text-sm font-bold text-slate-900">Upload Your Artwork</h5>
+                  <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                    Drop high-res PNG, JPG, or WebP posters, flyers, or ad creatives.
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white shadow-md shadow-indigo-500/20">
+                    2
+                  </div>
+                  <h5 className="mt-3 text-sm font-bold text-slate-900">Automated Inspection</h5>
+                  <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                    Parallel algorithms compute WCAG contrast ratios, safe zones, and AI copy analysis.
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-sm font-bold text-white shadow-md shadow-violet-500/20">
+                    3
+                  </div>
+                  <h5 className="mt-3 text-sm font-bold text-slate-900">Interactive Canvas Fixes</h5>
+                  <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                    Click color-coded markers directly on the design to inspect and copy recommendations.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -837,6 +958,56 @@ export default function DesignCheckClient() {
           </div>
         )}
       </main>
+
+      {/* FOOTER */}
+      <footer className="mt-20 border-t border-slate-200/70 bg-white px-5 py-8 sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+            <div>
+              <div className="text-lg font-bold">
+                Spel<span className="text-blue-600">lense</span>
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                Simple English spell checking &amp; design pre-flight QA for visual content.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-xs text-gray-400">
+              <Link href="/" className="transition hover:text-gray-700">
+                Home
+              </Link>
+              <Link href="/design-check" className="font-semibold text-blue-600">
+                Design Check (New)
+              </Link>
+              <Link href="/case-converter" className="transition hover:text-gray-700">
+                Case Converter
+              </Link>
+              <Link href="/us-uk-converter" className="transition hover:text-gray-700">
+                US ↔ UK Dialect
+              </Link>
+              <Link href="/about" className="transition hover:text-gray-700">
+                About
+              </Link>
+              <Link href="/faq" className="transition hover:text-gray-700">
+                FAQ
+              </Link>
+              <Link href="/privacy" className="transition hover:text-gray-700">
+                Privacy
+              </Link>
+              <Link href="/terms" className="transition hover:text-gray-700">
+                Terms
+              </Link>
+              <a href="mailto:hello@spellense.com" className="transition hover:text-gray-700">
+                Contact
+              </a>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-gray-100 pt-5 text-center text-[11px] text-gray-300">
+            © 2026 Spellense. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
