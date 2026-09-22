@@ -341,15 +341,30 @@ function PdfMarkedPreview({
     );
   }
 
+  const panHorizontal = (direction: "left" | "right") => {
+    if (!previewRef.current) return;
+    const delta = direction === "left" ? -280 : 280;
+    previewRef.current.scrollBy({ left: delta, behavior: "smooth" });
+  };
+
+  const handleReset = () => {
+    setZoom(1);
+    if (previewRef.current) {
+      previewRef.current.scrollLeft = 0;
+      previewRef.current.scrollTop = 0;
+    }
+  };
+
   return (
     <div className="bg-slate-200 p-4">
       <div
         ref={previewRef}
-        className={`flex h-[360px] sm:h-[480px] lg:h-[588px] items-center justify-center overflow-auto ${
-          zoom > 1 ? (panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none") : "touch-pan-y"
+        className={`flex h-[360px] sm:h-[480px] lg:h-[588px] items-start sm:items-center justify-start sm:justify-center overflow-auto overscroll-contain select-none ${
+          panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none"
         }`}
         onPointerDown={(event) => {
-          if (zoom <= 1 || !previewRef.current) return;
+          if (event.button !== 0 && event.pointerType === "mouse") return;
+          if (!previewRef.current) return;
 
           panStartRef.current = {
             x: event.clientX,
@@ -358,7 +373,9 @@ function PdfMarkedPreview({
             top: previewRef.current.scrollTop,
           };
           setPanning(true);
-          event.currentTarget.setPointerCapture(event.pointerId);
+          try {
+            event.currentTarget.setPointerCapture(event.pointerId);
+          } catch {}
         }}
         onPointerMove={(event) => {
           const start = panStartRef.current;
@@ -372,15 +389,19 @@ function PdfMarkedPreview({
         onPointerUp={(event) => {
           panStartRef.current = null;
           setPanning(false);
-          event.currentTarget.releasePointerCapture(event.pointerId);
+          try {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
+          } catch {}
         }}
         onPointerCancel={() => {
           panStartRef.current = null;
           setPanning(false);
         }}
       >
-        <div className="relative w-fit bg-white shadow-md">
-          <canvas ref={canvasRef} />
+        <div className="relative m-auto w-fit bg-white shadow-md">
+          <canvas ref={canvasRef} className="block" />
           <div
             ref={layerRef}
             className="pointer-events-none absolute left-0 top-0"
@@ -388,51 +409,74 @@ function PdfMarkedPreview({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
-        <button
-          type="button"
-          disabled={selectedPage === 1}
-          onClick={() => onPageChange(selectedPage - 1)}
-          className="rounded-lg px-3 py-2 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
-        >
-          Previous
-        </button>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-xs">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => panHorizontal("left")}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+            title="Move Left (Pan sideways)"
+          >
+            <span>◂</span> <span>Left</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => panHorizontal("right")}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+            title="Move Right (Pan sideways)"
+          >
+            <span>Right</span> <span>▸</span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            disabled={selectedPage === 1}
+            onClick={() => onPageChange(selectedPage - 1)}
+            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            Previous
+          </button>
+          <span className="text-[11px] font-medium text-slate-500">Page {selectedPage} of {pageCount}</span>
+          <button
+            type="button"
+            disabled={selectedPage === pageCount}
+            onClick={() => onPageChange(selectedPage + 1)}
+            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            Next
+          </button>
+        </div>
+
         <div className="flex items-center gap-1">
           <button
             type="button"
             aria-label="Zoom out"
-            disabled={zoom <= 0.75}
-            onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))}
+            disabled={zoom <= 0.5}
+            onClick={() => setZoom((value) => Math.max(0.5, Math.round((value - 0.25) * 100) / 100))}
             className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
           >
             −
           </button>
           <button
             type="button"
-            onClick={() => setZoom(1)}
-            className="min-w-12 rounded-lg px-2 py-1 text-[11px] transition hover:bg-slate-100"
+            onClick={handleReset}
+            className="min-w-12 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100"
+            title="Reset to 100%"
           >
             {Math.round(zoom * 100)}%
           </button>
           <button
             type="button"
             aria-label="Zoom in"
-            disabled={zoom >= 2}
-            onClick={() => setZoom((value) => Math.min(2, value + 0.25))}
+            disabled={zoom >= 2.5}
+            onClick={() => setZoom((value) => Math.min(2.5, Math.round((value + 0.25) * 100) / 100))}
             className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
           >
             +
           </button>
         </div>
-        <span>Page {selectedPage} of {pageCount}</span>
-        <button
-          type="button"
-          disabled={selectedPage === pageCount}
-          onClick={() => onPageChange(selectedPage + 1)}
-          className="rounded-lg px-3 py-2 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
-        >
-          Next
-        </button>
       </div>
     </div>
   );
@@ -541,15 +585,41 @@ function DocxPreview({
     });
   }, [currentPage, pageCount, zoom]);
 
+  const panHorizontal = (direction: "left" | "right") => {
+    if (!previewRef.current) return;
+    const delta = direction === "left" ? -280 : 280;
+    previewRef.current.scrollBy({ left: delta, behavior: "smooth" });
+  };
+
+  const handleFitWidth = () => {
+    if (!previewRef.current || !containerRef.current) return;
+    const section = containerRef.current.querySelector("section") as HTMLElement | null;
+    const sectionWidth = section?.offsetWidth || 816;
+    const availableWidth = previewRef.current.clientWidth - 40;
+    if (sectionWidth > 0 && availableWidth > 0) {
+      const fitZoom = Math.max(0.25, Math.min(2, availableWidth / sectionWidth));
+      setZoom(Math.round(fitZoom * 100) / 100);
+    }
+  };
+
+  const handleReset = () => {
+    setZoom(1);
+    if (previewRef.current) {
+      previewRef.current.scrollLeft = 0;
+      previewRef.current.scrollTop = 0;
+    }
+  };
+
   return (
     <div className="bg-slate-200 p-4">
       <div
         ref={previewRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto ${
-          zoom > 1 ? (panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none") : "touch-pan-y"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto overscroll-contain select-none ${
+          panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none"
         }`}
         onPointerDown={(event) => {
-          if (zoom <= 1 || !previewRef.current) return;
+          if (event.button !== 0 && event.pointerType === "mouse") return;
+          if (!previewRef.current) return;
           panStartRef.current = {
             x: event.clientX,
             y: event.clientY,
@@ -557,7 +627,9 @@ function DocxPreview({
             top: previewRef.current.scrollTop,
           };
           setPanning(true);
-          event.currentTarget.setPointerCapture(event.pointerId);
+          try {
+            event.currentTarget.setPointerCapture(event.pointerId);
+          } catch {}
         }}
         onPointerMove={(event) => {
           const start = panStartRef.current;
@@ -568,7 +640,11 @@ function DocxPreview({
         onPointerUp={(event) => {
           panStartRef.current = null;
           setPanning(false);
-          event.currentTarget.releasePointerCapture(event.pointerId);
+          try {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
+          } catch {}
         }}
         onPointerCancel={() => {
           panStartRef.current = null;
@@ -582,51 +658,85 @@ function DocxPreview({
           </div>
         )}
       </div>
-      <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
-        <button
-          type="button"
-          disabled={!pageCount || currentPage === 1}
-          onClick={() => setCurrentPage((page) => page - 1)}
-          className="rounded-lg px-3 py-2 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
-        >
-          Previous
-        </button>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-xs">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => panHorizontal("left")}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+            title="Move Left (Pan sideways)"
+          >
+            <span>◂</span> <span>Left</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => panHorizontal("right")}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+            title="Move Right (Pan sideways)"
+          >
+            <span>Right</span> <span>▸</span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            disabled={!pageCount || currentPage === 1}
+            onClick={() => setCurrentPage((page) => page - 1)}
+            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            Previous
+          </button>
+          <span className="text-[11px] font-medium text-slate-500">
+            {pageCount ? `Page ${currentPage} of ${pageCount}` : "Preparing pages..."}
+          </span>
+          <button
+            type="button"
+            disabled={!pageCount || currentPage === pageCount}
+            onClick={() => setCurrentPage((page) => page + 1)}
+            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            Next
+          </button>
+        </div>
+
         <div className="flex items-center gap-1">
           <button
             type="button"
             aria-label="Zoom out"
-            disabled={!pageCount || zoom <= 0.75}
-            onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))}
+            disabled={!pageCount || zoom <= 0.5}
+            onClick={() => setZoom((value) => Math.max(0.5, Math.round((value - 0.25) * 100) / 100))}
             className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
           >
             −
           </button>
           <button
             type="button"
-            onClick={() => setZoom(1)}
-            className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100"
+            onClick={handleReset}
+            className="min-w-12 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100"
+            title="Reset to 100%"
           >
             {Math.round(zoom * 100)}%
           </button>
           <button
             type="button"
             aria-label="Zoom in"
-            disabled={!pageCount || zoom >= 2}
-            onClick={() => setZoom((value) => Math.min(2, value + 0.25))}
+            disabled={!pageCount || zoom >= 2.5}
+            onClick={() => setZoom((value) => Math.min(2.5, Math.round((value + 0.25) * 100) / 100))}
             className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
           >
             +
           </button>
+          <button
+            type="button"
+            onClick={handleFitWidth}
+            className="ml-1 flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/70 px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-100 active:scale-95"
+            title="Fit document width to screen"
+          >
+            <span>⤢</span> <span>Fit</span>
+          </button>
         </div>
-        <span>{pageCount ? `Page ${currentPage} of ${pageCount}` : "Preparing pages..."}</span>
-        <button
-          type="button"
-          disabled={!pageCount || currentPage === pageCount}
-          onClick={() => setCurrentPage((page) => page + 1)}
-          className="rounded-lg px-3 py-2 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
-        >
-          Next
-        </button>
       </div>
     </div>
   );
@@ -748,15 +858,42 @@ function PptxPreview({
     });
   }, [currentSlide, slideCount, zoom]);
 
+  const panHorizontal = (direction: "left" | "right") => {
+    if (!viewportRef.current) return;
+    const delta = direction === "left" ? -280 : 280;
+    viewportRef.current.scrollBy({ left: delta, behavior: "smooth" });
+  };
+
+  const handleFitWidth = () => {
+    if (!viewportRef.current || !containerRef.current) return;
+    const slides = Array.from(containerRef.current.children) as HTMLElement[];
+    const activeSlide = slides[currentSlide - 1];
+    const baseWidth = activeSlide?.offsetWidth ?? 960;
+    const availableWidth = viewportRef.current.clientWidth - 40;
+    if (baseWidth > 0 && availableWidth > 0) {
+      const fitZoom = Math.max(0.25, Math.min(2, availableWidth / baseWidth));
+      setZoom(Math.round(fitZoom * 100) / 100);
+    }
+  };
+
+  const handleReset = () => {
+    setZoom(1);
+    if (viewportRef.current) {
+      viewportRef.current.scrollLeft = 0;
+      viewportRef.current.scrollTop = 0;
+    }
+  };
+
   return (
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto ${
-          zoom > 1 ? (panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none") : "touch-pan-y"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto overscroll-contain select-none ${
+          panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none"
         }`}
         onPointerDown={(event) => {
-          if (zoom <= 1 || !viewportRef.current) return;
+          if (event.button !== 0 && event.pointerType === "mouse") return;
+          if (!viewportRef.current) return;
           panStartRef.current = {
             x: event.clientX,
             y: event.clientY,
@@ -764,7 +901,9 @@ function PptxPreview({
             top: viewportRef.current.scrollTop,
           };
           setPanning(true);
-          event.currentTarget.setPointerCapture(event.pointerId);
+          try {
+            event.currentTarget.setPointerCapture(event.pointerId);
+          } catch {}
         }}
         onPointerMove={(event) => {
           const start = panStartRef.current;
@@ -775,7 +914,11 @@ function PptxPreview({
         onPointerUp={(event) => {
           panStartRef.current = null;
           setPanning(false);
-          event.currentTarget.releasePointerCapture(event.pointerId);
+          try {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
+          } catch {}
         }}
         onPointerCancel={() => {
           panStartRef.current = null;
@@ -790,15 +933,85 @@ function PptxPreview({
         <div ref={containerRef} className="pptx-preview-container" />
       </div>
 
-      <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
-        <button type="button" disabled={!slideCount || currentSlide === 1} onClick={() => setCurrentSlide((slide) => slide - 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Previous</button>
-        <div className="flex items-center gap-1">
-          <button type="button" aria-label="Zoom out" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
-          <button type="button" aria-label="Reset zoom" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
-          <button type="button" aria-label="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-xs">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => panHorizontal("left")}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+            title="Move Left (Pan sideways)"
+          >
+            <span>◂</span> <span>Left</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => panHorizontal("right")}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+            title="Move Right (Pan sideways)"
+          >
+            <span>Right</span> <span>▸</span>
+          </button>
         </div>
-        <span>{slideCount ? `Slide ${currentSlide} of ${slideCount}` : "Preparing slides..."}</span>
-        <button type="button" disabled={!slideCount || currentSlide === slideCount} onClick={() => setCurrentSlide((slide) => slide + 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Next</button>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            disabled={!slideCount || currentSlide === 1}
+            onClick={() => setCurrentSlide((slide) => slide - 1)}
+            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            Previous
+          </button>
+          <span className="text-[11px] font-medium text-slate-500">
+            {slideCount ? `Slide ${currentSlide} of ${slideCount}` : "Preparing slides..."}
+          </span>
+          <button
+            type="button"
+            disabled={!slideCount || currentSlide === slideCount}
+            onClick={() => setCurrentSlide((slide) => slide + 1)}
+            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            Next
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Zoom out"
+            disabled={zoom <= 0.5}
+            onClick={() => setZoom((value) => Math.max(0.5, Math.round((value - 0.25) * 100) / 100))}
+            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label="Reset zoom"
+            onClick={handleReset}
+            className="min-w-12 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100"
+            title="Reset to 100%"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            disabled={zoom >= 2.5}
+            onClick={() => setZoom((value) => Math.min(2.5, Math.round((value + 0.25) * 100) / 100))}
+            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            onClick={handleFitWidth}
+            className="ml-1 flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/70 px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-100 active:scale-95"
+            title="Fit slide width to screen"
+          >
+            <span>⤢</span> <span>Fit</span>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -847,15 +1060,43 @@ function XlsxPreview({
   const rows = sheets[currentSheet]?.rows ?? [];
   const maxColumns = Math.max(1, ...rows.map((row) => row.length));
 
+  const panHorizontal = (direction: "left" | "right") => {
+    if (!viewportRef.current) return;
+    const delta = direction === "left" ? -280 : 280;
+    viewportRef.current.scrollBy({ left: delta, behavior: "smooth" });
+  };
+
+  const handleFitWidth = () => {
+    if (!viewportRef.current) return;
+    const table = viewportRef.current.querySelector("table");
+    if (!table) return;
+    const availableWidth = viewportRef.current.clientWidth - 36;
+    const currentTableWidth = table.offsetWidth;
+    const unscaledWidth = currentTableWidth / (zoom || 1);
+    if (unscaledWidth > 0 && availableWidth > 0) {
+      const fitZoom = Math.max(0.25, Math.min(2, availableWidth / unscaledWidth));
+      setZoom(Math.round(fitZoom * 100) / 100);
+    }
+  };
+
+  const handleReset = () => {
+    setZoom(1);
+    if (viewportRef.current) {
+      viewportRef.current.scrollLeft = 0;
+      viewportRef.current.scrollTop = 0;
+    }
+  };
+
   return (
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto ${
-          zoom > 1 ? (panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none") : "touch-pan-y"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto overscroll-contain select-none ${
+          panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none"
         }`}
         onPointerDown={(event) => {
-          if (zoom <= 1 || !viewportRef.current) return;
+          if (event.button !== 0 && event.pointerType === "mouse") return;
+          if (!viewportRef.current) return;
           panStartRef.current = {
             x: event.clientX,
             y: event.clientY,
@@ -863,7 +1104,9 @@ function XlsxPreview({
             top: viewportRef.current.scrollTop,
           };
           setPanning(true);
-          event.currentTarget.setPointerCapture(event.pointerId);
+          try {
+            event.currentTarget.setPointerCapture(event.pointerId);
+          } catch {}
         }}
         onPointerMove={(event) => {
           const start = panStartRef.current;
@@ -874,7 +1117,11 @@ function XlsxPreview({
         onPointerUp={(event) => {
           panStartRef.current = null;
           setPanning(false);
-          event.currentTarget.releasePointerCapture(event.pointerId);
+          try {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
+          } catch {}
         }}
         onPointerCancel={() => {
           panStartRef.current = null;
@@ -888,7 +1135,12 @@ function XlsxPreview({
         ) : (
           <div
             className="origin-top-left bg-white shadow-md"
-            style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}
+            style={{
+              transform: `scale(${zoom})`,
+              transformOrigin: "top left",
+              width: zoom > 1 ? `${zoom * 100}%` : undefined,
+              marginBottom: zoom > 1 ? `${(zoom - 1) * 60}%` : undefined,
+            }}
           >
             <table className="border-collapse text-left text-sm">
               <tbody>
@@ -936,15 +1188,85 @@ function XlsxPreview({
         )}
       </div>
 
-      <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
-        <button type="button" disabled={currentSheet === 0} onClick={() => setCurrentSheet((sheet) => sheet - 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Previous</button>
-        <div className="flex items-center gap-1">
-          <button type="button" aria-label="Zoom out" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
-          <button type="button" aria-label="Reset zoom" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
-          <button type="button" aria-label="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-xs">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => panHorizontal("left")}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+            title="Move Left (Pan sideways)"
+          >
+            <span>◂</span> <span>Left</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => panHorizontal("right")}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+            title="Move Right (Pan sideways)"
+          >
+            <span>Right</span> <span>▸</span>
+          </button>
         </div>
-        <span>{sheets.length ? `Sheet ${currentSheet + 1} of ${sheets.length}` : "Preparing sheets..."}</span>
-        <button type="button" disabled={!sheets.length || currentSheet === sheets.length - 1} onClick={() => setCurrentSheet((sheet) => sheet + 1)} className="rounded-lg px-3 py-2 hover:bg-slate-100 disabled:opacity-30">Next</button>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            disabled={currentSheet === 0}
+            onClick={() => setCurrentSheet((sheet) => sheet - 1)}
+            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            Previous
+          </button>
+          <span className="text-[11px] font-medium text-slate-500">
+            {sheets.length ? `Sheet ${currentSheet + 1} of ${sheets.length}` : "Preparing sheets..."}
+          </span>
+          <button
+            type="button"
+            disabled={!sheets.length || currentSheet === sheets.length - 1}
+            onClick={() => setCurrentSheet((sheet) => sheet + 1)}
+            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            Next
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Zoom out"
+            disabled={zoom <= 0.5}
+            onClick={() => setZoom((value) => Math.max(0.5, Math.round((value - 0.25) * 100) / 100))}
+            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label="Reset zoom"
+            onClick={handleReset}
+            className="min-w-12 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100"
+            title="Reset to 100%"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            disabled={zoom >= 2.5}
+            onClick={() => setZoom((value) => Math.min(2.5, Math.round((value + 0.25) * 100) / 100))}
+            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            onClick={handleFitWidth}
+            className="ml-1 flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/70 px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-100 active:scale-95"
+            title="Fit spreadsheet to screen"
+          >
+            <span>⤢</span> <span>Fit</span>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -961,21 +1283,63 @@ function ImagePreview({
 }) {
   const [zoom, setZoom] = useState(1);
   const [panning, setPanning] = useState(false);
+  const [naturalDims, setNaturalDims] = useState<{ width: number; height: number } | null>(null);
   const imageUrl = useMemo(() => URL.createObjectURL(file), [file]);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const panStartRef = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+  const initialFittedRef = useRef(false);
 
   const markedWords = new Set(errors.map((error) => error.word.toLowerCase()));
+
+  // Calculate real display layout dimensions based on natural aspect ratio
+  const displayDims = useMemo(() => {
+    if (!naturalDims) return null;
+    const baseHeight = 440;
+    const aspectRatio = naturalDims.width / Math.max(naturalDims.height, 1);
+    const width = baseHeight * aspectRatio * zoom;
+    const height = baseHeight * zoom;
+    return { width, height };
+  }, [naturalDims, zoom]);
+
+  const panHorizontal = (direction: "left" | "right") => {
+    if (!viewportRef.current) return;
+    const delta = direction === "left" ? -280 : 280;
+    viewportRef.current.scrollBy({ left: delta, behavior: "smooth" });
+  };
+
+  const handleFitWidth = () => {
+    if (!viewportRef.current || !naturalDims) return;
+    const availableWidth = viewportRef.current.clientWidth - 48;
+    const baseHeight = 440;
+    const baseWidth = baseHeight * (naturalDims.width / Math.max(naturalDims.height, 1));
+    if (baseWidth <= 0 || availableWidth <= 0) return;
+    const fitScale = Math.max(0.15, Math.min(2.5, availableWidth / baseWidth));
+    setZoom(Math.round(fitScale * 100) / 100);
+    setTimeout(() => {
+      if (viewportRef.current) {
+        viewportRef.current.scrollLeft = 0;
+      }
+    }, 50);
+  };
+
+  const handleReset = () => {
+    setZoom(1);
+    if (viewportRef.current) {
+      viewportRef.current.scrollLeft = 0;
+      viewportRef.current.scrollTop = 0;
+    }
+  };
 
   return (
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto ${
-          zoom > 1 ? (panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none") : "touch-pan-y"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto overscroll-contain select-none ${
+          panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none"
         }`}
         onPointerDown={(event) => {
-          if (zoom <= 1 || !viewportRef.current) return;
+          if (event.button !== 0 && event.pointerType === "mouse") return;
+          if (!viewportRef.current) return;
           panStartRef.current = {
             x: event.clientX,
             y: event.clientY,
@@ -983,7 +1347,9 @@ function ImagePreview({
             top: viewportRef.current.scrollTop,
           };
           setPanning(true);
-          event.currentTarget.setPointerCapture(event.pointerId);
+          try {
+            event.currentTarget.setPointerCapture(event.pointerId);
+          } catch {}
         }}
         onPointerMove={(event) => {
           const start = panStartRef.current;
@@ -994,45 +1360,144 @@ function ImagePreview({
         onPointerUp={(event) => {
           panStartRef.current = null;
           setPanning(false);
-          event.currentTarget.releasePointerCapture(event.pointerId);
+          try {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
+          } catch {}
         }}
         onPointerCancel={() => {
           panStartRef.current = null;
           setPanning(false);
         }}
       >
-        <div className="relative h-fit w-fit">
+        <div
+          className="relative m-auto shrink-0 bg-white shadow-md"
+          style={
+            displayDims
+              ? { width: `${displayDims.width}px`, height: `${displayDims.height}px` }
+              : undefined
+          }
+        >
           {/* Blob URLs cannot use Next image optimization. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt="Uploaded file preview"
-            className="block max-h-[360px] sm:max-h-[480px] lg:max-h-[588px] max-w-none object-contain"
-            style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}
+            onLoad={(e) => {
+              const { naturalWidth, naturalHeight } = e.currentTarget;
+              if (naturalWidth && naturalHeight) {
+                setNaturalDims({ width: naturalWidth, height: naturalHeight });
+                if (!initialFittedRef.current && viewportRef.current) {
+                  initialFittedRef.current = true;
+                  const aspect = naturalWidth / naturalHeight;
+                  if (aspect > 2.2) {
+                    const availableWidth = viewportRef.current.clientWidth - 48;
+                    const baseWidth = 440 * aspect;
+                    if (baseWidth > availableWidth && availableWidth > 0) {
+                      const fitScale = Math.max(0.15, Math.min(1, availableWidth / baseWidth));
+                      setZoom(Math.round(fitScale * 100) / 100);
+                    }
+                  }
+                }
+              }
+            }}
+            className={
+              displayDims
+                ? "block h-full w-full object-contain pointer-events-none select-none"
+                : "block max-h-[360px] sm:max-h-[480px] lg:max-h-[588px] max-w-none object-contain pointer-events-none select-none"
+            }
+            draggable={false}
           />
           {marks
             .filter((mark) => markedWords.has(mark.word.toLowerCase()))
             .map((mark, index) => (
               <span
                 key={`${mark.word}-${index}`}
-                className="pointer-events-none absolute rounded border-2 border-red-500 bg-transparent"
+                className="pointer-events-none absolute rounded border-2 border-red-500 bg-red-500/15 shadow-xs ring-1 ring-red-500/40 select-none"
                 style={{
                   left: `${mark.left * 100}%`,
                   top: `${mark.top * 100}%`,
                   width: `${mark.width * 100}%`,
                   height: `${mark.height * 100}%`,
-                  transform: `scale(${zoom})`,
-                  transformOrigin: "top left",
                 }}
                 title="Possible spelling mistake"
               />
             ))}
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-500">
-        <button type="button" aria-label="Zoom out" disabled={zoom <= 0.75} onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">−</button>
-        <button type="button" aria-label="Reset zoom" onClick={() => setZoom(1)} className="min-w-12 rounded-lg px-2 py-1 text-[11px] hover:bg-slate-100">{Math.round(zoom * 100)}%</button>
-        <button type="button" aria-label="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg px-2 py-1 text-base hover:bg-slate-100 disabled:opacity-30">+</button>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-xs">
+        {/* Horizontal Navigation */}
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => panHorizontal("left")}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+            title="Move Left (Pan sideways)"
+          >
+            <span>◂</span> <span>Left</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => panHorizontal("right")}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+            title="Move Right (Pan sideways)"
+          >
+            <span>Right</span> <span>▸</span>
+          </button>
+        </div>
+
+        {/* Zoom Controls */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Zoom out"
+            disabled={zoom <= 0.25}
+            onClick={() => setZoom((value) => Math.max(0.25, Math.round((value - 0.25) * 100) / 100))}
+            className="rounded-lg px-2.5 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label="Reset zoom"
+            onClick={handleReset}
+            className="min-w-12 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100"
+            title="Click to reset 100%"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            disabled={zoom >= 3}
+            onClick={() => setZoom((value) => Math.min(3, Math.round((value + 0.25) * 100) / 100))}
+            className="rounded-lg px-2.5 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
+          >
+            +
+          </button>
+        </div>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handleFitWidth}
+            className="flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/70 px-2.5 py-1.5 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-100 active:scale-95"
+            title="Fit image width to screen"
+          >
+            <span>⤢</span> <span>Fit Width</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-600 transition hover:bg-slate-100 active:scale-95"
+            title="Reset position & zoom"
+          >
+            Reset
+          </button>
+        </div>
       </div>
       {imageUrl && <ImageUrlCleanup url={imageUrl} />}
     </div>
@@ -1951,14 +2416,22 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${hasErrors ? "border border-rose-200 bg-rose-50 text-rose-600" : "border border-emerald-200 bg-emerald-50 text-emerald-600"}`}>
-                      {hasErrors ? `${errorCount} MARKED ERROR${errorCount === 1 ? "" : "S"}` : "ALL CLEAR"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {!isTextResult && (
+                        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-500">
+                          <svg className="h-3 w-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+                          Drag to pan &bull; Scroll to inspect
+                        </span>
+                      )}
+                      <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${hasErrors ? "border border-rose-200 bg-rose-50 text-rose-600" : "border border-emerald-200 bg-emerald-50 text-emerald-600"}`}>
+                        {hasErrors ? `${errorCount} MARKED ERROR${errorCount === 1 ? "" : "S"}` : "ALL CLEAR"}
+                      </span>
+                    </div>
                   </div>
 
                   {files[0] ? (
                     isTextResult ? (
-                      <div className="bg-slate-50 p-6 overflow-auto h-[360px] sm:h-[480px] lg:h-[588px] text-slate-800 leading-relaxed font-sans text-base whitespace-pre-wrap select-text">
+                      <div className="bg-slate-50 p-6 overflow-auto overscroll-contain h-[360px] sm:h-[480px] lg:h-[588px] text-slate-800 leading-relaxed font-sans text-base whitespace-pre-wrap select-text">
                         {renderMarkedText(result.text ?? "", result.errors ?? [])}
                       </div>
                     ) : isPdfResult ? (
