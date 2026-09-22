@@ -241,16 +241,18 @@ export default function DesignCheckClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans selection:bg-blue-500/10 selection:text-blue-600 relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] bg-dot-pattern text-slate-800 font-sans selection:bg-blue-500/10 selection:text-blue-600 relative overflow-x-hidden">
+      {/* Ambient background glows / mesh across full page */}
+      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
+      <div className="pointer-events-none absolute top-40 -left-28 h-[420px] w-[420px] rounded-full bg-blue-200/40 blur-[100px]" />
+      <div className="pointer-events-none absolute top-36 -right-28 h-[440px] w-[440px] rounded-full bg-indigo-200/40 blur-[110px]" />
+      <div className="pointer-events-none absolute top-[700px] left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-blue-100/35 blur-[130px]" />
+      <div className="pointer-events-none absolute top-[1200px] -right-20 h-[500px] w-[500px] rounded-full bg-indigo-100/30 blur-[120px]" />
+
       <Navbar />
 
-      {/* HERO & AMBIENT MESH */}
-      <section className="relative overflow-hidden bg-dot-pattern">
-        {/* Ambient background glows / mesh */}
-        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
-        <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
-        <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
-
+      {/* HERO SECTION */}
+      <section className="relative">
         <div className="relative mx-auto max-w-7xl px-5 pb-10 pt-4 sm:px-6 sm:pt-6 lg:px-10 lg:pt-7">
           {/* HERO TEXT */}
           <div className="mx-auto max-w-4xl text-center">
@@ -311,7 +313,7 @@ export default function DesignCheckClient() {
                 if (droppedFile) handleFileSelect(droppedFile);
               }}
               onClick={() => fileInputRef.current?.click()}
-              className="group relative flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-white p-10 text-center shadow-lg shadow-slate-200/50 transition hover:border-blue-500 hover:bg-blue-50/20 hover:shadow-xl sm:p-14"
+              className="group relative flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300/90 bg-white/95 backdrop-blur-md p-10 text-center shadow-xl shadow-slate-200/40 transition hover:border-blue-500 hover:bg-blue-50/20 hover:shadow-2xl sm:p-14"
             >
               <input
                 ref={fileInputRef}
