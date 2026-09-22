@@ -140,7 +140,9 @@ export async function POST(req: Request) {
 
     const width = img.width;
     const height = img.height;
-    const aspectRatio = Math.round((width / Math.max(height, 1)) * 100) / 100;
+    const origWidth = Number(formData.get("originalWidth")) || width;
+    const origHeight = Number(formData.get("originalHeight")) || height;
+    const aspectRatio = Math.round((origWidth / Math.max(origHeight, 1)) * 100) / 100;
 
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
@@ -151,13 +153,13 @@ export async function POST(req: Request) {
 
     // 2. Check Resolution & Quality
     let qualityScore = 100;
-    if (width < 600 || height < 400) {
+    if (origWidth < 600 || origHeight < 400) {
       issues.push({
         id: `quality-${issueCounter++}`,
         category: "resolution",
         severity: "warning",
         title: "Low Resolution Artwork",
-        description: `Dimensions (${width}×${height}px) are low. This design may appear pixelated when printed or viewed on high-DPI displays.`,
+        description: `Dimensions (${origWidth}×${origHeight}px) are low. This design may appear pixelated when printed or viewed on high-DPI displays.`,
         suggestedFix: "Export at a minimum of 1080×1080px (for web) or 300 DPI (for print).",
         bbox: { left: 0.02, top: 0.02, width: 0.96, height: 0.08 },
       });
@@ -483,8 +485,8 @@ Output pure JSON only without markdown formatting.`;
       success: true,
       score: overallScore,
       dimensions: {
-        width,
-        height,
+        width: origWidth,
+        height: origHeight,
         aspectRatio,
       },
       categoryScores: {

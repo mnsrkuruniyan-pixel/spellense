@@ -101,23 +101,126 @@ export default function DesignCheckClient() {
     runDesignCheck(selectedFile);
   };
 
+  const prepareOptimizedImage = async (
+    sourceFile: File
+  ): Promise<{ file: File; originalWidth: number; originalHeight: number }> => {
+    return new Promise((resolve) => {
+      if (!sourceFile.type.startsWith("image/") || sourceFile.type.includes("svg")) {
+        resolve({ file: sourceFile, originalWidth: 0, originalHeight: 0 });
+        return;
+      }
+
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(sourceFile);
+
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const originalWidth = img.naturalWidth || img.width;
+        const originalHeight = img.naturalHeight || img.height;
+
+        // If file is already under 3MB and dimensions are reasonable, upload directly
+        if (sourceFile.size <= 3 * 1024 * 1024 && originalWidth <= 2200 && originalHeight <= 2200) {
+          resolve({ file: sourceFile, originalWidth, originalHeight });
+          return;
+        }
+
+        // Proportional scale to fit within 2200px max dimension (bypasses 4.5MB server limit)
+        const maxDim = 2200;
+        let targetWidth = originalWidth;
+        let targetHeight = originalHeight;
+
+        if (targetWidth > maxDim || targetHeight > maxDim) {
+          if (targetWidth > targetHeight) {
+            targetHeight = Math.round((targetHeight * maxDim) / targetWidth);
+            targetWidth = maxDim;
+          } else {
+            targetWidth = Math.round((targetWidth * maxDim) / targetHeight);
+            targetHeight = maxDim;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          resolve({ file: sourceFile, originalWidth, originalHeight });
+          return;
+        }
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const optimized = new File(
+                [blob],
+                sourceFile.name.replace(/\.[^/.]+$/, ".jpg"),
+                { type: "image/jpeg" }
+              );
+              resolve({ file: optimized, originalWidth, originalHeight });
+            } else {
+              resolve({ file: sourceFile, originalWidth, originalHeight });
+            }
+          },
+          "image/jpeg",
+          0.88
+        );
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve({ file: sourceFile, originalWidth: 0, originalHeight: 0 });
+      };
+
+      img.src = objectUrl;
+    });
+  };
+
   const runDesignCheck = async (uploadFile: File) => {
     setLoading(true);
     setCurrentStepIndex(0);
     setError(null);
 
     try {
+      const { file: processedFile, originalWidth, originalHeight } =
+        await prepareOptimizedImage(uploadFile);
+
       const formData = new FormData();
-      formData.append("file", uploadFile);
+      formData.append("file", processedFile);
+      if (originalWidth && originalHeight) {
+        formData.append("originalWidth", String(originalWidth));
+        formData.append("originalHeight", String(originalHeight));
+      }
 
       const res = await fetch("/api/design-check", {
         method: "POST",
         body: formData,
       });
 
+      if (!res.ok) {
+        if (res.status === 413) {
+          throw new Error(
+            "The design file is too large for the server to process. Please try an image under 15MB."
+          );
+        }
+        let errorMsg = `Server error (${res.status})`;
+        try {
+          const errorJson = await res.json();
+          if (errorJson.error) errorMsg = errorJson.error;
+        } catch {
+          const errorText = await res.text();
+          if (errorText && errorText.length < 200) errorMsg = errorText;
+        }
+        throw new Error(errorMsg);
+      }
+
       const data: DesignCheckResponse = await res.json();
 
-      if (!res.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.error || "Failed to analyze design file.");
       }
 
