@@ -88,6 +88,29 @@ function calculateContrastRatio(lum1: number, lum2: number): number {
   return (l1 + 0.05) / (l2 + 0.05);
 }
 
+function isLikelyRealText(text: string): boolean {
+  const trimmed = text.trim();
+  if (trimmed.length < 2) return false;
+  // Discard pure numbers, punctuation or symbols
+  if (/^[^a-zA-Z]+$/.test(trimmed)) return false;
+
+  const clean = trimmed.toLowerCase().replace(/[^a-z]/g, "");
+  if (clean.length < 2) return false;
+
+  // Words of 3+ letters must contain at least one vowel
+  if (clean.length >= 3 && !/[aeiouy]/.test(clean)) return false;
+
+  // Common 2-letter English words whitelist
+  const validTwoLetterWords = new Set([
+    "am", "an", "as", "at", "be", "by", "do", "go", "he", "hi", "if",
+    "in", "is", "it", "me", "my", "no", "of", "on", "or", "so", "to",
+    "up", "us", "we"
+  ]);
+  if (clean.length === 2 && !validTwoLetterWords.has(clean)) return false;
+
+  return true;
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -148,6 +171,7 @@ export async function POST(req: Request) {
 
     type BboxWord = {
       text: string;
+      confidence: number;
       left: number;
       top: number;
       width: number;
@@ -160,30 +184,40 @@ export async function POST(req: Request) {
 
     const words: BboxWord[] = [];
 
-    // Extract blocks and words with bounding boxes
+    // Extract blocks and words with strict noise filtering
     const rawBlocks = ocrResult.data?.blocks || [];
     for (const block of rawBlocks) {
       for (const paragraph of block.paragraphs || []) {
         for (const line of paragraph.lines || []) {
           for (const w of line.words || []) {
             const text = (w.text || "").trim();
-            if (!text || text.length < 2 || !w.bbox) continue;
+            const conf = typeof w.confidence === "number" ? w.confidence : 80;
+
+            // Strict filtering: discard low-confidence noise & non-text graphics
+            if (conf < 65) continue;
+            if (!isLikelyRealText(text) || !w.bbox) continue;
 
             const x0 = w.bbox.x0;
             const y0 = w.bbox.y0;
             const x1 = w.bbox.x1;
             const y1 = w.bbox.y1;
+            const pw = x1 - x0;
+            const ph = y1 - y0;
+
+            // Discard tiny sub-pixel specks
+            if (pw < 10 || ph < 8) continue;
 
             words.push({
               text,
+              confidence: conf,
               left: Math.max(0, x0 / width),
               top: Math.max(0, y0 / height),
-              width: Math.min(1, (x1 - x0) / width),
-              height: Math.min(1, (y1 - y0) / height),
+              width: Math.min(1, pw / width),
+              height: Math.min(1, ph / height),
               pixelX: x0,
               pixelY: y0,
-              pixelW: x1 - x0,
-              pixelH: y1 - y0,
+              pixelW: pw,
+              pixelH: ph,
             });
           }
         }
@@ -195,6 +229,8 @@ export async function POST(req: Request) {
     const SAFE_MARGIN = 0.035; // 3.5% from edges
 
     for (const w of words) {
+      if (w.pixelH < 12 || w.confidence < 70) continue;
+
       const touchesLeft = w.left < SAFE_MARGIN;
       const touchesRight = w.left + w.width > 1 - SAFE_MARGIN;
       const touchesTop = w.top < SAFE_MARGIN;
@@ -210,7 +246,6 @@ export async function POST(req: Request) {
           ? "top edge"
           : "bottom edge";
 
-        // Group or cap to avoid overwhelming
         if (marginIssuesCount <= 3) {
           issues.push({
             id: `margin-${issueCounter++}`,
@@ -234,7 +269,7 @@ export async function POST(req: Request) {
     // 5. WCAG Text-to-Background Contrast Engine
     let contrastFailCount = 0;
     for (const w of words) {
-      if (w.pixelW < 8 || w.pixelH < 8) continue;
+      if (w.pixelW < 16 || w.pixelH < 12 || w.confidence < 75) continue;
 
       try {
         // Sample text center pixel
@@ -249,10 +284,10 @@ export async function POST(req: Request) {
 
         // Sample background pixels just outside the bounding box
         const bgSamples = [
-          ctx.getImageData(Math.max(0, w.pixelX - 4), Math.max(0, centerY), 1, 1).data,
-          ctx.getImageData(Math.min(width - 1, w.pixelX + w.pixelW + 4), Math.max(0, centerY), 1, 1).data,
-          ctx.getImageData(Math.max(0, centerX), Math.max(0, w.pixelY - 4), 1, 1).data,
-          ctx.getImageData(Math.max(0, centerX), Math.min(height - 1, w.pixelY + w.pixelH + 4), 1, 1).data,
+          ctx.getImageData(Math.max(0, w.pixelX - 6), Math.max(0, centerY), 1, 1).data,
+          ctx.getImageData(Math.min(width - 1, w.pixelX + w.pixelW + 6), Math.max(0, centerY), 1, 1).data,
+          ctx.getImageData(Math.max(0, centerX), Math.max(0, w.pixelY - 6), 1, 1).data,
+          ctx.getImageData(Math.max(0, centerX), Math.min(height - 1, w.pixelY + w.pixelH + 6), 1, 1).data,
         ];
 
         let avgBgR = 0;
@@ -270,19 +305,16 @@ export async function POST(req: Request) {
         const bgLum = calculateRelativeLuminance(avgBgR, avgBgG, avgBgB);
         const ratio = calculateContrastRatio(textLum, bgLum);
 
-        // WCAG AA threshold: 4.5:1 for regular text, 3.0:1 for large text
-        const isLarge = w.pixelH >= 24;
-        const minRatio = isLarge ? 3.0 : 4.5;
-
-        if (ratio < minRatio && ratio > 1.05) {
+        // Flag clear contrast failures (< 2.8:1) on prominent words
+        if (ratio < 2.8 && ratio > 1.05 && w.text.length >= 3) {
           contrastFailCount++;
-          if (contrastFailCount <= 4) {
+          if (contrastFailCount <= 3) {
             issues.push({
               id: `contrast-${issueCounter++}`,
               category: "contrast",
               severity: "warning",
               title: "Low Contrast Readability",
-              description: `Text "${w.text}" has a contrast ratio of ${ratio.toFixed(1)}:1 (minimum recommended is ${minRatio}:1). It may be hard to read on mobile screens or in bright light.`,
+              description: `Text "${w.text}" has a low contrast ratio of ${ratio.toFixed(1)}:1 (minimum recommended is 4.5:1). It may be hard to read on mobile screens or in bright light.`,
               originalText: w.text,
               suggestedFix: "Increase brightness contrast between the text color and the background.",
               bbox: {
@@ -304,27 +336,29 @@ export async function POST(req: Request) {
     if (geminiKey) {
       try {
         const base64Data = buffer.toString("base64");
-        const prompt = `You are an expert graphic design pre-flight quality inspector.
-Analyze this image design carefully for:
-1. Spelling mistakes and typos in all visible text.
-2. Grammar mistakes, missing articles, or awkward phrasing (e.g., "We provide best service" -> "We provide the best service").
-3. Inconsistent or poor typography hierarchy.
-4. Overlooked placeholder text (e.g., "Lorem Ipsum", "Sample Text", "000000").
+        const prompt = `You are an expert graphic design proofreader and pre-flight QA specialist.
+Examine this design image carefully.
+CRITICAL RULES:
+1. Inspect ONLY human-designed text: titles, headlines, subheadings, promotional text, body copy, and disclaimers.
+2. Completely IGNORE all product photos, appliances, stoves, washing machines, refrigerators, background illustrations, graphic badges, and textures.
+3. Check ONLY for actual spelling mistakes, real grammar errors, or missing words in visible text copy.
+4. Correct English phrases like "Back to School", "Simply Smarter", "Stylish Choices, Exceptional Value" are 100% correct and MUST NOT be flagged.
+5. If all visible text is correct, return an empty list: { "issues": [] }. Do not invent issues.
 
 Return your findings strictly as a JSON object matching this schema:
 {
   "issues": [
     {
-      "category": "copy" | "typography",
-      "severity": "error" | "warning" | "suggestion",
-      "title": "Short title (e.g. Grammatical Mistake)",
+      "category": "copy",
+      "severity": "error",
+      "title": "Short title (e.g. Spelling Mistake)",
       "description": "Clear explanation of the error",
-      "originalText": "exact text as visible on image",
+      "originalText": "exact misspelled word",
       "suggestedFix": "corrected recommendation"
     }
   ]
 }
-If there are no copy or typography errors, return { "issues": [] }. Output pure JSON only without markdown formatting.`;
+Output pure JSON only without markdown formatting.`;
 
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`,
@@ -360,37 +394,33 @@ If there are no copy or typography errors, return { "issues": [] }. Output pure 
           if (textResponse) {
             const parsed = JSON.parse(textResponse);
             if (Array.isArray(parsed.issues)) {
+              // Mark that Gemini successfully inspected the design
               engine = "hybrid-gemini";
               for (const item of parsed.issues) {
-                // Find matching OCR word box for exact pixel-level bounding box
-                const orig = (item.originalText || "").toLowerCase();
+                const orig = (item.originalText || "").toLowerCase().trim();
                 const matchedWord = words.find((w) =>
-                  orig.includes(w.text.toLowerCase()) ||
-                  w.text.toLowerCase().includes(orig)
+                  w.text.toLowerCase().trim() === orig ||
+                  w.text.toLowerCase().includes(orig) ||
+                  orig.includes(w.text.toLowerCase().trim())
                 );
 
-                issues.push({
-                  id: `ai-${issueCounter++}`,
-                  category: item.category === "typography" ? "typography" : "copy",
-                  severity: item.severity || "error",
-                  title: item.title || "Copy Issue",
-                  description: item.description,
-                  originalText: item.originalText,
-                  suggestedFix: item.suggestedFix,
-                  bbox: matchedWord
-                    ? {
-                        left: matchedWord.left,
-                        top: matchedWord.top,
-                        width: Math.max(matchedWord.width, 0.05),
-                        height: Math.max(matchedWord.height, 0.03),
-                      }
-                    : {
-                        left: 0.2,
-                        top: 0.3,
-                        width: 0.6,
-                        height: 0.08,
-                      },
-                });
+                if (matchedWord) {
+                  issues.push({
+                    id: `ai-${issueCounter++}`,
+                    category: item.category === "typography" ? "typography" : "copy",
+                    severity: item.severity || "error",
+                    title: item.title || "Copy Issue",
+                    description: item.description,
+                    originalText: item.originalText,
+                    suggestedFix: item.suggestedFix,
+                    bbox: {
+                      left: matchedWord.left,
+                      top: matchedWord.top,
+                      width: Math.max(matchedWord.width, 0.05),
+                      height: Math.max(matchedWord.height, 0.03),
+                    },
+                  });
+                }
               }
             }
           }
@@ -400,12 +430,15 @@ If there are no copy or typography errors, return { "issues": [] }. Output pure 
       }
     }
 
-    // Fallback: If Gemini did not add copy issues, run local nspell dictionary
-    const hasCopyIssues = issues.some((i) => i.category === "copy");
-    if (!hasCopyIssues) {
+    // Fallback: ONLY run local nspell dictionary if Gemini did NOT run
+    if (engine !== "hybrid-gemini") {
       for (const w of words) {
-        const cleaned = w.text.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, "");
-        if (cleaned.length >= 3 && !/^\d+$/.test(cleaned)) {
+        // Tokenize compound OCR phrases (e.g. "Back to" -> "Back", "to")
+        const subTokens = w.text.split(/\s+/);
+        for (const sub of subTokens) {
+          const cleaned = sub.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, "");
+          if (cleaned.length < 3 || !isLikelyRealText(cleaned)) continue;
+
           if (!spellUS.correct(cleaned)) {
             const suggestions = spellUS.suggest(cleaned);
             issues.push({
@@ -413,8 +446,8 @@ If there are no copy or typography errors, return { "issues": [] }. Output pure 
               category: "copy",
               severity: "error",
               title: "Possible Spelling Mistake",
-              description: `Word "${w.text}" appears to be misspelled.`,
-              originalText: w.text,
+              description: `Word "${sub}" appears to be misspelled.`,
+              originalText: sub,
               suggestedFix: suggestions[0]
                 ? `Did you mean "${suggestions[0]}"?`
                 : undefined,

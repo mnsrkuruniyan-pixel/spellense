@@ -31,3 +31,4 @@ export const metadata: Metadata = {
 export default function DesignCheckPage() {
   return <DesignCheckClient />;
 }
+

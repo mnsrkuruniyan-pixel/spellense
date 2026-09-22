@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -19,7 +19,7 @@ const NAV_ITEMS = [
     shortLabel: "Checker",
     href: "/",
     description: "Visual OCR proofreading for images & documents",
-    tag: "Core",
+    tag: null,
     icon: (
       <svg
         width="16"
@@ -68,7 +68,7 @@ const NAV_ITEMS = [
     shortLabel: "Case",
     href: "/case-converter",
     description: "CamelCase, Title, Snake, Kebab & 12 styles",
-    tag: "Tool",
+    tag: null,
     icon: (
       <svg
         width="16"
@@ -91,7 +91,7 @@ const NAV_ITEMS = [
     shortLabel: "US/UK",
     href: "/us-uk-converter",
     description: "American vs British dialect spelling switcher",
-    tag: "Tool",
+    tag: null,
     icon: (
       <svg
         width="16"
@@ -157,15 +157,76 @@ const NAV_ITEMS = [
   },
 ];
 
+const UTILITY_TOOLS = [
+  {
+    label: "Case Converter",
+    href: "/case-converter",
+    description: "CamelCase, Title, Snake, Kebab & 12 styles",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <polyline points="4 7 4 4 20 4 20 7" />
+        <line x1="9" y1="20" x2="15" y2="20" />
+        <line x1="12" y1="4" x2="12" y2="20" />
+      </svg>
+    ),
+  },
+  {
+    label: "US ↔ UK Switcher",
+    href: "/us-uk-converter",
+    description: "American vs British dialect spelling switcher",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="2" y1="12" x2="22" y2="12" />
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
+    ),
+  },
+];
+
 export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [toolsDropdownOpen, setToolsDropdownOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
 
   const [prevPathname, setPrevPathname] = useState(pathname);
   if (prevPathname !== pathname) {
     setPrevPathname(pathname);
     setMobileMenuOpen(false);
+    setToolsDropdownOpen(false);
   }
+
+  // Close tools dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (toolsRef.current && !toolsRef.current.contains(event.target as Node)) {
+        setToolsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -186,6 +247,9 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
     }
     return pathname.startsWith(href);
   };
+
+  const isToolsActive =
+    pathname.startsWith("/case-converter") || pathname.startsWith("/us-uk-converter");
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl transition-colors">
@@ -282,39 +346,141 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
           <>
             {/* DESKTOP CENTER NAVIGATION PILL */}
             <div className="hidden lg:flex items-center gap-1 rounded-full border border-slate-200/80 bg-slate-100/70 p-1 text-[13px] font-medium text-slate-600 backdrop-blur-md shadow-xs">
-              {NAV_ITEMS.map((item) => {
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 ${
-                      active
-                        ? "bg-white text-blue-600 font-bold shadow-xs ring-1 ring-slate-900/5"
-                        : "hover:bg-white/60 hover:text-slate-900 text-slate-600"
+              {/* Spell Checker */}
+              <Link
+                href="/"
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 ${
+                  pathname === "/"
+                    ? "bg-white text-blue-600 font-bold shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-600"
+                }`}
+              >
+                <span>Spell Checker</span>
+              </Link>
+
+              {/* Design Check */}
+              <Link
+                href="/design-check"
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 ${
+                  pathname.startsWith("/design-check")
+                    ? "bg-white text-blue-600 font-bold shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-600"
+                }`}
+              >
+                <span>Design Check</span>
+                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700">
+                  New
+                </span>
+              </Link>
+
+              {/* Tools Dropdown */}
+              <div
+                ref={toolsRef}
+                className="relative"
+                onMouseEnter={() => setToolsDropdownOpen(true)}
+                onMouseLeave={() => setToolsDropdownOpen(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => setToolsDropdownOpen((prev) => !prev)}
+                  className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 ${
+                    isToolsActive
+                      ? "bg-white text-blue-600 font-bold shadow-xs ring-1 ring-slate-900/5"
+                      : "hover:bg-white/60 hover:text-slate-900 text-slate-600"
+                  }`}
+                  aria-expanded={toolsDropdownOpen}
+                >
+                  <span>Tools</span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`transition-transform duration-200 ${
+                      toolsDropdownOpen ? "rotate-180 text-blue-600" : "text-slate-400"
                     }`}
                   >
-                    <span>{item.label}</span>
-                    {item.tag && (
-                      <span
-                        className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full ${
-                          active
-                            ? "bg-blue-50 text-blue-700"
-                            : "bg-slate-200/60 text-slate-500"
-                        }`}
-                      >
-                        {item.tag}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {toolsDropdownOpen && (
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full pt-1.5 z-50">
+                    <div className="w-72 rounded-2xl border border-slate-200/80 bg-white/95 p-2 shadow-xl shadow-slate-900/10 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Text Utilities
+                      </div>
+                      {UTILITY_TOOLS.map((tool) => {
+                        const active = pathname.startsWith(tool.href);
+                        return (
+                          <Link
+                            key={tool.href}
+                            href={tool.href}
+                            onClick={() => setToolsDropdownOpen(false)}
+                            className={`flex items-start gap-3 rounded-xl p-2.5 transition-colors ${
+                              active
+                                ? "bg-blue-50/90 text-blue-700"
+                                : "hover:bg-slate-50 text-slate-700 hover:text-slate-900"
+                            }`}
+                          >
+                            <div
+                              className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                                active
+                                  ? "bg-blue-600 text-white shadow-xs"
+                                  : "bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              {tool.icon}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-bold leading-tight">
+                                {tool.label}
+                              </div>
+                              <div className="mt-0.5 text-[11px] text-slate-500 leading-normal line-clamp-1">
+                                {tool.description}
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* About */}
+              <Link
+                href="/about"
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 ${
+                  pathname.startsWith("/about")
+                    ? "bg-white text-blue-600 font-bold shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-600"
+                }`}
+              >
+                <span>About</span>
+              </Link>
+
+              {/* FAQ */}
+              <Link
+                href="/faq"
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 ${
+                  pathname.startsWith("/faq")
+                    ? "bg-white text-blue-600 font-bold shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-600"
+                }`}
+              >
+                <span>FAQ</span>
+              </Link>
             </div>
 
             {/* DESKTOP RIGHT ACTIONS */}
             <div className="hidden sm:flex items-center gap-3">
               {/* Free badge */}
-              <div className="hidden xl:flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-2xs">
+              <div className="hidden 2xl:flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-2xs">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>100% Free • No Signup</span>
               </div>

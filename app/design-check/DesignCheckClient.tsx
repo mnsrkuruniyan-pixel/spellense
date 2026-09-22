@@ -240,23 +240,64 @@ export default function DesignCheckClient() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-500/20 selection:text-blue-700">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans selection:bg-blue-500/10 selection:text-blue-600 relative overflow-x-hidden">
       <Navbar />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* HERO SECTION */}
-        <div className="mx-auto max-w-3xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-blue-50 px-3.5 py-1 text-xs font-semibold text-blue-700 shadow-xs">
-            <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-            AI Design Pre-Flight Quality Checker
+      {/* HERO & AMBIENT MESH */}
+      <section className="relative overflow-hidden bg-dot-pattern">
+        {/* Ambient background glows / mesh */}
+        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
+        <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
+        <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
+
+        <div className="relative mx-auto max-w-7xl px-5 pb-10 pt-4 sm:px-6 sm:pt-6 lg:px-10 lg:pt-7">
+          {/* HERO TEXT */}
+          <div className="mx-auto max-w-4xl text-center">
+            {/* TOP ANNOUNCEMENT PILL */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3.5 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md transition-all hover:border-blue-300">
+              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+              <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 bg-clip-text text-[11px] font-bold uppercase tracking-wider text-transparent">
+                AI Design Pre-Flight Quality Check
+              </span>
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+                v1.0
+              </span>
+            </div>
+
+            <h1 className="mt-3 text-[32px] font-extrabold leading-[1.12] tracking-[-1.8px] text-slate-900 sm:text-[46px] lg:text-[54px]">
+              Catch Design, Copy &amp; Print Errors{" "}
+              <br />
+              <span className="inline-block whitespace-nowrap bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                before you publish.
+              </span>
+            </h1>
+
+            <p className="mx-auto mt-2.5 max-w-[640px] text-[14px] leading-relaxed text-slate-600 sm:text-[15px]">
+              Automated visual inspection for posters, ads, flyers, and banners.
+              <br className="hidden sm:inline" />
+              Detect typos, grammar issues, low WCAG contrast, and bleed cutoffs directly on your canvas.
+            </p>
+
+            {/* QUICK HIGHLIGHT PILLS */}
+            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-500">
+              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
+                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <span>WCAG Contrast Math</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
+                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <span>Bleed &amp; Margin Safe-Zones</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
+                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <span>AI Copy &amp; Grammar Proofing</span>
+              </div>
+            </div>
           </div>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
-            Catch Design, Copy &amp; Print Errors Before You Publish.
-          </h1>
-          <p className="mt-3 text-base text-slate-600 sm:text-lg">
-            Upload posters, flyers, social media ads, or banners. Automatically detect typos, grammar issues, low-contrast text, and bleed cutoff risks with visual markers directly on your artwork.
-          </p>
         </div>
+      </section>
+
+      <main className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
 
         {/* UPLOAD ZONE (WHEN NO FILE OR WHEN CHANGING) */}
         {!result && !loading && (
@@ -799,3 +840,4 @@ export default function DesignCheckClient() {
     </div>
   );
 }
+
