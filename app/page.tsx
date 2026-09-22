@@ -2905,15 +2905,18 @@ export default function Home() {
           <div className="mx-auto max-w-4xl text-center">
 
             {/* TOP ANNOUNCEMENT PILL */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3.5 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md transition-all hover:border-blue-300">
+            <Link
+              href="/design-check"
+              className="group inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3.5 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md transition-all hover:border-blue-300 hover:bg-blue-50/50"
+            >
               <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
               <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 bg-clip-text text-[11px] font-bold uppercase tracking-wider text-transparent">
-                Intelligent OCR & Spell Checker
+                New: AI Design Pre-Flight Check
               </span>
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
-                v1.0
+              <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white transition group-hover:bg-blue-700">
+                Try Now &rarr;
               </span>
-            </div>
+            </Link>
 
             <h1 className="mt-3 text-[32px] font-extrabold leading-[1.12] tracking-[-1.8px] text-slate-900 sm:text-[46px] lg:text-[54px]">
               Great design deserves{" "}
@@ -3821,6 +3824,13 @@ export default function Home() {
                 className="transition hover:text-gray-700"
               >
                 About
+              </Link>
+
+              <Link
+                href="/design-check"
+                className="transition hover:text-gray-700 font-semibold text-blue-600"
+              >
+                Design Check (New)
               </Link>
 
               <Link
