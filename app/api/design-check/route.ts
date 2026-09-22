@@ -271,18 +271,11 @@ export async function POST(req: Request) {
     // 5. WCAG Text-to-Background Contrast Engine
     let contrastFailCount = 0;
     for (const w of words) {
-      if (w.pixelW < 16 || w.pixelH < 12 || w.confidence < 75) continue;
+      if (w.pixelW < 18 || w.pixelH < 12 || w.confidence < 75) continue;
 
       try {
-        // Sample text center pixel
         const centerX = Math.floor(w.pixelX + w.pixelW / 2);
         const centerY = Math.floor(w.pixelY + w.pixelH / 2);
-        const textPixel = ctx.getImageData(centerX, centerY, 1, 1).data;
-        const textLum = calculateRelativeLuminance(
-          textPixel[0],
-          textPixel[1],
-          textPixel[2]
-        );
 
         // Sample background pixels just outside the bounding box
         const bgSamples = [
@@ -305,10 +298,34 @@ export async function POST(req: Request) {
         avgBgB /= bgSamples.length;
 
         const bgLum = calculateRelativeLuminance(avgBgR, avgBgG, avgBgB);
-        const ratio = calculateContrastRatio(textLum, bgLum);
 
-        // Flag clear contrast failures (< 2.8:1) on prominent words
-        if (ratio < 2.8 && ratio > 1.05 && w.text.length >= 3) {
+        // Sample a grid of pixels inside the word bounding box
+        // To find the actual text glyph strokes rather than the background space between letters
+        const stepX = Math.max(1, Math.floor(w.pixelW / 10));
+        const stepY = Math.max(1, Math.floor(w.pixelH / 5));
+        const luminances: number[] = [];
+
+        for (let px = w.pixelX + 2; px < w.pixelX + w.pixelW - 2; px += stepX) {
+          for (let py = w.pixelY + 2; py < w.pixelY + w.pixelH - 2; py += stepY) {
+            const p = ctx.getImageData(px, py, 1, 1).data;
+            luminances.push(calculateRelativeLuminance(p[0], p[1], p[2]));
+          }
+        }
+
+        if (luminances.length === 0) continue;
+        luminances.sort((a, b) => a - b);
+
+        // If background is dark (bgLum < 0.5), text strokes are the BRIGHTEST pixels (90th percentile)
+        // If background is light (bgLum >= 0.5), text strokes are the DARKEST pixels (10th percentile)
+        const textStrokeLum =
+          bgLum < 0.5
+            ? luminances[Math.floor(luminances.length * 0.90)]
+            : luminances[Math.floor(luminances.length * 0.10)];
+
+        const ratio = calculateContrastRatio(textStrokeLum, bgLum);
+
+        // Only flag genuinely poor contrast (ratio < 2.5:1) on substantial words
+        if (ratio < 2.5 && w.text.length >= 3) {
           contrastFailCount++;
           if (contrastFailCount <= 3) {
             issues.push({
@@ -394,7 +411,12 @@ Output pure JSON only without markdown formatting.`;
           const textResponse =
             geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (textResponse) {
-            const parsed = JSON.parse(textResponse);
+            // Strip markdown code fences if Gemini wrapped response in ```json ... ```
+            const cleanJson = textResponse
+              .replace(/^[^{[]*/, "")
+              .replace(/[^}\]]*$/, "")
+              .trim();
+            const parsed = JSON.parse(cleanJson);
             if (Array.isArray(parsed.issues)) {
               // Mark that Gemini successfully inspected the design
               engine = "hybrid-gemini";
@@ -435,8 +457,8 @@ Output pure JSON only without markdown formatting.`;
     // Fallback: ONLY run local nspell dictionary if Gemini did NOT run
     if (engine !== "hybrid-gemini") {
       for (const w of words) {
-        // Tokenize compound OCR phrases (e.g. "Back to" -> "Back", "to")
-        const subTokens = w.text.split(/\s+/);
+        // Tokenize compound OCR phrases & hyphenated words (e.g. "heart-pounding", "Back to")
+        const subTokens = w.text.split(/[\s—–-]+/);
         for (const sub of subTokens) {
           const cleaned = sub.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, "");
           if (cleaned.length < 3 || !isLikelyRealText(cleaned)) continue;
