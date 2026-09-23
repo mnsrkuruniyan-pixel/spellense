@@ -47,11 +47,13 @@ function loadDictionary(subFolder: string, packageName: string) {
 const spellUS = loadDictionary("en", "dictionary-en");
 const spellGB = loadDictionary("en-gb", "dictionary-en-gb");
 
-type SpellError = {
+export type SpellError = {
   word: string;
   suggestion: string | null;
   index: number;
   page?: number;
+  type?: "spelling" | "grammar" | "context";
+  explanation?: string;
 };
 
 
@@ -2342,6 +2344,107 @@ function filterOcrBlocks(
 }
 
 /* =========================================================
+   GEMINI AI PROOFREADING ENGINE
+   ========================================================= */
+
+async function checkWithGeminiAI(
+  text: string,
+  dialect: string = "en-US",
+  apiKey: string
+): Promise<SpellError[]> {
+  const sampleText = text.slice(0, 15000);
+  const dialectName = dialect === "en-GB" ? "British English" : "American English";
+
+  const prompt = `You are an expert English proofreading engine.
+Carefully inspect the following text written in ${dialectName}.
+Identify:
+1. Genuine spelling mistakes and typos.
+2. Contextual word choice errors (e.g. "their" vs "there", "affect" vs "effect", "loose" vs "lose").
+3. Obvious grammatical errors in single words or short phrases.
+
+Rules:
+- Respect ${dialectName} spelling conventions (e.g. colour/color, organise/organize).
+- Do NOT flag brand names, technical terms, code variables, proper nouns, or valid acronyms.
+- If all text is correct, return an empty array: { "corrections": [] }.
+
+Return ONLY a pure JSON object matching this schema:
+{
+  "corrections": [
+    {
+      "word": "exact word or token as in text",
+      "suggestion": "corrected word or phrase",
+      "type": "spelling" | "grammar" | "context",
+      "explanation": "concise 1-sentence reason"
+    }
+  ]
+}`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              { text: `TEXT TO INSPECT:\n"""\n${sampleText}\n"""` },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          responseMimeType: "application/json",
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Gemini API returned status ${response.status}`);
+  }
+
+  const geminiData = await response.json();
+  const textResponse = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!textResponse) return [];
+
+  const cleanJson = textResponse
+    .replace(/^[^{[]*/, "")
+    .replace(/[^}\]]*$/, "")
+    .trim();
+
+  const parsed = JSON.parse(cleanJson);
+  if (!Array.isArray(parsed.corrections)) return [];
+
+  const errors: SpellError[] = [];
+  const lowerText = text.toLowerCase();
+
+  let searchCursor = 0;
+  for (const item of parsed.corrections) {
+    if (!item.word || !item.suggestion) continue;
+    const target = item.word.toLowerCase();
+    let foundIndex = lowerText.indexOf(target, searchCursor);
+    if (foundIndex === -1) {
+      foundIndex = lowerText.indexOf(target, 0);
+    }
+
+    if (foundIndex !== -1) {
+      searchCursor = foundIndex + target.length;
+      errors.push({
+        word: item.word,
+        suggestion: item.suggestion,
+        index: foundIndex,
+        type: item.type === "grammar" ? "grammar" : item.type === "context" ? "context" : "spelling",
+        explanation: item.explanation,
+      });
+    }
+  }
+
+  return errors;
+}
+
+/* =========================================================
    POST REQUEST
    ========================================================= */
 
@@ -2363,6 +2466,7 @@ export async function POST(
     const preExtractedFileName = formData.get("fileName") as string | null;
     const dialectParam = formData.get("dialect") as string | null;
     const dialect = dialectParam === "en-GB" ? "en-GB" : "en-US";
+    const aiMode = formData.get("aiMode") === "true";
 
     let text = "";
     let blocks: OcrBlock = [];
@@ -2569,20 +2673,31 @@ export async function POST(
     }
 
     /* -----------------------------------------------------
-       LOCAL SPELL ENGINE
+       PROOFREADING ENGINE (GEMINI AI OR LOCAL DICTIONARY)
     ----------------------------------------------------- */
 
     const isDigitalText = !isImage && (!isPdf || pdfHasTextLayer);
+    const geminiKey = process.env.GEMINI_API_KEY;
+    let engine: "gemini-ai" | "local-dictionary" = "local-dictionary";
+    let errors: SpellError[] = [];
 
-    let errors =
-      checkWithOurEngine(
+    if (aiMode && geminiKey) {
+      try {
+        errors = await checkWithGeminiAI(cleanText, dialect, geminiKey);
+        engine = "gemini-ai";
+      } catch (geminiErr) {
+        console.warn("[Spellense] Gemini AI proofreading failed, falling back to local dictionary:", geminiErr);
+      }
+    }
+
+    if (engine === "local-dictionary") {
+      errors = checkWithOurEngine(
         cleanText,
-        getLowConfidenceOcrWords(
-          blocks
-        ),
+        getLowConfidenceOcrWords(blocks),
         dialect,
         isDigitalText
       );
+    }
 
     /* -----------------------------------------------------
        REMOVE DUPLICATES
@@ -2667,6 +2782,7 @@ export async function POST(
         fileName,
       text: cleanText,
       errors,
+      engine,
       wordCount:
         words.length,
       errorCount:

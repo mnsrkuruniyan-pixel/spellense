@@ -15,6 +15,8 @@ type SpellError = {
   suggestion: string | null;
   index: number;
   page?: number;
+  type?: "spelling" | "grammar" | "context";
+  explanation?: string;
 };
 
 type CheckResult = {
@@ -22,6 +24,7 @@ type CheckResult = {
   filename?: string;
   text?: string;
   errors?: SpellError[];
+  engine?: "gemini-ai" | "local-dictionary";
   wordCount?: number;
   errorCount?: number;
   pdfHasTextLayer?: boolean;
@@ -1586,6 +1589,9 @@ export default function Home() {
   const [dialect, setDialect] =
     useState<"en-US" | "en-GB">("en-US");
 
+  const [aiMode, setAiMode] =
+    useState(false);
+
   const [copiedShare, setCopiedShare] =
     useState(false);
 
@@ -1595,6 +1601,10 @@ export default function Home() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDialect(savedDialect);
     }
+    const savedAi = localStorage.getItem("spellense_ai_mode");
+    if (savedAi === "true") {
+      setAiMode(true);
+    }
   }, []);
 
   const handleDialectChange = (newDialect: "en-US" | "en-GB") => {
@@ -1602,7 +1612,56 @@ export default function Home() {
     localStorage.setItem("spellense_dialect", newDialect);
   };
 
+  const handleAiModeToggle = (enabled: boolean) => {
+    setAiMode(enabled);
+    localStorage.setItem("spellense_ai_mode", String(enabled));
+  };
+
   const lastPageStartsRef = useRef<number[]>([]);
+
+  const handleRecheckEngine = async (newAiMode: boolean) => {
+    if (newAiMode === aiMode || checking || !result?.text) return;
+    handleAiModeToggle(newAiMode);
+    setChecking(true);
+    setCheckingMessage(
+      newAiMode
+        ? "Running deep contextual check with Gemini AI..."
+        : "Re-checking with in-memory dictionary..."
+    );
+
+    try {
+      const formData = new FormData();
+      formData.append("text", result.text);
+      if (result.filename) {
+        formData.append("fileName", result.filename);
+      }
+      formData.append("dialect", dialect);
+      formData.append("aiMode", String(newAiMode));
+      const pageStarts = result.pageStarts || lastPageStartsRef.current;
+      if (pageStarts && pageStarts.length > 0) {
+        formData.append("pageStarts", JSON.stringify(pageStarts));
+      }
+
+      const response = await fetch("/api/check", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data: CheckResult = await response.json();
+      if (data && data.success) {
+        setResult((prev) => ({
+          ...data,
+          pdfMarks: prev?.pdfMarks,
+          imageMarks: prev?.imageMarks,
+          pageStarts: prev?.pageStarts || data.pageStarts,
+        }));
+      }
+    } catch {
+      // Keep previous result on error
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const handleRecheckDialect = async (newDialect: "en-US" | "en-GB") => {
     if (newDialect === dialect || checking || !result?.text) return;
@@ -1619,6 +1678,7 @@ export default function Home() {
         formData.append("fileName", result.filename);
       }
       formData.append("dialect", newDialect);
+      formData.append("aiMode", String(aiMode));
       const pageStarts = result.pageStarts || lastPageStartsRef.current;
       if (pageStarts && pageStarts.length > 0) {
         formData.append("pageStarts", JSON.stringify(pageStarts));
@@ -1891,6 +1951,7 @@ export default function Home() {
       const file = files[0];
       const isPdf = file.name.toLowerCase().endsWith(".pdf");
       const formData = new FormData();
+      formData.append("aiMode", String(aiMode));
 
       if (isPdf) {
         setCheckingMessage("Extracting text from PDF...");
@@ -2037,6 +2098,7 @@ export default function Home() {
       formData.append("text", trimmed);
       formData.append("fileName", "pasted-text.txt");
       formData.append("dialect", dialect);
+      formData.append("aiMode", String(aiMode));
 
       const response = await fetch("/api/check", {
         method: "POST",
@@ -2209,38 +2271,75 @@ export default function Home() {
                   : "Every English token detected was cross-referenced against standard dictionaries with zero mistakes found."}
               </p>
 
-              {/* TARGET DIALECT TOGGLE & RE-CHECK */}
+              {/* TARGET DIALECT & ENGINE TOGGLE & RE-CHECK */}
               {result.text && (
-                <div className="mt-5 inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white/90 px-3.5 py-1.5 shadow-xs backdrop-blur-md">
-                  <span className="text-xs font-semibold text-slate-500">Target Dialect:</span>
-                  <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100/90 p-0.5">
-                    <button
-                      type="button"
-                      disabled={checking}
-                      onClick={() => handleRecheckDialect("en-US")}
-                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
-                        dialect === "en-US"
-                          ? "bg-white text-slate-900 shadow-xs ring-1 ring-slate-200/60"
-                          : "text-slate-500 hover:text-slate-900"
-                      }`}
-                      title="Check spelling using American English conventions (e.g. Center, Color, Organize)"
-                    >
-                      <span>🇺🇸 US English</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={checking}
-                      onClick={() => handleRecheckDialect("en-GB")}
-                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
-                        dialect === "en-GB"
-                          ? "bg-white text-slate-900 shadow-xs ring-1 ring-slate-200/60"
-                          : "text-slate-500 hover:text-slate-900"
-                      }`}
-                      title="Check spelling using British English conventions (e.g. Centre, Colour, Organise)"
-                    >
-                      <span>🇬🇧 UK English</span>
-                    </button>
+                <div className="mt-5 inline-flex flex-wrap items-center justify-center gap-2.5 rounded-2xl border border-slate-200/80 bg-white/90 px-3.5 py-1.5 shadow-xs backdrop-blur-md">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-slate-500">Dialect:</span>
+                    <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100/90 p-0.5">
+                      <button
+                        type="button"
+                        disabled={checking}
+                        onClick={() => handleRecheckDialect("en-US")}
+                        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          dialect === "en-US"
+                            ? "bg-white text-slate-900 shadow-xs ring-1 ring-slate-200/60"
+                            : "text-slate-500 hover:text-slate-900"
+                        }`}
+                        title="Check spelling using American English conventions (e.g. Center, Color, Organize)"
+                      >
+                        <span>🇺🇸 US</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={checking}
+                        onClick={() => handleRecheckDialect("en-GB")}
+                        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          dialect === "en-GB"
+                            ? "bg-white text-slate-900 shadow-xs ring-1 ring-slate-200/60"
+                            : "text-slate-500 hover:text-slate-900"
+                        }`}
+                        title="Check spelling using British English conventions (e.g. Centre, Colour, Organise)"
+                      >
+                        <span>🇬🇧 UK</span>
+                      </button>
+                    </div>
                   </div>
+
+                  <span className="hidden sm:inline-block text-slate-300">|</span>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-slate-500">Engine:</span>
+                    <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100/90 p-0.5">
+                      <button
+                        type="button"
+                        disabled={checking}
+                        onClick={() => handleRecheckEngine(false)}
+                        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          !aiMode
+                            ? "bg-white text-slate-900 shadow-xs ring-1 ring-slate-200/60"
+                            : "text-slate-500 hover:text-slate-900"
+                        }`}
+                        title="Fast offline dictionary check (instant)"
+                      >
+                        <span>⚡ Fast</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={checking}
+                        onClick={() => handleRecheckEngine(true)}
+                        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          aiMode
+                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs"
+                            : "text-slate-500 hover:text-indigo-600"
+                        }`}
+                        title="Deep AI contextual proofread with Gemini (grammar, typos & contextual errors)"
+                      >
+                        <span>✨ AI Deep Check</span>
+                      </button>
+                    </div>
+                  </div>
+
                   {checking && (
                     <span className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 animate-pulse pl-1">
                       <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -2307,15 +2406,21 @@ export default function Home() {
                 <p className="mt-0.5 text-xs font-semibold text-slate-400">Spelling Score</p>
               </div>
 
-              {/* File Info */}
+              {/* File Info / Engine */}
               <div className="group relative overflow-hidden rounded-2xl border border-white/90 bg-white/80 p-4 text-center shadow-xs backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
-                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 text-[11px] font-black tracking-wider ring-1 ring-slate-200">
-                  {isTextResult ? "TXT" : isPdfResult ? "PDF" : isDocxResult ? "DOCX" : isPptxResult ? "PPTX" : isXlsxResult ? "XLSX" : "IMG"}
+                <div className={`mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-xl text-[11px] font-black tracking-wider ring-1 ${
+                  result.engine === "gemini-ai"
+                    ? "bg-purple-50 text-purple-600 ring-purple-100"
+                    : "bg-slate-100 text-slate-600 ring-slate-200"
+                }`}>
+                  {result.engine === "gemini-ai" ? "AI" : isTextResult ? "TXT" : isPdfResult ? "PDF" : isDocxResult ? "DOCX" : isPptxResult ? "PPTX" : isXlsxResult ? "XLSX" : "IMG"}
                 </div>
                 <p className="truncate text-sm font-bold tracking-tight text-slate-800 px-1" title={fileName}>
-                  {files[0]?.size ? (files[0].size / 1024 / 1024).toFixed(2) + " MB" : "Verified"}
+                  {result.engine === "gemini-ai" ? "Gemini AI" : files[0]?.size ? (files[0].size / 1024 / 1024).toFixed(2) + " MB" : "Verified"}
                 </p>
-                <p className="mt-0.5 text-xs font-semibold text-slate-400">In-Memory OCR</p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-400">
+                  {result.engine === "gemini-ai" ? "Deep Engine" : "In-Memory OCR"}
+                </p>
               </div>
 
             </div>
@@ -2516,13 +2621,24 @@ export default function Home() {
                             </span>
 
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-bold text-rose-600">
-                                {error.word}
-                              </p>
-                              <p className="text-[11px] text-slate-400">
-                                {error.suggestion
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="truncate text-sm font-bold text-rose-600">
+                                  {error.word}
+                                </p>
+                                {error.type && error.type !== "spelling" && (
+                                  <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${
+                                    error.type === "grammar"
+                                      ? "bg-purple-100 text-purple-700"
+                                      : "bg-indigo-100 text-indigo-700"
+                                  }`}>
+                                    {error.type}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500">
+                                {error.explanation || (error.suggestion
                                   ? "Suggested correction available"
-                                  : "Possible typo or brand name"}
+                                  : "Possible typo or brand name")}
                               </p>
                             </div>
                           </div>
@@ -2995,35 +3111,70 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* DIALECT SELECTOR TOGGLE */}
-              <div className="inline-flex items-center gap-1 rounded-2xl bg-white/85 p-1 border border-slate-200/80 shadow-xs backdrop-blur-md">
-                <span className="hidden sm:inline-block pl-2.5 pr-1 text-[11px] font-semibold text-slate-400">Dictionary:</span>
-                <button
-                  type="button"
-                  onClick={() => handleDialectChange("en-US")}
-                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                    dialect === "en-US"
-                      ? "bg-slate-900 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-                  }`}
-                  title="Check spelling using American English rules (e.g., color, organize)"
-                >
-                  <span>🇺🇸 US</span>
-                  <span className="hidden sm:inline">English</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDialectChange("en-GB")}
-                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                    dialect === "en-GB"
-                      ? "bg-slate-900 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-                  }`}
-                  title="Check spelling using British English rules (e.g., colour, organise)"
-                >
-                  <span>🇬🇧 UK</span>
-                  <span className="hidden sm:inline">English</span>
-                </button>
+              {/* ENGINE & DIALECT SELECTOR TOGGLES */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* ENGINE SELECTOR TOGGLE */}
+                <div className="inline-flex items-center gap-1 rounded-2xl bg-white/85 p-1 border border-slate-200/80 shadow-xs backdrop-blur-md">
+                  <span className="hidden sm:inline-block pl-2.5 pr-1 text-[11px] font-semibold text-slate-400">Engine:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleAiModeToggle(false)}
+                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                      !aiMode
+                        ? "bg-slate-900 text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                    }`}
+                    title="Fast offline dictionary check (instant)"
+                  >
+                    <span>⚡ Fast</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAiModeToggle(true)}
+                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                      aiMode
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs"
+                        : "text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50"
+                    }`}
+                    title="AI Deep Proofreading with Google Gemini (catches grammar, typos & contextual errors)"
+                  >
+                    <span>✨ AI Deep Check</span>
+                    <span className={`rounded-full px-1.5 py-0.2 text-[9px] font-black ${
+                      aiMode ? "bg-white/20 text-white" : "bg-purple-100 text-purple-700"
+                    }`}>GEMINI</span>
+                  </button>
+                </div>
+
+                {/* DIALECT SELECTOR TOGGLE */}
+                <div className="inline-flex items-center gap-1 rounded-2xl bg-white/85 p-1 border border-slate-200/80 shadow-xs backdrop-blur-md">
+                  <span className="hidden sm:inline-block pl-2.5 pr-1 text-[11px] font-semibold text-slate-400">Dictionary:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleDialectChange("en-US")}
+                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                      dialect === "en-US"
+                        ? "bg-slate-900 text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                    }`}
+                    title="Check spelling using American English rules (e.g., color, organize)"
+                  >
+                    <span>🇺🇸 US</span>
+                    <span className="hidden sm:inline">English</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDialectChange("en-GB")}
+                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                      dialect === "en-GB"
+                        ? "bg-slate-900 text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                    }`}
+                    title="Check spelling using British English rules (e.g., colour, organise)"
+                  >
+                    <span>🇬🇧 UK</span>
+                    <span className="hidden sm:inline">English</span>
+                  </button>
+                </div>
               </div>
             </div>
 
