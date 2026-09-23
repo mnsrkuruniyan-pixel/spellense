@@ -457,6 +457,18 @@ export default function DesignCheckClient() {
       </section>
 
       <main className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+        {/* Always-mounted hidden file input so "Audit Another Design" works from results view */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          className="hidden"
+          onChange={(e) => {
+            const selected = e.target.files?.[0];
+            if (selected) handleFileSelect(selected);
+            e.target.value = "";
+          }}
+        />
 
         {/* UPLOAD ZONE (WHEN NO FILE OR WHEN CHANGING) */}
         {!result && !loading && (
@@ -471,17 +483,6 @@ export default function DesignCheckClient() {
               onClick={() => fileInputRef.current?.click()}
               className="group relative flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300/90 bg-white/95 backdrop-blur-md p-10 text-center shadow-xl shadow-slate-200/40 transition hover:border-blue-500 hover:bg-blue-50/20 hover:shadow-2xl sm:p-14"
             >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                className="hidden"
-                onChange={(e) => {
-                  const selected = e.target.files?.[0];
-                  if (selected) handleFileSelect(selected);
-                }}
-              />
-
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white">
                 <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />

@@ -32,6 +32,36 @@ function loadDictionary(subFolder: string, packageName: string) {
 }
 
 const spellUS = loadDictionary("en", "dictionary-en");
+const spellGB = loadDictionary("en-gb", "dictionary-en-gb");
+
+// Common brand names, international English spellings, and acronyms in advertising
+const BRAND_AND_PROPER_NOUNS = new Set([
+  // Prominent Global & Regional Brands
+  "hisense", "samsung", "panasonic", "sony", "toshiba", "daikin", "gree", "midea", "lg",
+  "carrier", "trane", "york", "voltas", "fujitsu", "mitsubishi", "hitachi", "apple", "nike",
+  "adidas", "puma", "reebok", "zara", "gucci", "prada", "dior", "chanel", "hermes", "rolex",
+  "omega", "casio", "seiko", "canon", "nikon", "epson", "bose", "jbl", "philips", "siemens",
+  "bosch", "dyson", "pepsi", "coca", "cola", "nestle", "starbucks", "mcdonalds", "kfc", "subway",
+  "dominos", "toyota", "honda", "ford", "bmw", "mercedes", "benz", "audi", "hyundai", "kia",
+  "nissan", "tesla", "volvo", "volkswagen", "porsche", "ferrari", "lamborghini", "google",
+  "microsoft", "amazon", "meta", "facebook", "instagram", "tiktok", "youtube", "linkedin",
+  "whatsapp", "netflix", "spotify", "adobe", "figma", "canva", "uber", "careem", "deliveroo", "talabat",
+
+  // Acronyms, Geography & Events
+  "hvac", "fifa", "uae", "usa", "uk", "eu", "dubai", "abu", "dhabi", "sharjah", "ajman", "rak",
+  "fujairah", "doha", "qatar", "saudi", "arabia", "riyadh", "jeddah", "kuwait", "oman", "muscat",
+  "bahrain", "manama", "cairo", "egypt", "beirut", "amman", "delhi", "mumbai", "london", "paris",
+  "tokyo", "singapore", "sydney", "expo", "olympics", "worldcup", "fifa26", "ac", "led", "lcd",
+  "oled", "qled", "uhd", "hd", "4k", "8k", "usb", "btu", "inverter", "wifi", "ai", "iot", "eco",
+  "pro", "max", "ultra", "plus", "mini", "lite", "super", "smart", "hybrid", "turbo",
+
+  // Standard British / Commonwealth English spellings
+  "catalogue", "catalogues", "programme", "programmes", "colour", "colours", "centre", "centres",
+  "theatre", "theatres", "favour", "favours", "flavour", "flavours", "defence", "licence",
+  "specialised", "specialise", "organised", "organise", "analysed", "analyse", "customised",
+  "customise", "prioritised", "prioritise", "optimised", "optimise", "travelled", "travelling",
+  "cancelled", "cancelling", "judgement", "fulfil", "enrol"
+]);
 
 export interface DesignIssue {
   id: string;
@@ -384,7 +414,7 @@ AUDIT THE DESIGN ACROSS THESE 5 CREATIVE QA PILLARS:
 - Day & Date Sanity: Verify the day of the week matches the calendar date if stated.
 - Contact Details: Incomplete phone numbers (missing digits), malformed emails (e.g. @gmial.com), broken URLs.
 - Placeholder Artifacts: Flag leftover dummy text ("Lorem Ipsum", "[Insert Date]", "[Company Name]").
-- Genuine spelling mistakes & grammar errors in visible headlines, offers, and body copy. (Do NOT flag brand names, tech terms, or creative slogans).
+- Genuine spelling mistakes & grammar errors in visible headlines, offers, and body copy. IMPORTANT: Accept BOTH American and British/Commonwealth English spellings (e.g. 'catalogue' and 'catalog', 'colour' and 'color', 'centre' and 'center' are BOTH 100% valid). Do NOT flag brand names, company logos, sponsors, or tech acronyms (e.g. Hisense, Samsung, Nike, FIFA, HVAC, UAE, etc.).
 
 2. COMPLIANCE & ASTERISK (*) MATCHING:
 - Asterisk Pairing: If a headline or promotional claim contains an asterisk (*), check whether a corresponding footnote/disclaimer exists. If a footnote has an asterisk, check if the main claim has one.
@@ -434,34 +464,55 @@ If the design is completely flawless with zero errors, return:
   "issues": []
 }`;
 
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    { text: prompt },
+        let response: Response | null = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            response = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  contents: [
                     {
-                      inlineData: {
-                        mimeType: mimeType.startsWith("image/") ? mimeType : "image/png",
-                        data: base64Data,
-                      },
+                      parts: [
+                        { text: prompt },
+                        {
+                          inlineData: {
+                            mimeType: mimeType.startsWith("image/") ? mimeType : "image/png",
+                            data: base64Data,
+                          },
+                        },
+                      ],
                     },
                   ],
-                },
-              ],
-              generationConfig: {
-                temperature: 0.1,
-                responseMimeType: "application/json",
-              },
-            }),
-          }
-        );
+                  generationConfig: {
+                    temperature: 0.1,
+                    responseMimeType: "application/json",
+                  },
+                }),
+              }
+            );
 
-        if (response.ok) {
+            if (response.ok) break;
+
+            if (response.status === 503 || response.status === 429) {
+              console.warn(`[DesignCheck] Gemini returned ${response.status}, retrying attempt ${attempt}...`);
+              if (attempt < 3) {
+                await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
+              }
+            } else {
+              break;
+            }
+          } catch (fetchErr) {
+            console.warn(`[DesignCheck] Gemini fetch error on attempt ${attempt}:`, fetchErr);
+            if (attempt < 3) {
+              await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
+            }
+          }
+        }
+
+        if (response && response.ok) {
           const geminiData = await response.json();
           const textResponse =
             geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -585,28 +636,50 @@ If the design is completely flawless with zero errors, return:
           const cleaned = sub.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, "");
           if (cleaned.length < 3 || !isLikelyRealText(cleaned)) continue;
 
-          if (!spellUS.correct(cleaned)) {
-            const suggestions = spellUS.suggest(cleaned);
-            issues.push({
-              id: `spell-${issueCounter++}`,
-              category: "copy",
-              severity: "critical",
-              qaRole: "Spelling & Typography QA",
-              title: "Possible Spelling Mistake",
-              description: `Word "${sub}" appears to be misspelled.`,
-              whyItMatters: "Spelling mistakes in published creative assets diminish brand trust and perceived professionalism.",
-              originalText: sub,
-              suggestedFix: suggestions[0]
-                ? `Change to "${suggestions[0]}".`
-                : "Verify dictionary spelling.",
-              bbox: {
-                left: w.left,
-                top: w.top,
-                width: w.width,
-                height: w.height,
-              },
-            });
+          // 1. Accept valid US, UK/Commonwealth spelling, or known Brand/Acronym
+          if (
+            spellUS.correct(cleaned) ||
+            spellGB.correct(cleaned) ||
+            BRAND_AND_PROPER_NOUNS.has(cleaned)
+          ) {
+            continue;
           }
+
+          // 2. Ignore 2-5 letter uppercase acronyms (HVAC, UAE, FIFA, LED, VIP, USB, AI, CEO, etc.)
+          if (sub === sub.toUpperCase() && cleaned.length <= 5) {
+            continue;
+          }
+
+          // 3. Check for TitleCase proper nouns / brand names (e.g. "Hisense")
+          const isCapitalized = /^[A-Z][a-z0-9]+$/.test(sub);
+
+          const suggestions = spellUS.suggest(cleaned);
+          const gbSuggestions = spellGB.suggest(cleaned);
+          const topFix = suggestions[0] || gbSuggestions[0];
+
+          issues.push({
+            id: `spell-${issueCounter++}`,
+            category: "copy",
+            severity: isCapitalized ? "suggestion" : "warning",
+            qaRole: "Spelling & Typography QA",
+            title: isCapitalized ? "Unrecognized Name or Brand" : "Possible Spelling Mistake",
+            description: isCapitalized
+              ? `Word "${sub}" was not recognized in standard English dictionaries. If this is a brand name or proper noun, you can safely ignore this.`
+              : `Word "${sub}" appears to be misspelled.`,
+            whyItMatters: isCapitalized
+              ? "Verify that brand names and proper nouns are spelled according to official brand guidelines."
+              : "Spelling mistakes in published creative assets diminish brand trust and perceived professionalism.",
+            originalText: sub,
+            suggestedFix: topFix
+              ? `If this is a typo, change to "${topFix}". Otherwise ignore if brand name.`
+              : "Verify spelling or ignore if brand name.",
+            bbox: {
+              left: w.left,
+              top: w.top,
+              width: w.width,
+              height: w.height,
+            },
+          });
         }
       }
     }
