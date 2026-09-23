@@ -35,10 +35,21 @@ const spellUS = loadDictionary("en", "dictionary-en");
 
 export interface DesignIssue {
   id: string;
-  category: "copy" | "contrast" | "margin" | "typography" | "resolution";
-  severity: "error" | "warning" | "suggestion";
+  category:
+    | "copy"
+    | "contrast"
+    | "margin"
+    | "typography"
+    | "compliance"
+    | "data_integrity"
+    | "layout"
+    | "artifacts"
+    | "resolution";
+  severity: "critical" | "warning" | "suggestion" | "error";
+  qaRole?: string;
   title: string;
   description: string;
+  whyItMatters?: string;
   originalText?: string;
   suggestedFix?: string;
   bbox: {
@@ -52,12 +63,19 @@ export interface DesignIssue {
 export interface DesignCheckResponse {
   success: boolean;
   score: number;
+  verdict: "ready" | "needs_review" | "critical_issues";
+  verdictTitle: string;
+  verdictSummary: string;
   dimensions: {
     width: number;
     height: number;
     aspectRatio: number;
   };
   categoryScores: {
+    dataScore: number;
+    complianceScore: number;
+    layoutScore: number;
+    visualScore: number;
     copyScore: number;
     contrastScore: number;
     marginScore: number;
@@ -152,7 +170,6 @@ export async function POST(req: Request) {
     let issueCounter = 1;
 
     // 2. Check Resolution & Quality
-    let qualityScore = 100;
     if (origWidth < 600 || origHeight < 400) {
       issues.push({
         id: `quality-${issueCounter++}`,
@@ -163,7 +180,6 @@ export async function POST(req: Request) {
         suggestedFix: "Export at a minimum of 1080×1080px (for web) or 300 DPI (for print).",
         bbox: { left: 0.02, top: 0.02, width: 0.96, height: 0.08 },
       });
-      qualityScore = 65;
     }
 
     // 3. OCR and spatial mapping via Tesseract
@@ -348,36 +364,75 @@ export async function POST(req: Request) {
       } catch {}
     }
 
-    // 6. Gemini Multimodal Vision / Language Inspection (if GEMINI_API_KEY is configured)
+    // 6. Gemini Multimodal Creative QA Auditor Inspection
     const geminiKey = process.env.GEMINI_API_KEY;
     let engine: "hybrid-gemini" | "local-deterministic" = "local-deterministic";
+    let aiVerdict: "ready" | "needs_review" | "critical_issues" | null = null;
+    let aiVerdictTitle: string | null = null;
+    let aiVerdictSummary: string | null = null;
 
     if (geminiKey) {
       try {
         const base64Data = buffer.toString("base64");
-        const prompt = `You are an expert graphic design proofreader and pre-flight QA specialist.
-Examine this design image carefully.
-CRITICAL RULES:
-1. Inspect ONLY human-designed text: titles, headlines, subheadings, promotional text, body copy, and disclaimers.
-2. Completely IGNORE all product photos, appliances, stoves, washing machines, refrigerators, background illustrations, graphic badges, and textures.
-3. Check ONLY for actual spelling mistakes, real grammar errors, or missing words in visible text copy.
-4. Correct English phrases like "Back to School", "Simply Smarter", "Stylish Choices, Exceptional Value" are 100% correct and MUST NOT be flagged.
-5. If all visible text is correct, return an empty list: { "issues": [] }. Do not invent issues.
+        const prompt = `You are a Senior Creative QA Auditor at a premier advertising and publishing agency.
+Your role is to conduct an uncompromising, professional Pre-Flight Quality Assurance audit on this graphic design asset.
 
-Return your findings strictly as a JSON object matching this schema:
+AUDIT THE DESIGN ACROSS THESE 5 CREATIVE QA PILLARS:
+
+1. DATA & INFORMATION INTEGRITY (Critical & High Priority):
+- Price & Discount Math: Verify any stated discounts or savings match the prices (e.g. "50% off! Was $100 Now $60" is wrong math: 100 to 60 is 40%).
+- Day & Date Sanity: Verify the day of the week matches the calendar date if stated.
+- Contact Details: Incomplete phone numbers (missing digits), malformed emails (e.g. @gmial.com), broken URLs.
+- Placeholder Artifacts: Flag leftover dummy text ("Lorem Ipsum", "[Insert Date]", "[Company Name]").
+- Genuine spelling mistakes & grammar errors in visible headlines, offers, and body copy. (Do NOT flag brand names, tech terms, or creative slogans).
+
+2. COMPLIANCE & ASTERISK (*) MATCHING:
+- Asterisk Pairing: If a headline or promotional claim contains an asterisk (*), check whether a corresponding footnote/disclaimer exists. If a footnote has an asterisk, check if the main claim has one.
+- Mandatory Disclaimers: Missing terms on promotional or regulated claims.
+- Outdated Copyright: Outdated years (e.g. © 2022 on a new ad).
+
+3. PRE-FLIGHT ARTIFACTS & BRAND INTEGRITY:
+- Stock Watermarks: Accidental leftover stock watermarks (Shutterstock, Getty, iStock, etc.).
+- Logo Distortion & Clear-Space: Logo squished, stretched disproportionately, or crowding borders without breathing room.
+
+4. TYPOGRAPHY & VISUAL HIERARCHY:
+- Font Overload: 4+ conflicting font styles creating visual chaos.
+- Hierarchy Inversion: Subheadings or fine print visually overpowering the main headline.
+- Legibility: Full body paragraphs in ALL-CAPS, or unreadable decorative/script fonts on essential info.
+
+5. LAYOUT, MARGINS & ACCESSIBILITY:
+- Text-on-Image Contrast: White or light text placed directly over busy photo highlights without an overlay or drop shadow.
+- Overcrowded / Cluttered: Essential elements colliding or lacking breathing room.
+
+COORDINATES (CRITICAL):
+For each issue, return a normalized bounding box [ymin, xmin, ymax, xmax] as integers between 0 and 1000 indicating where the issue occurs on the image.
+
+Return ONLY a pure JSON object matching this schema:
 {
+  "verdict": "ready" | "needs_review" | "critical_issues",
+  "verdictTitle": "Short 3-5 word summary headline",
+  "verdictSummary": "1-2 sentence executive assessment of the design's publication readiness.",
   "issues": [
     {
-      "category": "copy",
-      "severity": "error",
-      "title": "Short title (e.g. Spelling Mistake)",
+      "category": "data_integrity" | "compliance" | "copy" | "typography" | "layout" | "contrast" | "artifacts",
+      "severity": "critical" | "warning" | "suggestion",
+      "qaRole": "e.g. Data Integrity / Asterisk Match / Typography / Pre-Flight",
+      "title": "Concise issue title",
       "description": "Clear explanation of the error",
-      "originalText": "exact misspelled word",
-      "suggestedFix": "corrected recommendation"
+      "whyItMatters": "Why this damages credibility, legal compliance, or conversion",
+      "suggestedFix": "Actionable, designer-ready instruction on how to fix it",
+      "originalText": "exact text if applicable",
+      "box_2d": [ymin, xmin, ymax, xmax]
     }
   ]
 }
-Output pure JSON only without markdown formatting.`;
+If the design is completely flawless with zero errors, return:
+{
+  "verdict": "ready",
+  "verdictTitle": "Ready for Publication",
+  "verdictSummary": "This asset passes all creative QA checks with zero data integrity, compliance, or typography issues detected.",
+  "issues": []
+}`;
 
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`,
@@ -411,37 +466,105 @@ Output pure JSON only without markdown formatting.`;
           const textResponse =
             geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (textResponse) {
-            // Strip markdown code fences if Gemini wrapped response in ```json ... ```
             const cleanJson = textResponse
               .replace(/^[^{[]*/, "")
               .replace(/[^}\]]*$/, "")
               .trim();
             const parsed = JSON.parse(cleanJson);
-            if (Array.isArray(parsed.issues)) {
-              // Mark that Gemini successfully inspected the design
-              engine = "hybrid-gemini";
-              for (const item of parsed.issues) {
-                const orig = (item.originalText || "").toLowerCase().trim();
-                const matchedWord = words.find((w) =>
-                  w.text.toLowerCase().trim() === orig ||
-                  w.text.toLowerCase().includes(orig) ||
-                  orig.includes(w.text.toLowerCase().trim())
-                );
 
-                if (matchedWord) {
+            if (parsed && typeof parsed === "object") {
+              engine = "hybrid-gemini";
+              if (parsed.verdict) aiVerdict = parsed.verdict;
+              if (parsed.verdictTitle) aiVerdictTitle = parsed.verdictTitle;
+              if (parsed.verdictSummary) aiVerdictSummary = parsed.verdictSummary;
+
+              if (Array.isArray(parsed.issues)) {
+                for (const item of parsed.issues) {
+                  let left = 0.1;
+                  let top = 0.1;
+                  let boxW = 0.2;
+                  let boxH = 0.08;
+
+                  if (
+                    Array.isArray(item.box_2d) &&
+                    item.box_2d.length === 4 &&
+                    typeof item.box_2d[0] === "number"
+                  ) {
+                    const ymin = Math.max(0, Math.min(1000, item.box_2d[0]));
+                    const xmin = Math.max(0, Math.min(1000, item.box_2d[1]));
+                    const ymax = Math.max(ymin, Math.min(1000, item.box_2d[2]));
+                    const xmax = Math.max(xmin, Math.min(1000, item.box_2d[3]));
+
+                    top = ymin / 1000;
+                    left = xmin / 1000;
+                    boxW = Math.max(0.04, (xmax - xmin) / 1000);
+                    boxH = Math.max(0.025, (ymax - ymin) / 1000);
+                  } else if (item.originalText) {
+                    const orig = item.originalText.toLowerCase().trim();
+                    const matchedWord = words.find(
+                      (w) =>
+                        w.text.toLowerCase().trim() === orig ||
+                        w.text.toLowerCase().includes(orig) ||
+                        orig.includes(w.text.toLowerCase().trim())
+                    );
+                    if (matchedWord) {
+                      left = matchedWord.left;
+                      top = matchedWord.top;
+                      boxW = Math.max(matchedWord.width, 0.05);
+                      boxH = Math.max(matchedWord.height, 0.03);
+                    }
+                  }
+
+                  const validCategory = [
+                    "copy",
+                    "contrast",
+                    "margin",
+                    "typography",
+                    "compliance",
+                    "data_integrity",
+                    "layout",
+                    "artifacts",
+                  ].includes(item.category)
+                    ? item.category
+                    : "copy";
+
+                  const validSeverity = [
+                    "critical",
+                    "warning",
+                    "suggestion",
+                  ].includes(item.severity)
+                    ? item.severity
+                    : "warning";
+
                   issues.push({
-                    id: `ai-${issueCounter++}`,
-                    category: item.category === "typography" ? "typography" : "copy",
-                    severity: item.severity || "error",
-                    title: item.title || "Copy Issue",
+                    id: `qa-${issueCounter++}`,
+                    category: validCategory,
+                    severity: validSeverity,
+                    qaRole:
+                      item.qaRole ||
+                      (validCategory === "data_integrity"
+                        ? "Data Integrity QA"
+                        : validCategory === "compliance"
+                        ? "Asterisk & Legal Compliance"
+                        : validCategory === "typography"
+                        ? "Typography & Hierarchy"
+                        : validCategory === "contrast"
+                        ? "Contrast & Readability"
+                        : validCategory === "layout"
+                        ? "Layout & Alignment"
+                        : validCategory === "artifacts"
+                        ? "Pre-Flight Artifacts"
+                        : "Creative QA"),
+                    title: item.title || "QA Issue Flagged",
                     description: item.description,
+                    whyItMatters: item.whyItMatters,
                     originalText: item.originalText,
                     suggestedFix: item.suggestedFix,
                     bbox: {
-                      left: matchedWord.left,
-                      top: matchedWord.top,
-                      width: Math.max(matchedWord.width, 0.05),
-                      height: Math.max(matchedWord.height, 0.03),
+                      left: Math.max(0, Math.min(0.95, left)),
+                      top: Math.max(0, Math.min(0.95, top)),
+                      width: Math.min(1 - left, boxW),
+                      height: Math.min(1 - top, boxH),
                     },
                   });
                 }
@@ -450,14 +573,13 @@ Output pure JSON only without markdown formatting.`;
           }
         }
       } catch (geminiErr) {
-        console.warn("Gemini vision analysis failed, falling back to local spelling check:", geminiErr);
+        console.warn("Gemini QA analysis failed, falling back to local inspection:", geminiErr);
       }
     }
 
     // Fallback: ONLY run local nspell dictionary if Gemini did NOT run
     if (engine !== "hybrid-gemini") {
       for (const w of words) {
-        // Tokenize compound OCR phrases & hyphenated words (e.g. "heart-pounding", "Back to")
         const subTokens = w.text.split(/[\s—–-]+/);
         for (const sub of subTokens) {
           const cleaned = sub.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, "");
@@ -468,13 +590,15 @@ Output pure JSON only without markdown formatting.`;
             issues.push({
               id: `spell-${issueCounter++}`,
               category: "copy",
-              severity: "error",
+              severity: "critical",
+              qaRole: "Spelling & Typography QA",
               title: "Possible Spelling Mistake",
               description: `Word "${sub}" appears to be misspelled.`,
+              whyItMatters: "Spelling mistakes in published creative assets diminish brand trust and perceived professionalism.",
               originalText: sub,
               suggestedFix: suggestions[0]
-                ? `Did you mean "${suggestions[0]}"?`
-                : undefined,
+                ? `Change to "${suggestions[0]}".`
+                : "Verify dictionary spelling.",
               bbox: {
                 left: w.left,
                 top: w.top,
@@ -487,35 +611,125 @@ Output pure JSON only without markdown formatting.`;
       }
     }
 
-    // 7. Calculate category scores and overall score
-    const copyIssues = issues.filter((i) => i.category === "copy");
-    const contrastIssues = issues.filter((i) => i.category === "contrast");
-    const marginIssues = issues.filter((i) => i.category === "margin");
-
-    const copyScore = Math.max(20, 100 - copyIssues.length * 15);
-    const contrastScore = Math.max(20, 100 - contrastIssues.length * 12);
-    const marginScore = Math.max(30, 100 - marginIssues.length * 10);
-
-    const overallScore = Math.round(
-      copyScore * 0.4 +
-      contrastScore * 0.25 +
-      marginScore * 0.2 +
-      qualityScore * 0.15
+    // 7. Calculate QA Auditor category scores, verdict, and overall score
+    const criticalIssues = issues.filter(
+      (i) => i.severity === "critical" || i.severity === "error"
     );
+    const warningIssues = issues.filter((i) => i.severity === "warning");
+
+    const dataIssues = issues.filter(
+      (i) => i.category === "data_integrity" || i.category === "copy"
+    );
+    const complianceIssues = issues.filter(
+      (i) => i.category === "compliance" || i.category === "artifacts"
+    );
+    const layoutIssues = issues.filter(
+      (i) => i.category === "layout" || i.category === "margin"
+    );
+    const visualIssues = issues.filter(
+      (i) => i.category === "contrast" || i.category === "typography"
+    );
+
+    const dataScore = Math.max(
+      15,
+      100 -
+        dataIssues.reduce(
+          (acc, curr) => acc + (curr.severity === "critical" || curr.severity === "error" ? 22 : 10),
+          0
+        )
+    );
+    const complianceScore = Math.max(
+      20,
+      100 -
+        complianceIssues.reduce(
+          (acc, curr) => acc + (curr.severity === "critical" || curr.severity === "error" ? 20 : 10),
+          0
+        )
+    );
+    const layoutScore = Math.max(
+      25,
+      100 -
+        layoutIssues.reduce(
+          (acc, curr) => acc + (curr.severity === "critical" || curr.severity === "error" ? 18 : 8),
+          0
+        )
+    );
+    const visualScore = Math.max(
+      20,
+      100 -
+        visualIssues.reduce(
+          (acc, curr) => acc + (curr.severity === "critical" || curr.severity === "error" ? 15 : 7),
+          0
+        )
+    );
+
+    const overallScore = Math.min(
+      100,
+      Math.max(
+        15,
+        Math.round(
+          dataScore * 0.35 +
+            complianceScore * 0.2 +
+            layoutScore * 0.25 +
+            visualScore * 0.2
+        )
+      )
+    );
+
+    let verdict: "ready" | "needs_review" | "critical_issues" = "ready";
+    let verdictTitle = "Ready for Publication";
+    let verdictSummary =
+      "Asset passed all pre-flight creative QA checks with zero critical flaws.";
+
+    if (
+      criticalIssues.length > 0 ||
+      overallScore < 65 ||
+      aiVerdict === "critical_issues"
+    ) {
+      verdict = "critical_issues";
+      verdictTitle =
+        aiVerdictTitle ||
+        `${Math.max(1, criticalIssues.length)} Critical QA Deal-Breaker${criticalIssues.length > 1 ? "s" : ""} Detected`;
+      verdictSummary =
+        aiVerdictSummary ||
+        "Resolve critical data, discount math, placeholder, or compliance errors before publishing this asset.";
+    } else if (
+      warningIssues.length > 0 ||
+      overallScore < 85 ||
+      aiVerdict === "needs_review"
+    ) {
+      verdict = "needs_review";
+      verdictTitle =
+        aiVerdictTitle || "Review Recommended Before Launch";
+      verdictSummary =
+        aiVerdictSummary ||
+        `${Math.max(1, warningIssues.length)} warning${warningIssues.length > 1 ? "s" : ""} flagged. Adjusting these will elevate design polish and campaign conversion.`;
+    } else {
+      verdict = "ready";
+      if (aiVerdictTitle) verdictTitle = aiVerdictTitle;
+      if (aiVerdictSummary) verdictSummary = aiVerdictSummary;
+    }
 
     const result: DesignCheckResponse = {
       success: true,
       score: overallScore,
+      verdict,
+      verdictTitle,
+      verdictSummary,
       dimensions: {
         width: origWidth,
         height: origHeight,
         aspectRatio,
       },
       categoryScores: {
-        copyScore,
-        contrastScore,
-        marginScore,
-        qualityScore,
+        dataScore,
+        complianceScore,
+        layoutScore,
+        visualScore,
+        copyScore: dataScore,
+        contrastScore: visualScore,
+        marginScore: layoutScore,
+        qualityScore: complianceScore,
       },
       issues,
       engine,
