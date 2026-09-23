@@ -344,10 +344,9 @@ function PdfMarkedPreview({
     );
   }
 
-  const panHorizontal = (direction: "left" | "right") => {
+  const pan = (dx: number, dy: number) => {
     if (!previewRef.current) return;
-    const delta = direction === "left" ? -280 : 280;
-    previewRef.current.scrollBy({ left: delta, behavior: "smooth" });
+    previewRef.current.scrollBy({ left: dx, top: dy, behavior: "smooth" });
   };
 
   const handleReset = () => {
@@ -362,9 +361,18 @@ function PdfMarkedPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={previewRef}
-        className={`flex h-[360px] sm:h-[480px] lg:h-[588px] items-start sm:items-center justify-start sm:justify-center overflow-auto overscroll-contain select-none ${
-          panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none"
+        className={`flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
+          panning ? "cursor-grabbing touch-none" : "cursor-grab"
         }`}
+        onWheel={(event) => {
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+            const delta = event.deltaY > 0 ? -0.15 : 0.15;
+            setZoom((value) =>
+              Math.max(0.5, Math.min(2.5, Math.round((value + delta) * 100) / 100))
+            );
+          }
+        }}
         onPointerDown={(event) => {
           if (event.button !== 0 && event.pointerType === "mouse") return;
           if (!previewRef.current) return;
@@ -403,70 +411,104 @@ function PdfMarkedPreview({
           setPanning(false);
         }}
       >
-        <div className="relative m-auto w-fit bg-white shadow-md">
-          <canvas ref={canvasRef} className="block" />
-          <div
-            ref={layerRef}
-            className="pointer-events-none absolute left-0 top-0"
-          />
+        <div className="relative m-auto shrink-0 p-4">
+          <div className="relative bg-white shadow-md">
+            <canvas ref={canvasRef} className="block" />
+            <div
+              ref={layerRef}
+              className="pointer-events-none absolute left-0 top-0"
+            />
+          </div>
         </div>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-xs">
-        <div className="flex items-center gap-1.5">
+        {/* DIRECTIONAL PAN CONTROLS */}
+        <div className="flex items-center gap-1">
+          <span className="hidden md:inline-block pr-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Pan:
+          </span>
           <button
             type="button"
-            onClick={() => panHorizontal("left")}
-            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
-            title="Move Left (Pan sideways)"
+            onClick={() => pan(0, -220)}
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100 active:scale-95 cursor-pointer"
+            title="Pan Up"
+            aria-label="Pan Up"
           >
-            <span>◂</span> <span>Left</span>
+            ▲
           </button>
           <button
             type="button"
-            onClick={() => panHorizontal("right")}
-            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
-            title="Move Right (Pan sideways)"
+            onClick={() => pan(0, 220)}
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100 active:scale-95 cursor-pointer"
+            title="Pan Down"
+            aria-label="Pan Down"
           >
-            <span>Right</span> <span>▸</span>
+            ▼
+          </button>
+          <button
+            type="button"
+            onClick={() => pan(-220, 0)}
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100 active:scale-95 cursor-pointer"
+            title="Pan Left"
+            aria-label="Pan Left"
+          >
+            ◀
+          </button>
+          <button
+            type="button"
+            onClick={() => pan(220, 0)}
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100 active:scale-95 cursor-pointer"
+            title="Pan Right"
+            aria-label="Pan Right"
+          >
+            ▶
           </button>
         </div>
 
+        {/* PAGE NAVIGATION */}
         <div className="flex items-center gap-1.5">
           <button
             type="button"
             disabled={selectedPage === 1}
             onClick={() => onPageChange(selectedPage - 1)}
-            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
           >
             Previous
           </button>
-          <span className="text-[11px] font-medium text-slate-500">Page {selectedPage} of {pageCount}</span>
+          <span className="text-[11px] font-medium text-slate-500">
+            Page {selectedPage} of {pageCount}
+          </span>
           <button
             type="button"
             disabled={selectedPage === pageCount}
             onClick={() => onPageChange(selectedPage + 1)}
-            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+            className="rounded-lg px-2.5 py-1.5 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
           >
             Next
           </button>
         </div>
 
+        {/* ZOOM & FIT PAGE */}
         <div className="flex items-center gap-1">
           <button
             type="button"
             aria-label="Zoom out"
             disabled={zoom <= 0.5}
-            onClick={() => setZoom((value) => Math.max(0.5, Math.round((value - 0.25) * 100) / 100))}
-            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+            onClick={() =>
+              setZoom((value) =>
+                Math.max(0.5, Math.round((value - 0.25) * 100) / 100)
+              )
+            }
+            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
           >
             −
           </button>
           <button
             type="button"
             onClick={handleReset}
-            className="min-w-12 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100"
-            title="Reset to 100%"
+            className="min-w-12 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100 cursor-pointer"
+            title="Fit to Page (Reset zoom to 100%)"
           >
             {Math.round(zoom * 100)}%
           </button>
@@ -474,10 +516,22 @@ function PdfMarkedPreview({
             type="button"
             aria-label="Zoom in"
             disabled={zoom >= 2.5}
-            onClick={() => setZoom((value) => Math.min(2.5, Math.round((value + 0.25) * 100) / 100))}
-            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+            onClick={() =>
+              setZoom((value) =>
+                Math.min(2.5, Math.round((value + 0.25) * 100) / 100)
+              )
+            }
+            className="rounded-lg px-2 py-1 text-base leading-none transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
           >
             +
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="hidden sm:inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-100 active:scale-95 cursor-pointer"
+            title="Fit entire page in view"
+          >
+            Fit Page
           </button>
         </div>
       </div>
@@ -617,8 +671,8 @@ function DocxPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={previewRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto overscroll-contain select-none ${
-          panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
+          panning ? "cursor-grabbing touch-none" : "cursor-grab"
         }`}
         onPointerDown={(event) => {
           if (event.button !== 0 && event.pointerType === "mouse") return;
@@ -891,8 +945,8 @@ function PptxPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto overscroll-contain select-none ${
-          panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
+          panning ? "cursor-grabbing touch-none" : "cursor-grab"
         }`}
         onPointerDown={(event) => {
           if (event.button !== 0 && event.pointerType === "mouse") return;
@@ -1094,8 +1148,8 @@ function XlsxPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto overscroll-contain select-none ${
-          panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
+          panning ? "cursor-grabbing touch-none" : "cursor-grab"
         }`}
         onPointerDown={(event) => {
           if (event.button !== 0 && event.pointerType === "mouse") return;
@@ -1304,10 +1358,9 @@ function ImagePreview({
     return { width, height };
   }, [naturalDims, zoom]);
 
-  const panHorizontal = (direction: "left" | "right") => {
+  const pan = (dx: number, dy: number) => {
     if (!viewportRef.current) return;
-    const delta = direction === "left" ? -280 : 280;
-    viewportRef.current.scrollBy({ left: delta, behavior: "smooth" });
+    viewportRef.current.scrollBy({ left: dx, top: dy, behavior: "smooth" });
   };
 
   const handleFitWidth = () => {
@@ -1337,9 +1390,18 @@ function ImagePreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto overscroll-contain select-none ${
-          panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
+          panning ? "cursor-grabbing touch-none" : "cursor-grab"
         }`}
+        onWheel={(event) => {
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+            const delta = event.deltaY > 0 ? -0.15 : 0.15;
+            setZoom((value) =>
+              Math.max(0.15, Math.min(3, Math.round((value + delta) * 100) / 100))
+            );
+          }
+        }}
         onPointerDown={(event) => {
           if (event.button !== 0 && event.pointerType === "mouse") return;
           if (!viewportRef.current) return;
@@ -1431,23 +1493,46 @@ function ImagePreview({
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-xs">
-        {/* Horizontal Navigation */}
-        <div className="flex items-center gap-1.5">
+        {/* Directional Navigation */}
+        <div className="flex items-center gap-1">
+          <span className="hidden md:inline-block pr-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Pan:
+          </span>
           <button
             type="button"
-            onClick={() => panHorizontal("left")}
-            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
-            title="Move Left (Pan sideways)"
+            onClick={() => pan(0, -220)}
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100 active:scale-95 cursor-pointer"
+            title="Pan Up"
+            aria-label="Pan Up"
           >
-            <span>◂</span> <span>Left</span>
+            ▲
           </button>
           <button
             type="button"
-            onClick={() => panHorizontal("right")}
-            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
-            title="Move Right (Pan sideways)"
+            onClick={() => pan(0, 220)}
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100 active:scale-95 cursor-pointer"
+            title="Pan Down"
+            aria-label="Pan Down"
           >
-            <span>Right</span> <span>▸</span>
+            ▼
+          </button>
+          <button
+            type="button"
+            onClick={() => pan(-220, 0)}
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100 active:scale-95 cursor-pointer"
+            title="Pan Left"
+            aria-label="Pan Left"
+          >
+            ◀
+          </button>
+          <button
+            type="button"
+            onClick={() => pan(220, 0)}
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100 active:scale-95 cursor-pointer"
+            title="Pan Right"
+            aria-label="Pan Right"
+          >
+            ▶
           </button>
         </div>
 

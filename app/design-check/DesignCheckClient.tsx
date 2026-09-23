@@ -682,9 +682,18 @@ export default function DesignCheckClient() {
                 <div className="bg-slate-200 p-4">
                   <div
                     ref={viewportRef}
-                    className={`relative flex h-[380px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto overscroll-contain select-none ${
-                      panning ? "cursor-grabbing touch-none" : "cursor-grab touch-none"
+                    className={`relative flex h-[380px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
+                      panning ? "cursor-grabbing touch-none" : "cursor-grab"
                     }`}
+                    onWheel={(event) => {
+                      if (event.ctrlKey || event.metaKey) {
+                        event.preventDefault();
+                        const delta = event.deltaY > 0 ? -0.15 : 0.15;
+                        setZoom((value) =>
+                          Math.max(0.2, Math.min(3, Math.round((value + delta) * 100) / 100))
+                        );
+                      }
+                    }}
                     onPointerDown={(event) => {
                       if (event.button !== 0 && event.pointerType === "mouse") return;
                       if (!viewportRef.current) return;
