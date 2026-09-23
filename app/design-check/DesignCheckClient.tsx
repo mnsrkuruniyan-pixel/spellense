@@ -407,7 +407,7 @@ export default function DesignCheckClient() {
       <section className="relative">
         <div className="relative mx-auto max-w-7xl px-5 pb-10 pt-4 sm:px-6 sm:pt-6 lg:px-10 lg:pt-7">
           {/* HERO TEXT */}
-          <div className="mx-auto max-w-4xl text-center">
+          <div className="mx-auto max-w-5xl text-center">
             {/* TOP ANNOUNCEMENT PILL */}
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3.5 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md transition-all hover:border-blue-300">
               <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
@@ -419,8 +419,10 @@ export default function DesignCheckClient() {
               </span>
             </div>
 
-            <h1 className="mt-3 text-[32px] font-extrabold leading-[1.12] tracking-[-1.8px] text-slate-900 sm:text-[46px] lg:text-[54px]">
-              Catch Pricing, Asterisks &amp; Print Errors{" "}
+            <h1 className="mt-3 text-[28px] font-extrabold leading-[1.15] tracking-[-1.5px] text-slate-900 sm:text-[36px] md:text-[42px] lg:text-[48px]">
+              <span className="sm:whitespace-nowrap">
+                Catch Pricing, Asterisks &amp; Print Errors
+              </span>{" "}
               <br />
               <span className="inline-block whitespace-nowrap bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
                 before you publish.
