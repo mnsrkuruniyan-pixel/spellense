@@ -5,16 +5,6 @@ export const metadata: Metadata = {
   title: "AI Design Check & Pre-Flight QA — Spellense",
   description:
     "Free AI Design Pre-Flight Quality Checker. Detect spelling, grammar, low WCAG contrast, and bleed margin cutoffs in posters, social ads, flyers, and banners before publishing or printing.",
-  keywords: [
-    "design checker",
-    "poster quality check",
-    "flyer spell check",
-    "ad creative QA",
-    "WCAG contrast checker image",
-    "print preflight tool",
-    "social media design checker",
-    "design error finder",
-  ],
   alternates: {
     canonical: "/design-check",
   },
