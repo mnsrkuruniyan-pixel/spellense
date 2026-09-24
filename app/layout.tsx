@@ -23,6 +23,9 @@ export const metadata: Metadata = {
   },
   verification: {
     google: "97113ee971683ad4",
+    other: {
+      "naver-site-verification": "a6f71e8bc6be2a49fa849b2cbf78d068",
+    },
   },
   icons: {
     icon: [
