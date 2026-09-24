@@ -3145,26 +3145,25 @@ export default function Home() {
             {/* TOP ANNOUNCEMENT PILL */}
             <Link
               href="/design-check"
-              className="group inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3.5 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md transition-all hover:border-blue-300 hover:bg-blue-50/50"
+              className="group inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/90 px-4 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md transition-all hover:border-blue-300 hover:bg-blue-50/60"
             >
               <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-              <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 bg-clip-text text-[11px] font-bold uppercase tracking-wider text-transparent">
-                New: AI Design Pre-Flight Check
+              <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 bg-clip-text text-[11px] font-bold uppercase tracking-wider text-transparent">
+                New: AI Design Pre-Flight Check v2.0
               </span>
               <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white transition group-hover:bg-blue-700">
                 Try Now &rarr;
               </span>
             </Link>
 
-            <h1 className="mt-3 text-[32px] font-extrabold leading-[1.12] tracking-[-1.8px] text-slate-900 sm:text-[46px] lg:text-[54px]">
-              Great design deserves{" "}
-              <br />
+            <h1 className="mt-4 text-[34px] font-extrabold leading-[1.12] tracking-[-1.8px] text-slate-900 sm:text-[48px] lg:text-[56px]">
+              The Visual Proofreading Suite <br />
               <span className="inline-block whitespace-nowrap bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                flawless spelling.
+                for designs, documents &amp; slides.
               </span>
             </h1>
 
-            <p className="mx-auto mt-2.5 max-w-[620px] text-[14px] leading-relaxed text-slate-600 sm:text-[15px]">
+            <p className="mx-auto mt-3 max-w-[640px] text-[14px] leading-relaxed text-slate-600 sm:text-[15px]">
               AI &amp; OCR-powered spell checking for images, documents, slides, and sheets.
               <br className="hidden sm:inline" />
               Catch hidden English typos across your visual designs before going live.
@@ -3743,233 +3742,423 @@ export default function Home() {
 
           </div>
 
-          <section className="mx-auto mt-20 max-w-5xl border-t border-slate-200/80 pt-16">
+          <section className="mx-auto mt-20 max-w-6xl border-t border-slate-200/80 pt-20">
 
-            {/* SECTION HEADER */}
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/90 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-600 shadow-2xs backdrop-blur-xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-                HOW IT WORKS
+            {/* BENTO GRID: THE SPELLENSE SUITE */}
+            <div className="text-center max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/90 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs backdrop-blur-md">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
+                The Spellense Creative Suite
               </div>
 
-              <h2 className="mt-4 text-3xl font-extrabold tracking-[-1px] text-slate-900 sm:text-4xl lg:text-[42px] sm:leading-[1.15]">
-                Intelligent visual spell checking for images, documents & slides
+              <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl lg:text-[42px] leading-tight">
+                Complete Visual Pre-Flight &amp; Copy Tooling
               </h2>
 
-              <p className="mt-4 text-[15px] leading-relaxed text-slate-600 sm:text-base">
-                Spellense combines high-precision OCR (Optical Character Recognition) with deep English dictionaries to pinpoint spelling mistakes buried inside visual designs, graphics, multi-page PDFs, and presentation decks before you publish or print.
+              <p className="mt-3.5 text-sm sm:text-base leading-relaxed text-slate-600">
+                Crafted for marketing teams, art directors, graphic designers, and founders who cannot afford embarrassing errors in client-facing work.
               </p>
             </div>
 
-            {/* 3-STEP MODERN CARDS */}
-            <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {/* BENTO GRID CARDS */}
+            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
-              {/* STEP 1 */}
-              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
-                <div className="flex items-center justify-between">
+              {/* CARD 1: AI DESIGN CHECK (HERO BENTO - SPANS 2 COLS ON LG) */}
+              <div className="group relative rounded-3xl border border-indigo-200/80 bg-gradient-to-br from-white via-indigo-50/20 to-blue-50/30 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/10 lg:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white shadow-xs">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      Featured Tool
+                    </span>
+                    <span className="rounded-full bg-indigo-100/80 px-2.5 py-0.5 text-[11px] font-bold text-indigo-800">
+                      v2.0 Senior Designer AI
+                    </span>
+                  </div>
+
+                  <Link
+                    href="/design-check"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-indigo-700 active:scale-95"
+                  >
+                    <span>Try Design Check</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+
+                <h3 className="mt-5 text-2xl font-black tracking-tight text-slate-900">
+                  AI Design Pre-Flight Check
+                </h3>
+                <p className="mt-2.5 text-sm sm:text-[15px] leading-relaxed text-slate-600 max-w-2xl">
+                  Upload social flyers, pitch decks, banners, or UI designs. Acting as your in-house Senior Art Director, our AI evaluates optical balance, font pairings, contrast ratios, breathing room, and visual clutter with actionable designer feedback.
+                </p>
+
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <span className="rounded-xl border border-indigo-100 bg-white/90 px-3 py-1 text-xs font-semibold text-indigo-900 shadow-2xs">
+                    Optical Hierarchy
+                  </span>
+                  <span className="rounded-xl border border-indigo-100 bg-white/90 px-3 py-1 text-xs font-semibold text-indigo-900 shadow-2xs">
+                    Typographic Tension
+                  </span>
+                  <span className="rounded-xl border border-indigo-100 bg-white/90 px-3 py-1 text-xs font-semibold text-indigo-900 shadow-2xs">
+                    WCAG Contrast
+                  </span>
+                  <span className="rounded-xl border border-indigo-100 bg-white/90 px-3 py-1 text-xs font-semibold text-indigo-900 shadow-2xs">
+                    6-Pillar PDF Quality Scoring
+                  </span>
+                </div>
+              </div>
+
+              {/* CARD 2: DOCUMENT & OCR */}
+              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                    <path d="M11 8v6" />
+                    <path d="M8 11h6" />
+                  </svg>
+                </div>
+
+                <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                  Core Engine
+                </div>
+                <h3 className="mt-1 text-xl font-black text-slate-900">
+                  Scanned PDF &amp; Visual OCR
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+                  Extracts and maps text tokens from multi-page PDFs, Word documents, PowerPoint slides, and flattened raster graphics with pinpoint bounding boxes.
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-1.5 text-[11px] font-medium text-slate-500">
+                  <span className="rounded-md bg-slate-100 px-2 py-0.5">PDF</span>
+                  <span className="rounded-md bg-slate-100 px-2 py-0.5">DOCX</span>
+                  <span className="rounded-md bg-slate-100 px-2 py-0.5">PPTX</span>
+                  <span className="rounded-md bg-slate-100 px-2 py-0.5">PNG / JPG</span>
+                </div>
+              </div>
+
+              {/* CARD 3: US UK DIALECT CONVERTER */}
+              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:bg-white hover:shadow-xl hover:shadow-emerald-500/5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m3 16 4 4 4-4" />
+                    <path d="M7 20V4" />
+                    <path d="m21 8-4-4-4 4" />
+                    <path d="M17 4v16" />
+                  </svg>
+                </div>
+
+                <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+                  Regional Precision
+                </div>
+                <h3 className="mt-1 text-xl font-black text-slate-900">
+                  US ⇄ UK Dialect Switcher
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+                  Convert marketing copy, articles, and pitches between American and British English conventions with contextual vocabulary intelligence.
+                </p>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">color ⇄ colour, organize ⇄ organise</span>
+                  <Link href="/us-uk-converter" className="text-xs font-bold text-emerald-600 hover:underline">
+                    Use tool →
+                  </Link>
+                </div>
+              </div>
+
+              {/* CARD 4: SMART CASE CONVERTER */}
+              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-amber-200 hover:bg-white hover:shadow-xl hover:shadow-amber-500/5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 7V4h16v3" />
+                    <path d="M9 20h6" />
+                    <path d="M12 4v16" />
+                  </svg>
+                </div>
+
+                <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-amber-600">
+                  Typography Utility
+                </div>
+                <h3 className="mt-1 text-xl font-black text-slate-900">
+                  Smart Case Converter
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+                  Format headings and text effortlessly into AP/Chicago Title Case, Sentence case, camelCase, UPPERCASE, or URL slugs.
+                </p>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">AP, Chicago, Title, camelCase</span>
+                  <Link href="/case-converter" className="text-xs font-bold text-amber-600 hover:underline">
+                    Use tool →
+                  </Link>
+                </div>
+              </div>
+
+              {/* CARD 5: ZERO STORAGE PRIVACY */}
+              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+
+                <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                  Privacy First
+                </div>
+                <h3 className="mt-1 text-xl font-black text-slate-900">
+                  Zero-Storage In-Memory RAM
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+                  Your files never touch permanent disk. Content is inspected purely in volatile server memory and instantly cleared. No telemetry, no logs, zero AI training.
+                </p>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">GDPR-ready · Ephemeral</span>
+                  <Link href="/privacy" className="text-xs font-bold text-blue-600 hover:underline">
+                    Privacy Policy →
+                  </Link>
+                </div>
+              </div>
+
+            </div>
+
+            {/* THE VISUAL PROOFREADING PROBLEM COMPARISON */}
+            <div className="mt-16 rounded-3xl border border-slate-200/90 bg-white/90 p-8 shadow-sm backdrop-blur-md sm:p-10">
+              <div className="max-w-2xl">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/80 bg-rose-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-rose-700">
+                  The Blind Spot
+                </div>
+                <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                  Why standard spell checkers fail on visual media
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  Traditional checkers like Word and Grammarly only inspect text fields. In creative workflows, text gets flattened into pixels, canvas layers, and complex vectors.
+                </p>
+              </div>
+
+              <div className="mt-8 grid gap-6 md:grid-cols-2">
+                {/* TRADITIONAL CHECKERS */}
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-6">
+                  <div className="flex items-center gap-2 text-slate-700 font-bold text-base">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-slate-600 text-xs font-bold">
+                      ✕
+                    </span>
+                    Traditional Tools (Word, Grammarly)
+                  </div>
+                  <ul className="mt-4 space-y-3 text-xs sm:text-sm text-slate-600">
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-rose-500 font-bold">✕</span>
+                      <span><strong>Blind to raster graphics:</strong> Cannot read PNG, JPG, or WebP social graphics exported from Figma or Canva.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-rose-500 font-bold">✕</span>
+                      <span><strong>Fails on flattened PDFs:</strong> Inability to OCR text inside multi-page presentation decks, menus, and scanned contracts.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-rose-500 font-bold">✕</span>
+                      <span><strong>Zero visual context:</strong> No understanding of hierarchy, font pairing clashes, contrast ratios, or optical spacing.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-rose-500 font-bold">✕</span>
+                      <span><strong>Manual retyping friction:</strong> Forces creators to copy and paste text back and forth, breaking layouts.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* SPELLENSE */}
+                <div className="rounded-2xl border border-blue-200/90 bg-gradient-to-br from-blue-50/40 via-white to-indigo-50/30 p-6 shadow-xs">
+                  <div className="flex items-center gap-2 text-blue-900 font-bold text-base">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">
+                      ✓
+                    </span>
+                    The Spellense Visual Suite
+                  </div>
+                  <ul className="mt-4 space-y-3 text-xs sm:text-sm text-slate-700">
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span><strong>High-Precision Visual OCR:</strong> Direct optical extraction from bitmap pixels and complex vector layers.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span><strong>Interactive Canvas Overlay:</strong> Red bounding boxes highlight the exact position of typos directly on the artwork.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span><strong>Dual-Engine Accuracy:</strong> Instant Hunspell local dictionary plus optional Gemini AI contextual reasoning.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span><strong>Strict Zero-Storage Privacy:</strong> 100% in-memory processing. Your proprietary graphics and contracts are never stored.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* 3-STEP WORKFLOW */}
+            <div className="mt-16">
+              <div className="text-center max-w-2xl mx-auto">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/70 bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs">
+                  Fast &amp; Simple
+                </div>
+                <h3 className="mt-2.5 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                  How Spellense works in 3 easy steps
+                </h3>
+              </div>
+
+              <div className="mt-10 grid gap-6 md:grid-cols-3">
+                {/* STEP 1 */}
+                <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-xs font-black text-blue-600 ring-1 ring-blue-100">
                     01
                   </span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 group-hover:text-blue-600 transition">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" x2="12" y1="3" y2="15" />
-                    </svg>
-                  </div>
+                  <h4 className="mt-4 text-base font-bold text-slate-900">
+                    Drop your visual asset
+                  </h4>
+                  <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500">
+                    Upload any image (PNG, JPG, WebP), presentation slide (PPTX), document (DOCX, PDF), or spreadsheet. Or paste text directly.
+                  </p>
                 </div>
 
-                <h3 className="mt-5 text-lg font-bold text-slate-900">
-                  Upload any visual asset
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                  Drag and drop JPG, PNG, WebP graphics, multi-page PDFs, Word documents (DOCX), PowerPoint decks (PPTX), or Excel tables (XLSX). No sign-up or installation required.
-                </p>
-              </div>
-
-              {/* STEP 2 */}
-              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
-                <div className="flex items-center justify-between">
+                {/* STEP 2 */}
+                <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-xs font-black text-indigo-600 ring-1 ring-indigo-100">
                     02
                   </span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 group-hover:text-indigo-600 transition">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="8" />
-                      <path d="m21 21-4.3-4.3" />
-                      <path d="M11 8v6" />
-                      <path d="M8 11h6" />
-                    </svg>
-                  </div>
+                  <h4 className="mt-4 text-base font-bold text-slate-900">
+                    Dual-Engine Analysis
+                  </h4>
+                  <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500">
+                    Optical Character Recognition reads words off pixels, matching against 100,000+ words with regional US/UK dialect settings.
+                  </p>
                 </div>
 
-                <h3 className="mt-5 text-lg font-bold text-slate-900">
-                  Precision OCR extraction
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                  Advanced Optical Character Recognition extracts visible English text tokens while mapping coordinates to original pages and slides, keeping layout context intact.
-                </p>
-              </div>
-
-              {/* STEP 3 */}
-              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
-                <div className="flex items-center justify-between">
+                {/* STEP 3 */}
+                <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-xs font-black text-emerald-600 ring-1 ring-emerald-100">
                     03
                   </span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 group-hover:text-emerald-600 transition">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m9 12 2 2 4-4" />
-                      <circle cx="12" cy="12" r="10" />
-                    </svg>
-                  </div>
+                  <h4 className="mt-4 text-base font-bold text-slate-900">
+                    Inspect &amp; Fix on Canvas
+                  </h4>
+                  <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500">
+                    Review bounding boxes over your artwork, accept one-click suggestions, whitelist custom terms, and export your corrected copy.
+                  </p>
                 </div>
-
-                <h3 className="mt-5 text-lg font-bold text-slate-900">
-                  Smart visual inspection
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                  Review highlighted spelling errors with instant replacement suggestions, navigate multi-page previews, and whitelist custom brand names or technical jargon.
-                </p>
               </div>
-
             </div>
 
-            {/* USE CASES & SEO FEATURE HIGHLIGHTS */}
-            <div className="mt-14 grid gap-6 sm:grid-cols-2">
-
-              <div className="rounded-3xl border border-white/90 bg-gradient-to-br from-white via-white to-slate-50/70 p-7 shadow-xs backdrop-blur-md transition-all hover:border-blue-200">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect width="18" height="18" x="3" y="3" rx="2" />
-                    <path d="m9 9 6 6" />
-                    <path d="m15 9-6 6" />
-                  </svg>
-                </div>
-                <h3 className="mt-4 text-xl font-bold text-slate-900">
-                  Catch what standard spell-checkers miss
-                </h3>
-                <p className="mt-2.5 text-sm leading-relaxed text-slate-600">
-                  Traditional spellcheck tools only work inside plain text fields. Spellense bridges the gap by proofreading rasterized text in social media flyers, restaurant menus, infographic graphics, certificates, resumes, and PDF brochures.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
-                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Photoshop & Canva graphics</span>
-                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Scanned PDF contracts</span>
-                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Ad banners & flyers</span>
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-white/90 bg-gradient-to-br from-white via-white to-slate-50/70 p-7 shadow-xs backdrop-blur-md transition-all hover:border-indigo-200">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
-                    <path d="m9 12 2 2 4-4" />
-                  </svg>
-                </div>
-                <h3 className="mt-4 text-xl font-bold text-slate-900">
-                  Human-in-the-loop accuracy & privacy
-                </h3>
-                <p className="mt-2.5 text-sm leading-relaxed text-slate-600">
-                  Automated checkers often flag acronyms, brand names, and artistic fonts. Spellense displays suspected typos directly on your document canvas, giving you full control to verify before final sign-off. Everything stays private in memory.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
-                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Zero file logging</span>
-                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Side-by-side preview</span>
-                  <span className="rounded-lg bg-slate-100 px-2.5 py-1">Exportable report</span>
-                </div>
-              </div>
-
-            </div>
-
-            {/* EXPANDED FORMATS & EDUCATIONAL GUIDE */}
-            <div className="mt-14 space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                  Intelligent visual spell checking for modern media
-                </h2>
-                <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
-                  Proofread creative banners, corporate documents, and scanned pages in one fast, private workspace.
-                </p>
-              </div>
-
-              <div className="grid gap-6 sm:grid-cols-3">
-                <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all hover:border-blue-200">
-                  <div className="text-xs font-bold uppercase tracking-wider text-blue-600">
-                    Image Spell Check
+            {/* CURATED GUIDES & CONTENT HUB */}
+            <div className="mt-16 border-t border-slate-200/80 pt-16">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/70 bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs">
+                    Knowledge Hub
                   </div>
-                  <h3 className="mt-2 text-lg font-bold text-slate-900">
-                    PNG, JPG &amp; WebP Graphics
+                  <h3 className="mt-2.5 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                    Guides for flaw-free visual communication
                   </h3>
-                  <p className="mt-2.5 text-xs leading-relaxed text-slate-600">
-                    Graphic designers export banners, social carousels, and flyers from Figma or Canva where text becomes pixels. Spellense uses optical character recognition to read the letters directly from your artwork and highlights typos in place.
-                  </p>
                 </div>
-
-                <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all hover:border-indigo-200">
-                  <div className="text-xs font-bold uppercase tracking-wider text-indigo-600">
-                    Document Inspection
-                  </div>
-                  <h3 className="mt-2 text-lg font-bold text-slate-900">
-                    Multi-Page PDFs &amp; Slides
-                  </h3>
-                  <p className="mt-2.5 text-xs leading-relaxed text-slate-600">
-                    Pitch decks and contracts often mix vector text and scanned pages. Spellense renders a visual multi-page proofing canvas so you can navigate slides, inspect bounding boxes, and confirm suggestions before executive presentations.
-                  </p>
-                </div>
-
-                <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all hover:border-blue-200">
-                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-600">
-                    Dialect Awareness
-                  </div>
-                  <h3 className="mt-2 text-lg font-bold text-slate-900">
-                    US &amp; UK English Rules
-                  </h3>
-                  <p className="mt-2.5 text-xs leading-relaxed text-slate-600">
-                    Target your audience with confidence. Switch seamlessly between American English rules (color, organize, defense) and British English conventions (colour, organise, defence) with dialect-accurate suggestion engines.
-                  </p>
-                </div>
+                <Link
+                  href="/blog"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                >
+                  <span>View all articles</span>
+                  <span>→</span>
+                </Link>
               </div>
 
-              <div className="rounded-3xl border border-white/90 bg-white/85 p-7 shadow-xs backdrop-blur-md">
-                <h3 className="text-lg font-bold text-slate-900">
-                  Why visual proofreading matters for creators and businesses
-                </h3>
-                <div className="mt-3 grid gap-5 sm:grid-cols-3 text-xs leading-relaxed text-slate-600">
+              <div className="mt-8 grid gap-6 sm:grid-cols-3">
+                {/* GUIDE 1 */}
+                <Link
+                  href="/blog/how-to-spell-check-images-and-graphics-online"
+                  className="group flex flex-col justify-between rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5"
+                >
                   <div>
-                    <strong className="block text-slate-800 font-bold mb-1">Protect Brand Credibility</strong>
-                    Typographical errors on marketing graphics and resumes undermine credibility. Spellense catches subtle letter swaps before public release.
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                      Visual Design Guide
+                    </span>
+                    <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-blue-600 transition">
+                      How to Spell Check Images and Graphics Online (Without Retyping)
+                    </h4>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                      Learn how optical recognition pinpoints errors inside rasterized Canva banners, Figma artboards, and marketing flyers in seconds.
+                    </p>
                   </div>
+                  <div className="mt-4 flex items-center gap-1 text-xs font-bold text-blue-600">
+                    <span>Read guide</span>
+                    <span className="transition-transform group-hover:translate-x-1">→</span>
+                  </div>
+                </Link>
+
+                {/* GUIDE 2 */}
+                <Link
+                  href="/blog/top-5-mistakes-in-presentation-slides"
+                  className="group flex flex-col justify-between rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5"
+                >
                   <div>
-                    <strong className="block text-slate-800 font-bold mb-1">Avoid Costly Printing Reprints</strong>
-                    Catch mistakes on flyers, restaurant menus, certificates, and brochures before sending large print orders to press.
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">
+                      Pitch Decks &amp; Slides
+                    </span>
+                    <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-indigo-600 transition">
+                      Top 5 Spelling and Design Mistakes in Presentation Slides
+                    </h4>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                      The subtle slide mistakes that damage pitch credibility—from headline typos to inconsistent typographic hierarchy.
+                    </p>
                   </div>
+                  <div className="mt-4 flex items-center gap-1 text-xs font-bold text-indigo-600">
+                    <span>Read guide</span>
+                    <span className="transition-transform group-hover:translate-x-1">→</span>
+                  </div>
+                </Link>
+
+                {/* GUIDE 3 */}
+                <Link
+                  href="/blog/american-vs-british-english-spelling-guide"
+                  className="group flex flex-col justify-between rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-500/5"
+                >
                   <div>
-                    <strong className="block text-slate-800 font-bold mb-1">Zero-Storage Privacy</strong>
-                    Files are held in RAM solely for OCR analysis and immediately discarded. Your proprietary pitch decks and contracts remain strictly private.
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+                      Global Copywriting
+                    </span>
+                    <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-emerald-600 transition">
+                      American vs British English Spelling: A Complete Visual Guide
+                    </h4>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                      Master key regional orthographic variations (-ize vs -ise, -or vs -our) so your cross-border campaigns remain consistent.
+                    </p>
                   </div>
-                </div>
+                  <div className="mt-4 flex items-center gap-1 text-xs font-bold text-emerald-600">
+                    <span>Read guide</span>
+                    <span className="transition-transform group-hover:translate-x-1">→</span>
+                  </div>
+                </Link>
               </div>
             </div>
 
             {/* HOMEPAGE FAQ ACCORDION */}
-            <div className="mt-14 space-y-4">
-              <div className="text-center mb-8">
+            <div className="mt-16 border-t border-slate-200/80 pt-16">
+              <div className="text-center mb-10">
                 <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/70 bg-white/80 px-3 py-1 shadow-2xs backdrop-blur-md">
                   <span className="flex h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
                   <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
                     Frequently Asked Questions
                   </span>
                 </div>
-                <h2 className="mt-2.5 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
                   Everything you need to know about Spellense
-                </h2>
-                <p className="mx-auto mt-1.5 max-w-xl text-xs text-slate-500 sm:text-sm">
+                </h3>
+                <p className="mx-auto mt-2 max-w-xl text-xs text-slate-500 sm:text-sm">
                   Quick answers about our in-memory OCR proofreading, supported formats, and privacy policies.
                 </p>
               </div>
 
-              <div className="space-y-3 max-w-3xl mx-auto">
-                <details className="group rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
+              <div className="space-y-3.5 max-w-3xl mx-auto">
+                <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
                   <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
                     <span>How does Spellense detect spelling mistakes in images and visual designs?</span>
                     <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
@@ -3981,7 +4170,7 @@ export default function Home() {
                   </p>
                 </details>
 
-                <details className="group rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
+                <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
                   <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
                     <span>Are my uploaded files, contracts, or presentations saved on your server?</span>
                     <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
@@ -3993,7 +4182,7 @@ export default function Home() {
                   </p>
                 </details>
 
-                <details className="group rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
+                <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
                   <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
                     <span>Which document formats and file sizes are supported?</span>
                     <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
@@ -4005,7 +4194,7 @@ export default function Home() {
                   </p>
                 </details>
 
-                <details className="group rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
+                <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
                   <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
                     <span>Does Spellense support both American and British English spelling?</span>
                     <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
@@ -4017,7 +4206,7 @@ export default function Home() {
                   </p>
                 </details>
 
-                <details className="group rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
+                <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
                   <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
                     <span>Is Spellense completely free to use?</span>
                     <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
@@ -4031,26 +4220,67 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ACTION LINKS */}
-            <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200/70 pt-8">
-              <div className="flex flex-wrap items-center gap-6 text-sm font-semibold">
-                <Link href="/faq" className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:underline">
-                  <span>Explore Frequently Asked Questions</span>
-                  <span>→</span>
-                </Link>
-                <Link href="/privacy" className="inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 hover:underline">
-                  <span>Read our Zero-Storage Privacy Policy</span>
+            {/* BOTTOM CALL TO ACTION STRIP */}
+            <div className="mt-16 rounded-3xl border border-blue-200/80 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-8 sm:p-12 text-white text-center shadow-xl">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-300 backdrop-blur-md">
+                Get Started In Seconds
+              </div>
+              <h3 className="mt-4 text-2xl font-black sm:text-4xl tracking-tight">
+                Ready to catch mistakes before your clients do?
+              </h3>
+              <p className="mt-3 max-w-xl mx-auto text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Join thousands of creators, art directors, and marketers who use Spellense for flaw-free designs, pitch decks, and documents.
+              </p>
+
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={openFilePicker}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-xs sm:text-sm font-bold text-slate-900 shadow-md transition hover:bg-blue-50 active:scale-95"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" x2="12" y1="3" y2="15" />
+                  </svg>
+                  <span>Upload &amp; Proofread File</span>
+                </button>
+
+                <Link
+                  href="/design-check"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-xs sm:text-sm font-bold text-white backdrop-blur-md transition hover:bg-white/15 active:scale-95"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                  <span>Launch Design Check AI</span>
                 </Link>
               </div>
 
-              <button
-                type="button"
-                onClick={openFilePicker}
-                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-600 active:scale-95"
-              >
-                <span>Check your file now</span>
-                <span>↑</span>
-              </button>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-[11px] text-slate-400">
+                <span>✓ 100% Free</span>
+                <span>✓ No Sign-up Required</span>
+                <span>✓ Zero Server File Storage</span>
+              </div>
+            </div>
+
+            {/* FOOTER ACTION LINKS */}
+            <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200/70 pt-8 text-xs text-slate-500">
+              <div className="flex flex-wrap items-center gap-5 font-medium">
+                <Link href="/faq" className="hover:text-blue-600 transition">
+                  Frequently Asked Questions →
+                </Link>
+                <Link href="/privacy" className="hover:text-blue-600 transition">
+                  Zero-Storage Privacy Policy →
+                </Link>
+                <Link href="/about" className="hover:text-blue-600 transition">
+                  About Spellense →
+                </Link>
+              </div>
+
+              <div className="text-slate-400">
+                In-memory OCR &bull; High Precision
+              </div>
             </div>
 
           </section>
