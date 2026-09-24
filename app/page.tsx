@@ -3163,28 +3163,6 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="mx-auto mt-3 max-w-[640px] text-[14px] leading-relaxed text-slate-600 sm:text-[15px]">
-              AI &amp; OCR-powered spell checking for images, documents, slides, and sheets.
-              <br className="hidden sm:inline" />
-              Catch hidden English typos across your visual designs before going live.
-            </p>
-
-            {/* QUICK HIGHLIGHT PILLS */}
-            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-500">
-              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
-                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                <span>100% In-Memory Safe</span>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
-                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                <span>Instant OCR Parsing</span>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
-                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                <span>No Sign-up Needed</span>
-              </div>
-            </div>
-
           </div>
 
 
@@ -3935,7 +3913,7 @@ export default function Home() {
                   Why standard spell checkers fail on visual media
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  Traditional checkers like Word and Grammarly only inspect text fields. In creative workflows, text gets flattened into pixels, canvas layers, and complex vectors.
+                  Traditional checkers only inspect plain text fields. In creative workflows, text gets flattened into pixels, canvas layers, and complex vectors.
                 </p>
               </div>
 
@@ -3946,7 +3924,7 @@ export default function Home() {
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-slate-600 text-xs font-bold">
                       ✕
                     </span>
-                    Traditional Tools (Word, Grammarly)
+                    Traditional Text Checkers
                   </div>
                   <ul className="mt-4 space-y-3 text-xs sm:text-sm text-slate-600">
                     <li className="flex items-start gap-2.5">
