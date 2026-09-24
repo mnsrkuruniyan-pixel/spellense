@@ -440,12 +440,12 @@ export default function DesignCheckClient() {
               </span>
             </div>
 
-            <h1 className="mt-3 text-[28px] font-extrabold leading-[1.15] tracking-[-1.5px] text-slate-900 sm:text-[36px] md:text-[42px] lg:text-[48px]">
+            <h1 className="mt-3 pb-1 text-[28px] font-extrabold leading-[1.22] tracking-[-1.5px] text-slate-900 sm:text-[36px] sm:leading-[1.2] md:text-[42px] lg:text-[48px]">
               <span className="sm:whitespace-nowrap">
                 Catch Pricing, Asterisks &amp; Print Errors
               </span>{" "}
               <br />
-              <span className="inline-block whitespace-nowrap bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+              <span className="inline-block whitespace-nowrap bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text pb-1.5 text-transparent">
                 before you publish.
               </span>
             </h1>
