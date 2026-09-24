@@ -773,6 +773,9 @@ export default function CaseConverterClient() {
               <Link href="/about" className="transition hover:text-gray-700">
                 About
               </Link>
+              <Link href="/blog" className="transition hover:text-gray-700">
+                Blog
+              </Link>
               <Link href="/case-converter" className="font-semibold text-blue-600">
                 Case Converter
               </Link>

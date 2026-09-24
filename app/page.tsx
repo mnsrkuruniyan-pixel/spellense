@@ -4064,6 +4064,13 @@ export default function Home() {
               </Link>
 
               <Link
+                href="/blog"
+                className="transition hover:text-gray-700"
+              >
+                Blog
+              </Link>
+
+              <Link
                 href="/design-check"
                 className="transition hover:text-gray-700 font-semibold text-blue-600"
               >

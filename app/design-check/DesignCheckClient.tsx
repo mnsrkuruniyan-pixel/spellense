@@ -1288,6 +1288,12 @@ export default function DesignCheckClient() {
               <Link href="/" className="transition hover:text-gray-700">
                 Home
               </Link>
+              <Link href="/about" className="transition hover:text-gray-700">
+                About
+              </Link>
+              <Link href="/blog" className="transition hover:text-gray-700">
+                Blog
+              </Link>
               <Link href="/design-check" className="font-semibold text-blue-600">
                 Design Check (New)
               </Link>
@@ -1296,9 +1302,6 @@ export default function DesignCheckClient() {
               </Link>
               <Link href="/us-uk-converter" className="transition hover:text-gray-700">
                 US ↔ UK Dialect
-              </Link>
-              <Link href="/about" className="transition hover:text-gray-700">
-                About
               </Link>
               <Link href="/faq" className="transition hover:text-gray-700">
                 FAQ
