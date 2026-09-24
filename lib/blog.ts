@@ -470,3 +470,4 @@ export function getRelatedPosts(currentSlug: string): BlogPost[] {
 export function getAllCategories(): string[] {
   return Array.from(new Set(BLOG_POSTS.map((p) => p.category)));
 }
+

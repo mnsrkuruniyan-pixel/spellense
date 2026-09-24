@@ -262,3 +262,4 @@ export default function BlogClient({ posts, categories }: { posts: BlogPost[]; c
     </div>
   );
 }
+

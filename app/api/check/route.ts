@@ -570,6 +570,40 @@ const KNOWN_VALID_WORDS = new Set([
   "razorpay",
   "paytm",
   "phonepe",
+  "spellense",
+  "backlink",
+  "backlinks",
+  "preflight",
+  "pre-flight",
+  "on-page",
+  "off-page",
+  "meta",
+  "metadata",
+  "schema",
+  "schemas",
+  "snippet",
+  "snippets",
+  "rich-snippet",
+  "rich-snippets",
+  "markup",
+  "subdomain",
+  "subdomains",
+  "canva",
+  "figma",
+  "photoshop",
+  "trello",
+  "notion",
+  "in-memory",
+  "proofread",
+  "proofreader",
+  "proofreading",
+  "spellcheck",
+  "spellchecker",
+  "spellchecking",
+  "infographic",
+  "infographics",
+  "workflow",
+  "workflows",
 
   /* File Formats & Extensions */
   "pdf",
@@ -809,9 +843,9 @@ const KNOWN_VALID_WORDS = new Set([
 
 const KNOWN_ACRONYMS = new Set([
   // Tech & Computing
-  "pdf", "url", "http", "https", "seo", "json", "api", "html", "css", "xml", "csv", "sql", "svg", "png", "jpg", "jpeg", "webp", "gif", "mp4", "mp3", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "zip", "rar", "tar", "gz", "exe", "apk", "ios", "ai", "ml", "nlp", "llm", "ui", "ux", "gui", "cli", "sdk", "ide", "git", "ssh", "ssl", "tls", "vpn", "dns", "ip", "tcp", "udp", "lan", "wan", "wlan", "wifi", "mac", "pc", "os", "ram", "rom", "cpu", "gpu", "tpu", "ssd", "hdd", "usb", "hdmi", "vga", "sim", "esim", "gps", "nfc", "rfid", "led", "lcd", "oled", "qled", "dts", "hdr", "hdr10", "uhd", "vrr", "allm", "earc", "arc", "iot", "saas", "paas", "iaas", "pwa", "spa", "ssr", "ssg", "cdn", "db", "rdbms", "crud", "jwt", "oauth", "rest", "soap", "dom", "bom", "cors", "csrf", "xss", "ddos", "npm", "yarn", "pnpm", "node", "php", "py", "rb", "cpp", "cs", "fs", "go", "rs", "ts", "js",
+  "ocr", "pdf", "pdfs", "url", "urls", "http", "https", "seo", "json", "jsonld", "json-ld", "ld", "api", "apis", "html", "html5", "css", "css3", "xml", "csv", "sql", "svg", "png", "jpg", "jpeg", "webp", "gif", "mp4", "mp3", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "zip", "rar", "tar", "gz", "exe", "apk", "ios", "ai", "ml", "nlp", "llm", "ui", "ux", "gui", "cli", "sdk", "sdks", "ide", "ides", "git", "ssh", "ssl", "tls", "vpn", "dns", "ip", "tcp", "udp", "lan", "wan", "wlan", "wifi", "mac", "pc", "os", "ram", "rom", "cpu", "gpu", "tpu", "ssd", "hdd", "usb", "hdmi", "vga", "sim", "esim", "gps", "nfc", "rfid", "led", "lcd", "oled", "qled", "dts", "hdr", "hdr10", "uhd", "vrr", "allm", "earc", "arc", "iot", "saas", "paas", "iaas", "pwa", "spa", "ssr", "ssg", "cdn", "db", "rdbms", "crud", "jwt", "oauth", "rest", "soap", "dom", "bom", "cors", "csrf", "xss", "ddos", "npm", "yarn", "pnpm", "node", "php", "py", "rb", "cpp", "cs", "fs", "go", "rs", "ts", "js", "crm", "crms", "cms", "erp", "serp", "serps", "ctr", "cpc", "cpm", "cpa", "cro", "ltv", "cac", "ppc", "ga4", "gsc",
   // Business, Finance & Corporate
-  "ceo", "cto", "cfo", "coo", "cmo", "cio", "cso", "cpo", "hr", "pr", "qa", "qc", "rd", "it", "cs", "cx", "b2b", "b2c", "d2c", "kpi", "roi", "okr", "nda", "sla", "sop", "mou", "po", "rfp", "rfq", "gst", "vat", "tin", "pan", "kyc", "ssn", "ein", "cin", "iban", "swift", "bic", "ifsc", "neft", "rtgs", "imps", "upi", "atm", "pin", "otp", "cvv", "pos", "ebitda", "ipo", "pnl", "yoy", "mom", "qoq", "fy", "cy", "corp", "inc", "ltd", "llc", "llp", "plc", "pvt", "gmbh",
+  "ceo", "ceos", "cto", "ctos", "cfo", "cfos", "coo", "cmo", "cio", "cso", "cpo", "hr", "pr", "qa", "qc", "rd", "it", "cs", "cx", "b2b", "b2c", "d2c", "kpi", "kpis", "roi", "okr", "okrs", "nda", "ndas", "sla", "slas", "sop", "sops", "mou", "po", "rfp", "rfq", "gst", "vat", "tin", "pan", "kyc", "ssn", "ein", "cin", "iban", "swift", "bic", "ifsc", "neft", "rtgs", "imps", "upi", "atm", "pin", "otp", "cvv", "pos", "ebitda", "ipo", "pnl", "yoy", "mom", "qoq", "fy", "cy", "corp", "inc", "ltd", "llc", "llp", "plc", "pvt", "gmbh",
   // Education & Academic Degrees
   "sslc", "hse", "cbse", "icse", "ba", "bsc", "bcom", "bba", "bca", "btech", "be", "barch", "bed", "bpharm", "ma", "msc", "mcom", "mba", "mca", "mtech", "me", "med", "mphil", "phd", "md", "ms", "mbbs", "bds", "ca", "cma", "cs", "cfa", "cpa", "acca", "ielts", "toefl", "gre", "gmat", "sat", "cat", "gate",
   // Common Abbreviations & Units
@@ -1476,6 +1510,11 @@ function isValidEnglishWord(
     return true;
   }
 
+  /* Plural acronyms (e.g. PDFs, URLs, APIs, CTOs, CEOs, KPIs, SDKs, IDEs) */
+  if (clean.endsWith("s") && KNOWN_ACRONYMS.has(clean.slice(0, -1))) {
+    return true;
+  }
+
   /* Known valid special words, countries, names */
   if (KNOWN_VALID_WORDS.has(clean)) {
     return true;
@@ -1610,22 +1649,34 @@ function isLikelyNamedOrAcronym(
   word: string,
   dialect = "en-US"
 ): boolean {
-  // CamelCase or PascalCase (internal capital letter): iPhone, MacBook, YouTube, GitHub, JavaScript, NextJS, PowerPoint
-  if (/^[a-zA-Z]*[a-z][A-Z][a-zA-Z]*$/.test(word)) {
+  // Contains @, dot, underscore, or dollar sign (code identifiers, emails, domain names, schema fields)
+  if (/[@._$]/.test(word)) {
     return true;
   }
-  // All-caps word: if it's a known acronym or a valid English word in dictionary, treat as valid/acronym
-  if (/^[A-Z]{2,}$/.test(word)) {
+  // Standard CamelCase (e.g. iPhone, YouTube, JavaScript, mainEntity, itemProp)
+  if (/[a-z][A-Z]/.test(word)) {
+    return true;
+  }
+  // Acronym-prefixed PascalCase (e.g. FAQPage, HTMLElement, JSONData, APIClient, XMLParser)
+  if (/^[A-Z]{2,}[A-Z][a-z]+/.test(word)) {
+    return true;
+  }
+  // Hyphenated acronym or technical specification (e.g. JSON-LD, UTF-8, SHA-256)
+  if (/^[A-Z0-9]+-[A-Z0-9]+$/i.test(word)) {
+    return true;
+  }
+  // All-caps word: if it's a known acronym, plural acronym, or valid English word in dictionary
+  if (/^[A-Z]{2,}s?$/.test(word)) {
     const clean = normalizeWord(word);
-    if (KNOWN_ACRONYMS.has(clean) || isValidEnglishWord(clean, dialect)) {
+    if (
+      KNOWN_ACRONYMS.has(clean) ||
+      (clean.endsWith("s") && KNOWN_ACRONYMS.has(clean.slice(0, -1))) ||
+      isValidEnglishWord(clean, dialect)
+    ) {
       return true;
     }
     // If not a known acronym and not a valid English word (e.g. REPROT, DOCUMNT, ERORR), it IS a typo!
     return false;
-  }
-  // Contains @ or .
-  if (/[@.]/.test(word)) {
-    return true;
   }
   return false;
 }
@@ -1839,6 +1890,12 @@ function getWords(text: string) {
   masked = masked.replace(/www\.[^\s]+/gi, (m) => " ".repeat(m.length));
   // Mask email addresses
   masked = masked.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, (m) => " ".repeat(m.length));
+  // Mask HTML/XML tags (e.g. <script ...>, </script>, <div>, etc.)
+  masked = masked.replace(/<[^>\n]+>/g, (m) => " ".repeat(m.length));
+  // Mask JSON-LD / schema attributes (e.g. "@context", "@type", "@id")
+  masked = masked.replace(/@\w+/g, (m) => " ".repeat(m.length));
+  // Mask MIME types (e.g. application/ld+json, image/png)
+  masked = masked.replace(/\b[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.+-]+\b/g, (m) => " ".repeat(m.length));
   // Mask hex colors: #fff, #ffffff
   masked = masked.replace(/#[0-9a-fA-F]{3,8}\b/g, (m) => " ".repeat(m.length));
   // Mask numbers attached to units/ordinals/dimensions: 1080p, 500mg, 100km, 24px, 1st, 2nd, 3rd, 4th, 4k, 3d, 16gb, 60hz, win11, covid19
@@ -2066,14 +2123,45 @@ async function extractPdfText(
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
     const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item) => ("str" in item ? item.str : ""))
-      .filter(Boolean)
-      .join(" ");
+    let pageText = "";
+    let prevItem: { str?: string; transform?: number[]; width?: number; hasEOL?: boolean } | null = null;
+
+    for (const item of content.items) {
+      if (!("str" in item) || !item.str) continue;
+
+      if (!prevItem) {
+        pageText += item.str;
+      } else {
+        const prevTransform = prevItem.transform || [1, 0, 0, 1, 0, 0];
+        const curTransform = item.transform || [1, 0, 0, 1, 0, 0];
+        const fontSize = Math.max(8, Math.hypot(curTransform[2], curTransform[3]));
+        const isNewLine = prevItem.hasEOL || Math.abs(curTransform[5] - prevTransform[5]) > fontSize * 0.55;
+
+        if (isNewLine) {
+          pageText += "\n" + item.str;
+        } else {
+          const prevEnd = prevTransform[4] + (prevItem.width || 0);
+          const curStart = curTransform[4];
+          const gap = curStart - prevEnd;
+
+          if (gap > fontSize * 0.18 && !prevItem.str?.endsWith(" ") && !item.str.startsWith(" ")) {
+            pageText += " " + item.str;
+          } else {
+            pageText += item.str;
+          }
+        }
+      }
+      prevItem = item;
+    }
+
+    const cleanedPageText = pageText
+      .replace(/\r/g, "")
+      .replace(/[ \t]+/g, " ")
+      .trim();
 
     pageStarts.push(textLength);
-    pages.push(pageText);
-    textLength += pageText.length + 2;
+    pages.push(cleanedPageText);
+    textLength += cleanedPageText.length + 2;
 
     // Free memory for this page immediately
     page.cleanup();

@@ -267,6 +267,13 @@ function PdfMarkedPreview({
           span.className = "absolute overflow-visible whitespace-nowrap text-transparent";
 
           let tokenOffset = 0;
+          const itemWidth = Math.max(item.width * scale, 2);
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.font = `${fontSize}px sans-serif`;
+          }
+          const measuredTotal = ctx ? (ctx.measureText(item.str).width || 1) : item.str.length;
+          const scaleRatio = ctx ? itemWidth / measuredTotal : (itemWidth / item.str.length);
 
           for (const token of item.str.split(/(\s+)/)) {
             const normalizedToken = token
@@ -274,23 +281,24 @@ function PdfMarkedPreview({
               .replace(/^[^a-z]+|[^a-z]+$/g, "");
             const matchingError = markErrors
               ? errors.find((error) =>
+                  (error.page === undefined || error.page === selectedPage) &&
                   normalizedToken === error.word.toLowerCase()
                 )
               : undefined;
             const tokenSpan = document.createElement("span");
 
             if (matchingError) {
-              const itemWidth = Math.max(item.width * scale, 2);
+              const leftPx = ctx
+                ? ctx.measureText(item.str.slice(0, tokenOffset)).width * scaleRatio
+                : (tokenOffset / item.str.length) * itemWidth;
+              const widthPx = ctx
+                ? ctx.measureText(token).width * scaleRatio
+                : (token.length / item.str.length) * itemWidth;
 
               tokenSpan.style.position = "absolute";
-              tokenSpan.style.left = `${
-                (tokenOffset / item.str.length) * itemWidth
-              }px`;
+              tokenSpan.style.left = `${leftPx}px`;
               tokenSpan.style.top = "0px";
-              tokenSpan.style.width = `${Math.max(
-                (token.length / item.str.length) * itemWidth,
-                4
-              )}px`;
+              tokenSpan.style.width = `${Math.max(widthPx, 4)}px`;
               tokenSpan.style.height = `${fontSize * 1.2}px`;
               tokenSpan.className =
                 "rounded border-2 border-red-500 bg-red-500/15 shadow-xs ring-1 ring-red-500/40 pointer-events-auto";
@@ -2058,18 +2066,47 @@ export default function Home() {
             setCheckingMessage(`Scanning page ${pageNum} of ${pdf.numPages}...`);
             const page = await pdf.getPage(pageNum);
             const content = await page.getTextContent();
-            const pageText = content.items
-              .map((item) => ("str" in item ? item.str : ""))
-              .join(" ")
+            let pageText = "";
+            let prevItem: { str?: string; transform?: number[]; width?: number; hasEOL?: boolean } | null = null;
+
+            for (const item of content.items) {
+              if (!("str" in item) || !item.str) continue;
+
+              if (!prevItem) {
+                pageText += item.str;
+              } else {
+                const prevTransform = prevItem.transform || [1, 0, 0, 1, 0, 0];
+                const curTransform = item.transform || [1, 0, 0, 1, 0, 0];
+                const fontSize = Math.max(8, Math.hypot(curTransform[2], curTransform[3]));
+                const isNewLine = prevItem.hasEOL || Math.abs(curTransform[5] - prevTransform[5]) > fontSize * 0.55;
+
+                if (isNewLine) {
+                  pageText += "\n" + item.str;
+                } else {
+                  const prevEnd = prevTransform[4] + (prevItem.width || 0);
+                  const curStart = curTransform[4];
+                  const gap = curStart - prevEnd;
+
+                  if (gap > fontSize * 0.18 && !prevItem.str?.endsWith(" ") && !item.str.startsWith(" ")) {
+                    pageText += " " + item.str;
+                  } else {
+                    pageText += item.str;
+                  }
+                }
+              }
+              prevItem = item;
+            }
+
+            page.cleanup();
+
+            const cleanedPageText = pageText
               .replace(/\r/g, "")
               .replace(/[ \t]+/g, " ")
               .trim();
 
-            page.cleanup();
-
-            textParts.push(pageText);
+            textParts.push(cleanedPageText);
             // Joined with "\n\n"
-            currentOffset += pageText.length + 2;
+            currentOffset += cleanedPageText.length + 2;
           }
 
           await pdf.cleanup();
