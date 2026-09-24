@@ -605,6 +605,34 @@ const KNOWN_VALID_WORDS = new Set([
   "workflow",
   "workflows",
 
+  /* Schema.org Types & Structured Data */
+  "thing",
+  "action",
+  "creativework",
+  "event",
+  "intangible",
+  "organization",
+  "person",
+  "place",
+  "product",
+  "faqpage",
+  "question",
+  "answer",
+  "article",
+  "blogposting",
+  "breadcrumblist",
+  "listitem",
+  "webpage",
+  "website",
+  "softwareapplication",
+  "webapplication",
+  "aggregaterating",
+  "offer",
+  "imageobject",
+  "howtostep",
+  "howto",
+  "mainentity",
+
   /* File Formats & Extensions */
   "pdf",
   "docx",
@@ -1469,7 +1497,11 @@ function isSentenceStart(
    HYPHENATED COMPOUND WORD CHECK
    ========================================================= */
 
-function isValidHyphenatedWord(word: string, dialect = "en-US"): boolean {
+function isValidHyphenatedWord(
+  word: string,
+  dialect = "en-US",
+  customWords?: Set<string>
+): boolean {
   if (!word.includes("-")) {
     return false;
   }
@@ -1477,7 +1509,7 @@ function isValidHyphenatedWord(word: string, dialect = "en-US"): boolean {
   if (parts.length < 2 || parts.some((p) => !p)) {
     return false;
   }
-  return parts.every((p) => isValidEnglishWord(p, dialect));
+  return parts.every((p) => isValidEnglishWord(p, dialect, customWords));
 }
 
 /* =========================================================
@@ -1485,6 +1517,7 @@ function isValidHyphenatedWord(word: string, dialect = "en-US"): boolean {
    =========================================================
    Accept:
    - US English (or British English when dialect is en-GB)
+   - User custom-dictionary terms (whitelist)
    - Known valid words & modern tech vocabulary
    - Known acronyms & abbreviations
    - Valid hyphenated compounds (user-friendly, real-time)
@@ -1493,7 +1526,8 @@ function isValidHyphenatedWord(word: string, dialect = "en-US"): boolean {
 
 function isValidEnglishWord(
   word: string,
-  dialect = "en-US"
+  dialect = "en-US",
+  customWords?: Set<string>
 ): boolean {
   const clean = normalizeWord(word);
 
@@ -1502,6 +1536,11 @@ function isValidEnglishWord(
   }
 
   if (clean === "a" || clean === "i") {
+    return true;
+  }
+
+  /* User custom dictionary / whitelist terms */
+  if (customWords && customWords.has(clean)) {
     return true;
   }
 
@@ -1884,24 +1923,35 @@ function getBestCorrection(
    ========================================================= */
 
 function getWords(text: string) {
-  // Mask URLs (http://..., https://...)
-  let masked = text.replace(/https?:\/\/[^\s]+/gi, (m) => " ".repeat(m.length));
-  // Mask www. domains
+  let masked = text;
+  // 1. Mask entire code blocks: <script ...> ... </script>, <style>...</style>, <code>...</code>, <pre>...</pre>
+  masked = masked.replace(/<script\b[^>]*>[\s\S]*?(?:<\/script>|$)/gi, (m) => " ".repeat(m.length));
+  masked = masked.replace(/<style\b[^>]*>[\s\S]*?(?:<\/style>|$)/gi, (m) => " ".repeat(m.length));
+  masked = masked.replace(/<code\b[^>]*>[\s\S]*?(?:<\/code>|$)/gi, (m) => " ".repeat(m.length));
+  masked = masked.replace(/<pre\b[^>]*>[\s\S]*?(?:<\/pre>|$)/gi, (m) => " ".repeat(m.length));
+  // 2. Mask markdown code blocks
+  masked = masked.replace(/```[\s\S]*?```/g, (m) => " ".repeat(m.length));
+  masked = masked.replace(/`[^`\n]+`/g, (m) => " ".repeat(m.length));
+  // 3. Mask standalone JSON-LD / structured data blocks: { ... "@context": ... }
+  masked = masked.replace(/\{[^{}]*?"@context"[\s\S]*?\}/gi, (m) => " ".repeat(m.length));
+  // 4. Mask URLs (http://..., https://...)
+  masked = masked.replace(/https?:\/\/[^\s]+/gi, (m) => " ".repeat(m.length));
+  // 5. Mask www. domains
   masked = masked.replace(/www\.[^\s]+/gi, (m) => " ".repeat(m.length));
-  // Mask email addresses
+  // 6. Mask email addresses
   masked = masked.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, (m) => " ".repeat(m.length));
-  // Mask HTML/XML tags (e.g. <script ...>, </script>, <div>, etc.)
+  // 7. Mask individual HTML/XML tags (<tag>, </tag>)
   masked = masked.replace(/<[^>\n]+>/g, (m) => " ".repeat(m.length));
-  // Mask JSON-LD / schema attributes (e.g. "@context", "@type", "@id")
+  // 8. Mask JSON-LD / schema attributes (e.g. "@context", "@type", "@id")
   masked = masked.replace(/@\w+/g, (m) => " ".repeat(m.length));
-  // Mask MIME types (e.g. application/ld+json, image/png)
+  // 9. Mask MIME types (e.g. application/ld+json, image/png)
   masked = masked.replace(/\b[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.+-]+\b/g, (m) => " ".repeat(m.length));
-  // Mask hex colors: #fff, #ffffff
+  // 10. Mask hex colors: #fff, #ffffff
   masked = masked.replace(/#[0-9a-fA-F]{3,8}\b/g, (m) => " ".repeat(m.length));
-  // Mask numbers attached to units/ordinals/dimensions: 1080p, 500mg, 100km, 24px, 1st, 2nd, 3rd, 4th, 4k, 3d, 16gb, 60hz, win11, covid19
+  // 11. Mask numbers attached to units/ordinals/dimensions: 1080p, 500mg, 100km, 24px, 1st, 2nd, 3rd, 4th, 4k, 3d, 16gb, 60hz, win11, covid19
   masked = masked.replace(/\b\d+([a-zA-Z]+|\.[a-zA-Z0-9]+)\b/g, (m) => " ".repeat(m.length));
   masked = masked.replace(/\b[a-zA-Z]+\d+[a-zA-Z0-9]*\b/g, (m) => " ".repeat(m.length));
-  // Normalize smart quotes and dashes in-place so character indices stay identical
+  // 12. Normalize smart quotes and dashes in-place so character indices stay identical
   masked = masked.replace(/[\u2018\u2019\u0060\u00B4]/g, "'");
   masked = masked.replace(/[\u2013\u2014]/g, " ");
 
@@ -1935,7 +1985,8 @@ function checkWithOurEngine(
   text: string,
   lowConfidenceWords = new Set<string>(),
   dialect = "en-US",
-  isDigitalText = true
+  isDigitalText = true,
+  customWords = new Set<string>()
 ): SpellError[] {
   const words = getWords(text);
   const errors: SpellError[] = [];
@@ -1946,6 +1997,10 @@ function checkWithOurEngine(
     const original = item.word;
     const cleanWord = item.clean;
     const clean = normalizeWord(cleanWord);
+
+    if (customWords.has(clean)) {
+      continue;
+    }
 
     if (!isReasonableWord(cleanWord, isDigitalText, original)) {
       continue;
@@ -1967,7 +2022,7 @@ function checkWithOurEngine(
     }
 
     // Already valid in selected dialect
-    if (isValidEnglishWord(clean, dialect)) {
+    if (isValidEnglishWord(clean, dialect, customWords)) {
       continue;
     }
 
@@ -2155,6 +2210,21 @@ async function extractPdfText(
     }
 
     const cleanedPageText = pageText
+      // 1. Rejoin hyphenated line wraps (e.g. "brand-\nnew" -> "brand-new")
+      .replace(/([A-Za-z]+)-\s*\n\s*([A-Za-z]+)/g, "$1-$2")
+      // 2. Rejoin unhyphenated line wraps when fragments form a valid English word (e.g. "bene\nfit" -> "benefit", "backlin\nk" -> "backlink")
+      .replace(/([A-Za-z]{2,})\s*\n\s*([a-z]{1,5})\b/g, (match, p1, p2) => {
+        const candidate = `${p1}${p2}`.toLowerCase();
+        const p1Lower = p1.toLowerCase();
+        const p2Lower = p2.toLowerCase();
+        if (
+          isValidEnglishWord(candidate) &&
+          (!isValidEnglishWord(p1Lower) || !isValidEnglishWord(p2Lower))
+        ) {
+          return `${p1}${p2}`;
+        }
+        return match;
+      })
       .replace(/\r/g, "")
       .replace(/[ \t]+/g, " ")
       .trim();
@@ -2555,6 +2625,21 @@ export async function POST(
     const dialectParam = formData.get("dialect") as string | null;
     const dialect = dialectParam === "en-GB" ? "en-GB" : "en-US";
     const aiMode = formData.get("aiMode") === "true";
+    const customWordsRaw = formData.get("customWords") as string | null;
+
+    let customWordsSet = new Set<string>();
+    if (customWordsRaw) {
+      try {
+        const parsed = JSON.parse(customWordsRaw);
+        if (Array.isArray(parsed)) {
+          customWordsSet = new Set(parsed.map((w: string) => normalizeWord(String(w))).filter(Boolean));
+        }
+      } catch {
+        customWordsSet = new Set(
+          customWordsRaw.split(",").map((w) => normalizeWord(w.trim())).filter(Boolean)
+        );
+      }
+    }
 
     let text = "";
     let blocks: OcrBlock = [];
@@ -2731,6 +2816,21 @@ export async function POST(
 
     const cleanText =
       text
+        // 1. Rejoin hyphenated line wraps (e.g. "brand-\nnew" -> "brand-new")
+        .replace(/([A-Za-z]+)-\s*\n\s*([A-Za-z]+)/g, "$1-$2")
+        // 2. Rejoin unhyphenated word-breaks across lines where fragments form a valid word
+        .replace(/([A-Za-z]{2,})\s*\n\s*([a-z]{1,5})\b/g, (match, p1, p2) => {
+          const candidate = `${p1}${p2}`.toLowerCase();
+          const p1Lower = p1.toLowerCase();
+          const p2Lower = p2.toLowerCase();
+          if (
+            isValidEnglishWord(candidate, dialect, customWordsSet) &&
+            (!isValidEnglishWord(p1Lower, dialect, customWordsSet) || !isValidEnglishWord(p2Lower, dialect, customWordsSet))
+          ) {
+            return `${p1}${p2}`;
+          }
+          return match;
+        })
         .replace(/\r/g, "")
         .replace(
           /[ \t]+/g,
@@ -2783,7 +2883,8 @@ export async function POST(
         cleanText,
         getLowConfidenceOcrWords(blocks),
         dialect,
-        isDigitalText
+        isDigitalText,
+        customWordsSet
       );
     }
 
