@@ -3156,10 +3156,13 @@ export default function Home() {
               </span>
             </Link>
 
-            <h1 className="mt-4 pb-1 text-[34px] font-extrabold leading-[1.22] tracking-[-1.5px] text-slate-900 sm:text-[48px] sm:leading-[1.18] lg:text-[56px] lg:leading-[1.16]">
-              Free Visual Proofreading Suite <br />
-              <span className="inline-block whitespace-nowrap bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text pb-2 text-transparent">
-                for designs, documents &amp; slides.
+            <h1 className="mt-4 pb-1 text-[27px] xs:text-[31px] sm:text-[46px] lg:text-[54px] font-extrabold leading-[1.25] sm:leading-[1.18] tracking-[-0.6px] sm:tracking-[-1.5px] text-slate-900 text-center">
+              <span className="inline-block">Free Visual</span>{" "}
+              <span className="inline-block">Proofreading Suite</span>{" "}
+              <br className="hidden sm:inline" />
+              <span className="inline-block bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text pb-2 text-transparent sm:whitespace-nowrap">
+                <span className="inline-block">for designs,</span>{" "}
+                <span className="inline-block">documents &amp; slides.</span>
               </span>
             </h1>
 
