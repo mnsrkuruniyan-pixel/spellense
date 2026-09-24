@@ -3157,7 +3157,7 @@ export default function Home() {
             </Link>
 
             <h1 className="mt-4 text-[34px] font-extrabold leading-[1.12] tracking-[-1.8px] text-slate-900 sm:text-[48px] lg:text-[56px]">
-              The Visual Proofreading Suite <br />
+              Free Visual Proofreading Suite <br />
               <span className="inline-block whitespace-nowrap bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
                 for designs, documents &amp; slides.
               </span>
