@@ -6,7 +6,7 @@
     </linearGradient>
   </defs>
   <rect width="32" height="32" rx="7" fill="url(#spellenseGrad)"/>
-  <g transform="translate(4, 4)" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(5.63, 6.16) scale(0.82)" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
     <path d="M14 2v6h6" />
     <path d="M8 13h5" />
@@ -15,4 +15,3 @@
     <path d="m19.5 18.5 1.8 1.8" />
   </g>
 </svg>
-
