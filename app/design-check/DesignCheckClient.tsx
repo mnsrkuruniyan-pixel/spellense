@@ -19,10 +19,13 @@ interface DesignIssue {
   severity: "critical" | "warning" | "suggestion" | "error";
   title: string;
   description: string;
+  impact?: string;
+  specDetail?: string;
   originalText?: string;
   suggestedFix?: string;
   whyItMatters?: string;
   qaRole?: string;
+  isHedged?: boolean;
   bbox: {
     left: number;
     top: number;
@@ -37,6 +40,13 @@ interface DesignCheckResponse {
   verdict?: "ready" | "needs_review" | "critical_issues";
   verdictTitle?: string;
   verdictSummary?: string;
+  verdictCounts?: {
+    critical: number;
+    warning: number;
+    suggestion: number;
+    total: number;
+  };
+  positiveHighlights?: string[];
   dimensions: {
     width: number;
     height: number;
@@ -357,9 +367,19 @@ export default function DesignCheckClient() {
       `Overall QA Score: ${result.score}/100`,
       `Pre-Flight Verdict: ${(result.verdict || "reviewed").toUpperCase()} - ${result.verdictTitle || ""}`,
       `Verdict Summary: ${result.verdictSummary || ""}`,
+      result.verdictCounts
+        ? `Severity Breakdown: ${result.verdictCounts.critical} Critical, ${result.verdictCounts.warning} Warnings, ${result.verdictCounts.suggestion} Suggestions`
+        : null,
       `Audit Engine: ${result.engine}`,
       `Date & Time: ${new Date().toLocaleString()}`,
       "",
+      ...(result.positiveHighlights && result.positiveHighlights.length > 0
+        ? [
+            "--- WHAT'S WORKING WELL (CREATIVE QA STRENGTHS) ---",
+            ...result.positiveHighlights.map((h) => `[+] ${h}`),
+            "",
+          ]
+        : []),
       "--- QA PILLAR SCORES ---",
       `1. Data & Copy Integrity: ${result.categoryScores.dataScore ?? result.categoryScores.copyScore}/100`,
       `2. Legal & Asterisk (*): ${result.categoryScores.complianceScore ?? result.categoryScores.qualityScore}/100`,
@@ -371,8 +391,9 @@ export default function DesignCheckClient() {
         return [
           `\n[${idx + 1}] [${issue.severity.toUpperCase()}] ${issue.title.toUpperCase()}`,
           `Category: ${issue.category.toUpperCase()} | Auditor Role: ${issue.qaRole || "Creative QA"}`,
-          `Problem: ${issue.description}`,
-          issue.whyItMatters ? `Impact / Why It Matters: ${issue.whyItMatters}` : null,
+          `Observation: ${issue.description}`,
+          issue.impact ? `Real-World Impact: ${issue.impact}` : issue.whyItMatters ? `Impact / Why It Matters: ${issue.whyItMatters}` : null,
+          issue.specDetail ? `Technical Spec: ${issue.specDetail}` : null,
           issue.originalText ? `Original Text: "${issue.originalText}"` : null,
           issue.suggestedFix ? `Recommended Action: ${issue.suggestedFix}` : null,
         ]
@@ -719,12 +740,37 @@ export default function DesignCheckClient() {
                           {verdictTitle}
                         </h2>
                         <span className="rounded-full bg-white/90 border border-slate-200/80 px-2 py-0.5 text-[10px] font-bold text-slate-600 uppercase">
-                          {result.engine === "hybrid-gemini" ? "AI QA Auditor" : "Deterministic"}
+                          {result.engine === "hybrid-gemini" ? "AI Creative QA" : "Deterministic"}
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-slate-600 max-w-2xl leading-relaxed">
                         {verdictSummary}
                       </p>
+                      {/* Severity-Weighted Summary Counts (Rule 1) */}
+                      {result.verdictCounts && (
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+                          {result.verdictCounts.critical > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 text-rose-800 px-2.5 py-0.5 border border-rose-200">
+                              🚨 {result.verdictCounts.critical} Critical Deal-Breaker{result.verdictCounts.critical > 1 ? "s" : ""}
+                            </span>
+                          )}
+                          {result.verdictCounts.warning > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 border border-amber-200">
+                              ⚠️ {result.verdictCounts.warning} Warning{result.verdictCounts.warning > 1 ? "s" : ""} to Verify
+                            </span>
+                          )}
+                          {result.verdictCounts.suggestion > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 px-2.5 py-0.5 border border-blue-200">
+                              💡 {result.verdictCounts.suggestion} Polish Suggestion{result.verdictCounts.suggestion > 1 ? "s" : ""}
+                            </span>
+                          )}
+                          {result.verdictCounts.total === 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 border border-emerald-200">
+                              ✨ 0 Critical or Warning Issues
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -751,6 +797,37 @@ export default function DesignCheckClient() {
                 </div>
               );
             })()}
+
+            {/* POSITIVE HIGHLIGHTS: WHAT'S WORKING WELL (RULE 5) */}
+            {result.positiveHighlights && result.positiveHighlights.length > 0 && (
+              <div className="rounded-2xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-white p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-[11px] font-bold">✓</span>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-900">
+                      What&apos;s Working Well
+                    </h3>
+                    <span className="rounded-full bg-emerald-100/90 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                      Creative QA Strengths
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+                    Pre-Flight Observations
+                  </span>
+                </div>
+                <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                  {result.positiveHighlights.map((highlight, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-2.5 rounded-xl border border-emerald-100/90 bg-white/95 p-3 shadow-2xs transition hover:border-emerald-200"
+                    >
+                      <span className="mt-0.5 text-sm text-emerald-600">🌟</span>
+                      <p className="text-xs font-medium leading-relaxed text-slate-700">{highlight}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* TWO COLUMN INSPECTOR */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -1201,6 +1278,11 @@ export default function DesignCheckClient() {
                                   {issue.qaRole}
                                 </span>
                               )}
+                              {issue.isHedged && (
+                                <span className="rounded-full bg-slate-100 border border-slate-200/80 px-2 py-0.5 text-[9px] font-medium text-slate-600">
+                                  👀 Visual Observation
+                                </span>
+                              )}
                             </div>
                             <button
                               type="button"
@@ -1218,11 +1300,22 @@ export default function DesignCheckClient() {
                           <h3 className="mt-2.5 text-sm font-bold text-slate-900">{issue.title}</h3>
                           <p className="mt-1 text-xs leading-relaxed text-slate-600">{issue.description}</p>
 
-                          {/* WHY IT MATTERS (IMPACT) */}
-                          {issue.whyItMatters && (
-                            <div className="mt-2.5 flex items-start gap-1.5 rounded-xl border border-amber-200/80 bg-amber-50/60 p-2.5 text-[11px] text-amber-900 leading-relaxed">
-                              <span className="shrink-0 font-bold text-amber-700">⚠️ Impact:</span>
-                              <span>{issue.whyItMatters}</span>
+                          {/* REAL-WORLD IMPACT (RULE 2: EXPLAIN IMPACT, NOT SPEC) */}
+                          {(issue.impact || issue.whyItMatters) && (
+                            <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-amber-200/90 bg-amber-50/70 p-2.5 text-xs text-amber-950 leading-relaxed">
+                              <span className="shrink-0 text-amber-700 font-bold text-sm">⚠️</span>
+                              <div>
+                                <span className="font-bold text-amber-900">Real-World Consequence: </span>
+                                <span>{issue.impact || issue.whyItMatters}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* SECONDARY TECHNICAL SPEC (RULE 2) */}
+                          {issue.specDetail && (
+                            <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-slate-100/90 border border-slate-200/70 px-2.5 py-1.5 text-[11px] text-slate-600">
+                              <span className="font-semibold text-slate-500 uppercase tracking-wider text-[10px]">📐 Technical Spec:</span>
+                              <span className="font-mono text-[11px] text-slate-800">{issue.specDetail}</span>
                             </div>
                           )}
 

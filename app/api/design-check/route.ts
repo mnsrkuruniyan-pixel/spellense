@@ -79,9 +79,12 @@ export interface DesignIssue {
   qaRole?: string;
   title: string;
   description: string;
+  impact?: string;
+  specDetail?: string;
   whyItMatters?: string;
   originalText?: string;
   suggestedFix?: string;
+  isHedged?: boolean;
   bbox: {
     left: number; // 0.0 - 1.0
     top: number;
@@ -96,6 +99,13 @@ export interface DesignCheckResponse {
   verdict: "ready" | "needs_review" | "critical_issues";
   verdictTitle: string;
   verdictSummary: string;
+  verdictCounts?: {
+    critical: number;
+    warning: number;
+    suggestion: number;
+    total: number;
+  };
+  positiveHighlights?: string[];
   dimensions: {
     width: number;
     height: number;
@@ -206,8 +216,11 @@ export async function POST(req: Request) {
         category: "resolution",
         severity: "warning",
         title: "Low Resolution Artwork",
-        description: `Dimensions (${origWidth}×${origHeight}px) are low. This design may appear pixelated when printed or viewed on high-DPI displays.`,
-        suggestedFix: "Export at a minimum of 1080×1080px (for web) or 300 DPI (for print).",
+        description: `Artwork dimensions (${origWidth}×${origHeight}px) fall below recommended digital and print resolution thresholds.`,
+        impact: "This creative will look noticeably blurry or pixelated when viewed on modern high-DPI screens or in print.",
+        specDetail: `Uploaded asset is ${origWidth}×${origHeight}px (standard minimum is 1080×1080px for social, 300 DPI for print).`,
+        whyItMatters: "Low-resolution visuals degrade perceived brand quality and credibility.",
+        suggestedFix: "Export at a minimum of 1080×1080px (for social) or 300 DPI (for print).",
         bbox: { left: 0.02, top: 0.02, width: 0.96, height: 0.08 },
       });
     }
@@ -300,7 +313,10 @@ export async function POST(req: Request) {
             category: "margin",
             severity: "warning",
             title: "Safe-Zone Margin Bleed",
-            description: `Text "${w.text}" is placed too close to the ${edge}. It risks being cut off by print guillotines or social media feed crops.`,
+            description: `Text "${w.text}" is placed right against the ${edge}.`,
+            impact: "Text placed this close to the border risks being clipped by commercial print guillotines or covered by social platform app interfaces.",
+            specDetail: `Within ${Math.round(SAFE_MARGIN * 100)}% bleed boundary (${edge}).`,
+            whyItMatters: "Guillotine drift in printing is typically 2–3mm; placing critical copy inside the bleed zone causes reprints.",
             originalText: w.text,
             suggestedFix: `Move text inward by at least 15–20px to preserve a safe breathing margin.`,
             bbox: {
@@ -379,9 +395,12 @@ export async function POST(req: Request) {
               category: "contrast",
               severity: "warning",
               title: "Low Contrast Readability",
-              description: `Text "${w.text}" has a low contrast ratio of ${ratio.toFixed(1)}:1 (minimum recommended is 4.5:1). It may be hard to read on mobile screens or in bright light.`,
+              description: `Text "${w.text}" blends into the background color.`,
+              impact: "Readers in bright daylight or with low phone brightness will struggle to read this copy, leading them to skip past it.",
+              specDetail: `Contrast ratio is ${ratio.toFixed(1)}:1 (WCAG AA requires 4.5:1 for standard body text).`,
+              whyItMatters: "Poor contrast reduces reading speed and viewer comprehension.",
               originalText: w.text,
-              suggestedFix: "Increase brightness contrast between the text color and the background.",
+              suggestedFix: "Increase the brightness difference between the text color and background, or add a subtle soft shadow/underlay.",
               bbox: {
                 left: w.left,
                 top: w.top,
@@ -400,58 +419,86 @@ export async function POST(req: Request) {
     let aiVerdict: "ready" | "needs_review" | "critical_issues" | null = null;
     let aiVerdictTitle: string | null = null;
     let aiVerdictSummary: string | null = null;
+    let aiPositiveHighlights: string[] = [];
 
     if (geminiKey) {
       try {
         const base64Data = buffer.toString("base64");
-        const prompt = `You are a Senior Creative QA Auditor at a premier advertising and publishing agency.
-Your role is to conduct an uncompromising, professional Pre-Flight Quality Assurance audit on this graphic design asset.
+        const prompt = `You are an experienced Creative Director and Senior Pre-Flight QA Auditor at a premier advertising and publishing agency.
+Your role is to review this graphic design asset and provide an insightful, constructive, human pre-flight review.
+You must sound like an experienced human creative director — NEVER like a robotic automated checklist.
 
-AUDIT THE DESIGN ACROSS THESE 5 CREATIVE QA PILLARS:
+FOLLOW THESE 6 CORE HUMAN REVIEWER PRINCIPLES:
 
-1. DATA & INFORMATION INTEGRITY (Critical & High Priority):
-- Price & Discount Math: Verify any stated discounts or savings match the prices (e.g. "50% off! Was $100 Now $60" is wrong math: 100 to 60 is 40%).
-- Day & Date Sanity: Verify the day of the week matches the calendar date if stated.
-- Contact Details: Incomplete phone numbers (missing digits), malformed emails (e.g. @gmial.com), broken URLs.
-- Placeholder Artifacts: Flag leftover dummy text ("Lorem Ipsum", "[Insert Date]", "[Company Name]").
-- Genuine spelling mistakes & grammar errors in visible headlines, offers, and body copy. IMPORTANT: Accept BOTH American and British/Commonwealth English spellings (e.g. 'catalogue' and 'catalog', 'colour' and 'color', 'centre' and 'center' are BOTH 100% valid). Do NOT flag brand names, company logos, sponsors, or tech acronyms (e.g. Hisense, Samsung, Nike, FIFA, HVAC, UAE, etc.).
+1. HUMAN OVERALL VERDICT & SEVERITY SUMMARY:
+- Lead with an overarching, natural assessment of the asset's publication readiness.
+- Provide a severity-weighted summary (e.g., "1 critical data issue needs fixing before release, with 2 minor layout suggestions", NOT a raw robotic count like "3 issues found").
+- If the creative is clean, give a confident verdict like "Looks print-ready — strong contrast and clean hierarchy throughout."
 
-2. COMPLIANCE & ASTERISK (*) MATCHING:
-- Asterisk Pairing: If a headline or promotional claim contains an asterisk (*), check whether a corresponding footnote/disclaimer exists. If a footnote has an asterisk, check if the main claim has one.
-- Mandatory Disclaimers: Missing terms on promotional or regulated claims.
-- Outdated Copyright: Outdated years (e.g. © 2022 on a new ad).
+2. EXPLAIN IMPACT, NOT SPEC:
+- Frame findings around real-world human reader consequences and business risks.
+- In "impact": Explain what readers, customers, or printers will actually experience in plain language (e.g., "This text will be hard to read in bright sunlight or on a dim phone screen", or "Customers will notice conflicting prices at checkout, creating friction and complaints").
+- In "specDetail": Put the technical measurements or math comparisons (e.g., "Contrast ratio: 3.2:1 (WCAG AA requires 4.5:1 for 14pt body text)", or "Was $100, Now $60 is a 40% discount, but banner claims 50%").
+- Never lead an issue with dry spec numbers; always lead with what it actually means for people reading the design.
 
-3. PRE-FLIGHT ARTIFACTS & BRAND INTEGRITY:
-- Stock Watermarks: Accidental leftover stock watermarks (Shutterstock, Getty, iStock, etc.).
-- Logo Distortion & Clear-Space: Logo squished, stretched disproportionately, or crowding borders without breathing room.
+3. REAL-WORLD SEVERITY ORDERING:
+- Prioritize issues by tangible financial and reprint risk:
+  1. Financial / Reprint Disasters (Price & discount math errors, wrong dates, broken contact info, missing mandatory disclaimers).
+  2. Compliance & Legal Risks (Missing asterisks/disclaimers, outdated copyright).
+  3. Pre-Flight Artifacts & Brand (Squished/stretched logos, leftover stock watermarks).
+  4. Typography & Readability (Unreadable script fonts, poor contrast on important copy).
+  5. Cosmetic Polish (Minor margin spacing, subtle secondary contrast).
 
-4. TYPOGRAPHY & VISUAL HIERARCHY:
-- Font Overload: 4+ conflicting font styles creating visual chaos.
-- Hierarchy Inversion: Subheadings or fine print visually overpowering the main headline.
-- Legibility: Full body paragraphs in ALL-CAPS, or unreadable decorative/script fonts on essential info.
+4. HEDGE AI-VISION & SUBJECTIVE FINDINGS:
+- Deterministic checks (pricing math, date sanity, exact typos, missing phone digits) are definite and should be stated with confidence.
+- Subjective or visual checks (e.g. logo proportions, visual clutter, font pairing disharmony, crowded layout) must be hedged gently:
+  - "This looks like it might be a stretched logo — worth a second look."
+  - "The headline feels slightly crowded against the image subject; consider adding a little breathing room."
+  - "The contrast here may be difficult to read in bright outdoor conditions."
+- Set "isHedged": true for visual/subjective observations, and "isHedged": false for definite errors.
 
-5. LAYOUT, MARGINS & ACCESSIBILITY:
-- Text-on-Image Contrast: White or light text placed directly over busy photo highlights without an overlay or drop shadow.
-- Overcrowded / Cluttered: Essential elements colliding or lacking breathing room.
+5. MENTION WHAT'S WORKING WELL (POSITIVE HIGHLIGHTS):
+- Every great creative director builds trust by pointing out what works before critiquing flaws.
+- Provide 1 to 3 "positiveHighlights" noting what the design does effectively (e.g., "High-contrast, eye-catching Call-to-Action button", "Strong visual hierarchy guiding the eye from headline to offer", "Clean safe margins with zero border cut-off risks").
 
-COORDINATES (CRITICAL):
+6. GROUP RELATED ISSUES:
+- If a promotional offer has an asterisk (*) and the footnote disclaimer is missing, group them into a SINGLE cohesive finding (e.g. 'Promotional headline contains an asterisk (*), but the corresponding footnote terms are missing'). Do not split them into two disjointed errors.
+- If multiple small text elements on a background share the same contrast or safe-zone issue, group them into one unified, actionable note.
+
+AUDIT SCOPE:
+- Price & Discount Math: Verify stated savings match numbers (e.g. "50% off! Was $100 Now $60" is wrong: 100 to 60 is 40%).
+- Day & Date Sanity: Verify day matches calendar date.
+- Contact Details: Incomplete phone numbers, malformed emails (@gmial.com), broken URLs.
+- Placeholder Artifacts: Leftover dummy text ("Lorem Ipsum", "[Insert Date]").
+- Genuine typos in headlines, offers, and body copy. IMPORTANT: Accept BOTH American and British/Commonwealth English spellings ('catalogue' and 'catalog', 'colour' and 'color', 'centre' and 'center' are BOTH 100% valid). Do NOT flag brand names or standard tech acronyms.
+- Asterisk Pairing: Headline claims with (*) must have matching footnote disclaimer, and vice-versa.
+- Watermarks & Logo Distortion: Leftover stock watermarks (Shutterstock, Getty), or disproportionately stretched/squished logos.
+- Typography & Hierarchy: Font chaos (4+ fonts), unreadable decorative fonts, contrast on photos.
+
+COORDINATES:
 For each issue, return a normalized bounding box [ymin, xmin, ymax, xmax] as integers between 0 and 1000 indicating where the issue occurs on the image.
 
 Return ONLY a pure JSON object matching this schema:
 {
   "verdict": "ready" | "needs_review" | "critical_issues",
-  "verdictTitle": "Short 3-5 word summary headline",
-  "verdictSummary": "1-2 sentence executive assessment of the design's publication readiness.",
+  "verdictTitle": "Human-friendly executive title (e.g., '1 Critical Issue Needs Attention Before Print' or 'Looks Print-Ready')",
+  "verdictSummary": "1-2 sentence warm, professional creative director assessment explaining the overall readiness and severity-weighted status.",
+  "positiveHighlights": [
+    "1-3 concise observations of what is working well in this design (layout, color balance, hierarchy, typography, etc.)"
+  ],
   "issues": [
     {
       "category": "data_integrity" | "compliance" | "copy" | "typography" | "layout" | "contrast" | "artifacts",
       "severity": "critical" | "warning" | "suggestion",
-      "qaRole": "e.g. Data Integrity / Asterisk Match / Typography / Pre-Flight",
-      "title": "Concise issue title",
-      "description": "Clear explanation of the error",
-      "whyItMatters": "Why this damages credibility, legal compliance, or conversion",
-      "suggestedFix": "Actionable, designer-ready instruction on how to fix it",
+      "qaRole": "Role title (e.g. Creative Director / Data Integrity QA / Legal Compliance / Pre-Flight)",
+      "title": "Natural, clear issue title (e.g., 'Discount calculation doesn\\'t match prices')",
+      "description": "Clear explanation of what was observed",
+      "impact": "Real-world consequence for readers, customers, or brand reputation (e.g., 'Customers will notice the math discrepancy at checkout, creating friction and distrust')",
+      "specDetail": "Technical or mathematical details if applicable (e.g., 'Was $100, Now $60 is a 40% discount, but banner claims 50% off')",
+      "whyItMatters": "Concise summary of business or print risk",
+      "suggestedFix": "Actionable, designer-friendly fix in plain language",
       "originalText": "exact text if applicable",
+      "isHedged": true | false,
       "box_2d": [ymin, xmin, ymax, xmax]
     }
   ]
@@ -459,8 +506,13 @@ Return ONLY a pure JSON object matching this schema:
 If the design is completely flawless with zero errors, return:
 {
   "verdict": "ready",
-  "verdictTitle": "Ready for Publication",
-  "verdictSummary": "This asset passes all creative QA checks with zero data integrity, compliance, or typography issues detected.",
+  "verdictTitle": "Looks Print-Ready",
+  "verdictSummary": "This asset passes pre-flight review cleanly with solid typography hierarchy, clear contrast, and zero data integrity risks.",
+  "positiveHighlights": [
+    "Strong visual balance and clear call to action",
+    "Clean margin safe-zones with no text crowding borders",
+    "High contrast ensuring readability across screen and print"
+  ],
   "issues": []
 }`;
 
@@ -528,6 +580,11 @@ If the design is completely flawless with zero errors, return:
               if (parsed.verdict) aiVerdict = parsed.verdict;
               if (parsed.verdictTitle) aiVerdictTitle = parsed.verdictTitle;
               if (parsed.verdictSummary) aiVerdictSummary = parsed.verdictSummary;
+              if (Array.isArray(parsed.positiveHighlights)) {
+                aiPositiveHighlights = parsed.positiveHighlights
+                  .filter((h: unknown): h is string => typeof h === "string" && h.trim().length > 0)
+                  .map((h: string) => h.trim());
+              }
 
               if (Array.isArray(parsed.issues)) {
                 for (const item of parsed.issues) {
@@ -605,12 +662,15 @@ If the design is completely flawless with zero errors, return:
                         ? "Layout & Alignment"
                         : validCategory === "artifacts"
                         ? "Pre-Flight Artifacts"
-                        : "Creative QA"),
+                        : "Creative Director QA"),
                     title: item.title || "QA Issue Flagged",
                     description: item.description,
-                    whyItMatters: item.whyItMatters,
+                    impact: item.impact || item.whyItMatters || undefined,
+                    specDetail: item.specDetail || undefined,
+                    whyItMatters: item.whyItMatters || item.impact || undefined,
                     originalText: item.originalText,
                     suggestedFix: item.suggestedFix,
+                    isHedged: Boolean(item.isHedged),
                     bbox: {
                       left: Math.max(0, Math.min(0.95, left)),
                       top: Math.max(0, Math.min(0.95, top)),
@@ -666,6 +726,10 @@ If the design is completely flawless with zero errors, return:
             description: isCapitalized
               ? `Word "${sub}" was not recognized in standard English dictionaries. If this is a brand name or proper noun, you can safely ignore this.`
               : `Word "${sub}" appears to be misspelled.`,
+            impact: isCapitalized
+              ? "Verify proper nouns or sponsor names against official brand guidelines to preserve partnership relationships."
+              : "Spelling errors in prominent copy distract readers and lower perceived campaign authority.",
+            specDetail: topFix ? `Dictionary suggestion: "${topFix}"` : "Flagged by pre-flight dictionary check",
             whyItMatters: isCapitalized
               ? "Verify that brand names and proper nouns are spelled according to official brand guidelines."
               : "Spelling mistakes in published creative assets diminish brand trust and perceived professionalism.",
@@ -684,11 +748,39 @@ If the design is completely flawless with zero errors, return:
       }
     }
 
-    // 7. Calculate QA Auditor category scores, verdict, and overall score
+    // 7. Sort issues by Real-World Severity (Rule 3: Financial & Reprint Risks First)
+    function getRealWorldSeverityScore(issue: DesignIssue): number {
+      let sevScore = 100;
+      if (issue.severity === "critical" || (issue.severity as string) === "error") {
+        sevScore = 1000;
+      } else if (issue.severity === "warning") {
+        sevScore = 500;
+      }
+
+      let catScore = 10;
+      if (issue.category === "data_integrity") catScore = 50;
+      else if (issue.category === "compliance") catScore = 40;
+      else if (issue.category === "artifacts") catScore = 30;
+      else if (issue.category === "copy" || issue.category === "typography") catScore = 20;
+      else if (issue.category === "contrast" || issue.category === "margin" || issue.category === "layout") catScore = 10;
+
+      return sevScore + catScore;
+    }
+
+    issues.sort((a, b) => getRealWorldSeverityScore(b) - getRealWorldSeverityScore(a));
+
     const criticalIssues = issues.filter(
-      (i) => i.severity === "critical" || i.severity === "error"
+      (i) => i.severity === "critical" || (i.severity as string) === "error"
     );
     const warningIssues = issues.filter((i) => i.severity === "warning");
+    const suggestionIssues = issues.filter((i) => i.severity === "suggestion");
+
+    const verdictCounts = {
+      critical: criticalIssues.length,
+      warning: warningIssues.length,
+      suggestion: suggestionIssues.length,
+      total: issues.length,
+    };
 
     const dataIssues = issues.filter(
       (i) => i.category === "data_integrity" || i.category === "copy"
@@ -749,10 +841,31 @@ If the design is completely flawless with zero errors, return:
       )
     );
 
+    // Rule 5: Mention What's Working (Positive Highlights)
+    const positiveHighlights: string[] = [...aiPositiveHighlights];
+    if (positiveHighlights.length === 0) {
+      if (complianceIssues.length === 0) {
+        positiveHighlights.push("Legal & Asterisk Compliance: Clear disclaimer pairing and clean copyright alignment.");
+      }
+      if (marginIssuesCount === 0) {
+        positiveHighlights.push("Margin Safe-Zones: Clean border breathing room with no elements risking guillotine cut-off.");
+      }
+      if (contrastFailCount === 0) {
+        positiveHighlights.push("Readability & Contrast: Strong text-to-background contrast across key typography.");
+      }
+      if (dataIssues.length === 0) {
+        positiveHighlights.push("Data Integrity: Pricing math, discount offers, and contact formats verified.");
+      }
+      if (positiveHighlights.length === 0) {
+        positiveHighlights.push("Clear composition and well-defined visual focal points.");
+      }
+    }
+
+    // Rule 1: Human Creative Director Verdict & Severity-Weighted Summary
     let verdict: "ready" | "needs_review" | "critical_issues" = "ready";
-    let verdictTitle = "Ready for Publication";
+    let verdictTitle = "Looks Print-Ready";
     let verdictSummary =
-      "Asset passed all pre-flight creative QA checks with zero critical flaws.";
+      "Asset passed pre-flight creative review cleanly with zero critical flaws or reprint risks detected.";
 
     if (
       criticalIssues.length > 0 ||
@@ -762,10 +875,14 @@ If the design is completely flawless with zero errors, return:
       verdict = "critical_issues";
       verdictTitle =
         aiVerdictTitle ||
-        `${Math.max(1, criticalIssues.length)} Critical QA Deal-Breaker${criticalIssues.length > 1 ? "s" : ""} Detected`;
+        (criticalIssues.length === 1
+          ? "1 Critical Issue Needs Attention Before Release"
+          : `${criticalIssues.length} Critical Issues Need Attention Before Release`);
       verdictSummary =
         aiVerdictSummary ||
-        "Resolve critical data, discount math, placeholder, or compliance errors before publishing this asset.";
+        (warningIssues.length > 0
+          ? `Identified ${criticalIssues.length} critical deal-breaker${criticalIssues.length > 1 ? "s" : ""} (reprint or pricing risk) and ${warningIssues.length} recommendation${warningIssues.length > 1 ? "s" : ""} to review before going live.`
+          : `Identified ${criticalIssues.length} critical deal-breaker${criticalIssues.length > 1 ? "s" : ""} that could cause reprint costs or customer friction if published as-is.`);
     } else if (
       warningIssues.length > 0 ||
       overallScore < 85 ||
@@ -776,11 +893,16 @@ If the design is completely flawless with zero errors, return:
         aiVerdictTitle || "Review Recommended Before Launch";
       verdictSummary =
         aiVerdictSummary ||
-        `${Math.max(1, warningIssues.length)} warning${warningIssues.length > 1 ? "s" : ""} flagged. Adjusting these will elevate design polish and campaign conversion.`;
+        `Overall this design is in solid shape, but ${warningIssues.length} item${warningIssues.length > 1 ? "s" : ""} should be verified to elevate polish and conversion.`;
     } else {
       verdict = "ready";
       if (aiVerdictTitle) verdictTitle = aiVerdictTitle;
-      if (aiVerdictSummary) verdictSummary = aiVerdictSummary;
+      if (aiVerdictSummary) {
+        verdictSummary = aiVerdictSummary;
+      } else if (suggestionIssues.length > 0) {
+        verdictTitle = "Looks Print-Ready with Minor Suggestions";
+        verdictSummary = `The creative is structurally sound. ${suggestionIssues.length} minor visual polish suggestion${suggestionIssues.length > 1 ? "s" : ""} noted for extra finesse.`;
+      }
     }
 
     const result: DesignCheckResponse = {
@@ -789,6 +911,8 @@ If the design is completely flawless with zero errors, return:
       verdict,
       verdictTitle,
       verdictSummary,
+      verdictCounts,
+      positiveHighlights,
       dimensions: {
         width: origWidth,
         height: origHeight,
