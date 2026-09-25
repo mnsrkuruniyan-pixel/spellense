@@ -2342,7 +2342,7 @@ export default function Home() {
       : (errorCount === 0 ? 100 : 0);
 
     return (
-      <main className="min-h-screen bg-[#f8fafc] text-[#101828]">
+      <main className="min-h-screen bg-[#f0f6fe] text-[#101828]">
 
         {/* NAVBAR */}
         <Navbar
@@ -2357,7 +2357,7 @@ export default function Home() {
         />
 
         {/* RESULTS HERO */}
-        <section className="relative overflow-hidden bg-dot-pattern">
+        <section className="relative overflow-hidden">
           {/* Ambient lighting */}
           <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[900px] rounded-full bg-gradient-to-tr from-blue-400/15 via-indigo-400/15 to-purple-400/10 blur-[120px] opacity-75 animate-pulse-glow" />
 
@@ -3101,7 +3101,7 @@ export default function Home() {
 
   return (
 
-    <main id="main-content" className="min-h-screen bg-[#f8fafc] text-[#101828]">
+    <main id="main-content" className="min-h-screen bg-[#f0f6fe] text-[#101828]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }}
@@ -3128,7 +3128,7 @@ export default function Home() {
 
       {/* HERO */}
 
-      <section className="relative overflow-hidden bg-dot-pattern">
+      <section className="relative overflow-hidden">
 
         {/* Ambient background glows / mesh */}
         <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
