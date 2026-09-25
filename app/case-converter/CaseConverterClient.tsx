@@ -253,12 +253,12 @@ export default function CaseConverterClient() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-[#101828]">
+    <main className="min-h-screen bg-[#f0f6fe] text-[#101828]">
       {/* NAVBAR */}
       <Navbar />
 
       {/* HERO & TOOL SECTION */}
-      <section className="relative overflow-hidden bg-dot-pattern pb-20 pt-8 sm:pt-12">
+      <section className="relative overflow-hidden pb-20 pt-8 sm:pt-12">
         {/* Ambient background glows */}
         <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
         <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
