@@ -4238,14 +4238,14 @@ export default function Home() {
             </div>
 
             {/* BOTTOM CALL TO ACTION STRIP */}
-            <div className="mt-16 rounded-3xl border border-blue-200/80 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-8 sm:p-12 text-white text-center shadow-xl">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-300 backdrop-blur-md">
+            <div className="mt-16 rounded-3xl border border-blue-200/50 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-8 sm:p-12 text-white text-center shadow-2xl shadow-blue-500/25">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
                 Get Started In Seconds
               </div>
-              <h3 className="mt-4 text-2xl font-black sm:text-4xl tracking-tight">
+              <h3 className="mt-4 text-2xl font-black sm:text-4xl tracking-tight text-white">
                 Ready to catch mistakes before your clients do?
               </h3>
-              <p className="mt-3 max-w-xl mx-auto text-xs sm:text-sm text-slate-300 leading-relaxed">
+              <p className="mt-3 max-w-xl mx-auto text-xs sm:text-sm text-blue-100 leading-relaxed font-normal">
                 Join thousands of creators, art directors, and marketers who use Spellense for flaw-free designs, pitch decks, and documents.
               </p>
 
@@ -4253,7 +4253,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={openFilePicker}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-xs sm:text-sm font-bold text-slate-900 shadow-md transition hover:bg-blue-50 active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-xs sm:text-sm font-bold text-blue-700 shadow-md transition hover:bg-blue-50 hover:scale-105 active:scale-95 cursor-pointer"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -4265,7 +4265,7 @@ export default function Home() {
 
                 <Link
                   href="/design-check"
-                  className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-xs sm:text-sm font-bold text-white backdrop-blur-md transition hover:bg-white/15 active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-white/30 bg-white/10 px-6 py-3.5 text-xs sm:text-sm font-bold text-white backdrop-blur-md transition hover:bg-white/20 hover:scale-105 active:scale-95 cursor-pointer"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -4274,7 +4274,7 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-[11px] text-slate-400">
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-[11px] text-blue-100/90 font-medium">
                 <span>✓ 100% Free</span>
                 <span>✓ No Sign-up Required</span>
                 <span>✓ Zero Server File Storage</span>
