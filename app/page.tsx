@@ -3140,10 +3140,10 @@ export default function Home() {
 
           {/* HERO */}
 
-          <div className="mx-auto max-w-4xl text-center">
-            <h1 className="pb-1 text-[32px] xs:text-[38px] sm:text-[48px] lg:text-[56px] font-extrabold leading-[1.2] sm:leading-[1.16] tracking-[-1px] sm:tracking-[-1.5px] text-slate-900 text-center">
+          <div className="mx-auto max-w-6xl text-center">
+            <h1 className="pb-1 text-[29px] xs:text-[34px] sm:text-[40px] md:text-[46px] lg:text-[clamp(44px,4.5vw,66px)] font-extrabold leading-[1.2] lg:leading-[1.14] tracking-[-0.8px] sm:tracking-[-1.5px] lg:tracking-[-2px] text-slate-900 text-center lg:whitespace-nowrap">
               <span className="inline-block">Even your typos</span>{" "}
-              <br className="hidden sm:inline" />
+              <br className="lg:hidden" />
               <span className="inline-block bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text pb-2 text-transparent">
                 have nowhere to hide.
               </span>
