@@ -1671,12 +1671,12 @@ const HERO_HEADLINES = [
     line2: "have nowhere to hide.",
   },
   {
-    line1: "OCR-powered proofreading",
-    line2: "for images, PDFs & slides.",
+    line1: "OCR spellcheck",
+    line2: "for designs & PDFs.",
   },
   {
-    line1: "Inspect files up to 25 MB",
-    line2: "100% free with zero storage.",
+    line1: "Files up to 25 MB",
+    line2: "100% free & private.",
   },
 ];
 
