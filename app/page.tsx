@@ -1667,16 +1667,16 @@ function computeReadability(text: string) {
 
 const HERO_HEADLINES = [
   {
-    line1: "Even your typos",
-    line2: "have nowhere to hide.",
+    line1: "Typos don't",
+    line2: "stand a chance",
   },
   {
-    line1: "OCR spellcheck",
-    line2: "for designs & PDFs.",
+    line1: "Your last line of defense",
+    line2: "before it ships",
   },
   {
-    line1: "Files up to 25 MB",
-    line2: "100% free & private.",
+    line1: "The pre-flight check",
+    line2: "your creative work deserves",
   },
 ];
 
@@ -3200,7 +3200,7 @@ export default function Home() {
             <div className="min-h-[86px] xs:min-h-[96px] sm:min-h-[108px] lg:min-h-[76px] flex flex-col items-center justify-center">
               <h1
                 aria-live="polite"
-                className={`pb-1 text-[29px] xs:text-[34px] sm:text-[40px] md:text-[46px] lg:text-[clamp(44px,4.5vw,66px)] font-extrabold leading-[1.2] lg:leading-[1.14] tracking-[-0.8px] sm:tracking-[-1.5px] lg:tracking-[-2px] text-black text-center lg:whitespace-nowrap transition-all duration-300 ease-out ${
+                className={`pb-1 text-[29px] xs:text-[34px] sm:text-[40px] md:text-[46px] lg:text-[clamp(32px,3.2vw,54px)] xl:text-[clamp(38px,3.4vw,56px)] font-extrabold leading-[1.2] lg:leading-[1.14] tracking-[-0.8px] sm:tracking-[-1.5px] lg:tracking-[-2px] text-black text-center lg:whitespace-nowrap transition-all duration-300 ease-out ${
                   fadeState === "visible"
                     ? "opacity-100 translate-y-0 scale-100"
                     : "opacity-0 -translate-y-2 scale-[0.99]"
