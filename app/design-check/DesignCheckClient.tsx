@@ -1396,6 +1396,9 @@ export default function DesignCheckClient() {
               <Link href="/us-uk-converter" className="transition hover:text-gray-700">
                 US ↔ UK Dialect
               </Link>
+              <Link href="/image-to-text" className="transition hover:text-gray-700">
+                Image to Text
+              </Link>
               <Link href="/faq" className="transition hover:text-gray-700">
                 FAQ
               </Link>

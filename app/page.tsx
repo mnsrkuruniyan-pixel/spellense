@@ -1737,6 +1737,23 @@ export default function Home() {
     if (savedAi === "true") {
       setAiMode(true);
     }
+    try {
+      const pendingText = sessionStorage.getItem("spellense_check_text");
+      if (pendingText) {
+        sessionStorage.removeItem("spellense_check_text");
+        setInputMode("text");
+        setPastedText(pendingText);
+        setTimeout(() => {
+          const el = document.getElementById("pasted-text-input");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.focus();
+          }
+        }, 300);
+      }
+    } catch {
+      // ignore storage access issues
+    }
   }, []);
 
   const handleDialectChange = (newDialect: "en-US" | "en-GB") => {
@@ -3913,7 +3930,36 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* CARD 5: ZERO STORAGE PRIVACY */}
+              {/* CARD 5: FREE IMAGE TO TEXT CONVERTER */}
+              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                    <line x1="8" y1="13" x2="16" y2="13" />
+                  </svg>
+                </div>
+
+                <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                  OCR Utility
+                </div>
+                <h3 className="mt-1 text-xl font-black text-slate-900">
+                  Image to Text Converter
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+                  Extract clean, copyable text from screenshots, photos, and scanned PDFs instantly with free online OCR.
+                </p>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">JPG, PNG, WebP, PDF</span>
+                  <Link href="/image-to-text" className="text-xs font-bold text-blue-600 hover:underline">
+                    Use tool →
+                  </Link>
+                </div>
+              </div>
+
+              {/* CARD 6: ZERO STORAGE PRIVACY */}
               <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -4373,6 +4419,13 @@ export default function Home() {
                 className="transition hover:text-gray-700"
               >
                 US ↔ UK Dialect
+              </Link>
+
+              <Link
+                href="/image-to-text"
+                className="transition hover:text-gray-700"
+              >
+                Image to Text
               </Link>
 
               <Link
