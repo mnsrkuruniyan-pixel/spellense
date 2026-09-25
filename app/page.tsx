@@ -3136,7 +3136,7 @@ export default function Home() {
         <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
 
 
-        <div className="relative mx-auto max-w-7xl px-5 pb-12 pt-4 sm:px-6 sm:pt-6 lg:px-10 lg:pt-7">
+        <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-7 sm:px-6 sm:pt-10 lg:px-10 lg:pt-14">
 
           {/* HERO */}
 
@@ -3153,7 +3153,7 @@ export default function Home() {
 
           {/* UPLOAD & TEXT CHECK SECTION */}
 
-          <div className="mx-auto mt-5 max-w-[920px]">
+          <div className="mx-auto mt-10 sm:mt-12 lg:mt-16 max-w-[920px]">
 
             {/* MODE, ENGINE & DIALECT SELECTOR BAR (SINGLE LINE) */}
             <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2 px-1">
