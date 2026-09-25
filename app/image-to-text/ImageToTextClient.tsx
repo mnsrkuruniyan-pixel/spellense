@@ -522,7 +522,7 @@ export default function ImageToTextClient() {
 
       {/* HERO SECTION */}
       <section className="relative overflow-hidden pt-10 sm:pt-14 pb-8">
-        <div className="relative mx-auto max-w-5xl px-4 text-center sm:px-6">
+        <div className="relative mx-auto max-w-6xl px-4 text-center sm:px-6">
           {/* BADGE */}
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/90 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs backdrop-blur-md">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
@@ -530,7 +530,7 @@ export default function ImageToTextClient() {
           </div>
 
           {/* H1 */}
-          <h1 className="mt-4 text-3xl font-black tracking-tight text-black sm:text-5xl lg:text-6xl leading-[1.12]">
+          <h1 className="mt-4 pb-1 text-[27px] xs:text-[32px] sm:text-[38px] md:text-[44px] lg:text-[50px] xl:text-[54px] font-black tracking-[-1px] sm:tracking-[-1.5px] text-black leading-tight sm:whitespace-nowrap">
             Extract Text from Any Image — Free
           </h1>
 
