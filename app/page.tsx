@@ -1667,8 +1667,8 @@ function computeReadability(text: string) {
 
 const HERO_HEADLINES = [
   {
-    line1: "Typos don't",
-    line2: "stand a chance",
+    line1: "Not even hiding in a PDF",
+    line2: "will save a typo",
   },
   {
     line1: "Your last line of defense",
