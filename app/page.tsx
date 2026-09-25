@@ -3141,31 +3141,13 @@ export default function Home() {
           {/* HERO */}
 
           <div className="mx-auto max-w-4xl text-center">
-
-            {/* TOP ANNOUNCEMENT PILL */}
-            <Link
-              href="/design-check"
-              className="group inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/90 px-4 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md transition-all hover:border-blue-300 hover:bg-blue-50/60"
-            >
-              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-              <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 bg-clip-text text-[11px] font-bold uppercase tracking-wider text-transparent">
-                New: AI Design Pre-Flight Check v2.0
-              </span>
-              <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white transition group-hover:bg-blue-700">
-                Try Now &rarr;
-              </span>
-            </Link>
-
-            <h1 className="mt-4 pb-1 text-[27px] xs:text-[31px] sm:text-[46px] lg:text-[54px] font-extrabold leading-[1.25] sm:leading-[1.18] tracking-[-0.6px] sm:tracking-[-1.5px] text-slate-900 text-center">
-              <span className="inline-block">Free Visual</span>{" "}
-              <span className="inline-block">Proofreading Suite</span>{" "}
+            <h1 className="pb-1 text-[32px] xs:text-[38px] sm:text-[48px] lg:text-[56px] font-extrabold leading-[1.2] sm:leading-[1.16] tracking-[-1px] sm:tracking-[-1.5px] text-slate-900 text-center">
+              <span className="inline-block">Even your typos</span>{" "}
               <br className="hidden sm:inline" />
-              <span className="inline-block bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text pb-2 text-transparent sm:whitespace-nowrap">
-                <span className="inline-block">for designs,</span>{" "}
-                <span className="inline-block">documents &amp; slides.</span>
+              <span className="inline-block bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text pb-2 text-transparent">
+                have nowhere to hide.
               </span>
             </h1>
-
           </div>
 
 
@@ -3217,7 +3199,7 @@ export default function Home() {
                     onClick={() => handleAiModeToggle(false)}
                     className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       !aiMode
-                        ? "bg-slate-900 text-white shadow-xs"
+                        ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
                         : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
                     }`}
                     title="Fast offline dictionary check (instant)"
@@ -3229,15 +3211,12 @@ export default function Home() {
                     onClick={() => handleAiModeToggle(true)}
                     className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       aiMode
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs"
-                        : "text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50"
+                        ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
+                        : "text-slate-600 hover:text-blue-600 hover:bg-blue-50/50"
                     }`}
                     title="AI Deep Proofreading with Google Gemini (catches grammar, typos & contextual errors)"
                   >
                     <span>✨ AI Deep Check</span>
-                    <span className={`rounded-full px-1.5 py-0.2 text-[9px] font-black ${
-                      aiMode ? "bg-white/20 text-white" : "bg-purple-100 text-purple-700"
-                    }`}>GEMINI</span>
                   </button>
                 </div>
 
@@ -3249,26 +3228,24 @@ export default function Home() {
                     onClick={() => handleDialectChange("en-US")}
                     className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       dialect === "en-US"
-                        ? "bg-slate-900 text-white shadow-xs"
+                        ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
                         : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
                     }`}
                     title="Check spelling using American English rules (e.g., color, organize)"
                   >
                     <span>🇺🇸 US</span>
-                    <span className="hidden sm:inline">English</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDialectChange("en-GB")}
                     className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       dialect === "en-GB"
-                        ? "bg-slate-900 text-white shadow-xs"
+                        ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
                         : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
                     }`}
                     title="Check spelling using British English rules (e.g., colour, organise)"
                   >
                     <span>🇬🇧 UK</span>
-                    <span className="hidden sm:inline">English</span>
                   </button>
                 </div>
               </div>
@@ -3414,42 +3391,37 @@ export default function Home() {
                   openFilePicker();
                 }
               }}
-              className={`group relative rounded-[32px] transition-all duration-300 cursor-pointer overflow-hidden ${
+              className={`group relative rounded-[32px] border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden ${
                 dragging
-                  ? "bg-blue-50/95 shadow-[0_0_60px_rgba(59,130,246,0.25)] scale-[1.01]"
-                  : "bg-white/95 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.04)] hover:shadow-[0_25px_70px_-15px_rgba(59,130,246,0.14)]"
+                  ? "border-blue-500 bg-blue-50/95 shadow-[0_0_60px_rgba(59,130,246,0.25)] scale-[1.01]"
+                  : "border-blue-200/90 hover:border-blue-400/80 bg-white/95 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.04)] hover:shadow-[0_25px_70px_-15px_rgba(59,130,246,0.14)]"
               }`}
             >
 
-              <div className="relative rounded-[32px] backdrop-blur-2xl p-4 sm:p-7 text-center transition-all duration-300">
+              <div className="relative rounded-[32px] backdrop-blur-2xl p-6 sm:p-10 text-center transition-all duration-300">
 
                 {/* BEFORE UPLOAD */}
 
                 {files.length === 0 && (
 
-                  <div className={`relative rounded-[24px] transition-all duration-300 px-5 py-7 sm:px-8 sm:py-9 ${
-                    dragging
-                      ? "bg-blue-100/40"
-                      : "bg-gradient-to-b from-blue-50/30 via-slate-50/35 to-transparent group-hover:bg-blue-50/20"
-                  }`}>
+                  <div className="relative transition-all duration-300">
 
                     {/* FLOATING 3D ICON */}
                     <div className="relative mx-auto flex h-18 w-18 items-center justify-center">
                       <div className="absolute inset-0 rounded-3xl bg-blue-500/25 blur-xl transition-all duration-500 group-hover:scale-130 group-hover:bg-blue-500/35" />
                       <div className="relative flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white shadow-xl shadow-blue-600/35 ring-4 ring-blue-50/90 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:scale-105 group-hover:shadow-blue-600/45">
                         <svg
-                          width="30"
-                          height="30"
+                          width="28"
+                          height="28"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
-                          strokeWidth="2.2"
+                          strokeWidth="2.8"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         >
-                          <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-                          <path d="M12 12v9" />
-                          <path d="m8 16 4-4 4 4" />
+                          <path d="M12 19V5" />
+                          <path d="m5 12 7-7 7 7" />
                         </svg>
                       </div>
                     </div>
@@ -3459,7 +3431,7 @@ export default function Home() {
                     </h2>
 
                     <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
-                      Drag and drop anywhere inside, or choose a file from your computer • Max 25 MB
+                      Drag and drop anywhere inside, or choose a file from your computer • Max 25MB
                     </p>
 
                     {/* BUTTONS */}
@@ -3472,10 +3444,9 @@ export default function Home() {
                         }}
                         className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35 active:translate-y-0 active:scale-98 cursor-pointer"
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="17 8 12 3 7 8" />
-                          <line x1="12" y1="3" x2="12" y2="15" />
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 19V5" />
+                          <path d="m5 12 7-7 7 7" />
                         </svg>
                         <span>Choose a file</span>
                       </button>
@@ -3528,7 +3499,7 @@ export default function Home() {
                       </span>
                       <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-500 shadow-2xs">
                         <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                        MAX 25 MB
+                        Max 25MB
                       </span>
                     </div>
 
