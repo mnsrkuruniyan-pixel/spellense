@@ -4172,52 +4172,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* BOTTOM CALL TO ACTION STRIP */}
-            <div className="mt-16 rounded-3xl border border-blue-200/80 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-8 sm:p-12 text-white text-center shadow-xl">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-300 backdrop-blur-md">
-                Get Started In Seconds
-              </div>
-              <h3 className="mt-4 text-2xl font-black sm:text-4xl tracking-tight">
-                Ready to catch mistakes before your clients do?
-              </h3>
-              <p className="mt-3 max-w-xl mx-auto text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Join thousands of creators, art directors, and marketers who use Spellense for flaw-free designs, pitch decks, and documents.
-              </p>
-
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-                <button
-                  type="button"
-                  onClick={openFilePicker}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-xs sm:text-sm font-bold text-slate-900 shadow-md transition hover:bg-blue-50 active:scale-95"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" x2="12" y1="3" y2="15" />
-                  </svg>
-                  <span>Upload &amp; Proofread File</span>
-                </button>
-
-                <Link
-                  href="/design-check"
-                  className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-xs sm:text-sm font-bold text-white backdrop-blur-md transition hover:bg-white/15 active:scale-95"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                  <span>Launch Design Check AI</span>
-                </Link>
-              </div>
-
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-[11px] text-slate-400">
-                <span>✓ 100% Free</span>
-                <span>✓ No Sign-up Required</span>
-                <span>✓ Zero Server File Storage</span>
-              </div>
-            </div>
-
             {/* FOOTER ACTION LINKS */}
-            <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200/70 pt-8 text-xs text-slate-500">
+            <div className="mt-16 sm:mt-20 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200/70 pt-8 text-xs text-slate-500">
               <div className="flex flex-wrap items-center gap-5 font-medium">
                 <Link href="/faq" className="hover:text-blue-600 transition">
                   Frequently Asked Questions →
