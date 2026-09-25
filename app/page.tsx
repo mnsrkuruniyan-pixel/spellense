@@ -4101,7 +4101,7 @@ export default function Home() {
                     <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-blue-600 transition">
                       How to Spell Check Images and Graphics Online (Without Retyping)
                     </h4>
-                    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600">
                       Learn how optical recognition pinpoints errors inside rasterized Canva banners, Figma artboards, and marketing flyers in seconds.
                     </p>
                   </div>
@@ -4123,7 +4123,7 @@ export default function Home() {
                     <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-indigo-600 transition">
                       Top 5 Spelling and Design Mistakes in Presentation Slides
                     </h4>
-                    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600">
                       The subtle slide mistakes that damage pitch credibility—from headline typos to inconsistent typographic hierarchy.
                     </p>
                   </div>
@@ -4145,7 +4145,7 @@ export default function Home() {
                     <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-emerald-600 transition">
                       American vs British English Spelling: A Complete Visual Guide
                     </h4>
-                    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600">
                       Master key regional orthographic variations (-ize vs -ise, -or vs -our) so your cross-border campaigns remain consistent.
                     </p>
                   </div>
