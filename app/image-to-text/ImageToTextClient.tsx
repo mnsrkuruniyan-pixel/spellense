@@ -6,13 +6,79 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
-const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".pdf"];
+const ALLOWED_EXTENSIONS = [
+  ".pdf",
+  ".docx",
+  ".pptx",
+  ".xlsx",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+];
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ];
+
+async function optimizeImageForOcr(imageFile: File): Promise<File> {
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      const url = URL.createObjectURL(imageFile);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const MAX_DIM = 2400;
+        let { width, height } = img;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(imageFile);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob && blob.size < imageFile.size) {
+              const optimized = new File([blob], imageFile.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(optimized);
+            } else {
+              resolve(imageFile);
+            }
+          },
+          "image/jpeg",
+          0.92
+        );
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(imageFile);
+      };
+      img.src = url;
+    } catch {
+      resolve(imageFile);
+    }
+  });
+}
 
 const FAQ_ITEMS = [
   {
@@ -132,7 +198,7 @@ export default function ImageToTextClient() {
     }
   };
 
-  // Execute extraction via backend OCR endpoint
+  // Execute extraction via spell-check PDF & OCR pipeline
   const processFile = async (selectedFile: File) => {
     // 1. File size check (25 MB)
     if (selectedFile.size > MAX_FILE_SIZE) {
@@ -141,19 +207,19 @@ export default function ImageToTextClient() {
           selectedFile.size /
           1024 /
           1024
-        ).toFixed(1)} MB). Please choose a smaller image or document.`
+        ).toFixed(1)} MB). Please choose a smaller document.`
       );
       return;
     }
 
-    // 2. Format validation
+    // 2. Format validation (extensions & mime types)
     const nameLower = selectedFile.name.toLowerCase();
     const hasValidExt = ALLOWED_EXTENSIONS.some((ext) => nameLower.endsWith(ext));
     const hasValidMime = ALLOWED_MIME_TYPES.includes(selectedFile.type);
 
     if (!hasValidExt && !hasValidMime) {
       setUploadError(
-        "Unsupported file format. Please upload a JPG, PNG, WebP, or PDF document."
+        "Unsupported file format. Please upload a PDF, DOCX, PPTX, XLSX, JPG, PNG, or WEBP file."
       );
       return;
     }
@@ -161,7 +227,11 @@ export default function ImageToTextClient() {
     setUploadError(null);
     setFile(selectedFile);
     setExtracting(true);
-    setExtractingStep("Uploading file...");
+    setExtractingStep(
+      nameLower.endsWith(".pdf")
+        ? "Reading your PDF..."
+        : "Reading your file..."
+    );
     setHasExtracted(false);
     setNoTextDetected(false);
     setExtractedText("");
@@ -176,26 +246,201 @@ export default function ImageToTextClient() {
       setPreviewUrl(null);
     }
 
-    try {
-      const stepTimer1 = setTimeout(() => {
-        setExtractingStep("Running high-accuracy OCR extraction...");
-      }, 700);
+    const isPdf = nameLower.endsWith(".pdf");
 
-      const stepTimer2 = setTimeout(() => {
-        setExtractingStep("Preserving paragraphs, line breaks & formatting...");
-      }, 1800);
+    try {
+      if (isPdf) {
+        setExtractingStep("Extracting text from PDF...");
+        try {
+          const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+          pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+          const arrayBuffer = await selectedFile.arrayBuffer();
+          const loadingTask = pdfjs.getDocument({
+            data: new Uint8Array(arrayBuffer),
+          });
+          const pdf = await loadingTask.promise;
+
+          const textParts: string[] = [];
+
+          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            setExtractingStep(`Scanning page ${pageNum} of ${pdf.numPages}...`);
+            const page = await pdf.getPage(pageNum);
+            const content = await page.getTextContent();
+            let pageText = "";
+            let prevItem: {
+              str?: string;
+              transform?: number[];
+              width?: number;
+              hasEOL?: boolean;
+            } | null = null;
+
+            for (const item of content.items) {
+              if (!("str" in item) || !item.str) continue;
+
+              if (!prevItem) {
+                pageText += item.str;
+              } else {
+                const prevTransform = prevItem.transform || [1, 0, 0, 1, 0, 0];
+                const curTransform = item.transform || [1, 0, 0, 1, 0, 0];
+                const fontSize = Math.max(
+                  8,
+                  Math.hypot(curTransform[2], curTransform[3])
+                );
+                const isNewLine =
+                  prevItem.hasEOL ||
+                  Math.abs(curTransform[5] - prevTransform[5]) > fontSize * 0.55;
+
+                if (isNewLine) {
+                  pageText += "\n" + item.str;
+                } else {
+                  const prevEnd = prevTransform[4] + (prevItem.width || 0);
+                  const curStart = curTransform[4];
+                  const gap = curStart - prevEnd;
+
+                  if (
+                    gap > fontSize * 0.18 &&
+                    !prevItem.str?.endsWith(" ") &&
+                    !item.str.startsWith(" ")
+                  ) {
+                    pageText += " " + item.str;
+                  } else {
+                    pageText += item.str;
+                  }
+                }
+              }
+              prevItem = item;
+            }
+
+            page.cleanup();
+
+            const cleanedPageText = pageText
+              .replace(/\r/g, "")
+              .replace(/[ \t]+/g, " ")
+              .trim();
+
+            if (cleanedPageText) {
+              textParts.push(cleanedPageText);
+            }
+          }
+
+          await pdf.cleanup();
+          await loadingTask.destroy();
+
+          const pdfExtractedText = textParts.join("\n\n").trim();
+
+          if (pdfExtractedText.length > 0) {
+            setExtractedText(pdfExtractedText);
+            setNoTextDetected(false);
+            setHasExtracted(true);
+            setExtracting(false);
+            return;
+          } else {
+            // Scanned PDF (images only)
+            if (selectedFile.size <= 4.2 * 1024 * 1024) {
+              setExtractingStep("Running OCR on scanned PDF...");
+              const formData = new FormData();
+              formData.append("file", selectedFile);
+              formData.append("dialect", "en-US");
+
+              const response = await fetch("/api/check", {
+                method: "POST",
+                body: formData,
+              });
+
+              let data: { success?: boolean; text?: string; error?: string } | null = null;
+              try {
+                data = await response.json();
+              } catch {}
+
+              if (!response.ok || !data || data.success === false) {
+                setUploadError(
+                  data?.error || "Unable to extract text from this scanned PDF."
+                );
+                setExtracting(false);
+                return;
+              }
+
+              const text = data.text ? data.text.trim() : "";
+              if (!text) {
+                setNoTextDetected(true);
+                setExtractedText("");
+              } else {
+                setNoTextDetected(false);
+                setExtractedText(data.text || "");
+              }
+              setHasExtracted(true);
+              setExtracting(false);
+              return;
+            } else {
+              setUploadError(
+                "This scanned PDF contains only images without selectable text and exceeds the 4.5MB limit for OCR scanning. Please compress the file or use a digital PDF."
+              );
+              setExtracting(false);
+              return;
+            }
+          }
+        } catch (pdfErr) {
+          console.warn(
+            "Client-side PDF extraction failed, falling back to file upload:",
+            pdfErr
+          );
+          if (selectedFile.size <= 4.2 * 1024 * 1024) {
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            formData.append("dialect", "en-US");
+            const response = await fetch("/api/check", {
+              method: "POST",
+              body: formData,
+            });
+            let data: { success?: boolean; text?: string; error?: string } | null = null;
+            try {
+              data = await response.json();
+            } catch {}
+            if (data?.text?.trim()) {
+              setExtractedText(data.text);
+              setNoTextDetected(false);
+            } else {
+              setNoTextDetected(true);
+            }
+            setHasExtracted(true);
+            setExtracting(false);
+            return;
+          } else {
+            setUploadError(
+              "Unable to process this large PDF on the device. Please try a file under 4.5MB."
+            );
+            setExtracting(false);
+            return;
+          }
+        }
+      }
+
+      // Non-PDF (Images: JPG, PNG, WEBP, or Office Documents: DOCX, PPTX, XLSX)
+      setExtractingStep(
+        nameLower.endsWith(".docx") ||
+        nameLower.endsWith(".pptx") ||
+        nameLower.endsWith(".xlsx")
+          ? "Reading document text..."
+          : "Running OCR extraction..."
+      );
+
+      let fileToSend = selectedFile;
+      if (
+        selectedFile.type.startsWith("image/") &&
+        selectedFile.size > 3.5 * 1024 * 1024
+      ) {
+        setExtractingStep("Optimizing high-resolution image...");
+        fileToSend = await optimizeImageForOcr(selectedFile);
+      }
 
       const formData = new FormData();
-      formData.append("file", selectedFile);
+      formData.append("file", fileToSend);
       formData.append("dialect", "en-US");
 
       const response = await fetch("/api/check", {
         method: "POST",
         body: formData,
       });
-
-      clearTimeout(stepTimer1);
-      clearTimeout(stepTimer2);
 
       let data: {
         success?: boolean;
@@ -212,7 +457,7 @@ export default function ImageToTextClient() {
 
       if (!response.ok || !data || data.success === false) {
         setUploadError(
-          data?.error || "Unable to extract text from the file. Please try another image."
+          data?.error || "Unable to extract text from the file. Please try another image or document."
         );
         setExtracting(false);
         return;
@@ -352,7 +597,7 @@ export default function ImageToTextClient() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+            accept=".pdf,.docx,.pptx,.xlsx,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             className="hidden"
             onChange={(e) => {
               if (e.target.files && e.target.files[0]) {
@@ -488,16 +733,31 @@ export default function ImageToTextClient() {
                   </button>
                 </div>
 
-                <div className="mt-6 flex items-center justify-center gap-4 text-[11px] font-semibold text-slate-400">
-                  <span>JPG</span>
-                  <span>•</span>
-                  <span>PNG</span>
-                  <span>•</span>
-                  <span>WebP</span>
-                  <span>•</span>
-                  <span>PDF</span>
-                  <span>•</span>
-                  <span className="text-emerald-600 font-bold">100% Free</span>
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-[11px] font-bold text-slate-700">
+                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                    PDF
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                    DOCX
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    PPTX
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    XLSX
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+                    JPG • PNG • WEBP
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-slate-500 shadow-2xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                    Max 25MB
+                  </span>
                 </div>
               </div>
             </div>
