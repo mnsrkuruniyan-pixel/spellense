@@ -3697,17 +3697,17 @@ export default function Home() {
           <section className="mx-auto mt-20 max-w-6xl border-t border-slate-200/80 pt-20">
 
             {/* BENTO GRID: THE SPELLENSE SUITE */}
-            <div className="text-center max-w-3xl mx-auto">
+            <div className="text-center max-w-5xl mx-auto">
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/90 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs backdrop-blur-md">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
                 The Spellense Creative Suite
               </div>
 
-              <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl lg:text-[42px] leading-tight">
+              <h2 className="mt-4 text-2xl xs:text-3xl sm:text-4xl lg:text-[40px] xl:text-[42px] font-black tracking-tight text-slate-900 leading-tight lg:whitespace-nowrap">
                 Complete Visual Pre-Flight &amp; Copy Tooling
               </h2>
 
-              <p className="mt-3.5 text-sm sm:text-base leading-relaxed text-slate-600">
+              <p className="mt-3.5 text-sm sm:text-base leading-relaxed text-slate-600 max-w-3xl mx-auto">
                 Crafted for marketing teams, art directors, graphic designers, and founders who cannot afford embarrassing errors in client-facing work.
               </p>
             </div>
