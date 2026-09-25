@@ -16,8 +16,9 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="relative min-h-screen bg-[#f0f6fe] font-sans text-slate-900 antialiased selection:bg-blue-500 selection:text-white">
-      {/* AMBIENT MESH GLOW */}
+    <div className="relative min-h-screen bg-slate-50 font-sans text-slate-900 antialiased selection:bg-blue-500 selection:text-white">
+      {/* BACKGROUND DOT PATTERN & AMBIENT MESH GLOW */}
+      <div className="bg-dot-pattern pointer-events-none fixed inset-0 opacity-60" />
       <div className="animate-pulse-glow pointer-events-none fixed top-[-10%] left-[20%] h-[500px] w-[500px] rounded-full bg-gradient-to-tr from-rose-400/15 to-indigo-400/15 blur-[120px]" />
       <div className="animate-pulse-glow pointer-events-none fixed bottom-[10%] right-[15%] h-[450px] w-[450px] rounded-full bg-gradient-to-br from-amber-400/15 to-rose-400/15 blur-[120px]" />
 
