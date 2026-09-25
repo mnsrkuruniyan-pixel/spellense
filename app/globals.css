@@ -2,7 +2,7 @@
 
 :root {
   --background: #f0f6fe;
-  --foreground: #171717;
+  --foreground: #000000;
 }
 
 @theme inline {
@@ -15,13 +15,13 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #f0f6fe;
-    --foreground: #171717;
+    --foreground: #000000;
   }
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
+  color: #000000;
   font-family: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   letter-spacing: -0.01em;
   font-weight: 300;

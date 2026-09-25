@@ -414,7 +414,7 @@ export default function DesignCheckClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f6fe] text-slate-800 font-sans selection:bg-blue-500/10 selection:text-blue-600 relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#f0f6fe] text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative overflow-x-hidden">
       {/* Ambient background glows / mesh across full page */}
       <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
       <div className="pointer-events-none absolute top-40 -left-28 h-[420px] w-[420px] rounded-full bg-blue-200/40 blur-[100px]" />
@@ -440,12 +440,12 @@ export default function DesignCheckClient() {
               </span>
             </div>
 
-            <h1 className="mt-3 pb-1 text-[28px] font-extrabold leading-[1.22] tracking-[-1.5px] text-slate-900 sm:text-[36px] sm:leading-[1.2] md:text-[42px] lg:text-[48px]">
+            <h1 className="mt-3 pb-1 text-[28px] font-extrabold leading-[1.22] tracking-[-1.5px] text-black sm:text-[36px] sm:leading-[1.2] md:text-[42px] lg:text-[48px]">
               <span className="sm:whitespace-nowrap">
                 Catch Pricing, Asterisks &amp; Print Errors
               </span>{" "}
               <br />
-              <span className="inline-block whitespace-nowrap bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text pb-1.5 text-transparent">
+              <span className="inline-block whitespace-nowrap text-black pb-1.5">
                 before you publish.
               </span>
             </h1>

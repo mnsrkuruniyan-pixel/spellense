@@ -99,7 +99,7 @@ export default function FaqPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f0f6fe] text-[#101828]">
+    <main className="min-h-screen bg-[#f0f6fe] text-black">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
@@ -126,7 +126,7 @@ export default function FaqPage() {
               </span>
             </div>
 
-            <h1 className="mt-5 text-4xl font-extrabold tracking-[-1.5px] text-slate-900 sm:text-5xl lg:text-[54px]">
+            <h1 className="mt-5 text-4xl font-extrabold tracking-[-1.5px] text-black sm:text-5xl lg:text-[54px]">
               Frequently Asked Questions
             </h1>
 
@@ -150,7 +150,7 @@ export default function FaqPage() {
                       </span>
                       <span className="text-xs text-slate-400">Q{index + 1}</span>
                     </div>
-                    <h2 className="mt-2.5 text-lg font-bold text-slate-900 sm:text-xl">
+                    <h2 className="mt-2.5 text-lg font-bold text-black sm:text-xl">
                       {item.question}
                     </h2>
                     <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-[15px]">

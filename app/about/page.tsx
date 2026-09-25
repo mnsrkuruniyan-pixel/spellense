@@ -39,7 +39,7 @@ export default function AboutPage() {
   };
 
   return (
-    <main id="main-content" className="min-h-screen bg-[#f0f6fe] text-[#101828]">
+    <main id="main-content" className="min-h-screen bg-[#f0f6fe] text-black">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutSchema) }}
@@ -65,7 +65,7 @@ export default function AboutPage() {
               </span>
             </div>
 
-            <h1 className="mt-5 text-4xl font-extrabold tracking-[-1.5px] text-slate-900 sm:text-5xl lg:text-[54px]">
+            <h1 className="mt-5 text-4xl font-extrabold tracking-[-1.5px] text-black sm:text-5xl lg:text-[54px]">
               Built for great design and flawless words.
             </h1>
 
@@ -80,7 +80,7 @@ export default function AboutPage() {
               <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-2">
                 The Origin Story
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-black">
                 Born From a Real Workplace Problem
               </h2>
               <div className="mt-4 space-y-4 text-sm leading-relaxed text-slate-600 sm:text-[15px]">

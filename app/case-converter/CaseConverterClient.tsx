@@ -253,7 +253,7 @@ export default function CaseConverterClient() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f0f6fe] text-[#101828]">
+    <main className="min-h-screen bg-[#f0f6fe] text-black">
       {/* NAVBAR */}
       <Navbar />
 
@@ -274,7 +274,7 @@ export default function CaseConverterClient() {
               </span>
             </div>
 
-            <h1 className="mt-4 text-3xl font-extrabold tracking-[-1.5px] text-slate-900 sm:text-5xl lg:text-[52px]">
+            <h1 className="mt-4 text-3xl font-extrabold tracking-[-1.5px] text-black sm:text-5xl lg:text-[52px]">
               Case Converter &amp; Text Formatter
             </h1>
 

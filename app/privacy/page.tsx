@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-[#f0f6fe] text-[#101828]">
+    <main className="min-h-screen bg-[#f0f6fe] text-black">
 
       {/* NAVBAR */}
       <Navbar />
@@ -40,7 +40,7 @@ export default function PrivacyPage() {
               </span>
             </div>
 
-            <h1 className="mt-5 text-4xl font-extrabold tracking-[-1.5px] text-slate-900 sm:text-5xl lg:text-[54px]">
+            <h1 className="mt-5 text-4xl font-extrabold tracking-[-1.5px] text-black sm:text-5xl lg:text-[54px]">
               Spellense Privacy Policy
             </h1>
 

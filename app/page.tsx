@@ -2381,7 +2381,7 @@ export default function Home() {
       : (errorCount === 0 ? 100 : 0);
 
     return (
-      <main className="min-h-screen bg-[#f0f6fe] text-[#101828]">
+      <main className="min-h-screen bg-[#f0f6fe] text-black">
 
         {/* NAVBAR */}
         <Navbar
@@ -2422,7 +2422,7 @@ export default function Home() {
                 )}
               </div>
 
-              <h1 className="mt-4 text-3xl font-extrabold tracking-[-1.2px] text-slate-900 sm:text-4xl lg:text-[42px]">
+              <h1 className="mt-4 text-3xl font-extrabold tracking-[-1.2px] text-black sm:text-4xl lg:text-[42px]">
                 {hasErrors ? "Spelling issues detected in your file" : "Your document is error-free!"}
               </h1>
 
@@ -3140,7 +3140,7 @@ export default function Home() {
 
   return (
 
-    <main id="main-content" className="min-h-screen bg-[#f0f6fe] text-[#101828]">
+    <main id="main-content" className="min-h-screen bg-[#f0f6fe] text-black">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }}
@@ -3183,15 +3183,15 @@ export default function Home() {
             <div className="min-h-[86px] xs:min-h-[96px] sm:min-h-[108px] lg:min-h-[76px] flex flex-col items-center justify-center">
               <h1
                 aria-live="polite"
-                className={`pb-1 text-[29px] xs:text-[34px] sm:text-[40px] md:text-[46px] lg:text-[clamp(44px,4.5vw,66px)] font-extrabold leading-[1.2] lg:leading-[1.14] tracking-[-0.8px] sm:tracking-[-1.5px] lg:tracking-[-2px] text-slate-900 text-center lg:whitespace-nowrap transition-all duration-300 ease-out ${
+                className={`pb-1 text-[29px] xs:text-[34px] sm:text-[40px] md:text-[46px] lg:text-[clamp(44px,4.5vw,66px)] font-extrabold leading-[1.2] lg:leading-[1.14] tracking-[-0.8px] sm:tracking-[-1.5px] lg:tracking-[-2px] text-black text-center lg:whitespace-nowrap transition-all duration-300 ease-out ${
                   fadeState === "visible"
                     ? "opacity-100 translate-y-0 scale-100"
                     : "opacity-0 -translate-y-2 scale-[0.99]"
                 }`}
               >
-                <span className="inline-block">{HERO_HEADLINES[headlineIndex].line1}</span>{" "}
+                <span className="inline-block text-black">{HERO_HEADLINES[headlineIndex].line1}</span>{" "}
                 <br className="lg:hidden" />
-                <span className="inline-block bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text pb-2 text-transparent">
+                <span className="inline-block text-black">
                   {HERO_HEADLINES[headlineIndex].line2}
                 </span>
               </h1>
@@ -3207,8 +3207,8 @@ export default function Home() {
                   aria-label={`Show headline ${i + 1}`}
                   className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                     i === headlineIndex
-                      ? "w-6 bg-gradient-to-r from-blue-600 to-indigo-600 shadow-2xs shadow-blue-500/30"
-                      : "w-1.5 bg-blue-200/90 hover:bg-blue-300"
+                      ? "w-6 bg-black shadow-2xs"
+                      : "w-1.5 bg-slate-300 hover:bg-slate-400"
                   }`}
                 />
               ))}
@@ -3768,7 +3768,7 @@ export default function Home() {
                 The Spellense Creative Suite
               </div>
 
-              <h2 className="mt-4 text-2xl xs:text-3xl sm:text-4xl lg:text-[40px] xl:text-[42px] font-black tracking-tight text-slate-900 leading-tight lg:whitespace-nowrap">
+              <h2 className="mt-4 text-2xl xs:text-3xl sm:text-4xl lg:text-[40px] xl:text-[42px] font-black tracking-tight text-black leading-tight lg:whitespace-nowrap">
                 Complete Visual Pre-Flight &amp; Copy Tooling
               </h2>
 

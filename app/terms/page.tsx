@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-[#f0f6fe] text-[#101828]">
+    <main className="min-h-screen bg-[#f0f6fe] text-black">
 
       {/* NAVBAR */}
       <Navbar />
@@ -33,7 +33,7 @@ export default function TermsPage() {
               </span>
             </div>
 
-            <h1 className="mt-5 text-4xl font-extrabold tracking-[-1.5px] text-slate-900 sm:text-5xl lg:text-[54px]">
+            <h1 className="mt-5 text-4xl font-extrabold tracking-[-1.5px] text-black sm:text-5xl lg:text-[54px]">
               Terms of Use
             </h1>
 
@@ -46,7 +46,7 @@ export default function TermsPage() {
           <div className="mt-12 space-y-6">
 
             <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">1. Acceptance of Terms &amp; Permitted Use</h2>
+              <h2 className="text-xl font-bold text-black">1. Acceptance of Terms &amp; Permitted Use</h2>
               <p className="mt-3 text-sm leading-7 text-slate-600">
                 By accessing Spellense and submitting files for spell checking, you agree to comply with these Terms of Use. You warrant that you hold all rights, permissions, and authorizations necessary to submit your documents, graphics, and spreadsheets for processing. You may not use the service for any unlawful purpose or to process malicious content.
               </p>
