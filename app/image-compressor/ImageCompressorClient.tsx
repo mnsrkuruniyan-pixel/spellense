@@ -23,6 +23,8 @@ interface CompressedItem {
   compressedSize: number;
   width: number;
   height: number;
+  origWidth: number;
+  origHeight: number;
   format: OutputFormat;
   quality: number; // 1 to 100
   scalePercent: number; // 100
@@ -113,8 +115,14 @@ export default function ImageCompressorClient() {
   // Global Settings for active or batch
   const [globalFormat, setGlobalFormat] = useState<OutputFormat>("webp");
   const [globalQuality, setGlobalQuality] = useState<number>(80);
-  const globalScale = 100; // Strictly preserves original dimensions (1200x1200 stays 1200x1200)
   const [stripMetadata, setStripMetadata] = useState<boolean>(true);
+
+  // Dimension Resizing State (Optional, 100% locked by default)
+  const [enableResize, setEnableResize] = useState<boolean>(false);
+  const [lockAspectRatio, setLockAspectRatio] = useState<boolean>(true);
+  const [customWidth, setCustomWidth] = useState<number | "">("");
+  const [customHeight, setCustomHeight] = useState<number | "">("");
+  const [customScalePercent, setCustomScalePercent] = useState<number>(100);
 
   // Squoosh-Style Split Screen Slider State
   const [sliderPos, setSliderPos] = useState<number>(50); // 0 to 100 percent
@@ -138,7 +146,9 @@ export default function ImageCompressorClient() {
       item: CompressedItem,
       overrideQuality?: number,
       overrideFormat?: OutputFormat,
-      overrideScale?: number
+      overrideScale?: number,
+      overrideTargetW?: number,
+      overrideTargetH?: number
     ): Promise<CompressedItem> => {
       return new Promise((resolve) => {
         const qualityVal = (overrideQuality ?? item.quality) / 100;
@@ -158,11 +168,15 @@ export default function ImageCompressorClient() {
               return;
             }
 
-            // Dimension logic: strictly preserve original dimension
-            const origW = img.naturalWidth || img.width;
-            const origH = img.naturalHeight || img.height;
-            const targetW = Math.max(1, Math.round(origW * scaleVal));
-            const targetH = Math.max(1, Math.round(origH * scaleVal));
+            // Dimension logic: custom target px or proportional scale
+            const origW = item.origWidth || img.naturalWidth || img.width;
+            const origH = item.origHeight || img.naturalHeight || img.height;
+            const targetW = overrideTargetW
+              ? Math.max(1, Math.round(overrideTargetW))
+              : Math.max(1, Math.round(origW * scaleVal));
+            const targetH = overrideTargetH
+              ? Math.max(1, Math.round(overrideTargetH))
+              : Math.max(1, Math.round(origH * scaleVal));
 
             canvas.width = targetW;
             canvas.height = targetH;
@@ -246,9 +260,11 @@ export default function ImageCompressorClient() {
               compressedSize: finalBlob.size,
               width: targetW,
               height: targetH,
+              origWidth: origW,
+              origHeight: origH,
               quality: Math.round(qualityVal * 100),
               format: formatVal,
-              scalePercent: Math.round(scaleVal * 100),
+              scalePercent: origW > 0 ? Math.round((targetW / origW) * 100) : Math.round(scaleVal * 100),
               status: "done",
               error: undefined,
               blob: finalBlob,
@@ -344,9 +360,11 @@ export default function ImageCompressorClient() {
                   compressedSize: 0,
                   width: Math.round(viewport.width),
                   height: Math.round(viewport.height),
+                  origWidth: Math.round(viewport.width),
+                  origHeight: Math.round(viewport.height),
                   format: globalFormat,
                   quality: globalQuality,
-                  scalePercent: globalScale,
+                  scalePercent: 100,
                   status: "idle",
                   blob: null,
                 });
@@ -384,9 +402,11 @@ export default function ImageCompressorClient() {
             compressedSize: 0,
             width: dims.w,
             height: dims.h,
+            origWidth: dims.w,
+            origHeight: dims.h,
             format: globalFormat,
             quality: globalQuality,
-            scalePercent: globalScale,
+            scalePercent: 100,
             status: "idle",
             blob: null,
           });
@@ -408,7 +428,7 @@ export default function ImageCompressorClient() {
         setIsBatchCompressing(true);
         const compressedResults = await Promise.all(
           newItems.map((item) =>
-            compressSingleItem(item, globalQuality, globalFormat, globalScale)
+            compressSingleItem(item, globalQuality, globalFormat, 100)
           )
         );
 
@@ -426,7 +446,6 @@ export default function ImageCompressorClient() {
       compressSingleItem,
       globalFormat,
       globalQuality,
-      globalScale,
     ]
   );
 
@@ -471,11 +490,22 @@ export default function ImageCompressorClient() {
     const timer = setTimeout(async () => {
       if (activeItem.status === "compressing") return;
 
+      const targetW =
+        enableResize && typeof customWidth === "number"
+          ? customWidth
+          : undefined;
+      const targetH =
+        enableResize && typeof customHeight === "number"
+          ? customHeight
+          : undefined;
+
       const updated = await compressSingleItem(
         activeItem,
         globalQuality,
         globalFormat,
-        globalScale
+        enableResize ? customScalePercent : 100,
+        targetW,
+        targetH
       );
 
       if (isMounted) {
@@ -487,16 +517,176 @@ export default function ImageCompressorClient() {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [globalQuality, globalFormat, globalScale, activeId, activeItem, compressSingleItem]);
+  }, [
+    globalQuality,
+    globalFormat,
+    enableResize,
+    customScalePercent,
+    customWidth,
+    customHeight,
+    activeId,
+    activeItem,
+    compressSingleItem,
+  ]);
+
+  // Select active item and sync dimensions
+  const handleSelectActiveItem = (id: string) => {
+    setActiveId(id);
+    const it = items.find((x) => x.id === id);
+    if (it) {
+      const origW = it.origWidth || it.width;
+      const origH = it.origHeight || it.height;
+      if (enableResize) {
+        const scaledW = Math.max(1, Math.round((origW * customScalePercent) / 100));
+        const scaledH = Math.max(1, Math.round((origH * customScalePercent) / 100));
+        setCustomWidth(scaledW);
+        setCustomHeight(scaledH);
+      } else {
+        setCustomWidth(origW);
+        setCustomHeight(origH);
+        setCustomScalePercent(100);
+      }
+    }
+  };
+
+  // Handle dimension resizing
+  const triggerDimensionUpdate = useCallback(
+    (targetW: number, targetH: number, scalePct: number) => {
+      if (!activeItem) return;
+      compressSingleItem(
+        activeItem,
+        globalQuality,
+        globalFormat,
+        scalePct,
+        targetW,
+        targetH
+      ).then((updated) => {
+        setItems((prev) =>
+          prev.map((it) => (it.id === updated.id ? updated : it))
+        );
+      });
+    },
+    [activeItem, compressSingleItem, globalQuality, globalFormat]
+  );
+
+  const handleToggleResize = (enable: boolean) => {
+    setEnableResize(enable);
+    if (activeItem) {
+      const origW = activeItem.origWidth || activeItem.width;
+      const origH = activeItem.origHeight || activeItem.height;
+      if (enable) {
+        setCustomWidth(origW);
+        setCustomHeight(origH);
+        setCustomScalePercent(100);
+      } else {
+        setCustomWidth(origW);
+        setCustomHeight(origH);
+        setCustomScalePercent(100);
+        triggerDimensionUpdate(origW, origH, 100);
+      }
+    }
+  };
+
+  const handlePercentChange = (pct: number) => {
+    if (!activeItem) return;
+    const origW = activeItem.origWidth || activeItem.width;
+    const origH = activeItem.origHeight || activeItem.height;
+
+    const newW = Math.max(1, Math.round((origW * pct) / 100));
+    const newH = Math.max(1, Math.round((origH * pct) / 100));
+
+    setCustomScalePercent(pct);
+    setCustomWidth(newW);
+    setCustomHeight(newH);
+    triggerDimensionUpdate(newW, newH, pct);
+  };
+
+  const handleWidthChange = (valStr: string) => {
+    if (!activeItem) return;
+    const origW = activeItem.origWidth || activeItem.width;
+    const origH = activeItem.origHeight || activeItem.height;
+
+    if (valStr === "") {
+      setCustomWidth("");
+      return;
+    }
+
+    const newW = parseInt(valStr, 10);
+    if (isNaN(newW) || newW <= 0) return;
+
+    setCustomWidth(newW);
+
+    let newH = typeof customHeight === "number" ? customHeight : origH;
+    if (lockAspectRatio && origW > 0) {
+      newH = Math.max(1, Math.round((newW * origH) / origW));
+      setCustomHeight(newH);
+    }
+    const newPct = origW > 0 ? Math.round((newW / origW) * 100) : 100;
+    setCustomScalePercent(newPct);
+
+    triggerDimensionUpdate(newW, newH, newPct);
+  };
+
+  const handleHeightChange = (valStr: string) => {
+    if (!activeItem) return;
+    const origW = activeItem.origWidth || activeItem.width;
+    const origH = activeItem.origHeight || activeItem.height;
+
+    if (valStr === "") {
+      setCustomHeight("");
+      return;
+    }
+
+    const newH = parseInt(valStr, 10);
+    if (isNaN(newH) || newH <= 0) return;
+
+    setCustomHeight(newH);
+
+    let newW = typeof customWidth === "number" ? customWidth : origW;
+    if (lockAspectRatio && origH > 0) {
+      newW = Math.max(1, Math.round((newH * origW) / origH));
+      setCustomWidth(newW);
+    }
+    const newPct = origH > 0 ? Math.round((newH / origH) * 100) : 100;
+    setCustomScalePercent(newPct);
+
+    triggerDimensionUpdate(newW, newH, newPct);
+  };
+
+  const handleResetDimensions = () => {
+    if (!activeItem) return;
+    const origW = activeItem.origWidth || activeItem.width;
+    const origH = activeItem.origHeight || activeItem.height;
+    setCustomWidth(origW);
+    setCustomHeight(origH);
+    setCustomScalePercent(100);
+    triggerDimensionUpdate(origW, origH, 100);
+  };
 
   // Apply settings to all items in batch
   const handleApplyToAll = async () => {
     if (items.length === 0) return;
     setIsBatchCompressing(true);
     const updated = await Promise.all(
-      items.map((it) =>
-        compressSingleItem(it, globalQuality, globalFormat, globalScale)
-      )
+      items.map((it) => {
+        const origW = it.origWidth || it.width;
+        const origH = it.origHeight || it.height;
+        const targetW = enableResize
+          ? Math.max(1, Math.round((origW * customScalePercent) / 100))
+          : origW;
+        const targetH = enableResize
+          ? Math.max(1, Math.round((origH * customScalePercent) / 100))
+          : origH;
+
+        return compressSingleItem(
+          it,
+          globalQuality,
+          globalFormat,
+          enableResize ? customScalePercent : 100,
+          targetW,
+          targetH
+        );
+      })
     );
     setItems(updated);
     setIsBatchCompressing(false);
@@ -620,7 +810,7 @@ export default function ImageCompressorClient() {
             item,
             globalQuality,
             globalFormat,
-            globalScale
+            enableResize ? customScalePercent : 100
           );
           if (res.blob) {
             const baseName = res.name.replace(/\.[^/.]+$/, "");
@@ -1017,7 +1207,7 @@ export default function ImageCompressorClient() {
                               <div key={it.id} className="group relative">
                                 <button
                                   type="button"
-                                  onClick={() => setActiveId(it.id)}
+                                  onClick={() => handleSelectActiveItem(it.id)}
                                   title={`${it.name} • ${formatBytes(it.originalSize)} → ${
                                     it.compressedSize > 0
                                       ? formatBytes(it.compressedSize)
@@ -1340,25 +1530,213 @@ export default function ImageCompressorClient() {
                       ))}
                     </div>
 
-                    {/* DIMENSION LOCK NOTICE */}
-                    <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-3 text-xs text-blue-900">
-                      <div className="flex items-center gap-2 font-bold text-xs">
-                        <svg
-                          width="15"
-                          height="15"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
+                    {/* DIMENSION & RESIZE CONTROLS (With % Presets and Width x Height Lock) */}
+                    <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`flex h-7 w-7 items-center justify-center rounded-lg ${
+                              enableResize
+                                ? "bg-blue-600 text-white"
+                                : "bg-blue-50 text-blue-600"
+                            }`}
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                            >
+                              <polyline points="15 3 21 3 21 9" />
+                              <polyline points="9 21 3 21 3 15" />
+                              <line x1="21" y1="3" x2="14" y2="10" />
+                              <line x1="3" y1="21" x2="10" y2="14" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-slate-900">
+                              Resize Dimensions
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-normal">
+                              {enableResize
+                                ? `${activeItem?.width || 0}×${activeItem?.height || 0}px (${customScalePercent}%)`
+                                : `100% Original Locked (${activeItem?.width || 0}×${activeItem?.height || 0}px)`}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Toggle Switch */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleResize(!enableResize)}
+                          className={`h-5 w-9 rounded-full transition-colors cursor-pointer relative shrink-0 ${
+                            enableResize ? "bg-blue-600" : "bg-slate-300"
+                          }`}
+                          title={
+                            enableResize
+                              ? "Disable resize (Lock 100%)"
+                              : "Enable custom resize"
+                          }
                         >
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <span>Dimensions 100% Locked</span>
+                          <span
+                            className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-transform ${
+                              enableResize ? "translate-x-4" : "translate-x-0"
+                            }`}
+                          />
+                        </button>
                       </div>
-                      <p className="mt-1 text-[11px] text-blue-800/80 leading-relaxed font-normal">
-                        Your image retains its exact resolution ({activeItem ? `${activeItem.width}×${activeItem.height}px` : "original resolution"}).
-                      </p>
+
+                      {/* EXPANDED RESIZE CONTROLS */}
+                      {enableResize && (
+                        <div className="mt-3.5 pt-3 border-t border-slate-100 space-y-3">
+                          {/* QUICK PERCENTAGE PRESETS */}
+                          <div>
+                            <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                              <span>Scale Percentage</span>
+                              <span className="font-mono text-blue-600">
+                                {customScalePercent}%
+                              </span>
+                            </div>
+                            <div className="mt-1.5 grid grid-cols-4 gap-1.5">
+                              {[100, 75, 50, 25].map((pct) => (
+                                <button
+                                  key={pct}
+                                  type="button"
+                                  onClick={() => handlePercentChange(pct)}
+                                  className={`rounded-xl py-1.5 text-xs font-bold transition cursor-pointer ${
+                                    customScalePercent === pct
+                                      ? "bg-blue-600 text-white shadow-2xs"
+                                      : "bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-600"
+                                  }`}
+                                >
+                                  {pct === 100 ? "100% (Orig)" : `${pct}%`}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* CUSTOM WIDTH × HEIGHT WITH ASPECT RATIO LOCK */}
+                          <div>
+                            <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5">
+                              <span>Exact Pixels (W × H)</span>
+                              {customScalePercent !== 100 && (
+                                <button
+                                  type="button"
+                                  onClick={handleResetDimensions}
+                                  className="text-[11px] font-semibold text-blue-600 hover:underline cursor-pointer"
+                                >
+                                  Reset (100%)
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {/* Width Input */}
+                              <div className="relative flex-1">
+                                <input
+                                  type="number"
+                                  min="10"
+                                  max="10000"
+                                  value={customWidth}
+                                  onChange={(e) =>
+                                    handleWidthChange(e.target.value)
+                                  }
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
+                                  placeholder="Width"
+                                />
+                                <span className="absolute right-2 top-2 text-[10px] font-medium text-slate-400 pointer-events-none">
+                                  W
+                                </span>
+                              </div>
+
+                              {/* Aspect Ratio Lock Toggle */}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setLockAspectRatio(!lockAspectRatio)
+                                }
+                                title={
+                                  lockAspectRatio
+                                    ? "Aspect ratio locked (proportional)"
+                                    : "Aspect ratio unlocked (free resize)"
+                                }
+                                className={`p-1.5 rounded-xl border transition cursor-pointer shrink-0 ${
+                                  lockAspectRatio
+                                    ? "border-blue-300 bg-blue-50 text-blue-600 shadow-2xs"
+                                    : "border-slate-200 bg-slate-100 text-slate-400 hover:text-slate-600"
+                                }`}
+                              >
+                                {lockAspectRatio ? (
+                                  <svg
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                  >
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                  </svg>
+                                ) : (
+                                  <svg
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                  >
+                                    <rect
+                                      x="3"
+                                      y="11"
+                                      width="18"
+                                      height="11"
+                                      rx="2"
+                                      ry="2"
+                                    />
+                                    <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                                  </svg>
+                                )}
+                              </button>
+
+                              {/* Height Input */}
+                              <div className="relative flex-1">
+                                <input
+                                  type="number"
+                                  min="10"
+                                  max="10000"
+                                  value={customHeight}
+                                  onChange={(e) =>
+                                    handleHeightChange(e.target.value)
+                                  }
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
+                                  placeholder="Height"
+                                />
+                                <span className="absolute right-2 top-2 text-[10px] font-medium text-slate-400 pointer-events-none">
+                                  H
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-400 font-normal">
+                              <span>
+                                Orig:{" "}
+                                {activeItem?.origWidth || activeItem?.width}×
+                                {activeItem?.origHeight || activeItem?.height}
+                                px
+                              </span>
+                              <span>
+                                {lockAspectRatio
+                                  ? "🔗 Ratio locked"
+                                  : "🔓 Free scale"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* STRIP METADATA */}
