@@ -724,10 +724,10 @@ export default function ImageCompressorClient() {
       <Navbar />
 
       <main className="flex-1">
-        {/* HERO SECTION — Title color only black, home page title size, generous spacing */}
-        <section className="relative overflow-hidden px-5 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16 lg:px-8">
-          <div className="mx-auto max-w-5xl text-center">
-            <h1 className="text-[29px] xs:text-[34px] sm:text-[40px] md:text-[46px] lg:text-[clamp(32px,3.2vw,54px)] xl:text-[clamp(38px,3.4vw,56px)] font-extrabold leading-[1.2] lg:leading-[1.14] tracking-[-0.8px] sm:tracking-[-1.5px] lg:tracking-[-2px] text-black text-center">
+        {/* HERO SECTION — Title color only black, strictly 1 single line, generous spacing */}
+        <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
+          <div className="mx-auto max-w-7xl text-center">
+            <h1 className="text-[17px] xs:text-[21px] sm:text-[28px] md:text-[36px] lg:text-[42px] xl:text-[48px] font-extrabold leading-tight tracking-tight text-black text-center whitespace-nowrap">
               Compress Images Without Losing Quality
             </h1>
           </div>
