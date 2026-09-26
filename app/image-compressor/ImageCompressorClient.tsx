@@ -107,6 +107,8 @@ export default function ImageCompressorClient() {
   const [isZipping, setIsZipping] = useState(false);
   const [isBatchCompressing, setIsBatchCompressing] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [loadingSample, setLoadingSample] = useState<boolean>(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Global Settings for active or batch
   const [globalFormat, setGlobalFormat] = useState<OutputFormat>("webp");
@@ -428,6 +430,39 @@ export default function ImageCompressorClient() {
     ]
   );
 
+  // Load sample image to let users test compression with 1 click
+  const handleLoadSample = async () => {
+    try {
+      setLoadingSample(true);
+      setUploadError(null);
+
+      // Prioritize high-resolution catalog banner (~570KB) to showcase compression power, or fallback to sample-document.png
+      let res = await fetch("/spellense-launch-banner.jpg");
+      let fileName = "sample-catalog-banner.jpg";
+      let fileType = "image/jpeg";
+
+      if (!res.ok) {
+        res = await fetch("/sample-document.png");
+        fileName = "sample-document.png";
+        fileType = "image/png";
+      }
+
+      if (!res.ok) throw new Error("Sample file not found");
+
+      const blob = await res.blob();
+      const sampleFile = new File([blob], fileName, {
+        type: blob.type || fileType,
+      });
+
+      await processIncomingFiles([sampleFile]);
+    } catch (err) {
+      console.error("Error loading sample image:", err);
+      setUploadError("Could not load sample image. Please select an image from your device.");
+    } finally {
+      setLoadingSample(false);
+    }
+  };
+
   // Trigger re-compression on active item when quality or format changes
   useEffect(() => {
     if (!activeItem) return;
@@ -689,14 +724,11 @@ export default function ImageCompressorClient() {
       <Navbar />
 
       <main className="flex-1">
-        {/* HERO SECTION — Shortened title only, pill & subtitles removed */}
-        <section className="relative overflow-hidden px-5 pt-8 pb-6 sm:px-6 sm:pt-10 lg:px-8">
-          <div className="mx-auto max-w-4xl text-center">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl lg:text-[44px] leading-tight">
-              Compress Images{" "}
-              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                Without Losing Quality
-              </span>
+        {/* HERO SECTION — Title color only black, home page title size, generous spacing */}
+        <section className="relative overflow-hidden px-5 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16 lg:px-8">
+          <div className="mx-auto max-w-5xl text-center">
+            <h1 className="text-[29px] xs:text-[34px] sm:text-[40px] md:text-[46px] lg:text-[clamp(32px,3.2vw,54px)] xl:text-[clamp(38px,3.4vw,56px)] font-extrabold leading-[1.2] lg:leading-[1.14] tracking-[-0.8px] sm:tracking-[-1.5px] lg:tracking-[-2px] text-black text-center">
+              Compress Images Without Losing Quality
             </h1>
           </div>
         </section>
@@ -753,14 +785,56 @@ export default function ImageCompressorClient() {
                 Supports multiple files: JPG, PNG, WebP, AVIF or PDF. 100% private in-browser compression.
               </p>
 
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
-                  className="rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-600/25 transition hover:shadow-lg hover:shadow-blue-600/35 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-600/25 transition hover:shadow-lg hover:shadow-blue-600/35 active:scale-95 cursor-pointer"
                 >
                   Choose Images or PDF Catalog
                 </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLoadSample();
+                  }}
+                  disabled={loadingSample}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-slate-100/90 hover:bg-blue-50/70 px-5 py-3.5 text-xs sm:text-sm font-bold text-slate-700 shadow-2xs backdrop-blur-xs transition hover:text-blue-600 disabled:opacity-60 cursor-pointer"
+                  title="Test immediately with a sample image"
+                >
+                  {loadingSample ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                  ) : (
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-blue-500"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  )}
+                  <span>Try sample image</span>
+                </button>
               </div>
+
+              {uploadError && (
+                <div className="mt-4 text-xs font-semibold text-rose-600">
+                  {uploadError}
+                </div>
+              )}
 
               {isProcessingPdf && (
                 <div className="mt-6 flex items-center justify-center gap-2 text-xs font-semibold text-blue-600">
