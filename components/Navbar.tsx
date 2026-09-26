@@ -180,6 +180,29 @@ const NAV_ITEMS = [
     ),
   },
   {
+    label: "3D Flipbook",
+    shortLabel: "Flipbook",
+    href: "/flipbook",
+    description: "Convert PDFs & catalogs into interactive 3D flipbooks",
+    tag: "New",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+        <path d="M6 6h10" />
+        <path d="M6 10h10" />
+      </svg>
+    ),
+  },
+  {
     label: "About",
     shortLabel: "About",
     href: "/about",
@@ -228,6 +251,27 @@ const NAV_ITEMS = [
 ];
 
 const UTILITY_TOOLS = [
+  {
+    label: "3D Flipbook Maker",
+    href: "/flipbook",
+    description: "Turn multi-page PDFs & catalogs into 3D flipbooks",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+        <path d="M6 6h10" />
+        <path d="M6 10h10" />
+      </svg>
+    ),
+  },
   {
     label: "Case Converter",
     href: "/case-converter",
@@ -322,7 +366,8 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
 
   const isToolsActive =
     pathname.startsWith("/case-converter") ||
-    pathname.startsWith("/us-uk-converter");
+    pathname.startsWith("/us-uk-converter") ||
+    pathname.startsWith("/flipbook");
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl transition-colors">
