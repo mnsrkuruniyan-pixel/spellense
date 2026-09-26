@@ -88,6 +88,8 @@ export default function DesignCheckClient() {
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [dismissedIssueIds, setDismissedIssueIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [loadingSample, setLoadingSample] = useState(false);
 
   // Canvas Viewport State
   const [zoom, setZoom] = useState(1);
@@ -106,6 +108,56 @@ export default function DesignCheckClient() {
     }, 1800);
     return () => clearInterval(interval);
   }, [loading]);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) handleFileSelect(droppedFile);
+  };
+
+  const handleLoadSample = async () => {
+    try {
+      setLoadingSample(true);
+      setError(null);
+      let res = await fetch("/spellense-launch-banner.jpg");
+      let fileName = "sample-ad-creative.jpg";
+      let fileType = "image/jpeg";
+
+      if (!res.ok) {
+        res = await fetch("/sample-document.png");
+        fileName = "sample-document.png";
+        fileType = "image/png";
+      }
+
+      if (!res.ok) throw new Error("Sample file not found");
+
+      const blob = await res.blob();
+      const sampleFile = new File([blob], fileName, {
+        type: blob.type || fileType,
+      });
+
+      handleFileSelect(sampleFile);
+    } catch (err) {
+      console.error("Error loading sample design:", err);
+      setError("Could not load sample design. Please upload an image from your device.");
+    } finally {
+      setLoadingSample(false);
+    }
+  };
 
   const handleFileSelect = (selectedFile: File) => {
     if (!selectedFile.type.startsWith("image/")) {
@@ -424,60 +476,18 @@ export default function DesignCheckClient() {
 
       <Navbar />
 
-      {/* HERO SECTION */}
-      <section className="relative">
-        <div className="relative mx-auto max-w-7xl px-5 pb-10 pt-4 sm:px-6 sm:pt-6 lg:px-10 lg:pt-7">
-          {/* HERO TEXT */}
-          <div className="mx-auto max-w-5xl text-center">
-            {/* TOP ANNOUNCEMENT PILL */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3.5 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md transition-all hover:border-blue-300">
-              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-              <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 bg-clip-text text-[11px] font-bold uppercase tracking-wider text-transparent">
-                AI Creative QA Auditor • Agency Pre-Flight
-              </span>
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
-                v2.0
-              </span>
-            </div>
-
-            <h1 className="mt-3 pb-1 text-[28px] font-extrabold leading-[1.22] tracking-[-1.5px] text-black sm:text-[36px] sm:leading-[1.2] md:text-[42px] lg:text-[48px]">
-              <span className="sm:whitespace-nowrap">
-                Catch Pricing, Asterisks &amp; Print Errors
-              </span>{" "}
-              <br />
-              <span className="inline-block whitespace-nowrap text-black pb-1.5">
-                before you publish.
-              </span>
+      {/* HERO SECTION — Strictly 1 line, identical styling to homepage / compressor, only black text */}
+      {!result && (
+        <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
+          <div className="mx-auto max-w-7xl text-center">
+            <h1 className="text-[17px] xs:text-[21px] sm:text-[28px] md:text-[36px] lg:text-[42px] xl:text-[48px] font-extrabold leading-tight tracking-tight text-black text-center whitespace-nowrap">
+              Catch the mistake before your client does.
             </h1>
-
-            <p className="mx-auto mt-2.5 max-w-[660px] text-[14px] leading-relaxed text-slate-600 sm:text-[15px]">
-              Full creative agency QA automation. Audits price &amp; discount math, date coherence, asterisk disclaimers, watermark artifacts, WCAG contrast, and safe-zone bleeds directly on your canvas.
-            </p>
-
-            {/* QUICK HIGHLIGHT PILLS */}
-            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-500">
-              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
-                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                <span>Price &amp; Date Math Check</span>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
-                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                <span>Asterisk (*) &amp; Legal Pairing</span>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
-                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                <span>Watermarks &amp; Stretched Logos</span>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/70 px-3 py-1 shadow-2xs backdrop-blur-xs">
-                <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                <span>Bleed &amp; WCAG Contrast</span>
-              </div>
-            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <main className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
         {/* Always-mounted hidden file input so "Audit Another Design" works from results view */}
         <input
           ref={fileInputRef}
@@ -491,43 +501,100 @@ export default function DesignCheckClient() {
           }}
         />
 
-        {/* UPLOAD ZONE (WHEN NO FILE OR WHEN CHANGING) */}
+        {/* UPLOAD ZONE (WHEN NO FILE OR WHEN CHANGING) — Identical size & place as Image Compressor */}
         {!result && !loading && (
-          <div className="mx-auto mt-10 max-w-3xl">
+          <div>
             <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const droppedFile = e.dataTransfer.files[0];
-                if (droppedFile) handleFileSelect(droppedFile);
-              }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="group relative flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300/90 bg-white/95 backdrop-blur-md p-10 text-center shadow-xl shadow-slate-200/40 transition hover:border-blue-500 hover:bg-blue-50/20 hover:shadow-2xl sm:p-14"
+              className={`relative mx-auto max-w-4xl cursor-pointer rounded-3xl border-2 border-dashed p-10 sm:p-16 text-center transition-all duration-300 shadow-xl backdrop-blur-xl ${
+                isDragging
+                  ? "border-blue-500 bg-blue-50/80 scale-[1.01]"
+                  : "border-slate-300/80 bg-white/85 hover:border-blue-400 hover:bg-white"
+              }`}
             >
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white">
-                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-500 via-indigo-600 to-blue-700 text-white shadow-lg shadow-blue-500/25">
+                <svg
+                  width="36"
+                  height="36"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
               </div>
 
-              <h2 className="mt-5 text-lg font-bold text-slate-800">
-                Drop your design here, or <span className="text-blue-600 underline underline-offset-4">browse files</span>
+              <h2 className="mt-5 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                Drop your design here, or browse files
               </h2>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-md mx-auto font-normal">
                 Supports high-res PNG, JPG, WebP, SVG • Up to 25MB
               </p>
 
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-600/25 transition hover:shadow-lg hover:shadow-blue-600/35 active:scale-95 cursor-pointer"
+                >
+                  Choose Design File
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLoadSample();
+                  }}
+                  disabled={loadingSample}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-slate-100/90 hover:bg-blue-50/70 px-5 py-3.5 text-xs sm:text-sm font-bold text-slate-700 shadow-2xs backdrop-blur-xs transition hover:text-blue-600 disabled:opacity-60 cursor-pointer"
+                  title="Test immediately with a sample design"
+                >
+                  {loadingSample ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                  ) : (
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-blue-500"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  )}
+                  <span>Try sample design</span>
+                </button>
+              </div>
+
               {/* Supported types chips */}
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-600">
-                <span className="rounded-lg bg-slate-100 px-2.5 py-1">🖼️ Posters &amp; Flyers</span>
-                <span className="rounded-lg bg-slate-100 px-2.5 py-1">📱 Social Media Ads</span>
-                <span className="rounded-lg bg-slate-100 px-2.5 py-1">🏷️ Banners &amp; Signage</span>
-                <span className="rounded-lg bg-slate-100 px-2.5 py-1">📊 Slide Creatives</span>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-500">
+                <span className="rounded-lg bg-slate-100/80 px-2.5 py-1">🖼️ Posters &amp; Flyers</span>
+                <span className="rounded-lg bg-slate-100/80 px-2.5 py-1">📱 Social Media Ads</span>
+                <span className="rounded-lg bg-slate-100/80 px-2.5 py-1">🏷️ Banners &amp; Signage</span>
+                <span className="rounded-lg bg-slate-100/80 px-2.5 py-1">📊 Slide Creatives</span>
               </div>
             </div>
 
             {error && (
-              <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-sm font-medium text-rose-700">
+              <div className="mx-auto mt-4 max-w-4xl rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-sm font-medium text-rose-700">
                 {error}
               </div>
             )}
