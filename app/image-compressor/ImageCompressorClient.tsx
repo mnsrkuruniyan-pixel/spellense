@@ -920,10 +920,10 @@ export default function ImageCompressorClient() {
                 </div>
               </div>
 
-              {/* MAIN LAYOUT: PREVIEW & CONTROLS ON LEFT (8 COLS), BATCH QUEUE ON RIGHT (4 COLS) */}
+              {/* MAIN LAYOUT: PREVIEW ON LEFT (7-8 COLS), COMPRESSION SETTINGS ON RIGHT (4-5 COLS) */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* LEFT & CENTER: PREVIEW BOX + COMPRESSION CONTROLS (8 COLS) */}
-                <div className="lg:col-span-8 flex flex-col gap-6">
+                {/* LEFT: PREVIEW BOX WITH INTERNAL MULTI-IMAGE THUMBNAIL REEL */}
+                <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
                   {/* SQUOOSH-STYLE INTERACTIVE BEFORE/AFTER SLIDER */}
                   <div className="relative rounded-3xl border border-slate-200/80 bg-slate-900/95 overflow-hidden shadow-2xl backdrop-blur-xl">
                     {/* Viewport Top Toolbar */}
@@ -962,7 +962,7 @@ export default function ImageCompressorClient() {
                           setZoomLevel(1);
                           setPanOffset({ x: 0, y: 0 });
                         }}
-                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
                           zoomLevel === 1
                             ? "bg-blue-600 text-white"
                             : "text-slate-300 hover:text-white"
@@ -973,7 +973,7 @@ export default function ImageCompressorClient() {
                       <button
                         type="button"
                         onClick={() => setZoomLevel(1.5)}
-                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
                           zoomLevel === 1.5
                             ? "bg-blue-600 text-white"
                             : "text-slate-300 hover:text-white"
@@ -984,7 +984,7 @@ export default function ImageCompressorClient() {
                       <button
                         type="button"
                         onClick={() => setZoomLevel(2)}
-                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
                           zoomLevel === 2
                             ? "bg-blue-600 text-white"
                             : "text-slate-300 hover:text-white"
@@ -994,30 +994,74 @@ export default function ImageCompressorClient() {
                       </button>
                     </div>
 
-                    {/* Download Button on Bottom Right of Canvas */}
-                    <div className="absolute bottom-3.5 right-3.5 z-30">
-                      {activeItem && (
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadItem(activeItem)}
-                          className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-600/40 transition cursor-pointer"
-                        >
-                          <span>Download ({formatBytes(activeItem.compressedSize)})</span>
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                          >
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
+                    {/* MULTI-IMAGE THUMBNAIL REEL — Inside Preview Box on Right, Going Downwards */}
+                    {items.length > 1 && (
+                      <div className="absolute top-14 bottom-14 right-3 z-30 flex flex-col items-center pointer-events-auto">
+                        <div className="rounded-t-xl bg-slate-900/90 border border-white/10 px-2.5 py-1 text-[10px] font-bold text-slate-300 uppercase tracking-wider backdrop-blur-md shadow-xs">
+                          {items.length} Files
+                        </div>
+
+                        <div className="flex flex-col gap-2.5 overflow-y-auto max-h-[380px] sm:max-h-[420px] p-2 bg-slate-950/80 backdrop-blur-md rounded-b-xl border-x border-b border-white/10 shadow-2xl">
+                          {items.map((it, idx) => {
+                            const isSelected = it.id === (activeItem?.id || "");
+                            const savings =
+                              it.originalSize > 0 && it.compressedSize > 0
+                                ? Math.round(
+                                    ((it.originalSize - it.compressedSize) /
+                                      it.originalSize) *
+                                      100
+                                  )
+                                : 0;
+
+                            return (
+                              <div key={it.id} className="group relative">
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveId(it.id)}
+                                  title={`${it.name} • ${formatBytes(it.originalSize)} → ${
+                                    it.compressedSize > 0
+                                      ? formatBytes(it.compressedSize)
+                                      : "..."
+                                  }`}
+                                  className={`relative flex flex-col items-center rounded-xl p-0.5 transition-all cursor-pointer ${
+                                    isSelected
+                                      ? "ring-2 ring-blue-500 bg-blue-600/30 scale-105 shadow-lg shadow-blue-500/40"
+                                      : "opacity-60 hover:opacity-100 hover:scale-102"
+                                  }`}
+                                >
+                                  <div className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-lg overflow-hidden border border-white/20 bg-slate-800">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={it.compressedUrl || it.originalUrl}
+                                      alt={it.name}
+                                      className="h-full w-full object-cover"
+                                    />
+                                    <span className="absolute bottom-0.5 left-0.5 rounded bg-black/75 px-1 py-0.2 text-[9px] font-mono font-bold text-white leading-none">
+                                      #{idx + 1}
+                                    </span>
+                                    {savings > 0 && (
+                                      <span className="absolute top-0.5 right-0.5 rounded bg-emerald-500 px-1 py-0.2 text-[8px] font-bold text-white leading-none">
+                                        -{savings}%
+                                      </span>
+                                    )}
+                                  </div>
+                                </button>
+
+                                {/* Quick delete button on hover */}
+                                <button
+                                  type="button"
+                                  title="Remove"
+                                  onClick={(e) => handleRemoveItem(it.id, e)}
+                                  className="absolute -top-1 -right-1 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-white shadow-xs hover:bg-rose-700 text-[10px] cursor-pointer"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {/* SQUOOSH SPLIT SLIDER CANVAS */}
                     <div
@@ -1039,7 +1083,9 @@ export default function ImageCompressorClient() {
                     >
                       {activeItem ? (
                         <div
-                          className="relative flex items-center justify-center transition-transform duration-75"
+                          className={`relative flex items-center justify-center transition-transform duration-75 ${
+                            items.length > 1 ? "pr-14 sm:pr-18" : ""
+                          }`}
                           style={{
                             transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
                             transformOrigin: "center center",
@@ -1050,7 +1096,7 @@ export default function ImageCompressorClient() {
                           <img
                             src={activeItem.compressedUrl || activeItem.originalUrl}
                             alt="Compressed preview"
-                            className="max-h-[500px] w-auto object-contain pointer-events-none block"
+                            className="max-h-[480px] sm:max-h-[520px] w-auto object-contain pointer-events-none block"
                           />
 
                           {/* 2. Original Image (Clipped to Slider Left) */}
@@ -1064,7 +1110,7 @@ export default function ImageCompressorClient() {
                             <img
                               src={activeItem.originalUrl}
                               alt="Original preview"
-                              className="max-h-[500px] w-auto object-contain block"
+                              className="max-h-[480px] sm:max-h-[520px] w-auto object-contain block"
                             />
                           </div>
 
@@ -1103,178 +1149,8 @@ export default function ImageCompressorClient() {
                     </div>
                   </div>
 
-                  {/* COMPRESSION CONTROLS CARD — High Typography Readability */}
-                  <div className="rounded-3xl border border-white/90 bg-white/90 p-6 sm:p-7 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                      <div>
-                        <h3 className="text-base font-bold text-slate-900">
-                          Compression Settings
-                        </h3>
-                        <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                          Fine-tune quality, format, and size for optimal clarity.
-                        </p>
-                      </div>
-                      {isBatchCompressing && (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600">
-                          <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-                          Optimizing...
-                        </span>
-                      )}
-                    </div>
-
-                    {/* FORMAT SELECTION */}
-                    <div className="mt-5">
-                      <label className="text-sm font-bold text-slate-800 block">
-                        Output Format
-                      </label>
-                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {FORMAT_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => {
-                              setGlobalFormat(opt.value);
-                            }}
-                            className={`rounded-2xl border p-3 text-left transition cursor-pointer ${
-                              globalFormat === opt.value
-                                ? "border-blue-600 bg-blue-50/80 text-blue-900 shadow-2xs"
-                                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                            }`}
-                          >
-                            <div className="text-sm font-bold text-slate-900 truncate">
-                              {opt.label.split(" ")[0]}
-                            </div>
-                            <div className="text-xs text-slate-500 mt-0.5 truncate font-normal">
-                              {opt.value === "webp"
-                                ? "Best for Web"
-                                : opt.value === "jpeg"
-                                ? "Photos & Print"
-                                : opt.value === "png"
-                                ? "Transparency"
-                                : opt.value === "avif"
-                                ? "Next-gen"
-                                : "Keep Original"}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* QUALITY SLIDER — Highly Readable */}
-                    <div className="mt-6">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold text-slate-800">
-                          Quality Level
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <span className="text-base font-mono font-bold text-blue-600">
-                            {globalQuality}%
-                          </span>
-                          <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
-                            {globalQuality >= 85
-                              ? "High Fidelity"
-                              : globalQuality >= 70
-                              ? "Balanced"
-                              : "Ultra Small"}
-                          </span>
-                        </div>
-                      </div>
-                      <input
-                        type="range"
-                        min="10"
-                        max="98"
-                        value={globalQuality}
-                        onChange={(e) => setGlobalQuality(Number(e.target.value))}
-                        className="mt-3 w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                      />
-                      <div className="mt-1.5 flex justify-between text-xs font-medium text-slate-500">
-                        <span>Smallest File (10%)</span>
-                        <span>80% (Default)</span>
-                        <span>Near Lossless (98%)</span>
-                      </div>
-                    </div>
-
-                    {/* QUICK PRESETS */}
-                    <div className="mt-4 flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-bold text-slate-500">Presets:</span>
-                      {PRESETS.map((p) => (
-                        <button
-                          key={p.name}
-                          type="button"
-                          onClick={() => {
-                            setGlobalQuality(p.quality);
-                            setGlobalFormat(p.format);
-                          }}
-                          className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white hover:text-blue-600 transition cursor-pointer"
-                        >
-                          {p.name}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* DIMENSION LOCK NOTICE */}
-                    <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-3.5 text-xs text-blue-900">
-                      <div className="flex items-center gap-2 font-bold text-sm">
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                        >
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <span>Dimensions 100% Locked</span>
-                      </div>
-                      <p className="mt-1 text-xs text-blue-800/80 leading-relaxed font-normal">
-                        Your image retains its exact resolution ({activeItem ? `${activeItem.width}×${activeItem.height}px` : "original resolution"}). Only redundant color data is optimized.
-                      </p>
-                    </div>
-
-                    {/* STRIP METADATA TOGGLE */}
-                    <div className="mt-5 flex items-center justify-between pt-4 border-t border-slate-100">
-                      <div>
-                        <div className="text-sm font-bold text-slate-800">
-                          Strip EXIF &amp; Metadata
-                        </div>
-                        <div className="text-xs text-slate-500 font-normal">
-                          Removes camera and GPS info to save extra KB and protect privacy.
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setStripMetadata(!stripMetadata)}
-                        className={`h-6 w-11 rounded-full transition-colors cursor-pointer relative ${
-                          stripMetadata ? "bg-blue-600" : "bg-slate-300"
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                            stripMetadata ? "translate-x-5" : "translate-x-0"
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* APPLY TO ALL BUTTON — VIBRANT BLUE BUTTON */}
-                    {items.length > 1 && (
-                      <div className="mt-6 pt-4 border-t border-slate-100">
-                        <button
-                          type="button"
-                          onClick={handleApplyToAll}
-                          disabled={isBatchCompressing}
-                          className="w-full rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3.5 px-5 text-sm shadow-md shadow-blue-600/25 hover:shadow-lg hover:shadow-blue-600/35 transition cursor-pointer"
-                        >
-                          Apply Settings to All ({items.length}) Images
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
                   {/* CROSS-TOOL WORKFLOW BRIDGES */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-200/80 bg-white/90 p-4 shadow-xs backdrop-blur-md">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-200/80 bg-white/90 p-3.5 shadow-xs backdrop-blur-md">
                     <div className="text-xs text-slate-600 font-normal">
                       <span className="font-bold text-slate-900">Want to inspect this design?</span>{" "}
                       Check spelling or extract text without re-uploading.
@@ -1300,158 +1176,226 @@ export default function ImageCompressorClient() {
                   </div>
                 </div>
 
-                {/* RIGHT SIDEBAR: BATCH QUEUE DIRECTLY ON THE RIGHT OF PREVIEW BOX (4 COLS) */}
-                <div className="lg:col-span-4 flex flex-col gap-4">
+                {/* RIGHT: COMPRESSION SETTINGS CARD DIRECTLY ON RIGHT OF PREVIEW BOX */}
+                <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
                   <div className="rounded-3xl border border-white/90 bg-white/90 p-5 sm:p-6 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                       <div>
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                          Batch Queue
+                        <h3 className="text-base font-bold text-slate-900">
+                          Compression Settings
                         </h3>
-                        <span className="text-xs text-slate-500 font-normal">
-                          {items.length} file{items.length !== 1 ? "s" : ""} • Click any to preview
+                        <p className="text-xs text-slate-500 mt-0.5 font-normal">
+                          Fine-tune quality, format, and size for optimal clarity.
+                        </p>
+                      </div>
+                      {isBatchCompressing && (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600">
+                          <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                          Optimizing...
                         </span>
+                      )}
+                    </div>
+
+                    {/* ACTIVE IMAGE INFO & DOWNLOAD */}
+                    {activeItem && (
+                      <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-900 truncate">
+                              {activeItem.name}
+                            </div>
+                            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5 font-normal">
+                              <span>{formatBytes(activeItem.originalSize)}</span>
+                              <span>→</span>
+                              <span className="font-bold text-blue-700">
+                                {activeItem.compressedSize > 0
+                                  ? formatBytes(activeItem.compressedSize)
+                                  : "..."}
+                              </span>
+                              {activeItem.originalSize > 0 &&
+                                activeItem.compressedSize > 0 && (
+                                  <span className="rounded bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-700">
+                                    -
+                                    {Math.round(
+                                      ((activeItem.originalSize -
+                                        activeItem.compressedSize) /
+                                        activeItem.originalSize) *
+                                        100
+                                    )}
+                                    %
+                                  </span>
+                                )}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadItem(activeItem)}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+                          >
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                            >
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                              <polyline points="7 10 12 15 17 10" />
+                              <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            <span>Download</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* FORMAT SELECTION */}
+                    <div className="mt-5">
+                      <label className="text-sm font-bold text-slate-800 block">
+                        Output Format
+                      </label>
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {FORMAT_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              setGlobalFormat(opt.value);
+                            }}
+                            className={`rounded-2xl border p-2.5 text-left transition cursor-pointer ${
+                              globalFormat === opt.value
+                                ? "border-blue-600 bg-blue-50/80 text-blue-900 shadow-2xs"
+                                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            <div className="text-sm font-bold text-slate-900 truncate">
+                              {opt.label.split(" ")[0]}
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-0.5 truncate font-normal">
+                              {opt.value === "webp"
+                                ? "Best for Web"
+                                : opt.value === "jpeg"
+                                ? "Photos & Print"
+                                : opt.value === "png"
+                                ? "Transparency"
+                                : opt.value === "avif"
+                                ? "Next-gen"
+                                : "Keep Original"}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* QUALITY SLIDER */}
+                    <div className="mt-5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-bold text-slate-800">
+                          Quality Level
+                        </label>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base font-mono font-bold text-blue-600">
+                            {globalQuality}%
+                          </span>
+                          <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
+                            {globalQuality >= 85
+                              ? "High Fidelity"
+                              : globalQuality >= 70
+                              ? "Balanced"
+                              : "Ultra Small"}
+                          </span>
+                        </div>
+                      </div>
+                      <input
+                        type="range"
+                        min="10"
+                        max="98"
+                        value={globalQuality}
+                        onChange={(e) => setGlobalQuality(Number(e.target.value))}
+                        className="mt-3 w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      />
+                      <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
+                        <span>Smallest (10%)</span>
+                        <span>80% (Default)</span>
+                        <span>Lossless (98%)</span>
+                      </div>
+                    </div>
+
+                    {/* PRESETS */}
+                    <div className="mt-3.5 flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-bold text-slate-500">Presets:</span>
+                      {PRESETS.map((p) => (
+                        <button
+                          key={p.name}
+                          type="button"
+                          onClick={() => {
+                            setGlobalQuality(p.quality);
+                            setGlobalFormat(p.format);
+                          }}
+                          className="rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-white hover:text-blue-600 transition cursor-pointer"
+                        >
+                          {p.name}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* DIMENSION LOCK NOTICE */}
+                    <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-3 text-xs text-blue-900">
+                      <div className="flex items-center gap-2 font-bold text-xs">
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        <span>Dimensions 100% Locked</span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-blue-800/80 leading-relaxed font-normal">
+                        Your image retains its exact resolution ({activeItem ? `${activeItem.width}×${activeItem.height}px` : "original resolution"}).
+                      </p>
+                    </div>
+
+                    {/* STRIP METADATA */}
+                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
+                      <div>
+                        <div className="text-xs font-bold text-slate-800">
+                          Strip EXIF &amp; Metadata
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-normal">
+                          Removes GPS &amp; camera metadata.
+                        </div>
                       </div>
                       <button
                         type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 hover:bg-white transition"
+                        onClick={() => setStripMetadata(!stripMetadata)}
+                        className={`h-6 w-11 rounded-full transition-colors cursor-pointer relative shrink-0 ${
+                          stripMetadata ? "bg-blue-600" : "bg-slate-300"
+                        }`}
                       >
-                        + Add
+                        <span
+                          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                            stripMetadata ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
                       </button>
                     </div>
 
-                    {/* Scrollable List of Files */}
-                    <div className="mt-4 max-h-[580px] overflow-y-auto space-y-2.5 pr-1">
-                      {items.map((it) => {
-                        const isSelected = it.id === (activeItem?.id || "");
-                        const savings =
-                          it.originalSize > 0 && it.compressedSize > 0
-                            ? Math.round(
-                                ((it.originalSize - it.compressedSize) /
-                                  it.originalSize) *
-                                  100
-                              )
-                            : 0;
-
-                        return (
-                          <div
-                            key={it.id}
-                            onClick={() => setActiveId(it.id)}
-                            className={`flex items-center justify-between gap-3 rounded-2xl p-3 transition border cursor-pointer ${
-                              isSelected
-                                ? "border-blue-500 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/20"
-                                : "border-slate-200/80 bg-white hover:bg-slate-50/80"
-                            }`}
-                          >
-                            {/* Thumbnail */}
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={it.compressedUrl || it.originalUrl}
-                              alt={it.name}
-                              className="h-12 w-12 rounded-xl object-cover shrink-0 border border-slate-200"
-                            />
-
-                            {/* Name & Stats */}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-xs font-bold text-slate-900 truncate">
-                                {it.name}
-                              </div>
-                              <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5 font-normal">
-                                <span>{formatBytes(it.originalSize)}</span>
-                                <span>→</span>
-                                <span className="font-bold text-blue-700">
-                                  {it.compressedSize > 0
-                                    ? formatBytes(it.compressedSize)
-                                    : "..."}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Savings Badge & Actions */}
-                            <div className="flex items-center gap-1 shrink-0">
-                              {savings > 0 && (
-                                <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700">
-                                  -{savings}%
-                                </span>
-                              )}
-                              <button
-                                type="button"
-                                title="Download"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDownloadItem(it);
-                                }}
-                                className="p-1.5 text-slate-400 hover:text-blue-600 transition"
-                              >
-                                <svg
-                                  width="15"
-                                  height="15"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                >
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                  <polyline points="7 10 12 15 17 10" />
-                                  <line x1="12" y1="15" x2="12" y2="3" />
-                                </svg>
-                              </button>
-                              <button
-                                type="button"
-                                title="Remove"
-                                onClick={(e) => handleRemoveItem(it.id, e)}
-                                className="p-1.5 text-slate-400 hover:text-rose-600 transition"
-                              >
-                                <svg
-                                  width="15"
-                                  height="15"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                >
-                                  <line x1="18" y1="6" x2="6" y2="18" />
-                                  <line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Batch ZIP Download in Sidebar */}
+                    {/* APPLY TO ALL BUTTON */}
                     {items.length > 1 && (
-                      <div className="mt-4 pt-4 border-t border-slate-100">
+                      <div className="mt-5 pt-3 border-t border-slate-100">
                         <button
                           type="button"
-                          disabled={isZipping || isBatchCompressing}
-                          onClick={handleDownloadAllZip}
-                          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-4 py-3 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition hover:shadow-lg hover:shadow-blue-600/35 disabled:opacity-50 cursor-pointer"
+                          onClick={handleApplyToAll}
+                          disabled={isBatchCompressing}
+                          className="w-full rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-4 text-xs sm:text-sm shadow-md shadow-blue-600/25 hover:shadow-lg hover:shadow-blue-600/35 transition cursor-pointer"
                         >
-                          {isZipping ? (
-                            <>
-                              <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                              Creating ZIP...
-                            </>
-                          ) : (
-                            <>
-                              <span>Download All ({items.length}) as ZIP</span>
-                              <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.5"
-                              >
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                <polyline points="7 10 12 15 17 10" />
-                                <line x1="12" y1="15" x2="12" y2="3" />
-                              </svg>
-                            </>
-                          )}
+                          Apply Settings to All ({items.length}) Images
                         </button>
                       </div>
                     )}
