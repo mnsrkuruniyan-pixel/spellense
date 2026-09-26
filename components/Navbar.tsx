@@ -293,26 +293,7 @@ const UTILITY_TOOLS = [
       </svg>
     ),
   },
-  {
-    label: "Image Compressor",
-    href: "/image-compressor",
-    description: "Compress images with live Squoosh-style split comparison",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M4 14h6m0 0v6m0-6L3 21" />
-        <path d="M20 10h-6m0 0V4m0 6 7-7" />
-      </svg>
-    ),
-  },
+
 ];
 
 export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
@@ -486,6 +467,18 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700">
                   New
                 </span>
+              </Link>
+
+              {/* Image Compressor */}
+              <Link
+                href="/image-compressor"
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 font-bold ${
+                  pathname.startsWith("/image-compressor")
+                    ? "bg-white text-blue-600 shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-700"
+                }`}
+              >
+                <span>Image Compressor</span>
               </Link>
 
               {/* Tools Dropdown */}
