@@ -4,6 +4,12 @@ import { useState, useRef, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import {
+  trackFileUpload,
+  trackImageToTextComplete,
+  trackReportDownload,
+  trackTextCopied,
+} from "@/lib/analytics";
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 const ALLOWED_EXTENSIONS = [
@@ -148,6 +154,7 @@ export default function ImageToTextClient() {
   // Copy to clipboard with fallback for older browsers
   const handleCopy = async () => {
     if (!extractedText) return;
+    trackTextCopied("image_to_text");
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(extractedText);
@@ -174,6 +181,7 @@ export default function ImageToTextClient() {
   // Download text file
   const handleDownload = () => {
     if (!extractedText) return;
+    trackReportDownload({ tool: "image_to_text", format: "txt" });
     const baseName = file?.name ? file.name.replace(/\.[^/.]+$/, "") : "extracted-text";
     const filename = `${baseName}-spellense.txt`;
     const blob = new Blob([extractedText], { type: "text/plain;charset=utf-8" });
@@ -226,6 +234,7 @@ export default function ImageToTextClient() {
 
     setUploadError(null);
     setFile(selectedFile);
+    trackFileUpload("image_to_text", selectedFile);
     setExtracting(true);
     setExtractingStep(
       nameLower.endsWith(".pdf")
@@ -333,6 +342,11 @@ export default function ImageToTextClient() {
             setNoTextDetected(false);
             setHasExtracted(true);
             setExtracting(false);
+            trackImageToTextComplete({
+              file_type: "application/pdf",
+              char_count: pdfExtractedText.length,
+              word_count: pdfExtractedText.split(/\s+/).length,
+            });
             return;
           } else {
             // Scanned PDF (images only)
@@ -367,6 +381,11 @@ export default function ImageToTextClient() {
               } else {
                 setNoTextDetected(false);
                 setExtractedText(data.text || "");
+                trackImageToTextComplete({
+                  file_type: "application/pdf",
+                  char_count: text.length,
+                  word_count: text.split(/\s+/).length,
+                });
               }
               setHasExtracted(true);
               setExtracting(false);
@@ -470,6 +489,11 @@ export default function ImageToTextClient() {
       } else {
         setNoTextDetected(false);
         setExtractedText(data.text || "");
+        trackImageToTextComplete({
+          file_type: selectedFile.type || selectedFile.name.split(".").pop() || "unknown",
+          char_count: text.length,
+          word_count: text.split(/\s+/).length,
+        });
       }
       setHasExtracted(true);
     } catch (err) {

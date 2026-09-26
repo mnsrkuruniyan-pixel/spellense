@@ -3,6 +3,7 @@
 import { useState, useRef, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { trackFileUpload, trackDesignCheckComplete } from "@/lib/analytics";
 
 interface DesignIssue {
   id: string;
@@ -128,6 +129,7 @@ export default function DesignCheckClient() {
     initialFittedRef.current = false;
 
     // Trigger analysis
+    trackFileUpload("design_check", selectedFile);
     runDesignCheck(selectedFile);
   };
 
@@ -255,6 +257,12 @@ export default function DesignCheckClient() {
       }
 
       setResult(data);
+      trackDesignCheckComplete({
+        file_type: uploadFile.type || uploadFile.name.split(".").pop() || "image",
+        issue_count: data.issues?.length || 0,
+        score: data.score || 0,
+        verdict: data.verdict,
+      });
     } catch (err: unknown) {
       setError(
         err instanceof Error
