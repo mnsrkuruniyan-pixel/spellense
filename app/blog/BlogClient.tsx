@@ -24,29 +24,13 @@ export default function BlogClient({ posts, categories }: { posts: BlogPost[]; c
 
       <Navbar />
 
-      {/* HERO SECTION */}
-      <section className="relative pt-6 pb-12 sm:pt-10 sm:pb-16">
+      {/* HERO SECTION — Strictly 1 line, identical styling to compressor, only black text */}
+      <section className="relative overflow-hidden px-4 pt-12 pb-8 sm:px-6 sm:pt-16 sm:pb-10 lg:pt-20 lg:pb-12">
         <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            {/* Top pill */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3.5 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md">
-              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-              <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 bg-clip-text text-[11px] font-bold uppercase tracking-wider text-transparent">
-                Spellense Knowledge Hub
-              </span>
-            </div>
-
-            <h1 className="mt-4 text-3xl font-extrabold tracking-[-1.5px] text-black sm:text-5xl lg:text-[54px] leading-[1.12]">
-              Guides to Visual Proofreading,{" "}
-              <br />
-              <span className="text-black">
-                OCR &amp; Design Quality.
-              </span>
+          <div className="mx-auto max-w-7xl text-center">
+            <h1 className="text-[17px] xs:text-[21px] sm:text-[28px] md:text-[36px] lg:text-[42px] xl:text-[48px] font-extrabold leading-tight tracking-tight text-black text-center whitespace-nowrap">
+              Spellense Blog &amp; Guides
             </h1>
-
-            <p className="mx-auto mt-3.5 max-w-2xl text-[14px] leading-relaxed text-slate-600 sm:text-base">
-              Learn how to catch hidden typos in PDFs, scan Canva graphics before printing, master US vs. UK dialects, and eliminate costly reprint disasters.
-            </p>
 
             {/* CATEGORY FILTER PILLS */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-2">

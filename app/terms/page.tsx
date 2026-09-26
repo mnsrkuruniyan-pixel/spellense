@@ -26,20 +26,10 @@ export default function TermsPage() {
         <div className="relative mx-auto max-w-4xl px-5 sm:px-6 lg:px-8">
 
           {/* PAGE HEADER */}
-          <div className="text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3.5 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md">
-              <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 bg-clip-text text-[11px] font-bold uppercase tracking-wider text-transparent">
-                Legal &amp; Agreement
-              </span>
-            </div>
-
-            <h1 className="mt-5 text-4xl font-extrabold tracking-[-1.5px] text-black sm:text-5xl lg:text-[54px]">
+          <div className="text-center pt-2 pb-2 sm:pt-4 sm:pb-4">
+            <h1 className="text-[17px] xs:text-[21px] sm:text-[28px] md:text-[36px] lg:text-[42px] xl:text-[48px] font-extrabold leading-tight tracking-tight text-black text-center whitespace-nowrap">
               Terms of Use
             </h1>
-
-            <p className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-slate-600 sm:text-base">
-              Last updated: September 17, 2026 • Please read these terms carefully before using the Spellense online spell checking service.
-            </p>
           </div>
 
           {/* CLAUSES */}

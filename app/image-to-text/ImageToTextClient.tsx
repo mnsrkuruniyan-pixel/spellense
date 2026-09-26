@@ -520,52 +520,12 @@ export default function ImageToTextClient() {
       {/* NAVBAR */}
       <Navbar />
 
-      {/* HERO SECTION */}
-      <section className="relative overflow-hidden pt-10 sm:pt-14 pb-8">
-        <div className="relative mx-auto max-w-6xl px-4 text-center sm:px-6">
-          {/* BADGE */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/90 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs backdrop-blur-md">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
-            Free Online OCR • No Signup
-          </div>
-
-          {/* H1 */}
-          <h1 className="mt-4 pb-1 text-[27px] xs:text-[32px] sm:text-[38px] md:text-[44px] lg:text-[50px] xl:text-[54px] font-black tracking-[-1px] sm:tracking-[-1.5px] text-black leading-tight sm:whitespace-nowrap">
-            Extract Text from Any Image — Free
+      {/* HERO SECTION — Strictly 1 line, identical styling to compressor, only black text */}
+      <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
+        <div className="mx-auto max-w-7xl text-center">
+          <h1 className="text-[17px] xs:text-[21px] sm:text-[28px] md:text-[36px] lg:text-[42px] xl:text-[48px] font-extrabold leading-tight tracking-tight text-black text-center whitespace-nowrap">
+            Extract Text from Any Image
           </h1>
-
-          {/* SUBHEADING */}
-          <p className="mx-auto mt-3.5 max-w-2xl text-sm sm:text-base leading-relaxed text-slate-600 font-normal">
-            Upload a screenshot, photo, or scanned document. Get clean, copyable text in seconds.
-          </p>
-
-          {/* FEATURE PILLS */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-slate-600">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white/80 px-3 py-1 shadow-2xs">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              JPG, PNG, WebP &amp; PDF
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white/80 px-3 py-1 shadow-2xs">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              Up to 25 MB Limit
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white/80 px-3 py-1 shadow-2xs">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              100% In-Memory RAM Privacy
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white/80 px-3 py-1 shadow-2xs">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              Direct Spellcheck Funnel
-            </span>
-          </div>
         </div>
       </section>
 

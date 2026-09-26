@@ -88,21 +88,10 @@ export default function UsUkConverterClient() {
 
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           {/* HEADER */}
-          <div className="text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3.5 py-1.5 shadow-xs shadow-blue-500/5 backdrop-blur-md">
-              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-              <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 bg-clip-text text-[11px] font-bold uppercase tracking-wider text-transparent">
-                Dialect &amp; Spelling Tool
-              </span>
-            </div>
-
-            <h1 className="mt-4 text-3xl font-extrabold tracking-[-1.5px] text-black sm:text-5xl lg:text-[52px]">
+          <div className="text-center pt-2 pb-2 sm:pt-4 sm:pb-4">
+            <h1 className="text-[17px] xs:text-[21px] sm:text-[28px] md:text-[36px] lg:text-[42px] xl:text-[48px] font-extrabold leading-tight tracking-tight text-black text-center whitespace-nowrap">
               US ↔ UK English Converter
             </h1>
-
-            <p className="mx-auto mt-3 max-w-2xl text-[14px] leading-relaxed text-slate-600 sm:text-base">
-              Convert written text between American and British English seamlessly. Automatically adjusts spellings (-or/-our, -ize/-ise, -er/-re), double &apos;l&apos; variations, and vocabulary differences while preserving casing.
-            </p>
           </div>
 
           {/* DIRECTION SELECTOR SWITCH */}
