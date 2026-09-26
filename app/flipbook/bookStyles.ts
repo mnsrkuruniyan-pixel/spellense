@@ -36,7 +36,8 @@ export type StageBgId =
   | "emerald-velvet"
   | "gallery-light"
   | "pure-white"
-  | "midnight-navy";
+  | "midnight-navy"
+  | "custom";
 
 export interface BookStyleOption {
   id: BookStyleId;

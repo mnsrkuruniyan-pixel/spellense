@@ -50,6 +50,7 @@ export default function FlipbookClient() {
   // User-customizable book styles
   const [selectedStyleId, setSelectedStyleId] = useState<BookStyleId>("hardcover");
   const [selectedBgId, setSelectedBgId] = useState<StageBgId>("dark-studio");
+  const [customBgColor, setCustomBgColor] = useState<string>("#1e293b");
   const [customCoverDensity, setCustomCoverDensity] = useState<"hard" | "soft">("hard");
 
   const stageWrapperRef = useRef<HTMLDivElement>(null);
@@ -69,7 +70,17 @@ export default function FlipbookClient() {
   };
 
   const activeStyle = BOOK_STYLES.find((s) => s.id === selectedStyleId) || BOOK_STYLES[0];
-  const activeBg = STAGE_BACKGROUNDS.find((b) => b.id === selectedBgId) || STAGE_BACKGROUNDS[0];
+  const presetBg = STAGE_BACKGROUNDS.find((b) => b.id === selectedBgId) || STAGE_BACKGROUNDS[0];
+  const activeBg =
+    selectedBgId === "custom"
+      ? {
+          id: "custom" as StageBgId,
+          name: `Custom (${customBgColor.toUpperCase()})`,
+          desc: "User defined custom background color",
+          bgStyle: customBgColor,
+          theme: "dark" as "dark" | "light",
+        }
+      : presetBg;
 
   // Sync custom cover density whenever style changes
   useEffect(() => {
@@ -1177,8 +1188,8 @@ export default function FlipbookClient() {
             {/* QUICK CUSTOMIZATION DOCK (Simple, Catchy & Instant Background Picker) */}
             <div className="rounded-2xl border border-slate-200/90 bg-white/95 p-3 sm:p-3.5 shadow-sm backdrop-blur-md space-y-2.5">
               {/* ROW 1: BOOK STYLE */}
-              <div className="flex items-center gap-2">
-                <span className="shrink-0 text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+              <div className="flex items-center gap-2.5">
+                <span className="shrink-0 text-xs font-bold text-slate-500 uppercase tracking-wider pl-1 pr-1">
                   Style:
                 </span>
 
@@ -1230,17 +1241,14 @@ export default function FlipbookClient() {
 
               <div className="h-px w-full bg-slate-100" />
 
-              {/* ROW 2: STAGE BACKGROUND (Instant 1-Click Catchy Swatches) */}
-              <div className="flex flex-wrap items-center justify-between gap-2.5">
-                <div className="flex items-center gap-2 shrink-0 text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+              {/* ROW 2: STAGE BACKGROUND (Left-Aligned, No Cutoff, Instant Swatches + Custom Picker) */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-0.5">
+                <div className="flex items-center gap-1.5 shrink-0 text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
                   <span>Background:</span>
-                  <span className="text-slate-800 font-extrabold normal-case text-xs tracking-normal">
-                    {activeBg.name}
-                  </span>
                 </div>
 
-                {/* 8 Catchy Gradient Color Circles */}
-                <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
+                {/* Left-aligned Color Swatches + Custom Picker with ample padding so ring never cuts off */}
+                <div className="flex items-center gap-2.5 py-1.5 px-1 overflow-x-auto scrollbar-none">
                   {STAGE_BACKGROUNDS.map((bg) => {
                     const isSelected = selectedBgId === bg.id;
                     return (
@@ -1248,10 +1256,10 @@ export default function FlipbookClient() {
                         key={bg.id}
                         type="button"
                         onClick={() => setSelectedBgId(bg.id)}
-                        className={`group relative h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition-all duration-200 cursor-pointer shrink-0 ${
+                        className={`group relative h-7 w-7 rounded-full transition-all duration-150 cursor-pointer shrink-0 ${
                           isSelected
-                            ? "border-blue-600 ring-2 ring-blue-500/40 ring-offset-2 scale-110 shadow-md shadow-blue-500/20"
-                            : "border-white shadow-xs ring-1 ring-slate-200 hover:scale-115 hover:shadow-sm"
+                            ? "ring-2 ring-blue-600 ring-offset-2 scale-105 shadow-md shadow-blue-500/25 border border-white"
+                            : "border border-slate-300/80 shadow-xs hover:scale-110 hover:shadow-sm"
                         }`}
                         style={{ background: bg.bgStyle }}
                         title={bg.name}
@@ -1267,7 +1275,42 @@ export default function FlipbookClient() {
                       </button>
                     );
                   })}
+
+                  {/* CUSTOM COLOR PICKER */}
+                  <label
+                    className={`group relative inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-xs font-bold transition-all duration-150 cursor-pointer shrink-0 ${
+                      selectedBgId === "custom"
+                        ? "ring-2 ring-blue-600 ring-offset-2 scale-105 shadow-md shadow-blue-500/25 text-white border border-white"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300/80 hover:scale-105"
+                    }`}
+                    style={selectedBgId === "custom" ? { background: customBgColor } : {}}
+                    title="Pick any custom background color"
+                  >
+                    <input
+                      type="color"
+                      value={customBgColor}
+                      onChange={(e) => {
+                        setCustomBgColor(e.target.value);
+                        setSelectedBgId("custom");
+                      }}
+                      className="sr-only"
+                    />
+                    <span className="text-xs">🎨</span>
+                    <span className="text-[11px]">
+                      {selectedBgId === "custom" ? customBgColor.toUpperCase() : "Custom"}
+                    </span>
+                    {selectedBgId === "custom" && (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" className="text-white drop-shadow-sm">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </label>
                 </div>
+
+                {/* Active background name immediately adjacent on the left */}
+                <span className="text-xs font-bold text-slate-700 shrink-0">
+                  {activeBg.name}
+                </span>
               </div>
             </div>
 
