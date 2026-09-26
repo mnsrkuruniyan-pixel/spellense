@@ -51,7 +51,6 @@ export default function FlipbookClient() {
   const [selectedStyleId, setSelectedStyleId] = useState<BookStyleId>("hardcover");
   const [selectedBgId, setSelectedBgId] = useState<StageBgId>("dark-studio");
   const [customCoverDensity, setCustomCoverDensity] = useState<"hard" | "soft">("hard");
-  const [shelfViewMode, setShelfViewMode] = useState<"bookshelf" | "compact">("bookshelf");
 
   const stageWrapperRef = useRef<HTMLDivElement>(null);
   const bookHolderRef = useRef<HTMLDivElement>(null);
@@ -1083,15 +1082,14 @@ export default function FlipbookClient() {
 
                 <div className="h-4 w-px bg-slate-200" />
 
-                {/* READING BACKGROUND SELECTOR */}
+                {/* Cover Board Stiffness Toggle */}
                 <button
                   type="button"
-                  onClick={() => setShowStyleModal(true)}
+                  onClick={() => setCustomCoverDensity((d) => (d === "hard" ? "soft" : "hard"))}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 cursor-pointer"
-                  title="Change Reading Environment Background"
+                  title="Toggle Cover Stiffness between Hardcover and Soft Paperback"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-                  <span>Background: {activeBg.name}</span>
+                  <span>{customCoverDensity === "hard" ? "📖 Hardcover" : "📕 Softcover"}</span>
                 </button>
 
                 {/* Sound Toggle */}
@@ -1176,200 +1174,101 @@ export default function FlipbookClient() {
               </div>
             </div>
 
-            {/* 3D MINI-BOOK SWATCH SHELF */}
-            <div className="w-full space-y-2">
-              <div className="flex items-center justify-between px-1 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
-                    <span>{activeStyle.icon}</span>
-                    <span>Style:</span>
-                    <span className="text-blue-600 font-black">{activeStyle.name}</span>
-                  </span>
-                  <span className="text-[11px] font-semibold text-slate-400">
-                    ({BOOK_STYLES.length} styles)
-                  </span>
+            {/* QUICK CUSTOMIZATION DOCK (Simple, Catchy & Instant Background Picker) */}
+            <div className="rounded-2xl border border-slate-200/90 bg-white/95 p-3 sm:p-3.5 shadow-sm backdrop-blur-md space-y-2.5">
+              {/* ROW 1: BOOK STYLE */}
+              <div className="flex items-center gap-2">
+                <span className="shrink-0 text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+                  Style:
+                </span>
+
+                {/* Left scroll arrow */}
+                <button
+                  type="button"
+                  onClick={() => scrollShelf("left")}
+                  className="hidden sm:flex h-6 w-6 shrink-0 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-100 items-center justify-center transition active:scale-90 cursor-pointer shadow-2xs"
+                  title="Scroll styles left"
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+
+                {/* Scrollable Style Pills Strip */}
+                <div
+                  ref={shelfScrollRef}
+                  className="flex flex-1 items-center gap-2 overflow-x-auto py-1 px-0.5 scrollbar-none scroll-smooth"
+                >
+                  {BOOK_STYLES.map((style) => {
+                    const isActive = selectedStyleId === style.id;
+                    return (
+                      <button
+                        key={style.id}
+                        type="button"
+                        onClick={() => setSelectedStyleId(style.id)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 active:scale-95 ${
+                          isActive
+                            ? "bg-blue-600 text-white shadow-md shadow-blue-500/25 ring-2 ring-blue-500/20 scale-102"
+                            : "bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 border border-slate-200/60"
+                        }`}
+                      >
+                        <span className="text-xs">{style.icon}</span>
+                        <span>{style.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  {/* Left / Right scroll arrows */}
-                  {shelfViewMode === "bookshelf" && (
-                    <div className="flex items-center gap-1 mr-1">
-                      <button
-                        type="button"
-                        onClick={() => scrollShelf("left")}
-                        className="h-6 w-6 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 shadow-2xs transition active:scale-95 cursor-pointer"
-                        title="Scroll styles left"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => scrollShelf("right")}
-                        className="h-6 w-6 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 shadow-2xs transition active:scale-95 cursor-pointer"
-                        title="Scroll styles right"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* View Mode Toggle: 3D Bookshelf vs Compact */}
-                  <div className="flex items-center rounded-xl bg-slate-200/70 p-0.5 text-[11px] font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setShelfViewMode("bookshelf")}
-                      className={`px-2 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
-                        shelfViewMode === "bookshelf"
-                          ? "bg-white text-slate-900 shadow-xs"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
-                      title="Show 3D Mini-Book Bookshelf"
-                    >
-                      <span>📚</span>
-                      <span className="hidden xs:inline">Shelf</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShelfViewMode("compact")}
-                      className={`px-2 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
-                        shelfViewMode === "compact"
-                          ? "bg-white text-slate-900 shadow-xs"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
-                      title="Show compact pills view"
-                    >
-                      <span>💊</span>
-                      <span className="hidden xs:inline">Compact</span>
-                    </button>
-                  </div>
-                </div>
+                {/* Right scroll arrow */}
+                <button
+                  type="button"
+                  onClick={() => scrollShelf("right")}
+                  className="hidden sm:flex h-6 w-6 shrink-0 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-100 items-center justify-center transition active:scale-90 cursor-pointer shadow-2xs"
+                  title="Scroll styles right"
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
               </div>
 
-              {shelfViewMode === "bookshelf" ? (
-                /* 3D BOOKSHELF VIEW */
-                <div className="relative rounded-3xl border border-slate-200/90 bg-gradient-to-b from-white/95 via-slate-50/90 to-slate-100/95 p-3.5 shadow-md backdrop-blur-md border-b-4 border-b-slate-300">
-                  <div
-                    ref={shelfScrollRef}
-                    className="flex items-end gap-3 sm:gap-4 overflow-x-auto pb-2 pt-3 px-2 scrollbar-none select-none scroll-smooth"
-                  >
-                    {BOOK_STYLES.map((style) => {
-                      const isActive = selectedStyleId === style.id;
-                      return (
-                        <button
-                          key={style.id}
-                          type="button"
-                          onClick={() => setSelectedStyleId(style.id)}
-                          className="group flex flex-col items-center shrink-0 cursor-pointer focus:outline-none transition-all"
-                        >
-                          {/* 3D Mini Book Model */}
-                          <div
-                            className={`relative w-14 sm:w-16 h-20 sm:h-22 rounded-r-md rounded-l-xs transition-all duration-200 flex overflow-hidden shadow-md ${
-                              isActive
-                                ? "-translate-y-2.5 scale-108 ring-2 ring-blue-600 ring-offset-2 shadow-xl shadow-blue-500/25"
-                                : "group-hover:-translate-y-1.5 group-hover:shadow-lg opacity-85 group-hover:opacity-100"
-                            }`}
-                            style={{ background: style.swatchBg }}
-                          >
-                            {/* Spine Hinge (Left Edge) */}
-                            <div className="relative w-3 sm:w-3.5 h-full bg-black/25 shrink-0 border-r border-white/20 flex flex-col items-center justify-around py-1">
-                              {style.spineType === "spiral" ? (
-                                <>
-                                  <div className="w-1.5 h-1 bg-slate-300 rounded-full shadow-2xs" />
-                                  <div className="w-1.5 h-1 bg-slate-300 rounded-full shadow-2xs" />
-                                  <div className="w-1.5 h-1 bg-slate-300 rounded-full shadow-2xs" />
-                                  <div className="w-1.5 h-1 bg-slate-300 rounded-full shadow-2xs" />
-                                  <div className="w-1.5 h-1 bg-slate-300 rounded-full shadow-2xs" />
-                                </>
-                              ) : style.spineType === "vintage-stitch" ? (
-                                <>
-                                  <div className="w-1 h-1 bg-amber-400/80 rounded-full" />
-                                  <div className="w-1 h-1 bg-amber-400/80 rounded-full" />
-                                  <div className="w-1 h-1 bg-amber-400/80 rounded-full" />
-                                </>
-                              ) : (
-                                <div className="w-[1px] h-full bg-white/20" />
-                              )}
-                            </div>
+              <div className="h-px w-full bg-slate-100" />
 
-                            {/* Book Cover Face */}
-                            <div className="relative flex-1 h-full flex flex-col items-center justify-center p-1">
-                              {/* Embellishment border for luxury/foil styles */}
-                              {(style.id === "gold-deluxe" || style.id === "leather") && (
-                                <div className="absolute inset-1 rounded-sm border border-amber-300/40 pointer-events-none" />
-                              )}
-                              {style.id === "cyber-dark" && (
-                                <div className="absolute inset-1 rounded-sm border border-cyan-400/40 pointer-events-none" />
-                              )}
-                              {style.id === "blueprint" && (
-                                <div className="absolute inset-1 rounded-sm border border-cyan-300/30 border-dashed pointer-events-none" />
-                              )}
+              {/* ROW 2: STAGE BACKGROUND (Instant 1-Click Catchy Swatches) */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2 shrink-0 text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+                  <span>Background:</span>
+                  <span className="text-slate-800 font-extrabold normal-case text-xs tracking-normal">
+                    {activeBg.name}
+                  </span>
+                </div>
 
-                              {/* Book Icon */}
-                              <span className="text-xl sm:text-2xl drop-shadow-sm select-none">
-                                {style.icon}
-                              </span>
-
-                              {/* Active Checkmark Pill on Top-Right */}
-                              {isActive && (
-                                <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs">
-                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="20 6 9 17 4 12"/></svg>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Realistic Multi-Page Edge (Right Side) */}
-                            <div className="w-1.5 h-full bg-gradient-to-r from-slate-200 via-amber-50 to-slate-300 shrink-0 border-l border-black/15 shadow-inner" />
-                          </div>
-
-                          {/* Shelf Ground Reflection Shadow */}
-                          <div
-                            className={`mt-1.5 h-1 rounded-full transition-all duration-200 ${
-                              isActive
-                                ? "w-12 bg-blue-500/40 blur-[2px]"
-                                : "w-10 bg-black/15 blur-[1.5px] group-hover:w-11 group-hover:bg-black/25"
-                            }`}
-                          />
-
-                          {/* Concise Style Name Only */}
-                          <span
-                            className={`mt-1 text-[11px] sm:text-xs tracking-tight transition-colors whitespace-nowrap ${
-                              isActive
-                                ? "font-extrabold text-blue-600 scale-102"
-                                : "font-semibold text-slate-600 group-hover:text-slate-900"
-                            }`}
-                          >
-                            {style.name}
+                {/* 8 Catchy Gradient Color Circles */}
+                <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
+                  {STAGE_BACKGROUNDS.map((bg) => {
+                    const isSelected = selectedBgId === bg.id;
+                    return (
+                      <button
+                        key={bg.id}
+                        type="button"
+                        onClick={() => setSelectedBgId(bg.id)}
+                        className={`group relative h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition-all duration-200 cursor-pointer shrink-0 ${
+                          isSelected
+                            ? "border-blue-600 ring-2 ring-blue-500/40 ring-offset-2 scale-110 shadow-md shadow-blue-500/20"
+                            : "border-white shadow-xs ring-1 ring-slate-200 hover:scale-115 hover:shadow-sm"
+                        }`}
+                        style={{ background: bg.bgStyle }}
+                        title={bg.name}
+                        aria-label={`Change background to ${bg.name}`}
+                      >
+                        {isSelected && (
+                          <span className="flex items-center justify-center w-full h-full text-white drop-shadow-md">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
                           </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-              ) : (
-                /* COMPACT PILLS VIEW */
-                <div className="flex items-center justify-center w-full">
-                  <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white/90 border border-slate-200/90 shadow-2xs backdrop-blur-md max-w-full overflow-x-auto scrollbar-none">
-                    {BOOK_STYLES.map((style) => {
-                      const isActive = selectedStyleId === style.id;
-                      return (
-                        <button
-                          key={style.id}
-                          type="button"
-                          onClick={() => setSelectedStyleId(style.id)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
-                            isActive
-                              ? "bg-blue-600 text-white shadow-xs scale-102"
-                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                          }`}
-                        >
-                          <span className="text-xs">{style.icon}</span>
-                          <span>{style.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
 
             {/* 3D FLIPBOOK STAGE (Customizable background) */}
