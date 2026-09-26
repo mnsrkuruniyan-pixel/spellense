@@ -524,7 +524,7 @@ export default function ImageToTextClient() {
       <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
         <div className="mx-auto max-w-7xl text-center">
           <h1 className="text-[17px] xs:text-[21px] sm:text-[28px] md:text-[36px] lg:text-[42px] xl:text-[48px] font-extrabold leading-tight tracking-tight text-black text-center whitespace-nowrap">
-            Extract Text from Any Image
+            Unlock the text inside any image.
           </h1>
         </div>
       </section>
