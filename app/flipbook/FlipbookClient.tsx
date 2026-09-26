@@ -51,12 +51,23 @@ export default function FlipbookClient() {
   const [selectedStyleId, setSelectedStyleId] = useState<BookStyleId>("hardcover");
   const [selectedBgId, setSelectedBgId] = useState<StageBgId>("dark-studio");
   const [customCoverDensity, setCustomCoverDensity] = useState<"hard" | "soft">("hard");
+  const [shelfViewMode, setShelfViewMode] = useState<"bookshelf" | "compact">("bookshelf");
 
   const stageWrapperRef = useRef<HTMLDivElement>(null);
   const bookHolderRef = useRef<HTMLDivElement>(null);
   const pageFlipRef = useRef<PageFlipInstance | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const shelfScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollShelf = (direction: "left" | "right") => {
+    if (shelfScrollRef.current) {
+      shelfScrollRef.current.scrollBy({
+        left: direction === "left" ? -280 : 280,
+        behavior: "smooth",
+      });
+    }
+  };
 
   const activeStyle = BOOK_STYLES.find((s) => s.id === selectedStyleId) || BOOK_STYLES[0];
   const activeBg = STAGE_BACKGROUNDS.find((b) => b.id === selectedBgId) || STAGE_BACKGROUNDS[0];
@@ -255,14 +266,23 @@ export default function FlipbookClient() {
             const stitchOverlay = document.createElement("div");
             stitchOverlay.className = `spine-stitch ${idx % 2 === 0 ? "right-1" : "left-1"}`;
             innerWrap.appendChild(stitchOverlay);
+          } else if (activeStyle.spineType === "heavy-crease") {
+            const creaseLine = document.createElement("div");
+            creaseLine.className = `absolute top-0 bottom-0 pointer-events-none z-10 w-[2px] bg-black/25 ${
+              idx % 2 === 0 ? "right-1" : "left-1"
+            }`;
+            innerWrap.appendChild(creaseLine);
           }
 
           // Subtle gradient spine shadow
           const spineShadow = document.createElement("div");
-          spineShadow.className = `absolute top-0 bottom-0 pointer-events-none z-10 ${
+          const shadowWidth = activeStyle.spineType === "heavy-crease" ? "w-10" : "w-8";
+          const opacityClass =
+            activeStyle.shadowOpacity > 0.5 ? "from-black/25" : "from-black/16";
+          spineShadow.className = `absolute top-0 bottom-0 pointer-events-none z-10 ${shadowWidth} ${
             idx % 2 === 0
-              ? "right-0 w-8 bg-gradient-to-l from-black/20 to-transparent"
-              : "left-0 w-8 bg-gradient-to-r from-black/20 to-transparent"
+              ? `right-0 bg-gradient-to-l ${opacityClass} to-transparent`
+              : `left-0 bg-gradient-to-r ${opacityClass} to-transparent`
           }`;
           innerWrap.appendChild(spineShadow);
 
@@ -472,10 +492,17 @@ export default function FlipbookClient() {
       const pageItemsHtml = pages
         .map((p, idx) => {
           const isHard = isHardCover && (idx === 0 || idx === pages.length - 1);
+          let extraSpine = "";
+          if (activeStyle.spineType === "spiral") {
+            extraSpine = `<div class="spine-spiral ${idx % 2 === 0 ? "spine-right" : "spine-left"}"></div>`;
+          } else if (activeStyle.spineType === "vintage-stitch") {
+            extraSpine = `<div class="spine-stitch ${idx % 2 === 0 ? "spine-right" : "spine-left"}"></div>`;
+          }
           return `
       <div class="stf__item page-pane" data-density="${isHard ? "hard" : "soft"}">
         <div class="page-content" style="${filterStyle}">
           <img src="${p.dataUrl}" alt="Page ${idx + 1}" />
+          ${extraSpine}
           <div class="spine-shadow ${idx % 2 === 0 ? "spine-right" : "spine-left"}"></div>
         </div>
       </div>`;
@@ -615,6 +642,33 @@ export default function FlipbookClient() {
     }
     .spine-left { left: 0; background: linear-gradient(to right, rgba(0,0,0,0.22), transparent); }
     .spine-right { right: 0; background: linear-gradient(to left, rgba(0,0,0,0.22), transparent); }
+    .spine-spiral {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 18px;
+      pointer-events: none;
+      z-index: 25;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 14px,
+        #94a3b8 14px,
+        #475569 16px,
+        #cbd5e1 18px,
+        transparent 18px,
+        transparent 28px
+      );
+    }
+    .spine-stitch {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      pointer-events: none;
+      z-index: 25;
+      border-left: 2px dashed rgba(180, 83, 9, 0.7);
+    }
 
     .nav-btn {
       position: absolute;
@@ -884,7 +938,7 @@ export default function FlipbookClient() {
     },
     {
       q: "Can I customize the book style (e.g. Hardcover, Magazine, Spiral, or Vintage)?",
-      a: "Yes! Click the 'Book Style' button in the toolbar to choose from 10 distinct binding finishes (Classic Hardcover, Glossy Magazine, Vintage Parchment, Graphic Comic, Spiral Notebook, Leatherbound Folio, Broadsheet Newsprint, Cyber Blueprint, Pocket Paperback) and 8 ambient reading backgrounds.",
+      a: "Yes! Choose from 20 distinct binding finishes (Classic Hardcover, Glossy Magazine, Vintage Parchment, Graphic Comic, Spiral Notebook, Leather Folio, Newsprint, Cyberpunk, Paperback, Blueprint, Album, Gold Foil, Eco Kraft, Board Book, Manga, Commercial Catalog, Notebook, Pastel, and Film Noir) and 8 ambient reading backgrounds.",
     },
     {
       q: "How do visitors view or download the flipbook offline?",
@@ -1122,27 +1176,200 @@ export default function FlipbookClient() {
               </div>
             </div>
 
-            {/* STYLE SELECTOR BUTTONS */}
-            <div className="flex items-center justify-center w-full">
-              <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white/90 border border-slate-200/90 shadow-2xs backdrop-blur-md max-w-full overflow-x-auto scrollbar-none">
-                {BOOK_STYLES.map((style) => {
-                  const isActive = selectedStyleId === style.id;
-                  return (
+            {/* 3D MINI-BOOK SWATCH SHELF */}
+            <div className="w-full space-y-2">
+              <div className="flex items-center justify-between px-1 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                    <span>{activeStyle.icon}</span>
+                    <span>Style:</span>
+                    <span className="text-blue-600 font-black">{activeStyle.name}</span>
+                  </span>
+                  <span className="text-[11px] font-semibold text-slate-400">
+                    ({BOOK_STYLES.length} styles)
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {/* Left / Right scroll arrows */}
+                  {shelfViewMode === "bookshelf" && (
+                    <div className="flex items-center gap-1 mr-1">
+                      <button
+                        type="button"
+                        onClick={() => scrollShelf("left")}
+                        className="h-6 w-6 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 shadow-2xs transition active:scale-95 cursor-pointer"
+                        title="Scroll styles left"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => scrollShelf("right")}
+                        className="h-6 w-6 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 shadow-2xs transition active:scale-95 cursor-pointer"
+                        title="Scroll styles right"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* View Mode Toggle: 3D Bookshelf vs Compact */}
+                  <div className="flex items-center rounded-xl bg-slate-200/70 p-0.5 text-[11px] font-bold">
                     <button
-                      key={style.id}
                       type="button"
-                      onClick={() => setSelectedStyleId(style.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
-                        isActive
-                          ? "bg-blue-600 text-white shadow-xs scale-102"
-                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      onClick={() => setShelfViewMode("bookshelf")}
+                      className={`px-2 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
+                        shelfViewMode === "bookshelf"
+                          ? "bg-white text-slate-900 shadow-xs"
+                          : "text-slate-500 hover:text-slate-800"
                       }`}
+                      title="Show 3D Mini-Book Bookshelf"
                     >
-                      {style.name}
+                      <span>📚</span>
+                      <span className="hidden xs:inline">Shelf</span>
                     </button>
-                  );
-                })}
+                    <button
+                      type="button"
+                      onClick={() => setShelfViewMode("compact")}
+                      className={`px-2 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
+                        shelfViewMode === "compact"
+                          ? "bg-white text-slate-900 shadow-xs"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                      title="Show compact pills view"
+                    >
+                      <span>💊</span>
+                      <span className="hidden xs:inline">Compact</span>
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              {shelfViewMode === "bookshelf" ? (
+                /* 3D BOOKSHELF VIEW */
+                <div className="relative rounded-3xl border border-slate-200/90 bg-gradient-to-b from-white/95 via-slate-50/90 to-slate-100/95 p-3.5 shadow-md backdrop-blur-md border-b-4 border-b-slate-300">
+                  <div
+                    ref={shelfScrollRef}
+                    className="flex items-end gap-3 sm:gap-4 overflow-x-auto pb-2 pt-3 px-2 scrollbar-none select-none scroll-smooth"
+                  >
+                    {BOOK_STYLES.map((style) => {
+                      const isActive = selectedStyleId === style.id;
+                      return (
+                        <button
+                          key={style.id}
+                          type="button"
+                          onClick={() => setSelectedStyleId(style.id)}
+                          className="group flex flex-col items-center shrink-0 cursor-pointer focus:outline-none transition-all"
+                        >
+                          {/* 3D Mini Book Model */}
+                          <div
+                            className={`relative w-14 sm:w-16 h-20 sm:h-22 rounded-r-md rounded-l-xs transition-all duration-200 flex overflow-hidden shadow-md ${
+                              isActive
+                                ? "-translate-y-2.5 scale-108 ring-2 ring-blue-600 ring-offset-2 shadow-xl shadow-blue-500/25"
+                                : "group-hover:-translate-y-1.5 group-hover:shadow-lg opacity-85 group-hover:opacity-100"
+                            }`}
+                            style={{ background: style.swatchBg }}
+                          >
+                            {/* Spine Hinge (Left Edge) */}
+                            <div className="relative w-3 sm:w-3.5 h-full bg-black/25 shrink-0 border-r border-white/20 flex flex-col items-center justify-around py-1">
+                              {style.spineType === "spiral" ? (
+                                <>
+                                  <div className="w-1.5 h-1 bg-slate-300 rounded-full shadow-2xs" />
+                                  <div className="w-1.5 h-1 bg-slate-300 rounded-full shadow-2xs" />
+                                  <div className="w-1.5 h-1 bg-slate-300 rounded-full shadow-2xs" />
+                                  <div className="w-1.5 h-1 bg-slate-300 rounded-full shadow-2xs" />
+                                  <div className="w-1.5 h-1 bg-slate-300 rounded-full shadow-2xs" />
+                                </>
+                              ) : style.spineType === "vintage-stitch" ? (
+                                <>
+                                  <div className="w-1 h-1 bg-amber-400/80 rounded-full" />
+                                  <div className="w-1 h-1 bg-amber-400/80 rounded-full" />
+                                  <div className="w-1 h-1 bg-amber-400/80 rounded-full" />
+                                </>
+                              ) : (
+                                <div className="w-[1px] h-full bg-white/20" />
+                              )}
+                            </div>
+
+                            {/* Book Cover Face */}
+                            <div className="relative flex-1 h-full flex flex-col items-center justify-center p-1">
+                              {/* Embellishment border for luxury/foil styles */}
+                              {(style.id === "gold-deluxe" || style.id === "leather") && (
+                                <div className="absolute inset-1 rounded-sm border border-amber-300/40 pointer-events-none" />
+                              )}
+                              {style.id === "cyber-dark" && (
+                                <div className="absolute inset-1 rounded-sm border border-cyan-400/40 pointer-events-none" />
+                              )}
+                              {style.id === "blueprint" && (
+                                <div className="absolute inset-1 rounded-sm border border-cyan-300/30 border-dashed pointer-events-none" />
+                              )}
+
+                              {/* Book Icon */}
+                              <span className="text-xl sm:text-2xl drop-shadow-sm select-none">
+                                {style.icon}
+                              </span>
+
+                              {/* Active Checkmark Pill on Top-Right */}
+                              {isActive && (
+                                <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="20 6 9 17 4 12"/></svg>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Realistic Multi-Page Edge (Right Side) */}
+                            <div className="w-1.5 h-full bg-gradient-to-r from-slate-200 via-amber-50 to-slate-300 shrink-0 border-l border-black/15 shadow-inner" />
+                          </div>
+
+                          {/* Shelf Ground Reflection Shadow */}
+                          <div
+                            className={`mt-1.5 h-1 rounded-full transition-all duration-200 ${
+                              isActive
+                                ? "w-12 bg-blue-500/40 blur-[2px]"
+                                : "w-10 bg-black/15 blur-[1.5px] group-hover:w-11 group-hover:bg-black/25"
+                            }`}
+                          />
+
+                          {/* Concise Style Name Only */}
+                          <span
+                            className={`mt-1 text-[11px] sm:text-xs tracking-tight transition-colors whitespace-nowrap ${
+                              isActive
+                                ? "font-extrabold text-blue-600 scale-102"
+                                : "font-semibold text-slate-600 group-hover:text-slate-900"
+                            }`}
+                          >
+                            {style.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                /* COMPACT PILLS VIEW */
+                <div className="flex items-center justify-center w-full">
+                  <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white/90 border border-slate-200/90 shadow-2xs backdrop-blur-md max-w-full overflow-x-auto scrollbar-none">
+                    {BOOK_STYLES.map((style) => {
+                      const isActive = selectedStyleId === style.id;
+                      return (
+                        <button
+                          key={style.id}
+                          type="button"
+                          onClick={() => setSelectedStyleId(style.id)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                            isActive
+                              ? "bg-blue-600 text-white shadow-xs scale-102"
+                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                          }`}
+                        >
+                          <span className="text-xs">{style.icon}</span>
+                          <span>{style.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 3D FLIPBOOK STAGE (Customizable background) */}
