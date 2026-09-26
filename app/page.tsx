@@ -3959,6 +3959,33 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* CARD: FREE IMAGE COMPRESSOR & OPTIMIZER */}
+              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 14h6m0 0v6m0-6L3 21" />
+                    <path d="M20 10h-6m0 0V4m0 6 7-7" />
+                  </svg>
+                </div>
+
+                <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                  Image Optimizer
+                </div>
+                <h3 className="mt-1 text-xl font-black text-slate-900">
+                  Image Compressor &amp; Optimizer
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+                  Compress JPG, PNG, WebP &amp; multi-page PDF catalogs with live Squoosh-style split comparison. 100% private in-browser compression.
+                </p>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">WebP, MozJPEG, AVIF, PDF</span>
+                  <Link href="/image-compressor" className="text-xs font-bold text-blue-600 hover:underline">
+                    Use tool →
+                  </Link>
+                </div>
+              </div>
+
               {/* CARD 6: ZERO STORAGE PRIVACY */}
               <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
@@ -4426,6 +4453,13 @@ export default function Home() {
                 className="transition hover:text-gray-700"
               >
                 Image to Text
+              </Link>
+
+              <Link
+                href="/image-compressor"
+                className="transition hover:text-gray-700"
+              >
+                Image Compressor
               </Link>
 
               <Link

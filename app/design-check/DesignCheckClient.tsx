@@ -1399,6 +1399,9 @@ export default function DesignCheckClient() {
               <Link href="/image-to-text" className="transition hover:text-gray-700">
                 Image to Text
               </Link>
+              <Link href="/image-compressor" className="transition hover:text-gray-700">
+                Image Compressor
+              </Link>
               <Link href="/faq" className="transition hover:text-gray-700">
                 FAQ
               </Link>

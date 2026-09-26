@@ -1170,6 +1170,9 @@ export default function ImageToTextClient() {
               <Link href="/image-to-text" className="font-semibold text-blue-600">
                 Image to Text
               </Link>
+              <Link href="/image-compressor" className="transition hover:text-gray-700">
+                Image Compressor
+              </Link>
               <Link href="/faq" className="transition hover:text-gray-700">
                 FAQ
               </Link>
