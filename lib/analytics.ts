@@ -33,7 +33,7 @@ export function trackEvent(
  * Triggered when a user selects or drops a file
  */
 export function trackFileUpload(
-  tool: "spellcheck" | "image_to_text" | "design_check",
+  tool: "spellcheck" | "image_to_text" | "design_check" | "image_compressor",
   file: File
 ) {
   const extension = file.name.split(".").pop()?.toLowerCase() || "unknown";
@@ -87,21 +87,23 @@ export function trackPastedTextSubmitted(params: {
  * Triggered when a user downloads or exports a proofreading report or extracted text
  */
 export function trackReportDownload(params: {
-  tool: "spellcheck" | "image_to_text" | "design_check";
-  format: "txt" | "pdf" | "json";
+  tool: "spellcheck" | "image_to_text" | "design_check" | "image_compressor";
+  format: "txt" | "pdf" | "json" | "zip" | "webp" | "jpg" | "png" | "avif";
   error_count?: number;
+  file_count?: number;
 }) {
   trackEvent("report_downloaded", {
     tool: params.tool,
     format: params.format,
     error_count: params.error_count ?? 0,
+    file_count: params.file_count ?? 1,
   });
 }
 
 /**
  * Triggered when a user copies text to their clipboard
  */
-export function trackTextCopied(tool: "spellcheck" | "image_to_text" | "design_check") {
+export function trackTextCopied(tool: "spellcheck" | "image_to_text" | "design_check" | "image_compressor") {
   trackEvent("text_copied", { tool });
 }
 
@@ -138,5 +140,27 @@ export function trackDesignCheckComplete(params: {
     issue_count: params.issue_count,
     score: params.score,
     verdict: params.verdict || "unknown",
+  });
+}
+
+/**
+ * Triggered when image compression is completed
+ */
+export function trackImageCompressed(params: {
+  format: string;
+  quality: number;
+  original_size_kb: number;
+  compressed_size_kb: number;
+  savings_percent: number;
+  batch_count?: number;
+}) {
+  trackEvent("image_compressed", {
+    tool: "image_compressor",
+    format: params.format,
+    quality: params.quality,
+    original_size_kb: params.original_size_kb,
+    compressed_size_kb: params.compressed_size_kb,
+    savings_percent: params.savings_percent,
+    batch_count: params.batch_count || 1,
   });
 }

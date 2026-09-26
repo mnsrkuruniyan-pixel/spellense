@@ -9,13 +9,6 @@ import {
 } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import {
-  trackFileUpload,
-  trackSpellcheckComplete,
-  trackPastedTextSubmitted,
-  trackReportDownload,
-  trackTextCopied,
-} from "@/lib/analytics";
 
 type SpellError = {
   word: string;
@@ -1947,7 +1940,6 @@ export default function Home() {
 
     // Clear any previous error and setup file
     setUploadError(null);
-    trackFileUpload("spellcheck", file);
 
     if (pdfPreviewUrl) {
       URL.revokeObjectURL(pdfPreviewUrl);
@@ -2249,13 +2241,6 @@ export default function Home() {
         lastPageStartsRef.current = data.pageStarts;
       }
       setResult(data);
-      trackSpellcheckComplete({
-        tool: "spellcheck",
-        file_type: file.type || file.name.split(".").pop(),
-        error_count: data.errorCount ?? data.errors?.length ?? 0,
-        word_count: data.wordCount ?? 0,
-        dialect,
-      });
 
     } catch (error) {
 
@@ -2319,18 +2304,6 @@ export default function Home() {
         new File([trimmed], "pasted-text.txt", { type: "text/plain" }),
       ]);
       setResult(data);
-      trackPastedTextSubmitted({
-        char_count: trimmed.length,
-        word_count: trimmed.split(/\s+/).length,
-        dialect,
-      });
-      trackSpellcheckComplete({
-        tool: "spellcheck_pasted_text",
-        file_type: "text/plain",
-        error_count: data.errorCount ?? data.errors?.length ?? 0,
-        word_count: data.wordCount ?? 0,
-        dialect,
-      });
     } catch (err) {
       console.error(err);
       setResult({
@@ -2345,12 +2318,6 @@ export default function Home() {
 
   const downloadReport = () => {
     if (!result) return;
-
-    trackReportDownload({
-      tool: "spellcheck",
-      format: "txt",
-      error_count: result.errorCount ?? result.errors?.length ?? 0,
-    });
 
     const lines = [
       "Spellense spelling report",
@@ -2376,8 +2343,6 @@ export default function Home() {
 
   const copyReport = async () => {
     if (!result) return;
-
-    trackTextCopied("spellcheck");
 
     const lines = [
       "Spellense spelling report",
