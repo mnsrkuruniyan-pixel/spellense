@@ -460,14 +460,14 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
         ) : (
           <>
             {/* DESKTOP CENTER NAVIGATION PILL */}
-            <div className="hidden lg:flex items-center gap-1 rounded-full border border-slate-200/80 bg-slate-100/70 p-1 text-[13px] font-medium text-slate-600 backdrop-blur-md shadow-xs">
+            <div className="hidden lg:flex items-center gap-1 rounded-full border border-slate-200/80 bg-slate-100/70 p-1 text-[13px] font-bold text-slate-700 backdrop-blur-md shadow-xs">
               {/* Spell Checker */}
               <Link
                 href="/"
-                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 ${
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 font-bold ${
                   pathname === "/"
-                    ? "bg-white text-blue-600 font-bold shadow-xs ring-1 ring-slate-900/5"
-                    : "hover:bg-white/60 hover:text-slate-900 text-slate-600"
+                    ? "bg-white text-blue-600 shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-700"
                 }`}
               >
                 <span>Spell Checker</span>
@@ -476,10 +476,10 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
               {/* Design Check */}
               <Link
                 href="/design-check"
-                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 ${
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 font-bold ${
                   pathname.startsWith("/design-check")
-                    ? "bg-white text-blue-600 font-bold shadow-xs ring-1 ring-slate-900/5"
-                    : "hover:bg-white/60 hover:text-slate-900 text-slate-600"
+                    ? "bg-white text-blue-600 shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-700"
                 }`}
               >
                 <span>Design Check</span>
@@ -498,10 +498,10 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 <button
                   type="button"
                   onClick={() => setToolsDropdownOpen((prev) => !prev)}
-                  className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 ${
+                  className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 font-bold ${
                     isToolsActive
-                      ? "bg-white text-blue-600 font-bold shadow-xs ring-1 ring-slate-900/5"
-                      : "hover:bg-white/60 hover:text-slate-900 text-slate-600"
+                      ? "bg-white text-blue-600 shadow-xs ring-1 ring-slate-900/5"
+                      : "hover:bg-white/60 hover:text-slate-900 text-slate-700"
                   }`}
                   aria-expanded={toolsDropdownOpen}
                 >
@@ -570,10 +570,10 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
               {/* About */}
               <Link
                 href="/about"
-                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 ${
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 font-bold ${
                   pathname.startsWith("/about")
-                    ? "bg-white text-blue-600 font-bold shadow-xs ring-1 ring-slate-900/5"
-                    : "hover:bg-white/60 hover:text-slate-900 text-slate-600"
+                    ? "bg-white text-blue-600 shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-700"
                 }`}
               >
                 <span>About</span>
@@ -582,10 +582,10 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
               {/* FAQ */}
               <Link
                 href="/faq"
-                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 ${
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 font-bold ${
                   pathname.startsWith("/faq")
-                    ? "bg-white text-blue-600 font-bold shadow-xs ring-1 ring-slate-900/5"
-                    : "hover:bg-white/60 hover:text-slate-900 text-slate-600"
+                    ? "bg-white text-blue-600 shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-700"
                 }`}
               >
                 <span>FAQ</span>
