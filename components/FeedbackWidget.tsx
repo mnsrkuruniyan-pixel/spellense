@@ -152,8 +152,7 @@ export default function FeedbackWidget() {
                 Thank You!
               </h4>
               <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal max-w-xs mx-auto">
-                Your feedback was sent directly to our team at{" "}
-                <span className="font-semibold text-blue-600">hello@spellense.com</span>. We truly appreciate your time!
+                Your feedback has been received. Thank you for helping us improve Spellense!
               </p>
               <div className="mt-5 flex items-center justify-center gap-2">
                 <button
@@ -243,25 +242,12 @@ export default function FeedbackWidget() {
                 {isSubmitting ? (
                   <>
                     <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    <span>Sending...</span>
+                    <span>Submitting...</span>
                   </>
                 ) : (
-                  <>
-                    <span>Send to hello@spellense.com</span>
-                    <span>→</span>
-                  </>
+                  <span>Submit</span>
                 )}
               </button>
-
-              {/* FOOTER DIRECT EMAIL LINK */}
-              <div className="text-center pt-1 border-t border-slate-100">
-                <a
-                  href={`mailto:hello@spellense.com?subject=Spellense Feedback (${type})&body=${encodeURIComponent(message || "")}`}
-                  className="text-[11px] text-slate-400 hover:text-blue-600 transition"
-                >
-                  Or email directly to <span className="font-semibold text-slate-600 hover:text-blue-600">hello@spellense.com</span>
-                </a>
-              </div>
             </form>
           )}
         </div>
