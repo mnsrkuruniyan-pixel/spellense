@@ -82,7 +82,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Are my confidential design files or client images uploaded to any server?",
-    a: "Never. 100% of the image compression takes place locally inside your browser using HTML5 Canvas and browser WebAssembly. Your files never leave your computer and are never saved or trained on any server.",
+    a: "Never. 100% of the image compression takes place locally inside your browser using HTML5 Canvas and browser WebAssembly. Even faster than our spellchecker — your files never leave your device, and are never saved or trained on any server.",
   },
   {
     q: "Which format is best: WebP, JPEG, or PNG?",
@@ -972,7 +972,7 @@ export default function ImageCompressorClient() {
                 Drop your images or multi-page catalogs here
               </h2>
               <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-md mx-auto font-normal">
-                Supports multiple files: JPG, PNG, WebP, AVIF or PDF. 100% private in-browser compression.
+                Supports JPG, PNG, WebP, AVIF &amp; multi-page PDFs. Even faster than our spellchecker — your images never leave your device.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -1342,8 +1342,8 @@ export default function ImageCompressorClient() {
                   {/* CROSS-TOOL WORKFLOW BRIDGES */}
                   <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-200/80 bg-white/90 p-3.5 shadow-xs backdrop-blur-md">
                     <div className="text-xs text-slate-600 font-normal">
-                      <span className="font-bold text-slate-900">Want to inspect this design?</span>{" "}
-                      Check spelling or extract text without re-uploading.
+                      <span className="font-bold text-slate-900">Compressed your image?</span>{" "}
+                      Check the text inside it for typos too →
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -1351,7 +1351,7 @@ export default function ImageCompressorClient() {
                         onClick={handleSendToSpellcheck}
                         className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 transition hover:bg-blue-100 cursor-pointer"
                       >
-                        <span>Check for Typos</span>
+                        <span>Run Spellcheck</span>
                         <span>→</span>
                       </button>
                       <button
@@ -1780,6 +1780,33 @@ export default function ImageCompressorClient() {
                   </div>
                 </div>
               </div>
+
+              {/* POST-COMPRESSION SPELLCHECK CALLOUT BANNER (FIX 4) */}
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-3xl border border-blue-200/90 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-blue-50/90 p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white font-bold shadow-md shadow-blue-600/20">
+                    ✍️
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-slate-900">
+                      Compressed your image? Check the text inside it for typos too →
+                    </div>
+                    <div className="text-xs text-slate-600 font-normal mt-0.5">
+                      Ensure your marketing copy, client catalog, and posters have zero spelling errors before publishing.
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleSendToSpellcheck}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/25 hover:bg-blue-700 transition cursor-pointer"
+                  >
+                    <span>Check Spelling Now</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </section>
@@ -1852,6 +1879,9 @@ export default function ImageCompressorClient() {
                 >
                   <button
                     type="button"
+                    id={`faq-btn-${index}`}
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${index}`}
                     onClick={() => setOpenFaqIndex(isOpen ? null : index)}
                     className="flex w-full items-center justify-between p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
                   >
@@ -1878,11 +1908,22 @@ export default function ImageCompressorClient() {
                     </span>
                   </button>
 
-                  {isOpen && (
-                    <div className="border-t border-slate-100 px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal animate-in fade-in duration-150">
-                      {faq.a}
+                  <div
+                    id={`faq-answer-${index}`}
+                    role="region"
+                    aria-labelledby={`faq-btn-${index}`}
+                    className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
+                      isOpen
+                        ? "grid-rows-[1fr] opacity-100"
+                        : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="border-t border-slate-100 px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal">
+                        {faq.a}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
