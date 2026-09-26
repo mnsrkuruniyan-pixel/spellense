@@ -1029,18 +1029,15 @@ export default function FlipbookClient() {
 
                 <div className="h-4 w-px bg-slate-200" />
 
-                {/* BOOK STYLE CUSTOMIZER */}
+                {/* READING BACKGROUND SELECTOR */}
                 <button
                   type="button"
                   onClick={() => setShowStyleModal(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/80 px-3 py-1.5 text-xs font-bold text-blue-700 transition hover:bg-blue-100 active:scale-95 cursor-pointer"
-                  title="Customize Book Binding & Style"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 cursor-pointer"
+                  title="Change Reading Environment Background"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                  </svg>
-                  <span>Style: {activeStyle.name}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                  <span>Background: {activeBg.name}</span>
                 </button>
 
                 {/* Sound Toggle */}
@@ -1125,13 +1122,26 @@ export default function FlipbookClient() {
               </div>
             </div>
 
-            {/* INTERACTIVE DRAG HINT PILL */}
-            <div className="flex items-center justify-center">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/90 px-4 py-1.5 text-xs font-semibold text-blue-800 shadow-2xs backdrop-blur-sm animate-pulse-glow">
-                <span>💡</span>
-                <span>
-                  <strong>Drag Corners to Turn:</strong> Hover near any corner and drag with mouse or finger to peel pages realistically!
-                </span>
+            {/* STYLE SELECTOR BUTTONS */}
+            <div className="flex items-center justify-center w-full">
+              <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white/90 border border-slate-200/90 shadow-2xs backdrop-blur-md max-w-full overflow-x-auto scrollbar-none">
+                {BOOK_STYLES.map((style) => {
+                  const isActive = selectedStyleId === style.id;
+                  return (
+                    <button
+                      key={style.id}
+                      type="button"
+                      onClick={() => setSelectedStyleId(style.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow-xs scale-102"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      }`}
+                    >
+                      {style.name}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1243,15 +1253,15 @@ export default function FlipbookClient() {
           </div>
         )}
 
-        {/* BOOK STYLE & ENVIRONMENT MODAL */}
+        {/* READING ENVIRONMENT MODAL */}
         {showStyleModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
-            <div className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900">Customize Book Style</h3>
+                  <h3 className="text-base font-extrabold text-slate-900">Reading Environment &amp; Cover</h3>
                   <p className="text-xs text-slate-500">
-                    Apply binding, paper finishes, and reading environments to your book:
+                    Choose background ambiance and cover board stiffness:
                   </p>
                 </div>
                 <button
@@ -1263,53 +1273,40 @@ export default function FlipbookClient() {
                 </button>
               </div>
 
-              {/* 1. Binding & Presentation Styles (10 Options) */}
-              <div className="mt-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    10 Book Binding &amp; Paper Finishes
-                  </span>
-                  <span className="text-[11px] font-semibold text-blue-600">
-                    Current: {activeStyle.name}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                  {BOOK_STYLES.map((style) => (
-                    <div
-                      key={style.id}
-                      onClick={() => setSelectedStyleId(style.id)}
-                      className={`rounded-2xl border p-3.5 cursor-pointer transition hover:border-blue-400 hover:shadow-xs flex flex-col justify-between ${
-                        selectedStyleId === style.id
-                          ? "border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/25"
-                          : "border-slate-200 bg-white"
+              {/* 1. Reading Stage Environment (8 Options) */}
+              <div className="mt-5 space-y-2.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Reading Background
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {STAGE_BACKGROUNDS.map((bg) => (
+                    <button
+                      key={bg.id}
+                      type="button"
+                      onClick={() => setSelectedBgId(bg.id)}
+                      className={`h-16 rounded-xl p-2.5 flex flex-col justify-end text-left border-2 transition cursor-pointer relative overflow-hidden ${
+                        selectedBgId === bg.id
+                          ? "border-blue-600 ring-2 ring-blue-500/30 scale-102"
+                          : "border-slate-200 opacity-85 hover:opacity-100"
                       }`}
+                      style={{ background: bg.bgStyle }}
                     >
-                      <div>
-                        <div className="flex items-center justify-between gap-1 mb-1">
-                          <span className="text-xs font-bold text-slate-900">{style.name}</span>
-                          <span className="text-[9px] font-bold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full shrink-0">
-                            {style.badge}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                          {style.desc}
-                        </p>
-                      </div>
-
-                      <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-semibold">
-                        <span>{style.coverDensity === "hard" ? "Hard Cover" : "Soft Cover"}</span>
-                        <span>{style.spineType.replace("-", " ")}</span>
-                      </div>
-                    </div>
+                      <span
+                        className={`text-xs font-bold drop-shadow-sm leading-tight ${
+                          bg.theme === "light" ? "text-slate-900" : "text-white"
+                        }`}
+                      >
+                        {bg.name}
+                      </span>
+                    </button>
                   ))}
                 </div>
               </div>
 
-              {/* 2. Cover Hardness Override */}
-              <div className="mt-6 pt-5 border-t border-slate-100 space-y-2">
+              {/* 2. Cover Hardness */}
+              <div className="mt-5 pt-4 border-t border-slate-100 space-y-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Cover Board Density
+                  Cover Stiffness
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -1321,7 +1318,7 @@ export default function FlipbookClient() {
                         : "border-slate-200 text-slate-600 hover:bg-slate-50"
                     }`}
                   >
-                    Hardcover Board (Stiff Cover)
+                    Hardcover Board
                   </button>
                   <button
                     type="button"
@@ -1332,49 +1329,8 @@ export default function FlipbookClient() {
                         : "border-slate-200 text-slate-600 hover:bg-slate-50"
                     }`}
                   >
-                    Soft Paperback (Flexible Cover)
+                    Soft Paperback
                   </button>
-                </div>
-              </div>
-
-              {/* 3. Reading Stage Environment (8 Options) */}
-              <div className="mt-6 pt-5 border-t border-slate-100 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    8 Reading Environments (Background)
-                  </span>
-                  <span className="text-[11px] font-semibold text-blue-600">{activeBg.name}</span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {STAGE_BACKGROUNDS.map((bg) => (
-                    <button
-                      key={bg.id}
-                      type="button"
-                      onClick={() => setSelectedBgId(bg.id)}
-                      className={`h-22 rounded-xl p-2.5 flex flex-col justify-end text-left border-2 transition cursor-pointer relative overflow-hidden ${
-                        selectedBgId === bg.id
-                          ? "border-blue-600 ring-2 ring-blue-500/30 scale-102"
-                          : "border-slate-200 opacity-85 hover:opacity-100"
-                      }`}
-                      style={{ background: bg.bgStyle }}
-                    >
-                      <span
-                        className={`text-[11px] font-bold drop-shadow-sm leading-tight ${
-                          bg.theme === "light" ? "text-slate-900" : "text-white"
-                        }`}
-                      >
-                        {bg.name}
-                      </span>
-                      <span
-                        className={`text-[9px] line-clamp-1 opacity-80 ${
-                          bg.theme === "light" ? "text-slate-600" : "text-slate-200"
-                        }`}
-                      >
-                        {bg.desc}
-                      </span>
-                    </button>
-                  ))}
                 </div>
               </div>
 
@@ -1384,7 +1340,7 @@ export default function FlipbookClient() {
                   onClick={() => setShowStyleModal(false)}
                   className="rounded-xl bg-blue-600 px-6 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 active:scale-95 cursor-pointer"
                 >
-                  Apply &amp; Done
+                  Done
                 </button>
               </div>
             </div>
