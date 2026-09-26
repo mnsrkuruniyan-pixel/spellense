@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import JSZip from "jszip";
@@ -24,8 +25,7 @@ interface CompressedItem {
   height: number;
   format: OutputFormat;
   quality: number; // 1 to 100
-  scalePercent: number; // 25, 50, 75, 100
-  targetSizeKb: number | null; // e.g. 150
+  scalePercent: number; // 100
   status: "idle" | "compressing" | "done" | "error";
   error?: string;
   blob: Blob | null;
@@ -65,6 +65,29 @@ const PRESETS = [
   { name: "Ultra Fidelity (~400 KB)", quality: 92, format: "jpeg" as OutputFormat },
 ];
 
+const FAQ_ITEMS = [
+  {
+    q: "Does compressing an image change its dimensions (width & height)?",
+    a: "No. Spellense strictly locks and preserves your exact pixel dimensions. For example, a 1200×1200 image remains 1200×1200 after compression. We apply perceptual compression and remove bloat so your layout remains sharp without shrinking resolution.",
+  },
+  {
+    q: "How does the Squoosh-style split comparison work?",
+    a: "Our interactive split-screen slider lets you drag a vertical divider line across your image. The left side shows your original uncompressed image, and the right side shows the compressed result in real time. You can zoom up to 2× to verify that text, logos, and edges remain razor sharp.",
+  },
+  {
+    q: "Can I compress multiple images or multi-page PDF catalogs at once?",
+    a: "Yes! You can drop 10, 20, or more images at once, or drop a multi-page PDF catalog. Spellense automatically processes all pages and lets you download individual files or download everything in a single, organized ZIP archive.",
+  },
+  {
+    q: "Are my confidential design files or client images uploaded to any server?",
+    a: "Never. 100% of the image compression takes place locally inside your browser using HTML5 Canvas and browser WebAssembly. Your files never leave your computer and are never saved or trained on any server.",
+  },
+  {
+    q: "Which format is best: WebP, JPEG, or PNG?",
+    a: "WebP is recommended for websites and digital media because it achieves up to 90% size reduction with virtually no noticeable difference. JPEG is ideal for print documents and client submissions. PNG is best when transparent backgrounds or pixel-level text contrast must be retained.",
+  },
+];
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   if (bytes < 1024) return `${bytes} B`;
@@ -83,11 +106,12 @@ export default function ImageCompressorClient() {
   const [pdfProgressText, setPdfProgressText] = useState("");
   const [isZipping, setIsZipping] = useState(false);
   const [isBatchCompressing, setIsBatchCompressing] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   // Global Settings for active or batch
   const [globalFormat, setGlobalFormat] = useState<OutputFormat>("webp");
   const [globalQuality, setGlobalQuality] = useState<number>(80);
-  const globalScale = 100; // Strictly preserves original dimensions (e.g. 1200x1200 stays 1200x1200)
+  const globalScale = 100; // Strictly preserves original dimensions (1200x1200 stays 1200x1200)
   const [stripMetadata, setStripMetadata] = useState<boolean>(true);
 
   // Squoosh-Style Split Screen Slider State
@@ -132,7 +156,7 @@ export default function ImageCompressorClient() {
               return;
             }
 
-            // Dimension logic: strictly preserve original dimension unless explicitly scaled
+            // Dimension logic: strictly preserve original dimension
             const origW = img.naturalWidth || img.width;
             const origH = img.naturalHeight || img.height;
             const targetW = Math.max(1, Math.round(origW * scaleVal));
@@ -321,7 +345,6 @@ export default function ImageCompressorClient() {
                   format: globalFormat,
                   quality: globalQuality,
                   scalePercent: globalScale,
-                  targetSizeKb: null,
                   status: "idle",
                   blob: null,
                 });
@@ -362,7 +385,6 @@ export default function ImageCompressorClient() {
             format: globalFormat,
             quality: globalQuality,
             scalePercent: globalScale,
-            targetSizeKb: null,
             status: "idle",
             blob: null,
           });
@@ -432,7 +454,7 @@ export default function ImageCompressorClient() {
     };
   }, [globalQuality, globalFormat, globalScale, activeId, activeItem, compressSingleItem]);
 
-  // Apply to all items
+  // Apply settings to all items in batch
   const handleApplyToAll = async () => {
     if (items.length === 0) return;
     setIsBatchCompressing(true);
@@ -559,7 +581,6 @@ export default function ImageCompressorClient() {
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         if (!item.blob) {
-          // If not compressed, compress now
           const res = await compressSingleItem(
             item,
             globalQuality,
@@ -611,7 +632,6 @@ export default function ImageCompressorClient() {
   const handleSendToSpellcheck = () => {
     if (!activeItem) return;
     try {
-      // Navigate to homepage with active image
       sessionStorage.setItem("spellense_source_image_name", activeItem.name);
       router.push("/");
     } catch {
@@ -669,43 +689,15 @@ export default function ImageCompressorClient() {
       <Navbar />
 
       <main className="flex-1">
-        {/* HERO SECTION */}
-        <section className="relative overflow-hidden px-5 pt-10 pb-8 sm:px-6 sm:pt-14 lg:px-8">
-          {/* Subtle Glows */}
-          <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[520px] w-[900px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/15 to-purple-400/10 blur-[120px]" />
-
-          <div className="mx-auto max-w-5xl text-center">
-            {/* Pill Tag */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/90 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
-              Squoosh-Grade Visual Quality • 100% In-Browser Privacy
-            </div>
-
-            {/* H1 Heading */}
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-black sm:text-4xl lg:text-[46px] leading-[1.16]">
-              Compress Images &amp; Catalogs{" "}
+        {/* HERO SECTION — Shortened title only, pill & subtitles removed */}
+        <section className="relative overflow-hidden px-5 pt-8 pb-6 sm:px-6 sm:pt-10 lg:px-8">
+          <div className="mx-auto max-w-4xl text-center">
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl lg:text-[44px] leading-tight">
+              Compress Images{" "}
               <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                Without Losing a Single Pixel
+                Without Losing Quality
               </span>
             </h1>
-
-            {/* Subheading */}
-            <p className="mx-auto mt-3.5 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base font-light">
-              Exact dimensions preserved (1200×1200 stays 1200×1200). Squoosh-style interactive before/after split slider. Drop multiple images or entire multi-page catalogs.
-            </p>
-
-            {/* Quick Badges */}
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-slate-500">
-              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white/80 px-2.5 py-1 backdrop-blur-xs">
-                🔒 Zero Server Uploads (Client-Side)
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white/80 px-2.5 py-1 backdrop-blur-xs">
-                📐 Locked Original Dimensions
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white/80 px-2.5 py-1 backdrop-blur-xs">
-                📦 Multi-Page &amp; ZIP Batch Export
-              </span>
-            </div>
           </div>
         </section>
 
@@ -757,7 +749,7 @@ export default function ImageCompressorClient() {
               <h2 className="mt-5 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                 Drop your images or multi-page catalogs here
               </h2>
-              <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+              <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-md mx-auto font-normal">
                 Supports multiple files: JPG, PNG, WebP, AVIF or PDF. 100% private in-browser compression.
               </p>
 
@@ -854,27 +846,28 @@ export default function ImageCompressorClient() {
                 </div>
               </div>
 
-              {/* MAIN SPLIT WORKSPACE: CANVAS ON LEFT, CONTROLS ON RIGHT */}
+              {/* MAIN LAYOUT: PREVIEW & CONTROLS ON LEFT (8 COLS), BATCH QUEUE ON RIGHT (4 COLS) */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* SQUOOSH-STYLE INTERACTIVE BEFORE/AFTER SLIDER (8 Cols) */}
-                <div className="lg:col-span-8 flex flex-col gap-3">
+                {/* LEFT & CENTER: PREVIEW BOX + COMPRESSION CONTROLS (8 COLS) */}
+                <div className="lg:col-span-8 flex flex-col gap-6">
+                  {/* SQUOOSH-STYLE INTERACTIVE BEFORE/AFTER SLIDER */}
                   <div className="relative rounded-3xl border border-slate-200/80 bg-slate-900/95 overflow-hidden shadow-2xl backdrop-blur-xl">
-                    {/* Viewport Toolbar */}
-                    <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
+                    {/* Viewport Top Toolbar */}
+                    <div className="absolute top-3.5 left-3.5 right-3.5 z-30 flex items-center justify-between pointer-events-none">
                       {/* Left Badge: Original */}
-                      <div className="pointer-events-auto rounded-xl bg-slate-900/80 px-3 py-1 text-[11px] font-bold text-white backdrop-blur-md border border-white/10 shadow-xs">
+                      <div className="pointer-events-auto rounded-xl bg-slate-900/85 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md border border-white/10 shadow-xs">
                         ORIGINAL • {activeItem?.width}×{activeItem?.height} •{" "}
                         {activeItem ? formatBytes(activeItem.originalSize) : "0 KB"}
                       </div>
 
                       {/* Right Badge: Compressed */}
-                      <div className="pointer-events-auto flex items-center gap-1.5 rounded-xl bg-blue-600/90 px-3 py-1 text-[11px] font-bold text-white backdrop-blur-md border border-blue-400/30 shadow-xs">
+                      <div className="pointer-events-auto flex items-center gap-1.5 rounded-xl bg-blue-600/90 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md border border-blue-400/30 shadow-xs">
                         <span>
                           {activeItem?.format.toUpperCase()} •{" "}
                           {activeItem ? formatBytes(activeItem.compressedSize) : "..."}
                         </span>
                         {activeItem && activeItem.compressedSize > 0 && (
-                          <span className="rounded-full bg-emerald-400/30 px-1.5 py-0.5 text-[10px] text-emerald-200">
+                          <span className="rounded-full bg-emerald-400/30 px-2 py-0.5 text-[11px] font-bold text-emerald-200">
                             -
                             {Math.round(
                               ((activeItem.originalSize - activeItem.compressedSize) /
@@ -888,14 +881,14 @@ export default function ImageCompressorClient() {
                     </div>
 
                     {/* Zoom / Pan Controls (Bottom Left of Canvas) */}
-                    <div className="absolute bottom-3 left-3 z-30 flex items-center gap-1 rounded-xl bg-slate-900/85 p-1 border border-white/10 backdrop-blur-md">
+                    <div className="absolute bottom-3.5 left-3.5 z-30 flex items-center gap-1 rounded-xl bg-slate-900/85 p-1 border border-white/10 backdrop-blur-md">
                       <button
                         type="button"
                         onClick={() => {
                           setZoomLevel(1);
                           setPanOffset({ x: 0, y: 0 });
                         }}
-                        className={`px-2 py-0.5 text-[11px] font-semibold rounded-lg transition ${
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
                           zoomLevel === 1
                             ? "bg-blue-600 text-white"
                             : "text-slate-300 hover:text-white"
@@ -906,7 +899,7 @@ export default function ImageCompressorClient() {
                       <button
                         type="button"
                         onClick={() => setZoomLevel(1.5)}
-                        className={`px-2 py-0.5 text-[11px] font-semibold rounded-lg transition ${
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
                           zoomLevel === 1.5
                             ? "bg-blue-600 text-white"
                             : "text-slate-300 hover:text-white"
@@ -917,7 +910,7 @@ export default function ImageCompressorClient() {
                       <button
                         type="button"
                         onClick={() => setZoomLevel(2)}
-                        className={`px-2 py-0.5 text-[11px] font-semibold rounded-lg transition ${
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
                           zoomLevel === 2
                             ? "bg-blue-600 text-white"
                             : "text-slate-300 hover:text-white"
@@ -928,12 +921,12 @@ export default function ImageCompressorClient() {
                     </div>
 
                     {/* Download Button on Bottom Right of Canvas */}
-                    <div className="absolute bottom-3 right-3 z-30">
+                    <div className="absolute bottom-3.5 right-3.5 z-30">
                       {activeItem && (
                         <button
                           type="button"
                           onClick={() => handleDownloadItem(activeItem)}
-                          className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 hover:bg-blue-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-600/40 transition cursor-pointer"
+                          className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-600/40 transition cursor-pointer"
                         >
                           <span>Download ({formatBytes(activeItem.compressedSize)})</span>
                           <svg
@@ -952,7 +945,7 @@ export default function ImageCompressorClient() {
                       )}
                     </div>
 
-                    {/* SQUOOSH SPLIT SLIDER CONTAINER */}
+                    {/* SQUOOSH SPLIT SLIDER CANVAS */}
                     <div
                       ref={compareContainerRef}
                       className="relative min-h-[460px] sm:min-h-[520px] flex items-center justify-center overflow-hidden cursor-crosshair select-none"
@@ -1003,7 +996,7 @@ export default function ImageCompressorClient() {
 
                           {/* 3. Draggable Divider Handle Line */}
                           <div
-                            className="absolute top-0 bottom-0 z-20 w-0.5 bg-white cursor-ew-resize pointer-events-auto shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+                            className="absolute top-0 bottom-0 z-20 w-0.5 bg-blue-400 cursor-ew-resize pointer-events-auto shadow-[0_0_12px_rgba(37,99,235,0.8)]"
                             style={{ left: `${sliderPos}%` }}
                             onMouseDown={(e) => {
                               e.stopPropagation();
@@ -1014,8 +1007,8 @@ export default function ImageCompressorClient() {
                               setIsDraggingHandle(true);
                             }}
                           >
-                            {/* Circular Slider Button */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-800 shadow-xl border border-slate-300 transition-transform hover:scale-110 active:scale-95 cursor-ew-resize">
+                            {/* BLUE Circular Handle with White Left/Right Arrows */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl shadow-blue-600/50 border-2 border-white transition-transform hover:scale-110 active:scale-95 cursor-ew-resize">
                               <svg
                                 width="16"
                                 height="16"
@@ -1036,11 +1029,181 @@ export default function ImageCompressorClient() {
                     </div>
                   </div>
 
+                  {/* COMPRESSION CONTROLS CARD — High Typography Readability */}
+                  <div className="rounded-3xl border border-white/90 bg-white/90 p-6 sm:p-7 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900">
+                          Compression Settings
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5 font-normal">
+                          Fine-tune quality, format, and size for optimal clarity.
+                        </p>
+                      </div>
+                      {isBatchCompressing && (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600">
+                          <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                          Optimizing...
+                        </span>
+                      )}
+                    </div>
+
+                    {/* FORMAT SELECTION */}
+                    <div className="mt-5">
+                      <label className="text-sm font-bold text-slate-800 block">
+                        Output Format
+                      </label>
+                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {FORMAT_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              setGlobalFormat(opt.value);
+                            }}
+                            className={`rounded-2xl border p-3 text-left transition cursor-pointer ${
+                              globalFormat === opt.value
+                                ? "border-blue-600 bg-blue-50/80 text-blue-900 shadow-2xs"
+                                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            <div className="text-sm font-bold text-slate-900 truncate">
+                              {opt.label.split(" ")[0]}
+                            </div>
+                            <div className="text-xs text-slate-500 mt-0.5 truncate font-normal">
+                              {opt.value === "webp"
+                                ? "Best for Web"
+                                : opt.value === "jpeg"
+                                ? "Photos & Print"
+                                : opt.value === "png"
+                                ? "Transparency"
+                                : opt.value === "avif"
+                                ? "Next-gen"
+                                : "Keep Original"}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* QUALITY SLIDER — Highly Readable */}
+                    <div className="mt-6">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-bold text-slate-800">
+                          Quality Level
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-base font-mono font-bold text-blue-600">
+                            {globalQuality}%
+                          </span>
+                          <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
+                            {globalQuality >= 85
+                              ? "High Fidelity"
+                              : globalQuality >= 70
+                              ? "Balanced"
+                              : "Ultra Small"}
+                          </span>
+                        </div>
+                      </div>
+                      <input
+                        type="range"
+                        min="10"
+                        max="98"
+                        value={globalQuality}
+                        onChange={(e) => setGlobalQuality(Number(e.target.value))}
+                        className="mt-3 w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      />
+                      <div className="mt-1.5 flex justify-between text-xs font-medium text-slate-500">
+                        <span>Smallest File (10%)</span>
+                        <span>80% (Default)</span>
+                        <span>Near Lossless (98%)</span>
+                      </div>
+                    </div>
+
+                    {/* QUICK PRESETS */}
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-bold text-slate-500">Presets:</span>
+                      {PRESETS.map((p) => (
+                        <button
+                          key={p.name}
+                          type="button"
+                          onClick={() => {
+                            setGlobalQuality(p.quality);
+                            setGlobalFormat(p.format);
+                          }}
+                          className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white hover:text-blue-600 transition cursor-pointer"
+                        >
+                          {p.name}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* DIMENSION LOCK NOTICE */}
+                    <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-3.5 text-xs text-blue-900">
+                      <div className="flex items-center gap-2 font-bold text-sm">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        <span>Dimensions 100% Locked</span>
+                      </div>
+                      <p className="mt-1 text-xs text-blue-800/80 leading-relaxed font-normal">
+                        Your image retains its exact resolution ({activeItem ? `${activeItem.width}×${activeItem.height}px` : "original resolution"}). Only redundant color data is optimized.
+                      </p>
+                    </div>
+
+                    {/* STRIP METADATA TOGGLE */}
+                    <div className="mt-5 flex items-center justify-between pt-4 border-t border-slate-100">
+                      <div>
+                        <div className="text-sm font-bold text-slate-800">
+                          Strip EXIF &amp; Metadata
+                        </div>
+                        <div className="text-xs text-slate-500 font-normal">
+                          Removes camera and GPS info to save extra KB and protect privacy.
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setStripMetadata(!stripMetadata)}
+                        className={`h-6 w-11 rounded-full transition-colors cursor-pointer relative ${
+                          stripMetadata ? "bg-blue-600" : "bg-slate-300"
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                            stripMetadata ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* APPLY TO ALL BUTTON — VIBRANT BLUE BUTTON */}
+                    {items.length > 1 && (
+                      <div className="mt-6 pt-4 border-t border-slate-100">
+                        <button
+                          type="button"
+                          onClick={handleApplyToAll}
+                          disabled={isBatchCompressing}
+                          className="w-full rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3.5 px-5 text-sm shadow-md shadow-blue-600/25 hover:shadow-lg hover:shadow-blue-600/35 transition cursor-pointer"
+                        >
+                          Apply Settings to All ({items.length}) Images
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   {/* CROSS-TOOL WORKFLOW BRIDGES */}
                   <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-200/80 bg-white/90 p-4 shadow-xs backdrop-blur-md">
-                    <div className="text-xs text-slate-600">
+                    <div className="text-xs text-slate-600 font-normal">
                       <span className="font-bold text-slate-900">Want to inspect this design?</span>{" "}
-                      Directly check text spelling or extract copy without re-uploading.
+                      Check spelling or extract text without re-uploading.
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -1063,173 +1226,29 @@ export default function ImageCompressorClient() {
                   </div>
                 </div>
 
-                {/* CONTROLS SIDEBAR (4 Cols) */}
-                <div className="lg:col-span-4 flex flex-col gap-5">
-                  {/* COMPRESSION SETTINGS CARD */}
-                  <div className="rounded-3xl border border-white/90 bg-white/90 p-6 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
+                {/* RIGHT SIDEBAR: BATCH QUEUE DIRECTLY ON THE RIGHT OF PREVIEW BOX (4 COLS) */}
+                <div className="lg:col-span-4 flex flex-col gap-4">
+                  <div className="rounded-3xl border border-white/90 bg-white/90 p-5 sm:p-6 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                        Compression Controls
-                      </h3>
-                      {isBatchCompressing && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600">
-                          <span className="h-2 w-2 animate-spin rounded-full border border-blue-600 border-t-transparent" />
-                          Optimizing...
-                        </span>
-                      )}
-                    </div>
-
-                    {/* FORMAT SELECTION */}
-                    <div className="mt-4">
-                      <label className="text-xs font-bold text-slate-700 block">
-                        Output Format
-                      </label>
-                      <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-                        {FORMAT_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => {
-                              setGlobalFormat(opt.value);
-                            }}
-                            className={`rounded-xl border px-3 py-2 text-xs font-bold text-left transition cursor-pointer ${
-                              globalFormat === opt.value
-                                ? "border-blue-600 bg-blue-50 text-blue-700 shadow-2xs"
-                                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                            }`}
-                          >
-                            <div className="truncate">{opt.label.split(" ")[0]}</div>
-                            <div className="text-[10px] font-normal text-slate-400 truncate">
-                              {opt.value === "webp"
-                                ? "Recommended"
-                                : opt.value === "jpeg"
-                                ? "Photos & Print"
-                                : opt.value === "png"
-                                ? "Transparent"
-                                : "Next-gen"}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* QUALITY SLIDER */}
-                    <div className="mt-5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-slate-700">
-                          Quality ({globalQuality}%)
-                        </label>
-                        <span className="text-xs font-mono font-bold text-blue-600">
-                          {globalQuality >= 85
-                            ? "High"
-                            : globalQuality >= 70
-                            ? "Balanced"
-                            : "Ultra Small"}
-                        </span>
-                      </div>
-                      <input
-                        type="range"
-                        min="10"
-                        max="98"
-                        value={globalQuality}
-                        onChange={(e) => setGlobalQuality(Number(e.target.value))}
-                        className="mt-2 w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                      />
-                      <div className="mt-1 flex justify-between text-[10px] font-medium text-slate-400">
-                        <span>Smallest File (10%)</span>
-                        <span>80% (Default)</span>
-                        <span>Near Lossless (98%)</span>
-                      </div>
-                    </div>
-
-                    {/* QUICK PRESET BUTTONS */}
-                    <div className="mt-4 flex flex-wrap gap-1.5">
-                      {PRESETS.map((p) => (
-                        <button
-                          key={p.name}
-                          type="button"
-                          onClick={() => {
-                            setGlobalQuality(p.quality);
-                            setGlobalFormat(p.format);
-                          }}
-                          className="rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-white hover:text-blue-600 transition cursor-pointer"
-                        >
-                          {p.name}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* DIMENSION LOCK INFO (User requirement: Never change dimensions) */}
-                    <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-3 text-xs text-blue-900">
-                      <div className="flex items-center gap-1.5 font-bold">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                        >
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <span>Dimensions Locked (100% Original)</span>
-                      </div>
-                      <p className="mt-1 text-[11px] text-blue-800/80 leading-relaxed font-light">
-                        Output keeps exact {activeItem ? `${activeItem.width}×${activeItem.height}px` : "original resolution"}. Only perceptual color quantization is applied to shrink file size.
-                      </p>
-                    </div>
-
-                    {/* STRIP METADATA TOGGLE */}
-                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
                       <div>
-                        <div className="text-xs font-bold text-slate-800">
-                          Strip EXIF &amp; Metadata
-                        </div>
-                        <div className="text-[10px] text-slate-500">
-                          Removes GPS, camera info &amp; saves extra KB
-                        </div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+                          Batch Queue
+                        </h3>
+                        <span className="text-xs text-slate-500 font-normal">
+                          {items.length} file{items.length !== 1 ? "s" : ""} • Click any to preview
+                        </span>
                       </div>
                       <button
                         type="button"
-                        onClick={() => setStripMetadata(!stripMetadata)}
-                        className={`h-5 w-9 rounded-full transition-colors cursor-pointer relative ${
-                          stripMetadata ? "bg-blue-600" : "bg-slate-300"
-                        }`}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 hover:bg-white transition"
                       >
-                        <span
-                          className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-transform ${
-                            stripMetadata ? "translate-x-4" : "translate-x-0"
-                          }`}
-                        />
+                        + Add
                       </button>
                     </div>
 
-                    {/* APPLY TO ALL BUTTON (BATCH) */}
-                    {items.length > 1 && (
-                      <div className="mt-5 pt-3 border-t border-slate-100">
-                        <button
-                          type="button"
-                          onClick={handleApplyToAll}
-                          disabled={isBatchCompressing}
-                          className="w-full rounded-2xl bg-slate-900 hover:bg-slate-800 text-white py-2.5 text-xs font-bold transition shadow-xs cursor-pointer"
-                        >
-                          Apply Settings to All ({items.length}) Images
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* MULTI-PAGE / BATCH QUEUE LIST */}
-                  <div className="rounded-3xl border border-white/90 bg-white/90 p-5 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-                        Batch Queue ({items.length} files)
-                      </h3>
-                      <span className="text-[11px] text-slate-500">Click to compare</span>
-                    </div>
-
-                    <div className="mt-3 max-h-[300px] overflow-y-auto space-y-2 pr-1">
+                    {/* Scrollable List of Files */}
+                    <div className="mt-4 max-h-[580px] overflow-y-auto space-y-2.5 pr-1">
                       {items.map((it) => {
                         const isSelected = it.id === (activeItem?.id || "");
                         const savings =
@@ -1245,10 +1264,10 @@ export default function ImageCompressorClient() {
                           <div
                             key={it.id}
                             onClick={() => setActiveId(it.id)}
-                            className={`flex items-center justify-between gap-2.5 rounded-2xl p-2.5 transition border cursor-pointer ${
+                            className={`flex items-center justify-between gap-3 rounded-2xl p-3 transition border cursor-pointer ${
                               isSelected
-                                ? "border-blue-500 bg-blue-50/70 shadow-2xs"
-                                : "border-slate-200/70 bg-white hover:bg-slate-50"
+                                ? "border-blue-500 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/20"
+                                : "border-slate-200/80 bg-white hover:bg-slate-50/80"
                             }`}
                           >
                             {/* Thumbnail */}
@@ -1256,18 +1275,18 @@ export default function ImageCompressorClient() {
                             <img
                               src={it.compressedUrl || it.originalUrl}
                               alt={it.name}
-                              className="h-10 w-10 rounded-lg object-cover shrink-0 border border-slate-200"
+                              className="h-12 w-12 rounded-xl object-cover shrink-0 border border-slate-200"
                             />
 
                             {/* Name & Stats */}
                             <div className="flex-1 min-w-0">
-                              <div className="text-xs font-bold text-slate-800 truncate">
+                              <div className="text-xs font-bold text-slate-900 truncate">
                                 {it.name}
                               </div>
-                              <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                              <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5 font-normal">
                                 <span>{formatBytes(it.originalSize)}</span>
                                 <span>→</span>
-                                <span className="font-semibold text-blue-700">
+                                <span className="font-bold text-blue-700">
                                   {it.compressedSize > 0
                                     ? formatBytes(it.compressedSize)
                                     : "..."}
@@ -1278,7 +1297,7 @@ export default function ImageCompressorClient() {
                             {/* Savings Badge & Actions */}
                             <div className="flex items-center gap-1 shrink-0">
                               {savings > 0 && (
-                                <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                                <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700">
                                   -{savings}%
                                 </span>
                               )}
@@ -1289,11 +1308,11 @@ export default function ImageCompressorClient() {
                                   e.stopPropagation();
                                   handleDownloadItem(it);
                                 }}
-                                className="p-1 text-slate-400 hover:text-blue-600 transition"
+                                className="p-1.5 text-slate-400 hover:text-blue-600 transition"
                               >
                                 <svg
-                                  width="14"
-                                  height="14"
+                                  width="15"
+                                  height="15"
                                   viewBox="0 0 24 24"
                                   fill="none"
                                   stroke="currentColor"
@@ -1308,11 +1327,11 @@ export default function ImageCompressorClient() {
                                 type="button"
                                 title="Remove"
                                 onClick={(e) => handleRemoveItem(it.id, e)}
-                                className="p-1 text-slate-400 hover:text-rose-600 transition"
+                                className="p-1.5 text-slate-400 hover:text-rose-600 transition"
                               >
                                 <svg
-                                  width="14"
-                                  height="14"
+                                  width="15"
+                                  height="15"
                                   viewBox="0 0 24 24"
                                   fill="none"
                                   stroke="currentColor"
@@ -1327,6 +1346,41 @@ export default function ImageCompressorClient() {
                         );
                       })}
                     </div>
+
+                    {/* Batch ZIP Download in Sidebar */}
+                    {items.length > 1 && (
+                      <div className="mt-4 pt-4 border-t border-slate-100">
+                        <button
+                          type="button"
+                          disabled={isZipping || isBatchCompressing}
+                          onClick={handleDownloadAllZip}
+                          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-4 py-3 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition hover:shadow-lg hover:shadow-blue-600/35 disabled:opacity-50 cursor-pointer"
+                        >
+                          {isZipping ? (
+                            <>
+                              <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              Creating ZIP...
+                            </>
+                          ) : (
+                            <>
+                              <span>Download All ({items.length}) as ZIP</span>
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                              >
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                              </svg>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1335,23 +1389,23 @@ export default function ImageCompressorClient() {
         </section>
 
         {/* BENTO GRID: WHY USE SPELLENSE IMAGE COMPRESSOR */}
-        <section className="mx-auto max-w-6xl px-5 pt-12 pb-20 border-t border-slate-200/80">
+        <section className="mx-auto max-w-6xl px-5 pt-12 pb-16 border-t border-slate-200/80">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
               High-Fidelity Visual Optimization Built for Creators
             </h2>
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-2.5 text-xs sm:text-sm text-slate-600 font-normal">
               Everything you love about Google Squoosh, tailored for design catalogs, marketing decks, and high-res print files.
             </p>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-sm">
               <div className="h-10 w-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold mb-4">
                 📐
               </div>
               <h3 className="font-bold text-slate-900 text-base">Locked Dimensions</h3>
-              <p className="mt-2 text-xs leading-relaxed text-slate-600">
+              <p className="mt-2 text-xs leading-relaxed text-slate-600 font-normal">
                 1200×1200 stays exactly 1200×1200. Only unneeded color bloat and invisible metadata are removed so your design layout remains crisp.
               </p>
             </div>
@@ -1361,7 +1415,7 @@ export default function ImageCompressorClient() {
                 🔍
               </div>
               <h3 className="font-bold text-slate-900 text-base">Squoosh Split Screen</h3>
-              <p className="mt-2 text-xs leading-relaxed text-slate-600">
+              <p className="mt-2 text-xs leading-relaxed text-slate-600 font-normal">
                 Inspect before and after side-by-side with an interactive drag divider and up to 2× zoom to guarantee no text or line blur.
               </p>
             </div>
@@ -1371,55 +1425,125 @@ export default function ImageCompressorClient() {
                 📚
               </div>
               <h3 className="font-bold text-slate-900 text-base">Multi-Page &amp; ZIP Export</h3>
-              <p className="mt-2 text-xs leading-relaxed text-slate-600">
+              <p className="mt-2 text-xs leading-relaxed text-slate-600 font-normal">
                 Drop entire product catalogs or 50 images at once. Compress them simultaneously and download a single tidy ZIP archive.
               </p>
             </div>
           </div>
         </section>
 
-        {/* SEO FAQ SECTION */}
-        <section className="mx-auto max-w-4xl px-5 pb-24">
+        {/* FAQ SECTION — Exact Design from Image to Text Page */}
+        <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
           <div className="text-center">
-            <h2 className="text-2xl font-extrabold text-slate-900">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/70 bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs">
               Frequently Asked Questions
+            </div>
+            <h2 className="mt-2.5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+              Image Compressor FAQ
             </h2>
+            <p className="mt-2 text-xs sm:text-sm text-slate-500 font-normal">
+              Everything you need to know about compressing images without losing quality.
+            </p>
           </div>
 
-          <div className="mt-8 space-y-4">
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
-              <h3 className="text-sm font-bold text-slate-900">
-                Does compressing an image change its dimensions (width &amp; height)?
-              </h3>
-              <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                No. By default, Spellense preserves your exact pixel dimensions (for example, a 1200×1200 image remains 1200×1200). We only apply perceptual compression to shrink file weight from megabytes to kilobytes.
-              </p>
-            </div>
+          <div className="mt-10 space-y-3.5">
+            {FAQ_ITEMS.map((faq, index) => {
+              const isOpen = openFaqIndex === index;
+              return (
+                <div
+                  key={faq.q}
+                  className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-2xs backdrop-blur-sm transition"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                    className="flex w-full items-center justify-between p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
+                  >
+                    <span className="text-sm sm:text-base font-bold text-slate-900">
+                      {faq.q}
+                    </span>
+                    <span
+                      className={`ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-transform duration-200 ${
+                        isOpen ? "rotate-180 bg-blue-50 text-blue-600" : ""
+                      }`}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </span>
+                  </button>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
-              <h3 className="text-sm font-bold text-slate-900">
-                Are my client images or confidential catalogs uploaded to any server?
-              </h3>
-              <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                Never. 100% of the image compression runs locally in your web browser using HTML5 Canvas and browser WebAssembly codecs. Nothing is uploaded or stored on any server.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
-              <h3 className="text-sm font-bold text-slate-900">
-                Which format should I choose: WebP, JPEG, or PNG?
-              </h3>
-              <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                Use <strong>WebP</strong> for websites and digital banners (delivers up to 90% size reduction with crisp quality). Use <strong>JPEG</strong> for print decks and client submissions. Use <strong>PNG</strong> when transparent backgrounds must be preserved.
-              </p>
-            </div>
+                  {isOpen && (
+                    <div className="border-t border-slate-100 px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal animate-in fade-in duration-150">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       </main>
 
-      {/* FOOTER */}
-      <footer className="border-t border-slate-200/80 bg-white/70 py-8 text-center text-xs text-slate-400 backdrop-blur-md">
-        <p>© 2026 Spellense. Free, private visual QA &amp; creative tooling.</p>
+      {/* FOOTER — Exact Design matching Image to Text page */}
+      <footer className="border-t border-slate-200/70 bg-white px-5 py-8 sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+            <div>
+              <div className="text-lg font-bold">
+                Spel<span className="text-blue-600">lense</span>
+              </div>
+              <p className="mt-1 text-xs text-gray-400 font-normal">
+                Simple English spell checking and text tools.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-xs text-gray-400 font-normal">
+              <Link href="/" className="transition hover:text-gray-700">
+                Home
+              </Link>
+              <Link href="/about" className="transition hover:text-gray-700">
+                About
+              </Link>
+              <Link href="/blog" className="transition hover:text-gray-700">
+                Blog
+              </Link>
+              <Link href="/design-check" className="transition hover:text-gray-700">
+                Design Check
+              </Link>
+              <Link href="/case-converter" className="transition hover:text-gray-700">
+                Case Converter
+              </Link>
+              <Link href="/us-uk-converter" className="transition hover:text-gray-700">
+                US ↔ UK Dialect
+              </Link>
+              <Link href="/image-to-text" className="transition hover:text-gray-700">
+                Image to Text
+              </Link>
+              <Link href="/image-compressor" className="font-semibold text-blue-600">
+                Image Compressor
+              </Link>
+              <Link href="/faq" className="transition hover:text-gray-700">
+                FAQ
+              </Link>
+              <Link href="/privacy" className="transition hover:text-gray-700">
+                Privacy
+              </Link>
+              <Link href="/terms" className="transition hover:text-gray-700">
+                Terms
+              </Link>
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );
