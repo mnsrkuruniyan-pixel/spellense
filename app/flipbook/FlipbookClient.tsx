@@ -4,74 +4,46 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import JSZip from "jszip";
+import { TEMPLATES, generateTemplatePages, FlipPage, TemplateInfo } from "./templates";
 
-interface FlipPage {
-  id: string;
-  dataUrl: string;
-  width: number;
-  height: number;
-  pageNum: number;
+// Type definitions for PageFlip instance
+interface PageFlipInstance {
+  destroy: () => void;
+  loadFromHTML: (items: HTMLElement[] | NodeListOf<HTMLElement>) => void;
+  flipNext: (corner?: "top" | "bottom") => void;
+  flipPrev: (corner?: "top" | "bottom") => void;
+  flip: (page: number, corner?: "top" | "bottom") => void;
+  turnToPage: (page: number) => void;
+  getCurrentPageIndex: () => number;
+  getPageCount: () => number;
+  getOrientation: () => "portrait" | "landscape";
+  update: () => void;
+  on: (
+    event: "flip" | "changeState" | "changeOrientation" | "init",
+    callback: (e: { data: unknown }) => void
+  ) => void;
 }
-
-export type BookStyle = "hardcover" | "spiral" | "magazine" | "minimalist";
-
-interface StyleOption {
-  id: BookStyle;
-  name: string;
-  badge: string;
-  icon: string;
-  description: string;
-}
-
-const STYLE_OPTIONS: StyleOption[] = [
-  {
-    id: "hardcover",
-    name: "Hardcover Book",
-    badge: "Realistic 3D",
-    icon: "📖",
-    description: "Leather casing, 3D stacked paper edges, curved spine & silk ribbon bookmark",
-  },
-  {
-    id: "spiral",
-    name: "Spiral Notebook",
-    badge: "Wire-O Rings",
-    icon: "📓",
-    description: "Metallic chrome wire loops with punched paper hole eyelets & kraft backing",
-  },
-  {
-    id: "magazine",
-    name: "Glossy Magazine",
-    badge: "Saddle-Stitch",
-    icon: "📰",
-    description: "Saddle-stitched metallic staples with light-catching glossy sheen overlay",
-  },
-  {
-    id: "minimalist",
-    name: "Minimalist Deck",
-    badge: "Clean Modern",
-    icon: "📑",
-    description: "Frameless floating presentation cards for digital pitches & tech brochures",
-  },
-];
 
 export default function FlipbookClient() {
   const [pages, setPages] = useState<FlipPage[]>([]);
   const [currentPage, setCurrentPage] = useState(0); // 0 = Cover
-  const [bookStyle, setBookStyle] = useState<BookStyle>("hardcover");
-  const [isFlipping, setIsFlipping] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [isDoublePage, setIsDoublePage] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showThumbnails, setShowThumbnails] = useState(true);
   const [showEmbedModal, setShowEmbedModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [activeTemplate, setActiveTemplate] = useState<string>("classic-book");
   const [copiedEmbed, setCopiedEmbed] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [orientationMode, setOrientationMode] = useState<"portrait" | "landscape">("landscape");
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const stageWrapperRef = useRef<HTMLDivElement>(null);
+  const bookHolderRef = useRef<HTMLDivElement>(null);
+  const pageFlipRef = useRef<PageFlipInstance | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -81,8 +53,7 @@ export default function FlipbookClient() {
     try {
       const AudioCtx =
         window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       const bufferSize = ctx.sampleRate * 0.16;
@@ -118,32 +89,21 @@ export default function FlipbookClient() {
 
   // Turn page forward
   const turnNext = useCallback(() => {
-    if (isFlipping) return;
-    const step = isDoublePage ? (currentPage === 0 ? 1 : 2) : 1;
-    if (currentPage + step >= pages.length) return;
-
-    playFlipSound();
-    setIsFlipping(true);
-
-    setTimeout(() => {
-      setCurrentPage((prev) => Math.min(pages.length - 1, prev + step));
-      setIsFlipping(false);
-    }, 400);
-  }, [currentPage, isDoublePage, isFlipping, pages.length, playFlipSound]);
+    if (!pageFlipRef.current) return;
+    pageFlipRef.current.flipNext("bottom");
+  }, []);
 
   // Turn page backward
   const turnPrev = useCallback(() => {
-    if (isFlipping || currentPage <= 0) return;
-    const step = isDoublePage ? (currentPage <= 2 ? currentPage : 2) : 1;
+    if (!pageFlipRef.current) return;
+    pageFlipRef.current.flipPrev("bottom");
+  }, []);
 
-    playFlipSound();
-    setIsFlipping(true);
-
-    setTimeout(() => {
-      setCurrentPage((prev) => Math.max(0, prev - step));
-      setIsFlipping(false);
-    }, 400);
-  }, [currentPage, isDoublePage, isFlipping, playFlipSound]);
+  // Jump or flip to specific page index
+  const goToPage = useCallback((index: number) => {
+    if (!pageFlipRef.current) return;
+    pageFlipRef.current.flip(index);
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -172,29 +132,30 @@ export default function FlipbookClient() {
       if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current);
       return;
     }
+
     autoPlayTimerRef.current = setInterval(() => {
-      setCurrentPage((curr) => {
-        const step = isDoublePage ? (curr === 0 ? 1 : 2) : 1;
-        if (curr + step >= pages.length) {
-          setIsAutoPlaying(false);
-          return curr;
-        }
-        playFlipSound();
-        return curr + step;
-      });
-    }, 3200);
+      if (!pageFlipRef.current) return;
+      const cur = pageFlipRef.current.getCurrentPageIndex();
+      const total = pageFlipRef.current.getPageCount();
+
+      if (cur >= total - 1) {
+        setIsAutoPlaying(false);
+      } else {
+        pageFlipRef.current.flipNext("bottom");
+      }
+    }, 3400);
 
     return () => {
       if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current);
     };
-  }, [isAutoPlaying, isDoublePage, pages.length, playFlipSound]);
+  }, [isAutoPlaying, pages.length]);
 
   // Fullscreen toggle
   const toggleFullscreen = async () => {
     try {
       if (!document.fullscreenElement) {
-        if (containerRef.current) {
-          await containerRef.current.requestFullscreen();
+        if (stageWrapperRef.current) {
+          await stageWrapperRef.current.requestFullscreen();
           setIsFullscreen(true);
         }
       } else {
@@ -203,6 +164,155 @@ export default function FlipbookClient() {
       }
     } catch {
       setIsFullscreen(!isFullscreen);
+    }
+  };
+
+  // Initialize PageFlip instance when pages change
+  useEffect(() => {
+    if (pages.length === 0 || !bookHolderRef.current) return;
+
+    let isMounted = true;
+
+    const initBook = async () => {
+      try {
+        const holder = bookHolderRef.current;
+        if (!holder) return;
+
+        // Clean up previous instance
+        if (pageFlipRef.current) {
+          try {
+            pageFlipRef.current.destroy();
+          } catch {
+            // ignore
+          }
+          pageFlipRef.current = null;
+        }
+
+        holder.innerHTML = "";
+
+        // Dynamically import PageFlip to prevent SSR errors
+        const { PageFlip } = await import("page-flip");
+        if (!isMounted) return;
+
+        // Create book target div inside holder
+        const bookEl = document.createElement("div");
+        bookEl.className = "spellense-flipbook-root";
+        holder.appendChild(bookEl);
+
+        // Build HTML page elements for StPageFlip
+        const pageElements: HTMLElement[] = [];
+        pages.forEach((p, idx) => {
+          const pageDiv = document.createElement("div");
+          pageDiv.className = "stf__item page-sheet";
+          // First and last page are hard covers, inner pages are soft flexible paper
+          const isHardCover = idx === 0 || idx === pages.length - 1;
+          pageDiv.setAttribute("data-density", isHardCover ? "hard" : "soft");
+
+          const innerWrap = document.createElement("div");
+          innerWrap.className =
+            "relative w-full h-full bg-white overflow-hidden flex items-center justify-center select-none shadow-xs";
+
+          const img = document.createElement("img");
+          img.src = p.dataUrl;
+          img.alt = `Page ${idx + 1}`;
+          img.className = "w-full h-full object-contain pointer-events-none select-none";
+          img.loading = "eager";
+
+          innerWrap.appendChild(img);
+
+          // Realistic spine shadow
+          const spineShadow = document.createElement("div");
+          spineShadow.className = `absolute top-0 bottom-0 pointer-events-none z-10 ${
+            idx % 2 === 0
+              ? "right-0 w-8 bg-gradient-to-l from-black/20 to-transparent"
+              : "left-0 w-8 bg-gradient-to-r from-black/20 to-transparent"
+          }`;
+          innerWrap.appendChild(spineShadow);
+
+          pageDiv.appendChild(innerWrap);
+          pageElements.push(pageDiv);
+        });
+
+        // Calculate aspect ratio
+        const firstPage = pages[0];
+        const pageRatio = firstPage && firstPage.width > 0 ? firstPage.height / firstPage.width : 1.4;
+        const baseWidth = 520;
+        const baseHeight = Math.round(baseWidth * pageRatio);
+
+        // Instantiate PageFlip with physics settings
+        const pf = new PageFlip(bookEl, {
+          width: baseWidth,
+          height: baseHeight,
+          size: "stretch",
+          minWidth: 280,
+          maxWidth: 900,
+          minHeight: 380,
+          maxHeight: 1250,
+          maxShadowOpacity: 0.5,
+          showCover: true, // Closed cover when on page 0 & end
+          mobileScrollSupport: false,
+          showPageCorners: true, // Realistic corner lift on hover
+          useMouseEvents: true, // Real-time mouse & touch dragging!
+          flippingTime: 750, // Realistic turn velocity
+          usePortrait: true, // Auto switch to single page on mobile
+          startPage: 0,
+          disableFlipByClick: false,
+        });
+
+        pf.loadFromHTML(pageElements);
+
+        pf.on("flip", (e: { data: unknown }) => {
+          if (typeof e.data === "number") {
+            setCurrentPage(e.data);
+            playFlipSound();
+          }
+        });
+
+        pf.on("changeOrientation", (e: { data: unknown }) => {
+          if (e.data === "portrait" || e.data === "landscape") {
+            setOrientationMode(e.data);
+          }
+        });
+
+        pageFlipRef.current = pf as unknown as PageFlipInstance;
+      } catch (err) {
+        console.error("Failed to initialize PageFlip:", err);
+      }
+    };
+
+    initBook();
+
+    return () => {
+      isMounted = false;
+      if (pageFlipRef.current) {
+        try {
+          pageFlipRef.current.destroy();
+        } catch {
+          // ignore
+        }
+        pageFlipRef.current = null;
+      }
+    };
+  }, [pages, playFlipSound]);
+
+  // Load a chosen preset template
+  const loadTemplate = async (templateId: string) => {
+    setIsProcessing(true);
+    const tmpl = TEMPLATES.find((t) => t.id === templateId) || TEMPLATES[0];
+    setProcessingStatus(`Generating ${tmpl.name}...`);
+    setActiveTemplate(templateId);
+    setShowTemplateModal(false);
+
+    try {
+      const generatedPages = await generateTemplatePages(templateId);
+      setPages(generatedPages);
+      setCurrentPage(0);
+    } catch (err) {
+      console.error("Template generation error:", err);
+      alert("Failed to generate template.");
+    } finally {
+      setIsProcessing(false);
+      setProcessingStatus("");
     }
   };
 
@@ -215,8 +325,7 @@ export default function FlipbookClient() {
     try {
       const fileList = Array.from(files);
       const isPdf =
-        fileList[0].type === "application/pdf" ||
-        fileList[0].name.toLowerCase().endsWith(".pdf");
+        fileList[0].type === "application/pdf" || fileList[0].name.toLowerCase().endsWith(".pdf");
 
       if (isPdf) {
         const pdfFile = fileList[0];
@@ -239,7 +348,7 @@ export default function FlipbookClient() {
         for (let i = 1; i <= totalPages; i++) {
           setProcessingStatus(`Rendering page ${i} of ${totalPages}...`);
           const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: 1.8 });
+          const viewport = page.getViewport({ scale: 2.0 }); // High-DPI crispness
 
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
@@ -250,7 +359,7 @@ export default function FlipbookClient() {
 
           // @ts-expect-error pdfjs typing
           await page.render({ canvasContext: ctx, viewport }).promise;
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.94);
 
           newPages.push({
             id: `pdf-page-${i}-${Date.now()}`,
@@ -268,11 +377,9 @@ export default function FlipbookClient() {
         setProcessingStatus(`Processing ${fileList.length} images...`);
         const newPages: FlipPage[] = [];
 
+        // Sort naturally by filename
         const sortedImages = fileList.sort((a, b) =>
-          a.name.localeCompare(b.name, undefined, {
-            numeric: true,
-            sensitivity: "base",
-          })
+          a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" })
         );
 
         for (let i = 0; i < sortedImages.length; i++) {
@@ -283,14 +390,12 @@ export default function FlipbookClient() {
             reader.readAsDataURL(imgFile);
           });
 
-          const dimensions = await new Promise<{ w: number; h: number }>(
-            (resolve) => {
-              const img = new Image();
-              img.onload = () =>
-                resolve({ w: img.naturalWidth, h: img.naturalHeight });
-              img.src = dataUrl;
-            }
-          );
+          // Get dimensions
+          const dimensions = await new Promise<{ w: number; h: number }>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+            img.src = dataUrl;
+          });
 
           newPages.push({
             id: `img-page-${i + 1}-${Date.now()}`,
@@ -306,157 +411,45 @@ export default function FlipbookClient() {
       }
     } catch (err) {
       console.error("Flipbook processing error:", err);
-      alert(
-        "Failed to render flipbook pages. Please ensure your PDF or image files are valid."
-      );
+      alert("Failed to render flipbook pages. Please ensure your PDF or image files are valid.");
     } finally {
       setIsProcessing(false);
       setProcessingStatus("");
     }
   };
 
-  // Generate Sample Demo Flipbook
-  const loadDemoFlipbook = (presetStyle?: BookStyle) => {
-    if (presetStyle) setBookStyle(presetStyle);
-    setIsProcessing(true);
-    setProcessingStatus("Generating high-fashion lookbook demo...");
-
-    setTimeout(() => {
-      const demoPages: FlipPage[] = [];
-      const canvasWidth = 900;
-      const canvasHeight = 1200;
-
-      const pageConfigs = [
-        {
-          bg: "#0f172a",
-          title: "AURA 2026",
-          subtitle: "EDITORIAL LOOKBOOK & SPECIFICATIONS",
-          body: "A curated visual monograph exploring architectural forms, typographic balance, and pre-flight print precision.",
-          tag: "ISSUE NO. 04",
-          isCover: true,
-        },
-        {
-          bg: "#f8fafc",
-          title: "TABLE OF CONTENTS",
-          subtitle: "ARCHITECTURAL ESSAYS & CASE STUDIES",
-          body: "01. Spatial Typography & Negative Space\n02. Minimalist Packaging & Sustainable Foil\n03. Digital Pre-Flight QA & Color Proofing\n04. Catalog Specifications & Paper Stocks",
-          tag: "MANIFESTO",
-        },
-        {
-          bg: "#ffffff",
-          title: "01 / SPATIAL TYPOGRAPHY",
-          subtitle: "DYNAMIC PROPORTIONS & GRID SYSTEMS",
-          body: "Visual hierarchies should breathe. When type meets negative space with mathematical rigor, the reader's cognitive flow accelerates naturally.",
-          tag: "CASE STUDY",
-        },
-        {
-          bg: "#f1f5f9",
-          title: "02 / SUSTAINABLE PACKAGING",
-          subtitle: "TEXTURE, BLEED & EMBOSSED FINISHES",
-          body: "High-contrast geometric compositions printed on 350gsm unbleached organic cotton cardstock. Designed to catch light and resist scuffs.",
-          tag: "PRINT SPEC",
-        },
-        {
-          bg: "#ffffff",
-          title: "03 / COLOR ACCURACY",
-          subtitle: "ZERO-STORAGE DIGITAL PRE-FLIGHT",
-          body: "Every millimeter inspected before plates are struck. Catching typos, misaligned margins, and contrast drops saves thousands in costly reprint runs.",
-          tag: "QUALITY QA",
-        },
-        {
-          bg: "#0f172a",
-          title: "SPELLENSE FLIPBOOK",
-          subtitle: "FLAWLESS DESIGN • ZERO ERROR",
-          body: "Published with 100% In-Browser Privacy.\nDesigned for modern creators, agencies & print masters.\n\nVisit spellense.com",
-          tag: "BACK COVER",
-          isCover: true,
-        },
-      ];
-
-      pageConfigs.forEach((cfg, idx) => {
-        const canvas = document.createElement("canvas");
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        ctx.fillStyle = cfg.bg;
-        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-        if (cfg.isCover) {
-          const grad = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
-          grad.addColorStop(0, "rgba(59, 130, 246, 0.25)");
-          grad.addColorStop(1, "rgba(147, 51, 234, 0.15)");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-        }
-
-        ctx.strokeStyle = cfg.isCover
-          ? "rgba(255, 255, 255, 0.15)"
-          : "rgba(0, 0, 0, 0.08)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(40, 40, canvasWidth - 80, canvasHeight - 80);
-
-        ctx.fillStyle = cfg.isCover ? "#3b82f6" : "#2563eb";
-        ctx.font = "bold 20px sans-serif";
-        ctx.fillText(cfg.tag, 80, 110);
-
-        ctx.fillStyle = cfg.isCover ? "#ffffff" : "#0f172a";
-        ctx.font = "bold 56px sans-serif";
-        ctx.fillText(cfg.title, 80, 240);
-
-        ctx.fillStyle = cfg.isCover ? "#94a3b8" : "#64748b";
-        ctx.font = "bold 24px sans-serif";
-        ctx.fillText(cfg.subtitle, 80, 300);
-
-        ctx.fillStyle = cfg.isCover ? "#38bdf8" : "#2563eb";
-        ctx.fillRect(80, 340, 120, 4);
-
-        ctx.fillStyle = cfg.isCover ? "#cbd5e1" : "#334155";
-        ctx.font = "normal 28px sans-serif";
-        const lines = cfg.body.split("\n");
-        let startY = 440;
-        for (const line of lines) {
-          ctx.fillText(line, 80, startY);
-          startY += 48;
-        }
-
-        ctx.fillStyle = cfg.isCover ? "#64748b" : "#94a3b8";
-        ctx.font = "bold 20px sans-serif";
-        ctx.fillText(
-          `PAGE ${idx + 1} / ${pageConfigs.length}`,
-          80,
-          canvasHeight - 80
-        );
-        ctx.fillText(
-          "SPELLENSE 3D FLIPBOOK",
-          canvasWidth - 360,
-          canvasHeight - 80
-        );
-
-        demoPages.push({
-          id: `demo-${idx + 1}`,
-          dataUrl: canvas.toDataURL("image/jpeg", 0.95),
-          width: canvasWidth,
-          height: canvasHeight,
-          pageNum: idx + 1,
-        });
-      });
-
-      setPages(demoPages);
-      setCurrentPage(0);
-      setIsProcessing(false);
-      setProcessingStatus("");
-    }, 400);
-  };
-
-  // Generate Standalone Single-File Offline HTML Flipbook
-  const downloadStandaloneHtml = () => {
+  // Generate Standalone Single-File Offline HTML Flipbook (with inlined page-flip engine)
+  const downloadStandaloneHtml = async () => {
     if (pages.length === 0) return;
+    setIsProcessing(true);
+    setProcessingStatus("Packaging standalone offline HTML reader...");
 
-    const pageImagesJson = JSON.stringify(pages.map((p) => p.dataUrl));
+    try {
+      // Fetch the standalone page-flip engine script
+      let engineScript = "";
+      try {
+        const res = await fetch("/page-flip.browser.js");
+        if (res.ok) {
+          engineScript = await res.text();
+        }
+      } catch {
+        // fallback
+      }
 
-    const htmlContent = `<!DOCTYPE html>
+      const pageItemsHtml = pages
+        .map((p, idx) => {
+          const isHard = idx === 0 || idx === pages.length - 1;
+          return `
+      <div class="stf__item page-pane" data-density="${isHard ? "hard" : "soft"}">
+        <div class="page-content">
+          <img src="${p.dataUrl}" alt="Page ${idx + 1}" />
+          <div class="spine-shadow ${idx % 2 === 0 ? "spine-right" : "spine-left"}"></div>
+        </div>
+      </div>`;
+        })
+        .join("");
+
+      const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -465,20 +458,19 @@ export default function FlipbookClient() {
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #0b1120;
+      background: #090d16;
       color: #f8fafc;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: space-between;
       overflow-x: hidden;
       user-select: none;
     }
     header {
       width: 100%;
-      padding: 16px 24px;
+      padding: 14px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -487,7 +479,7 @@ export default function FlipbookClient() {
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       z-index: 50;
     }
-    .brand { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+    .brand { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; }
     .brand span { color: #3b82f6; }
     .badge {
       font-size: 11px;
@@ -502,155 +494,100 @@ export default function FlipbookClient() {
     main {
       flex: 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       width: 100%;
-      padding: 24px 16px;
-      perspective: 2500px;
+      padding: 16px;
+      position: relative;
+    }
+    .hint-pill {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 4px 14px;
+      border-radius: 9999px;
+      margin-bottom: 12px;
     }
     .book-stage {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      max-width: 1060px;
+      max-width: 1100px;
       width: 100%;
+      min-height: 540px;
     }
-
-    /* HARDCOVER STYLING */
-    .style-hardcover {
-      background: linear-gradient(135deg, #2a1b12 0%, #1c120c 60%, #120a06 100%);
-      padding: 12px;
-      border-radius: 16px;
-      box-shadow: 0 40px 80px -15px rgba(0,0,0,0.95);
-      border: 1px solid rgba(255,255,255,0.08);
+    /* StPageFlip Styles */
+    .stf__parent {
       position: relative;
+      display: block;
+      box-sizing: border-box;
+      transform: translateZ(0);
+      touch-action: pan-y;
+      margin: 0 auto;
     }
-    .hardcover-ribbon {
-      position: absolute;
-      top: -4px;
-      left: 50%;
-      transform: translateX(-50%) rotate(2deg);
-      width: 14px;
-      height: 180px;
-      background: linear-gradient(to bottom, #991b1b, #ef4444);
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 88%, 0 100%);
-      z-index: 30;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-      pointer-events: none;
-    }
-
-    /* SPIRAL NOTEBOOK STYLING */
-    .style-spiral {
-      background: #c2a688;
-      padding: 10px;
-      border-radius: 12px;
-      box-shadow: 0 30px 60px -12px rgba(0,0,0,0.85);
-      border: 1px solid rgba(255,255,255,0.15);
+    .stf__wrapper {
       position: relative;
-    }
-    .spiral-spine {
-      position: absolute;
-      left: 50%;
-      top: 0;
-      bottom: 0;
-      transform: translateX(-50%);
-      width: 32px;
-      z-index: 35;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-evenly;
-      pointer-events: none;
-    }
-    .spiral-ring {
-      width: 30px;
-      height: 10px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #64748b 0%, #ffffff 40%, #94a3b8 70%, #334155 100%);
-      border: 1px solid #475569;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-      transform: rotate(-10deg);
-    }
-
-    /* MAGAZINE STYLING */
-    .style-magazine {
-      background: #0f172a;
-      padding: 6px;
-      border-radius: 8px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
-      position: relative;
-    }
-    .magazine-staple {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 5px;
-      height: 32px;
-      background: linear-gradient(to right, #64748b, #f8fafc, #475569);
-      border-radius: 2px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-      z-index: 35;
-    }
-
-    /* MINIMALIST STYLING */
-    .style-minimalist {
-      padding: 0;
-      border-radius: 12px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
-    }
-
-    .spread {
-      display: flex;
       width: 100%;
-      height: 68vh;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #ffffff;
-      position: relative;
+      box-sizing: border-box;
     }
-    .page-pane {
-      flex: 1;
+    .stf__block {
+      position: absolute;
+      width: 100%;
       height: 100%;
+      box-sizing: border-box;
+      perspective: 2400px;
+    }
+    .stf__item {
+      display: none;
+      position: absolute;
+      transform-style: preserve-3d;
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+      cursor: grab;
+    }
+    .stf__item:active { cursor: grabbing; }
+    .stf__outerShadow, .stf__innerShadow, .stf__hardShadow, .stf__hardInnerShadow {
+      position: absolute;
+      left: 0;
+      top: 0;
+      pointer-events: none;
+    }
+    .page-content {
       position: relative;
+      width: 100%;
+      height: 100%;
       background: #ffffff;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
-      cursor: pointer;
     }
-    .page-pane img {
+    .page-content img {
       width: 100%;
       height: 100%;
       object-fit: contain;
-      background: #ffffff;
+      pointer-events: none;
     }
-    .spine-shadow-left {
+    .spine-shadow {
       position: absolute;
       top: 0;
       bottom: 0;
-      right: 0;
       width: 32px;
-      background: linear-gradient(to left, rgba(0,0,0,0.3), transparent);
-      z-index: 10;
       pointer-events: none;
-    }
-    .spine-shadow-right {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: 32px;
-      background: linear-gradient(to right, rgba(0,0,0,0.3), transparent);
       z-index: 10;
-      pointer-events: none;
     }
+    .spine-left { left: 0; background: linear-gradient(to right, rgba(0,0,0,0.22), transparent); }
+    .spine-right { right: 0; background: linear-gradient(to left, rgba(0,0,0,0.22), transparent); }
+
     .nav-btn {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 46px;
-      height: 46px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: rgba(15, 23, 42, 0.75);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -663,15 +600,16 @@ export default function FlipbookClient() {
       transition: all 0.2s;
     }
     .nav-btn:hover { background: #2563eb; transform: translateY(-50%) scale(1.08); }
-    .nav-prev { left: -24px; }
-    .nav-next { right: -24px; }
+    .nav-prev { left: 10px; }
+    .nav-next { right: 10px; }
+
     footer {
       width: 100%;
-      padding: 14px 24px;
+      padding: 12px 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 16px;
+      gap: 14px;
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(12px);
       border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -694,126 +632,96 @@ export default function FlipbookClient() {
 <body>
   <header>
     <div class="brand">Spel<span>lense</span> • 3D Flipbook</div>
-    <div class="badge">${bookStyle.toUpperCase()} STYLE • OFFLINE</div>
+    <div class="badge">Offline Reader • Zero Server</div>
   </header>
 
   <main>
-    <div class="book-stage style-${bookStyle}">
-      ${
-        bookStyle === "hardcover"
-          ? '<div class="hardcover-ribbon"></div>'
-          : ""
-      }
-      ${
-        bookStyle === "spiral"
-          ? `<div class="spiral-spine">${Array.from({ length: 12 })
-              .map(() => '<div class="spiral-ring"></div>')
-              .join("")}</div>`
-          : ""
-      }
-      ${
-        bookStyle === "magazine"
-          ? '<div class="magazine-staple" style="top:20%"></div><div class="magazine-staple" style="bottom:20%"></div>'
-          : ""
-      }
-
-      <button class="nav-btn nav-prev" onclick="turnPrev()">&#10094;</button>
-      <div class="spread">
-        <div class="page-pane" id="leftPane" onclick="turnPrev()">
-          <img id="leftImg" src="" alt="Left Page" />
-          <div class="spine-shadow-left"></div>
-        </div>
-        <div class="page-pane" id="rightPane" onclick="turnNext()">
-          <img id="rightImg" src="" alt="Right Page" />
-          <div class="spine-shadow-right"></div>
-        </div>
-      </div>
-      <button class="nav-btn nav-next" onclick="turnNext()">&#10095;</button>
+    <div class="hint-pill">💡 Grab &amp; Drag any page corner with mouse or finger to turn</div>
+    <div class="book-stage">
+      <button class="nav-btn nav-prev" onclick="pageFlip && pageFlip.flipPrev('bottom')">&#10094;</button>
+      <div id="flipbook">${pageItemsHtml}</div>
+      <button class="nav-btn nav-next" onclick="pageFlip && pageFlip.flipNext('bottom')">&#10095;</button>
     </div>
   </main>
 
   <footer>
-    <button class="tool-btn" onclick="turnPrev()">Previous</button>
-    <div class="page-indicator" id="pageIndicator">Loading...</div>
-    <button class="tool-btn" onclick="turnNext()">Next</button>
+    <button class="tool-btn" onclick="pageFlip && pageFlip.flipPrev('bottom')">Previous</button>
+    <div class="page-indicator" id="pageIndicator">Cover (Page 1 of ${pages.length})</div>
+    <button class="tool-btn" onclick="pageFlip && pageFlip.flipNext('bottom')">Next</button>
     <button class="tool-btn" onclick="toggleFullscreen()">Fullscreen</button>
   </footer>
 
+  <script>${engineScript}</script>
   <script>
-    const PAGES = ${pageImagesJson};
-    let currentIdx = 0;
+    let pageFlip = null;
+    const totalPages = ${pages.length};
 
-    function renderPages() {
-      const leftImg = document.getElementById("leftImg");
-      const rightImg = document.getElementById("rightImg");
-      const leftPane = document.getElementById("leftPane");
-      const rightPane = document.getElementById("rightPane");
-      const indicator = document.getElementById("pageIndicator");
+    function initFlipbook() {
+      const bookEl = document.getElementById("flipbook");
+      if (!window.St || !window.St.PageFlip) return;
 
-      if (currentIdx === 0) {
-        leftPane.style.visibility = "hidden";
-        rightPane.style.visibility = "visible";
-        rightImg.src = PAGES[0];
-        indicator.textContent = "Cover (Page 1 of " + PAGES.length + ")";
-      } else {
-        leftPane.style.visibility = "visible";
-        leftImg.src = PAGES[currentIdx] || "";
-        
-        if (currentIdx + 1 < PAGES.length) {
-          rightPane.style.visibility = "visible";
-          rightImg.src = PAGES[currentIdx + 1];
-          indicator.textContent = "Pages " + (currentIdx + 1) + "–" + (currentIdx + 2) + " of " + PAGES.length;
-        } else {
-          rightPane.style.visibility = "hidden";
-          indicator.textContent = "Page " + (currentIdx + 1) + " of " + PAGES.length + " (Back Cover)";
-        }
-      }
-    }
+      pageFlip = new window.St.PageFlip(bookEl, {
+        width: 520,
+        height: 728,
+        size: "stretch",
+        minWidth: 280,
+        maxWidth: 900,
+        minHeight: 380,
+        maxHeight: 1250,
+        maxShadowOpacity: 0.5,
+        showCover: true,
+        showPageCorners: true,
+        useMouseEvents: true,
+        flippingTime: 750,
+        usePortrait: true
+      });
 
-    function turnNext() {
-      const step = currentIdx === 0 ? 1 : 2;
-      if (currentIdx + step < PAGES.length) {
-        currentIdx += step;
-        renderPages();
-      }
-    }
+      pageFlip.loadFromHTML(document.querySelectorAll(".page-pane"));
 
-    function turnPrev() {
-      const step = currentIdx <= 2 ? currentIdx : 2;
-      if (currentIdx > 0) {
-        currentIdx = Math.max(0, currentIdx - step);
-        renderPages();
-      }
+      pageFlip.on("flip", function(e) {
+        const idx = e.data;
+        const ind = document.getElementById("pageIndicator");
+        if (idx === 0) ind.textContent = "Cover (Page 1 of " + totalPages + ")";
+        else if (idx >= totalPages - 1) ind.textContent = "Back Cover (Page " + totalPages + " of " + totalPages + ")";
+        else ind.textContent = "Pages " + (idx + 1) + "–" + Math.min(totalPages, idx + 2) + " of " + totalPages;
+      });
     }
 
     function toggleFullscreen() {
       if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
+        document.documentElement.requestFullscreen().catch(function(){});
       } else {
-        document.exitFullscreen().catch(() => {});
+        document.exitFullscreen().catch(function(){});
       }
     }
 
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowRight" || e.key === " ") turnNext();
-      if (e.key === "ArrowLeft") turnPrev();
+    window.addEventListener("keydown", function(e) {
+      if (e.key === "ArrowRight" || e.key === " ") pageFlip && pageFlip.flipNext("bottom");
+      if (e.key === "ArrowLeft") pageFlip && pageFlip.flipPrev("bottom");
     });
 
-    renderPages();
+    window.addEventListener("DOMContentLoaded", initFlipbook);
   </script>
 </body>
 </html>`;
 
-    const blob = new Blob([htmlContent], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `spellense-${bookStyle}-flipbook.html`;
-    a.click();
-    URL.revokeObjectURL(url);
+      const blob = new Blob([htmlContent], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "spellense-interactive-flipbook.html";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Offline HTML download error:", err);
+      alert("Failed to export offline HTML.");
+    } finally {
+      setIsProcessing(false);
+      setProcessingStatus("");
+    }
   };
 
-  // Generate ZIP Package
+  // Generate ZIP Package with index.html, page-flip.browser.js and images
   const downloadZipPackage = async () => {
     if (pages.length === 0) return;
     setIsProcessing(true);
@@ -823,62 +731,85 @@ export default function FlipbookClient() {
       const zip = new JSZip();
       const pagesFolder = zip.folder("pages");
 
+      // Save each page image
       pages.forEach((p, idx) => {
         const base64Data = p.dataUrl.split(",")[1];
         const pageFileName = `page_${String(idx + 1).padStart(2, "0")}.jpg`;
         pagesFolder?.file(pageFileName, base64Data, { base64: true });
       });
 
-      const pagePaths = pages.map(
-        (_, idx) => `./pages/page_${String(idx + 1).padStart(2, "0")}.jpg`
-      );
+      // Include page-flip.browser.js in zip
+      try {
+        const scriptRes = await fetch("/page-flip.browser.js");
+        if (scriptRes.ok) {
+          const scriptText = await scriptRes.text();
+          zip.file("page-flip.browser.js", scriptText);
+        }
+      } catch {
+        // ignore
+      }
+
+      const pageItemsZipHtml = pages
+        .map((_, idx) => {
+          const pageFileName = `./pages/page_${String(idx + 1).padStart(2, "0")}.jpg`;
+          const isHard = idx === 0 || idx === pages.length - 1;
+          return `
+      <div class="stf__item page-pane" data-density="${isHard ? "hard" : "soft"}">
+        <div class="page-content">
+          <img src="${pageFileName}" alt="Page ${idx + 1}" />
+        </div>
+      </div>`;
+        })
+        .join("");
 
       const zipHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Digital Flipbook — ${bookStyle.toUpperCase()}</title>
+  <title>Offline 3D Digital Flipbook</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0f172a; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; min-height: 100vh; justify-content: space-between; align-items: center; }
-    header { padding: 16px; width: 100%; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+    body { background: #090d16; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; min-height: 100vh; justify-content: space-between; align-items: center; }
+    header { padding: 14px 20px; width: 100%; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; background: #0f172a; }
     main { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; padding: 20px; }
-    .book { display: flex; width: 1000px; height: 700px; max-width: 95vw; max-height: 75vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); border-radius: 8px; overflow: hidden; background: #fff; }
-    .pane { flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; background: #fff; }
-    .pane img { width: 100%; height: 100%; object-fit: contain; }
-    footer { padding: 14px; width: 100%; display: flex; justify-content: center; gap: 14px; align-items: center; border-top: 1px solid #334155; }
+    .book-stage { width: 100%; max-width: 1050px; min-height: 520px; position: relative; }
+    .page-content { width: 100%; height: 100%; background: #fff; display: flex; align-items: center; justify-content: center; }
+    .page-content img { width: 100%; height: 100%; object-fit: contain; }
+    footer { padding: 12px 20px; width: 100%; display: flex; justify-content: center; gap: 14px; align-items: center; border-top: 1px solid #1e293b; background: #0f172a; }
     button { background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     button:hover { background: #1d4ed8; }
   </style>
+  <script src="./page-flip.browser.js"></script>
 </head>
 <body>
   <header>
     <div><strong>Spellense</strong> 3D Flipbook</div>
-    <div>Style: ${bookStyle.toUpperCase()}</div>
+    <div>Offline Web Package</div>
   </header>
   <main>
-    <div class="book">
-      <div class="pane"><img id="left" src="${pagePaths[0]}" /></div>
-      <div class="pane"><img id="right" src="${pagePaths[1] || pagePaths[0]}" /></div>
+    <div class="book-stage">
+      <div id="flipbook">${pageItemsZipHtml}</div>
     </div>
   </main>
   <footer>
-    <button onclick="prev()">Previous</button>
-    <span id="label">Pages 1–2</span>
-    <button onclick="next()">Next</button>
+    <button onclick="pf && pf.flipPrev()">Previous</button>
+    <span id="label">Cover</span>
+    <button onclick="pf && pf.flipNext()">Next</button>
   </footer>
   <script>
-    const pages = ${JSON.stringify(pagePaths)};
-    let cur = 0;
-    function show() {
-      document.getElementById('left').src = pages[cur] || '';
-      document.getElementById('right').src = pages[cur+1] || pages[cur] || '';
-      document.getElementById('label').textContent = 'Pages ' + (cur+1) + '–' + Math.min(pages.length, cur+2) + ' of ' + pages.length;
-    }
-    function next() { if (cur + 2 < pages.length) { cur += 2; show(); } }
-    function prev() { if (cur - 2 >= 0) { cur -= 2; show(); } }
-    show();
+    let pf = null;
+    window.addEventListener("DOMContentLoaded", function() {
+      if (!window.St || !window.St.PageFlip) return;
+      pf = new window.St.PageFlip(document.getElementById("flipbook"), {
+        width: 520, height: 728, size: "stretch",
+        showCover: true, showPageCorners: true, useMouseEvents: true, flippingTime: 750
+      });
+      pf.loadFromHTML(document.querySelectorAll(".page-pane"));
+      pf.on("flip", function(e) {
+        document.getElementById("label").textContent = "Page " + (e.data + 1);
+      });
+    });
   </script>
 </body>
 </html>`;
@@ -889,7 +820,7 @@ export default function FlipbookClient() {
       const url = URL.createObjectURL(zipBlob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `spellense-${bookStyle}-package.zip`;
+      a.download = "spellense-flipbook-web-package.zip";
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -912,24 +843,24 @@ export default function FlipbookClient() {
   // FAQ items data
   const faqs = [
     {
-      q: "What are the different Book Styles available?",
-      a: "Spellense lets you choose between 4 realistic presentation models: (1) Hardcover Book with 3D leather casing, silk bookmark, and stacked page lines; (2) Spiral Notebook with metallic wire-o rings and punched paper holes; (3) Glossy Magazine with saddle-stitched staples and art-paper specular sheen; and (4) Minimalist Deck for sleek digital presentations.",
+      q: "How does the drag-to-turn physics work?",
+      a: "Our flipbook runs on StPageFlip, a zero-dependency real-time 3D physics engine. You can hover over any corner to see the paper peel up, then click and drag across the screen to bend the page dynamically. Releasing with momentum will smoothly flip the page, while letting go early snaps it back.",
     },
     {
       q: "How do visitors view or download the flipbook offline?",
-      a: "You can click 'Download HTML' to receive a single, self-contained HTML file. Anyone can double-click this file on Mac, Windows, iPhone, or Android to open and read your catalog with realistic page turning and zero internet connection required.",
+      a: "Click 'Download HTML' to get a single, 100% self-contained HTML file with embedded high-resolution pages and the 3D physics engine. Double-click the file on Mac, Windows, iOS, or Android to read your catalog offline with realistic draggable page turns and zero internet connection required.",
     },
     {
       q: "Are my confidential PDFs or catalog images uploaded to any server?",
-      a: "No. Spellense operates on a strict zero-storage, in-memory architecture. Your PDF pages and images are rendered directly on your device using WebAssembly and HTML5 Canvas. No document data is ever stored or transmitted to external servers.",
+      a: "No. Spellense operates on a strict zero-storage, in-memory client-side architecture. Your PDF pages and images are rendered directly on your device using WebAssembly and HTML5 Canvas. No document data is ever stored or transmitted to external servers.",
+    },
+    {
+      q: "Can I choose different realistic styles (e.g. leather novel vs tech catalog)?",
+      a: "Yes! Click the 'Templates' button in the toolbar to instantly switch between 4 curated book styles: Classic Hardcover Novel (aged parchment & gold embossing), Luxury Lookbook (architectural editorial), Cyberpunk Tech Specs (dark mode HUD), and Illustrated Storybook.",
     },
     {
       q: "Can I embed the 3D flipbook on my own website or WordPress?",
-      a: "Yes. Click 'Embed' to copy an iframe snippet. You can paste this code into WordPress, Webflow, Squarespace, Shopify, or any HTML webpage to display a responsive interactive flipbook.",
-    },
-    {
-      q: "What file formats can I upload?",
-      a: "You can upload multi-page PDF documents (brochures, magazines, lookbooks, portfolios), or batch upload individual image files in JPG, PNG, or WebP format.",
+      a: "Yes. Click 'Embed Code' to copy an iframe snippet. You can paste this code into WordPress, Webflow, Squarespace, Shopify, or any HTML webpage to display a responsive interactive flipbook.",
     },
   ];
 
@@ -950,57 +881,8 @@ export default function FlipbookClient() {
       {/* WORKSPACE SECTION */}
       <main className="flex-1 mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8 w-full">
         {pages.length === 0 ? (
-          /* EMPTY STATE / UPLOAD DROPZONE */
-          <div className="mx-auto max-w-4xl space-y-8">
-            {/* BOOK STYLE SELECTOR CARDS (PRE-UPLOAD) */}
-            <div>
-              <div className="text-center mb-4">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                  Step 1: Choose Book Presentation Style
-                </span>
-                <h2 className="mt-2 text-lg sm:text-xl font-extrabold text-slate-900">
-                  Select your preferred 3D physical book aesthetic
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {STYLE_OPTIONS.map((style) => {
-                  const isSelected = bookStyle === style.id;
-                  return (
-                    <button
-                      key={style.id}
-                      type="button"
-                      onClick={() => setBookStyle(style.id)}
-                      className={`relative flex flex-col items-start p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-                        isSelected
-                          ? "border-blue-600 bg-white shadow-md shadow-blue-500/10 ring-2 ring-blue-500/20"
-                          : "border-slate-200/90 bg-white/70 hover:bg-white hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex w-full items-center justify-between">
-                        <span className="text-2xl">{style.icon}</span>
-                        <span
-                          className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                            isSelected
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {style.badge}
-                        </span>
-                      </div>
-                      <span className="mt-2 text-sm font-bold text-slate-900">
-                        {style.name}
-                      </span>
-                      <p className="mt-1 text-xs text-slate-500 leading-normal line-clamp-2">
-                        {style.description}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
+          /* EMPTY STATE / UPLOAD DROPZONE + TEMPLATES SHOWCASE */
+          <div className="mx-auto max-w-4xl space-y-10">
             {/* DROPZONE */}
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -1046,51 +928,21 @@ export default function FlipbookClient() {
                 Upload Multi-Page PDF or Images
               </h2>
               <p className="mt-2 text-sm text-slate-500 max-w-md">
-                Drop your brochure, catalog, or portfolio here to generate a{" "}
-                <strong className="text-slate-800">
-                  {STYLE_OPTIONS.find((s) => s.id === bookStyle)?.name}
-                </strong>{" "}
-                with zero server storage.
+                Drop your brochure, catalog, or portfolio here. Convert it into a realistic draggable
+                3D flipbook with zero server storage.
               </p>
 
               <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50/70 px-3 py-1 text-xs font-semibold text-blue-700">
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                   Multi-Page PDF
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50/70 px-3 py-1 text-xs font-semibold text-blue-700">
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                   JPG, PNG &amp; WebP
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50/70 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                   100% In-Browser Private
                 </span>
               </div>
@@ -1109,28 +961,69 @@ export default function FlipbookClient() {
               </div>
             </div>
 
-            {/* DEMO BUTTON PROMPT */}
-            <div className="mt-6 text-center">
-              <span className="text-xs text-slate-500">
-                Don&apos;t have a PDF ready?{" "}
-              </span>
-              <button
-                type="button"
-                onClick={() => loadDemoFlipbook(bookStyle)}
-                className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 underline underline-offset-4 cursor-pointer"
-              >
-                <span>
-                  Preview Sample as {STYLE_OPTIONS.find((s) => s.id === bookStyle)?.name}
-                </span>
-                <span>&rarr;</span>
-              </button>
+            {/* CURATED TEMPLATES SHOWCASE */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 sm:text-lg">
+                    Or Try a Realistic Preset Template
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Explore different physical book styles with real corner-drag page physics:
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {TEMPLATES.map((tmpl) => (
+                  <div
+                    key={tmpl.id}
+                    onClick={() => loadTemplate(tmpl.id)}
+                    className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer overflow-hidden"
+                  >
+                    {/* Top gradient preview banner */}
+                    <div
+                      className={`h-24 -mx-5 -mt-5 mb-4 bg-gradient-to-br ${tmpl.bgGradient} flex items-center justify-center p-3 text-center relative overflow-hidden`}
+                    >
+                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:12px_12px]" />
+                      <span className="text-xs font-black tracking-widest uppercase text-white drop-shadow-md">
+                        {tmpl.name}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
+                          {tmpl.name}
+                        </span>
+                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                          {tmpl.badge}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-3">
+                        {tmpl.desc}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-slate-400">
+                        {tmpl.malName}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 group-hover:translate-x-0.5 transition">
+                        <span>Open</span>
+                        <span>&rarr;</span>
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
-          /* ACTIVE FLIPBOOK WORKSPACE */
-          <div ref={containerRef} className="space-y-4">
-            {/* TOP TOOLBAR WITH STYLE SELECTOR */}
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/90 p-3 shadow-xs backdrop-blur-md">
+          /* ACTIVE 3D FLIPBOOK WORKSPACE */
+          <div ref={stageWrapperRef} className="space-y-4">
+            {/* TOP TOOLBAR */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/95 p-3 shadow-xs backdrop-blur-md">
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
@@ -1140,58 +1033,21 @@ export default function FlipbookClient() {
                   }}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 cursor-pointer"
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M19 12H5M12 19l-7-7 7-7" />
-                  </svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                   <span>New File</span>
                 </button>
 
                 <div className="h-4 w-px bg-slate-200" />
 
-                {/* LIVE BOOK STYLE SWITCHER */}
-                <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl">
-                  {STYLE_OPTIONS.map((style) => {
-                    const isSelected = bookStyle === style.id;
-                    return (
-                      <button
-                        key={style.id}
-                        type="button"
-                        onClick={() => setBookStyle(style.id)}
-                        className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
-                          isSelected
-                            ? "bg-white text-blue-700 shadow-xs"
-                            : "text-slate-600 hover:text-slate-900"
-                        }`}
-                        title={style.description}
-                      >
-                        <span>{style.icon}</span>
-                        <span className="hidden sm:inline">{style.name.split(" ")[0]}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="h-4 w-px bg-slate-200" />
-
-                {/* Double / Single Page Toggle */}
+                {/* Templates Selector */}
                 <button
                   type="button"
-                  onClick={() => setIsDoublePage(!isDoublePage)}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
-                    isDoublePage
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
-                      : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
-                  }`}
-                  title="Toggle 2-page spread or single-page view"
+                  onClick={() => setShowTemplateModal(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 cursor-pointer"
+                  title="Switch Book Styles"
                 >
-                  <span>{isDoublePage ? "Spread Mode" : "Single Page"}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+                  <span>Templates</span>
                 </button>
 
                 {/* Sound Toggle */}
@@ -1203,20 +1059,9 @@ export default function FlipbookClient() {
                       ? "bg-slate-100 text-slate-800"
                       : "bg-white text-slate-400 border border-slate-200"
                   }`}
-                  title={
-                    soundEnabled
-                      ? "Mute paper flip sound"
-                      : "Enable paper flip sound"
-                  }
+                  title={soundEnabled ? "Mute paper flip sound" : "Enable paper flip sound"}
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     {soundEnabled ? (
                       <>
                         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
@@ -1243,30 +1088,19 @@ export default function FlipbookClient() {
                       : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                   }`}
                 >
-                  <span>{isAutoPlaying ? "Auto On" : "Auto-Play"}</span>
+                  <span>{isAutoPlaying ? "Auto-Play On" : "Auto-Play"}</span>
                 </button>
               </div>
 
               {/* DOWNLOAD & EMBED ACTIONS */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={downloadStandaloneHtml}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 active:scale-95 cursor-pointer"
-                  title="Download standalone single-file HTML that opens offline in any browser"
+                  title="Download standalone single-file HTML that opens offline in any browser with full draggable 3D turning"
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   <span>Download HTML</span>
                 </button>
 
@@ -1293,278 +1127,77 @@ export default function FlipbookClient() {
                   className="inline-flex items-center justify-center h-8 w-8 rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 cursor-pointer"
                   title="Fullscreen"
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-                  </svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                 </button>
               </div>
             </div>
 
-            {/* 3D FLIPBOOK STAGE WITH DYNAMIC BOOK STYLES */}
-            <div className="relative flex min-h-[520px] sm:min-h-[620px] lg:min-h-[680px] w-full items-center justify-center rounded-3xl border border-slate-200/90 bg-slate-900 p-4 sm:p-8 shadow-2xl overflow-hidden select-none">
+            {/* INTERACTIVE DRAG HINT PILL */}
+            <div className="flex items-center justify-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/90 px-4 py-1.5 text-xs font-semibold text-blue-800 shadow-2xs backdrop-blur-sm animate-pulse-glow">
+                <span>💡</span>
+                <span>
+                  <strong>Drag Corners to Turn:</strong> Hover near any corner and drag with mouse or finger to peel pages realistically!
+                </span>
+              </div>
+            </div>
+
+            {/* 3D FLIPBOOK STAGE (Holds the StPageFlip physics canvas) */}
+            <div className="relative flex min-h-[560px] sm:min-h-[660px] lg:min-h-[720px] w-full items-center justify-center rounded-3xl border border-slate-200/90 bg-slate-900 p-4 sm:p-8 shadow-2xl overflow-hidden select-none">
               {/* Previous Nav Arrow */}
               <button
                 type="button"
                 onClick={turnPrev}
-                disabled={currentPage === 0 || isFlipping}
-                className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-slate-800/80 text-white shadow-lg backdrop-blur-md transition hover:bg-blue-600 hover:scale-110 active:scale-95 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                disabled={currentPage === 0}
+                className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-slate-800/80 text-white shadow-lg backdrop-blur-md transition hover:bg-blue-600 hover:scale-110 active:scale-95 disabled:opacity-25 disabled:pointer-events-none cursor-pointer"
                 aria-label="Previous page"
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
               </button>
 
-              {/* BOOK SPREAD CONTAINER */}
+              {/* BOOK HOLDER CONTAINER (StPageFlip mounts here) */}
               <div
-                className="relative flex items-center justify-center transition-transform duration-300"
-                style={{
-                  transform: `scale(${zoomLevel})`,
-                  perspective: "2600px",
-                }}
+                className="relative flex items-center justify-center w-full transition-transform duration-300"
+                style={{ transform: `scale(${zoomLevel})` }}
               >
-                {/* OUTER PHYSICAL BOOK CASING ACCORDING TO STYLE */}
                 <div
-                  className={`relative transition-all duration-300 ${
-                    bookStyle === "hardcover"
-                      ? "p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-[#2a1b12] via-[#1c120c] to-[#120a06] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.95)] ring-1 ring-white/10"
-                      : bookStyle === "spiral"
-                      ? "p-2.5 sm:p-3 rounded-xl bg-[#c2a688] shadow-[0_30px_60px_-12px_rgba(0,0,0,0.85)] ring-1 ring-black/20"
-                      : bookStyle === "magazine"
-                      ? "p-1.5 sm:p-2 rounded-lg bg-slate-950 shadow-[0_30px_60px_-12px_rgba(0,0,0,0.8)]"
-                      : "p-0 rounded-lg shadow-2xl"
-                  }`}
-                >
-                  {/* HARDCOVER SILK RIBBON BOOKMARK */}
-                  {bookStyle === "hardcover" && (
-                    <div
-                      className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 w-3.5 h-44 z-30 bg-gradient-to-b from-rose-800 to-rose-600 shadow-md rounded-b-xs transform rotate-2"
-                      style={{
-                        clipPath:
-                          "polygon(0 0, 100% 0, 100% 100%, 50% 88%, 0 100%)",
-                      }}
-                    />
-                  )}
-
-                  {/* HARDCOVER STACKED PAPER EDGE THICKNESS ON LEFT & RIGHT */}
-                  {bookStyle === "hardcover" && (
-                    <>
-                      <div
-                        className="pointer-events-none absolute -left-2.5 top-3.5 bottom-3.5 w-2.5 rounded-l-xs shadow-md border-y border-l border-slate-400/50"
-                        style={{
-                          backgroundImage:
-                            "repeating-linear-gradient(to bottom, #f1f5f9 0, #f1f5f9 1.5px, #94a3b8 1.5px, #94a3b8 3px)",
-                        }}
-                      />
-                      <div
-                        className="pointer-events-none absolute -right-2.5 top-3.5 bottom-3.5 w-2.5 rounded-r-xs shadow-md border-y border-r border-slate-400/50"
-                        style={{
-                          backgroundImage:
-                            "repeating-linear-gradient(to bottom, #f1f5f9 0, #f1f5f9 1.5px, #94a3b8 1.5px, #94a3b8 3px)",
-                        }}
-                      />
-                    </>
-                  )}
-
-                  {/* SPREAD PAPER BODY */}
-                  {isDoublePage ? (
-                    /* 2-PAGE SPREAD */
-                    <div className="relative flex h-[440px] sm:h-[540px] lg:h-[600px] shadow-2xl rounded-lg overflow-hidden bg-white">
-                      {/* SPIRAL NOTEBOOK: METALLIC WIRE RINGS DOWN CENTER GUTTER */}
-                      {bookStyle === "spiral" && (
-                        <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-8 z-30 flex flex-col justify-between py-4">
-                          {Array.from({ length: 14 }).map((_, i) => (
-                            <div
-                              key={i}
-                              className="relative flex items-center justify-center h-5 w-8"
-                            >
-                              {/* Left punched hole */}
-                              <div className="absolute -left-2 w-2 h-2.5 rounded-full bg-slate-900 shadow-inner" />
-                              {/* Right punched hole */}
-                              <div className="absolute -right-2 w-2 h-2.5 rounded-full bg-slate-900 shadow-inner" />
-                              {/* Metallic Wire Loop */}
-                              <div
-                                className="w-7 h-2.5 rounded-full border border-slate-400 shadow-md transform -rotate-12"
-                                style={{
-                                  background:
-                                    "linear-gradient(135deg, #cbd5e1 0%, #ffffff 40%, #94a3b8 70%, #475569 100%)",
-                                  boxShadow:
-                                    "0 2px 4px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.9)",
-                                }}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* MAGAZINE: METALLIC STAPLE PINS DOWN CENTER CREASE */}
-                      {bookStyle === "magazine" && (
-                        <>
-                          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[20%] w-1.5 h-8 rounded-xs bg-gradient-to-r from-slate-400 via-slate-100 to-slate-500 shadow-md z-30 border border-slate-600/30" />
-                          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-[20%] w-1.5 h-8 rounded-xs bg-gradient-to-r from-slate-400 via-slate-100 to-slate-500 shadow-md z-30 border border-slate-600/30" />
-                        </>
-                      )}
-
-                      {/* MAGAZINE: GLOSSY SPECULAR LIGHT SHEEN */}
-                      {bookStyle === "magazine" && (
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-80 z-20" />
-                      )}
-
-                      {/* LEFT PAGE */}
-                      <div
-                        onClick={turnPrev}
-                        className="relative w-[280px] sm:w-[380px] lg:w-[440px] h-full bg-white flex items-center justify-center overflow-hidden cursor-pointer group"
-                      >
-                        {currentPage === 0 ? (
-                          /* Cover mode: left side is inner spine */
-                          <div className="w-full h-full bg-slate-800 flex items-center justify-center text-slate-500 text-xs font-bold uppercase tracking-wider">
-                            Book Cover Closed
-                          </div>
-                        ) : (
-                          pages[currentPage] && (
-                            <img
-                              src={pages[currentPage].dataUrl}
-                              alt={`Page ${currentPage + 1}`}
-                              className="h-full w-full object-contain pointer-events-none"
-                            />
-                          )
-                        )}
-
-                        {/* Spine shadow on left page */}
-                        <div
-                          className={`pointer-events-none absolute right-0 top-0 bottom-0 z-10 ${
-                            bookStyle === "hardcover"
-                              ? "w-12 bg-gradient-to-l from-black/40 via-black/15 to-transparent"
-                              : bookStyle === "spiral"
-                              ? "w-8 bg-gradient-to-l from-black/20 to-transparent"
-                              : "w-6 bg-gradient-to-l from-black/25 to-transparent"
-                          }`}
-                        />
-
-                        {/* Subtle hover page-curl indicator */}
-                        <div className="pointer-events-none absolute left-0 bottom-0 h-10 w-10 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-tr from-blue-500/20 to-transparent" />
-                      </div>
-
-                      {/* RIGHT PAGE */}
-                      <div
-                        onClick={turnNext}
-                        className="relative w-[280px] sm:w-[380px] lg:w-[440px] h-full bg-white flex items-center justify-center overflow-hidden cursor-pointer group"
-                      >
-                        {currentPage === 0 ? (
-                          /* Cover page */
-                          pages[0] && (
-                            <img
-                              src={pages[0].dataUrl}
-                              alt="Front Cover"
-                              className="h-full w-full object-contain pointer-events-none"
-                            />
-                          )
-                        ) : currentPage + 1 < pages.length ? (
-                          <img
-                            src={pages[currentPage + 1].dataUrl}
-                            alt={`Page ${currentPage + 2}`}
-                            className="h-full w-full object-contain pointer-events-none"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold">
-                            End of Document
-                          </div>
-                        )}
-
-                        {/* Spine shadow on right page */}
-                        <div
-                          className={`pointer-events-none absolute left-0 top-0 bottom-0 z-10 ${
-                            bookStyle === "hardcover"
-                              ? "w-12 bg-gradient-to-r from-black/40 via-black/15 to-transparent"
-                              : bookStyle === "spiral"
-                              ? "w-8 bg-gradient-to-r from-black/20 to-transparent"
-                              : "w-6 bg-gradient-to-r from-black/25 to-transparent"
-                          }`}
-                        />
-
-                        {/* Subtle hover page-curl indicator */}
-                        <div className="pointer-events-none absolute right-0 bottom-0 h-10 w-10 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-tl from-blue-500/20 to-transparent" />
-                      </div>
-                    </div>
-                  ) : (
-                    /* SINGLE PAGE MODE (Mobile / Portrait) */
-                    <div
-                      onClick={turnNext}
-                      className="h-[440px] sm:h-[560px] w-[320px] sm:w-[420px] shadow-2xl rounded-lg overflow-hidden bg-white cursor-pointer relative"
-                    >
-                      {pages[currentPage] && (
-                        <img
-                          src={pages[currentPage].dataUrl}
-                          alt={`Page ${currentPage + 1}`}
-                          className="h-full w-full object-contain pointer-events-none"
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
+                  ref={bookHolderRef}
+                  className="w-full flex items-center justify-center max-w-[1080px]"
+                />
               </div>
 
               {/* Next Nav Arrow */}
               <button
                 type="button"
                 onClick={turnNext}
-                disabled={currentPage >= pages.length - 1 || isFlipping}
-                className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-slate-800/80 text-white shadow-lg backdrop-blur-md transition hover:bg-blue-600 hover:scale-110 active:scale-95 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                disabled={currentPage >= pages.length - 1}
+                className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-slate-800/80 text-white shadow-lg backdrop-blur-md transition hover:bg-blue-600 hover:scale-110 active:scale-95 disabled:opacity-25 disabled:pointer-events-none cursor-pointer"
                 aria-label="Next page"
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
             </div>
 
             {/* BOTTOM CONTROLS & THUMBNAILS STRIP */}
             <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-xs backdrop-blur-md space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-800">
-                    {currentPage === 0
-                      ? `Cover (Page 1 of ${pages.length})`
-                      : isDoublePage
-                      ? `Pages ${currentPage + 1}–${Math.min(
-                          pages.length,
-                          currentPage + 2
-                        )} of ${pages.length}`
-                      : `Page ${currentPage + 1} of ${pages.length}`}
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                    {STYLE_OPTIONS.find((s) => s.id === bookStyle)?.name}
-                  </span>
+                <div className="text-xs font-bold text-slate-800">
+                  {currentPage === 0
+                    ? `Front Cover (Page 1 of ${pages.length})`
+                    : currentPage >= pages.length - 1
+                    ? `Back Cover (Page ${pages.length} of ${pages.length})`
+                    : orientationMode === "portrait"
+                    ? `Page ${currentPage + 1} of ${pages.length}`
+                    : `Pages ${currentPage + 1}–${Math.min(pages.length, currentPage + 2)} of ${pages.length}`}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setZoomLevel((z) => (z === 1 ? 1.25 : 1))}
+                    onClick={() => setZoomLevel((z) => (z === 1 ? 1.2 : 1))}
                     className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
                   >
-                    {zoomLevel === 1 ? "Zoom 125%" : "Zoom 100%"}
+                    {zoomLevel === 1 ? "Zoom 120%" : "Zoom 100%"}
                   </button>
 
                   <button
@@ -1583,14 +1216,14 @@ export default function FlipbookClient() {
                   {pages.map((p, idx) => {
                     const isSelected =
                       currentPage === idx ||
-                      (isDoublePage &&
-                        currentPage + 1 === idx &&
-                        currentPage !== 0);
+                      (orientationMode === "landscape" &&
+                        currentPage !== 0 &&
+                        currentPage + 1 === idx);
                     return (
                       <button
                         key={p.id}
                         type="button"
-                        onClick={() => setCurrentPage(idx)}
+                        onClick={() => goToPage(idx)}
                         className={`relative h-20 w-16 shrink-0 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
                           isSelected
                             ? "border-blue-600 ring-2 ring-blue-500/30 scale-105"
@@ -1614,15 +1247,61 @@ export default function FlipbookClient() {
           </div>
         )}
 
+        {/* TEMPLATE PICKER MODAL */}
+        {showTemplateModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+            <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">Choose Flipbook Style</h3>
+                  <p className="text-xs text-slate-500">
+                    Switch between different realistic book designs:
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTemplateModal(false)}
+                  className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                {TEMPLATES.map((tmpl) => (
+                  <div
+                    key={tmpl.id}
+                    onClick={() => loadTemplate(tmpl.id)}
+                    className={`rounded-2xl border p-4 cursor-pointer transition hover:border-blue-400 hover:shadow-md ${
+                      activeTemplate === tmpl.id
+                        ? "border-blue-600 bg-blue-50/40 ring-2 ring-blue-500/20"
+                        : "border-slate-200 bg-white"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-slate-900">{tmpl.name}</span>
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                        {tmpl.badge}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 line-clamp-2">{tmpl.desc}</p>
+                    <div className="mt-2 text-[10px] font-semibold text-slate-400">
+                      {tmpl.malName}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* LOADING OVERLAY */}
         {isProcessing && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
             <div className="flex flex-col items-center gap-4 rounded-3xl bg-white p-8 text-center shadow-2xl max-w-sm mx-4">
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
               <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Processing Flipbook
-                </h3>
+                <h3 className="text-base font-bold text-slate-900">Processing Flipbook</h3>
                 <p className="mt-1 text-xs text-slate-500">{processingStatus}</p>
               </div>
             </div>
@@ -1634,31 +1313,18 @@ export default function FlipbookClient() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
             <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="text-base font-bold text-slate-900">
-                  Embed 3D Flipbook on Website
-                </h3>
+                <h3 className="text-base font-bold text-slate-900">Embed 3D Flipbook on Website</h3>
                 <button
                   type="button"
                   onClick={() => setShowEmbedModal(false)}
                   className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                 >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
 
               <p className="mt-3 text-xs text-slate-600 leading-relaxed">
-                Copy and paste this HTML code directly into your WordPress post,
-                Webflow embed, Squarespace block, or custom website:
+                Copy and paste this HTML code directly into your WordPress post, Webflow embed, Squarespace block, or custom website:
               </p>
 
               <div className="mt-3 relative rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-[11px] text-slate-800 break-all">
@@ -1693,12 +1359,10 @@ export default function FlipbookClient() {
                 Pre-Flight QA &amp; Compression
               </span>
               <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
-                Want to reduce your catalog file size or check for hidden typos?
+                Want to reduce catalog size or check for hidden typos?
               </h3>
               <p className="mt-1.5 text-xs sm:text-sm text-slate-600 max-w-xl">
-                Run your pages through our Image Compressor to reduce size by up
-                to 90%, or use Visual Spellchecker to catch mistakes before
-                publishing.
+                Run your pages through our Image Compressor to reduce size by up to 90%, or use Visual Spellchecker to catch mistakes before publishing.
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2.5 shrink-0">
@@ -1727,8 +1391,7 @@ export default function FlipbookClient() {
               Frequently Asked Questions
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-slate-500">
-              Everything you need to know about creating, sharing, and downloading
-              3D digital flipbooks.
+              Everything you need to know about creating, sharing, and downloading 3D digital flipbooks.
             </p>
           </div>
 
@@ -1751,16 +1414,7 @@ export default function FlipbookClient() {
                         isOpen ? "rotate-180 text-blue-600" : "text-slate-400"
                       }`}
                     >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                     </span>
                   </button>
 
@@ -1784,29 +1438,16 @@ export default function FlipbookClient() {
               Spel<span className="text-blue-600">lense</span>
             </div>
             <p className="mt-1 text-xs text-slate-400">
-              100% Free In-Browser 3D Flipbook Maker &amp; Visual Design
-              Pre-Flight QA.
+              100% Free In-Browser 3D Flipbook Maker &amp; Visual Design Pre-Flight QA.
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-500">
-            <Link href="/" className="hover:text-slate-900">
-              Spell Checker
-            </Link>
-            <Link href="/design-check" className="hover:text-slate-900">
-              Design Check
-            </Link>
-            <Link href="/image-compressor" className="hover:text-slate-900">
-              Compressor
-            </Link>
-            <Link href="/image-to-text" className="hover:text-slate-900">
-              Image to Text
-            </Link>
-            <Link href="/privacy" className="hover:text-slate-900">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-slate-900">
-              Terms
-            </Link>
+            <Link href="/" className="hover:text-slate-900">Spell Checker</Link>
+            <Link href="/design-check" className="hover:text-slate-900">Design Check</Link>
+            <Link href="/image-compressor" className="hover:text-slate-900">Compressor</Link>
+            <Link href="/image-to-text" className="hover:text-slate-900">Image to Text</Link>
+            <Link href="/privacy" className="hover:text-slate-900">Privacy</Link>
+            <Link href="/terms" className="hover:text-slate-900">Terms</Link>
           </div>
         </div>
       </footer>
