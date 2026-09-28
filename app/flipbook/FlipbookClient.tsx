@@ -7,33 +7,34 @@ import Link from "next/link";
 
 // ── Viewer CSS (embedded in preview AND in every downloaded standalone flipbook) ──
 const VCSS = `
-.fbv{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 20px;border-radius:24px;overflow:hidden;min-height:320px;box-sizing:border-box;font-family:inherit}
+.fbv{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 24px;border-radius:28px;overflow:hidden;min-height:360px;box-sizing:border-box;font-family:inherit;transition:background .3s}
 .fbv.full{border-radius:0;min-height:100vh;justify-content:center}
 .fbv .ov{position:absolute;inset:0;pointer-events:none}
 .fbh{display:flex;justify-content:space-between;align-items:center;width:100%;gap:16px;z-index:2}
 .fbh.rv{flex-direction:row-reverse}.fbh.rv p{text-align:left}
-.fbh img{max-height:48px;max-width:40%;object-fit:contain}
-.fbh p{margin:0;font-size:.875rem;line-height:1.45;text-align:right;max-width:56%;white-space:pre-line;font-weight:500}
-.stage{position:relative;width:100%;display:flex;overflow-x:auto;touch-action:pan-y;z-index:2}
-.bk{position:relative;margin:auto;perspective:2400px;transition:transform .5s}
-.bd{position:absolute;z-index:0}
+.fbh img{max-height:48px;max-width:38%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.15))}
+.fbh p{margin:0;font-size:.875rem;line-height:1.45;text-align:right;max-width:58%;white-space:pre-line;font-weight:600;letter-spacing:-.01em}
+.stage{position:relative;width:100%;display:flex;overflow-x:auto;touch-action:pan-y;z-index:2;padding:12px 0}
+.bk{position:relative;margin:auto;perspective:2600px;transition:transform .5s cubic-bezier(.25,1,.5,1);cursor:grab}
+.bk:active{cursor:grabbing}
+.bd{position:absolute;z-index:0;transition:all .3s}
 .lf{position:absolute;top:0;left:50%;transform-origin:left center;transform-style:preserve-3d;transition:transform var(--sp) cubic-bezier(.45,.05,.25,1)}
-.fc{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;background:#fff}
+.fc{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
 .fc.f{border-radius:0 var(--pr) var(--pr) 0}.fc.b{transform:rotateY(180deg);border-radius:var(--pr) 0 0 var(--pr)}
-.fc img{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;filter:var(--pf)}
+.fc img{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;filter:var(--pf);object-fit:fill}
 .fc::after{content:"";position:absolute;inset:0;pointer-events:none}
-.fc.f::after{background:linear-gradient(90deg,rgba(0,0,0,.28),transparent 10%)}
-.fc.b::after{background:linear-gradient(270deg,rgba(0,0,0,.28),transparent 10%)}
+.fc.f::after{background:linear-gradient(90deg,rgba(0,0,0,.22),transparent 12%)}
+.fc.b::after{background:linear-gradient(270deg,rgba(0,0,0,.22),transparent 12%)}
 .sp{position:absolute;left:50%;top:0;bottom:0;width:22px;transform:translateX(-50%);z-index:9999;pointer-events:none;background:radial-gradient(circle,#111 0 3px,#c8c8c8 3.5px 5.5px,transparent 6px) 0 0/22px 20px repeat-y}
-.sp.rg{width:30px;background:radial-gradient(circle,#333 0 4px,#e5e7eb 5px 8px,transparent 9px) 0 0/30px 60px repeat-y}
-.sp.st{width:0;border-left:2px dashed rgba(255,255,255,.6)}
-.ct{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;z-index:2;background:rgba(15,23,42,.75);padding:8px 14px;border-radius:999px;color:#fff;backdrop-filter:blur(12px);box-shadow:0 10px 25px -5px rgba(0,0,0,.3)}
-.ct button{all:unset;cursor:pointer;min-width:36px;height:36px;text-align:center;line-height:36px;border-radius:50%;font-size:1.1rem;transition:all .15s}
-.ct button:hover,.ct button:focus-visible{background:rgba(255,255,255,.2);transform:scale(1.05)}
-.ct .pg{font-size:.875rem;min-width:70px;text-align:center;font-weight:600;letter-spacing:-.01em}
-.th{display:flex;gap:8px;overflow-x:auto;width:100%;padding:8px 4px;z-index:2}.th[hidden]{display:none}
-.th img{height:68px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:all .15s}.th img:hover{border-color:#3b82f6;transform:scale(1.05)}
-.cr{z-index:2;font-size:.75rem;color:inherit;opacity:.75;font-weight:500;text-decoration:none}
+.sp.rg{width:32px;background:radial-gradient(circle,#333 0 4px,#e5e7eb 5px 8px,transparent 9px) 0 0/32px 60px repeat-y}
+.sp.st{width:0;border-left:2px dashed rgba(255,255,255,.65)}
+.ct{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;z-index:2;background:rgba(15,23,42,.85);padding:6px 12px;border-radius:999px;color:#fff;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 30px -5px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15)}
+.ct button{all:unset;cursor:pointer;width:34px;height:34px;text-align:center;line-height:34px;border-radius:50%;font-size:1.05rem;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.ct button:hover,.ct button:focus-visible{background:rgba(255,255,255,.2);transform:scale(1.08)}
+.ct .pg{font-size:.8125rem;min-width:76px;text-align:center;font-weight:700;letter-spacing:-.01em;padding:0 4px}
+.th{display:flex;gap:10px;overflow-x:auto;width:100%;padding:10px 4px;z-index:2;scrollbar-width:thin}.th[hidden]{display:none!important}
+.th img{height:72px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .18s;box-shadow:0 4px 10px rgba(0,0,0,.15)}.th img:hover{border-color:#3b82f6;transform:scale(1.06)}
+.cr{z-index:2;font-size:.75rem;color:inherit;opacity:.75;font-weight:600;text-decoration:none;transition:opacity .15s}
 .cr:hover{opacity:1;text-decoration:underline}
 @media (prefers-reduced-motion:reduce){.lf,.bk{transition-duration:.01s!important}}
 `;
@@ -46,63 +47,69 @@ const APP_CSS = `
 }
 #ed {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) 370px;
   gap: 24px;
   align-items: start;
 }
 .fpn {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 24px;
-  padding: 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 28px;
+  padding: 18px;
   position: sticky;
   top: 24px;
-  box-shadow: 0 10px 25px -5px rgba(15,23,42,.04);
+  box-shadow: 0 20px 45px -15px rgba(15,23,42,.07), 0 0 1px rgba(15,23,42,.08);
 }
 .ftb {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  margin-bottom: 14px;
-  padding-bottom: 4px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 16px;
 }
 .ftb button {
-  flex: 0 0 auto;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #475569;
-  padding: 8px 14px;
-  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748b;
+  padding: 8px 4px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: .8125rem;
+  font-size: .75rem;
   font-weight: 700;
-  transition: all .15s;
+  text-align: center;
+  transition: all .15s ease;
+  white-space: nowrap;
 }
 .ftb button:hover {
-  background: #f1f5f9;
   color: #0f172a;
+  background: rgba(255,255,255,.6);
 }
 .ftb .fon {
-  background: #2563eb;
-  color: #ffffff;
-  border-color: #2563eb;
-  box-shadow: 0 4px 12px rgba(37,99,235,.25);
+  background: #ffffff !important;
+  color: #2563eb !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgba(15,23,42,.07) !important;
+  font-weight: 800 !important;
 }
 .ftp {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-height: 58vh;
+  gap: 14px;
+  max-height: 60vh;
   overflow-y: auto;
   padding-right: 4px;
+  scrollbar-width: thin;
 }
 .ftp[hidden] {
-  display: none;
+  display: none !important;
 }
 .ftp label {
   font-size: .8125rem;
   font-weight: 700;
-  color: #334155;
+  color: #1e293b;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -113,47 +120,87 @@ const APP_CSS = `
   gap: 10px;
   font-weight: 600;
   cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  transition: background .15s;
+}
+.ftp label.fck:hover {
+  background: #f1f5f9;
+}
+.ftp label.fck input[type=checkbox] {
+  width: 17px;
+  height: 17px;
+  accent-color: #2563eb;
+  cursor: pointer;
 }
 .ftg {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 10px;
 }
 .ftc {
   border: 1.5px solid #e2e8f0;
   background: #ffffff;
-  border-radius: 14px;
-  padding: 8px;
+  border-radius: 18px;
+  padding: 10px;
   cursor: pointer;
   font-size: .75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1e293b;
   text-align: left;
-  transition: all .15s;
+  transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(15,23,42,.03);
 }
 .ftc:hover {
   border-color: #93c5fd;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px -5px rgba(37,99,235,.15);
 }
 .ftc i {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 56px;
+  height: 66px;
   padding: 6px;
-  border-radius: 8px;
-  margin-bottom: 6px;
+  border-radius: 12px;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+  overflow: hidden;
 }
 .ftc i img {
-  height: 100%;
-  border-radius: 3px;
-  box-shadow: 0 4px 10px rgba(0,0,0,.25);
+  height: 90%;
+  border-radius: 4px;
+  box-shadow: 0 6px 14px rgba(0,0,0,.3);
 }
 .ftc.fon {
-  border-color: #2563eb;
-  background: #eff6ff;
-  color: #1d4ed8;
-  box-shadow: 0 0 0 2px #2563eb;
+  border-color: #2563eb !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  box-shadow: 0 0 0 2px #2563eb, 0 10px 24px -5px rgba(37,99,235,.22) !important;
+}
+.ftc.fon::after {
+  content: "✓";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  background: #2563eb;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 900;
+  box-shadow: 0 2px 6px rgba(37,99,235,.4);
 }
 .fpl {
   display: flex;
@@ -161,22 +208,23 @@ const APP_CSS = `
   gap: 8px;
 }
 .fpl button {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px #cbd5e1;
+  box-shadow: 0 0 0 1.5px #cbd5e1;
   cursor: pointer;
-  transition: transform .15s;
+  transition: transform .18s, box-shadow .18s;
 }
 .fpl button:hover {
-  transform: scale(1.1);
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px #2563eb;
 }
 .ftp input[type=color] {
   appearance: none;
   border: 0;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   border-radius: 50%;
   cursor: pointer;
@@ -185,17 +233,18 @@ const APP_CSS = `
 .ftp input[type=color]::-webkit-color-swatch {
   border-radius: 50%;
   border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px #cbd5e1;
+  box-shadow: 0 0 0 1.5px #cbd5e1;
 }
 .ftp textarea, .ftp select {
   font: inherit;
-  font-size: .875rem;
+  font-size: .8125rem;
   padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 14px;
   width: 100%;
   background: #ffffff;
   color: #0f172a;
+  transition: border-color .15s, box-shadow .15s;
 }
 .ftp textarea:focus, .ftp select:focus {
   outline: none;
@@ -206,13 +255,13 @@ const APP_CSS = `
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #cbd5e1;
+  border: 1.5px solid #cbd5e1;
   background: #ffffff;
   color: #1e293b;
   padding: 9px 16px;
   border-radius: 14px;
   cursor: pointer;
-  font-size: .875rem;
+  font-size: .8125rem;
   font-weight: 700;
   transition: all .15s;
 }
@@ -224,19 +273,19 @@ const APP_CSS = `
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(to right, #2563eb, #4f46e5);
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
   color: #ffffff;
   border: 0;
-  font-size: .9375rem;
+  font-size: .875rem;
   font-weight: 700;
-  padding: 11px 22px;
+  padding: 10px 20px;
   border-radius: 14px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(37,99,235,.25);
-  transition: all .15s;
+  box-shadow: 0 6px 16px rgba(37,99,235,.28);
+  transition: all .18s;
 }
 .fcta:hover {
-  box-shadow: 0 6px 20px rgba(37,99,235,.35);
+  box-shadow: 0 8px 22px rgba(37,99,235,.38);
   transform: translateY(-1px);
 }
 .fsm {
@@ -258,24 +307,25 @@ const APP_CSS = `
   color: #0f172a;
 }
 #ex {
-  margin-top: 20px;
+  margin-top: 24px;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
 }
 #emb {
   display: block;
   background: #0f172a;
-  color: #e2e8f0;
-  padding: 12px;
-  border-radius: 12px;
+  color: #93c5fd;
+  padding: 12px 14px;
+  border-radius: 14px;
   font-size: .8125rem;
-  font-family: ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   word-break: break-all;
   margin-top: 10px;
+  border: 1px solid #1e293b;
 }
-@media (max-width: 860px) {
+@media (max-width: 900px) {
   #ed {
     grid-template-columns: 1fr;
   }
@@ -348,12 +398,16 @@ export default function FlipbookClient() {
 
       <main className="flex-1">
         {/* HERO SECTION — Uniform Spellense tool hero banner */}
-        <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
+        <section className="relative overflow-hidden px-4 pt-12 pb-8 sm:px-6 sm:pt-16 sm:pb-12 lg:pt-20 lg:pb-14">
           <div className="mx-auto max-w-7xl text-center">
-            <h1 className="text-[17px] xs:text-[21px] sm:text-[28px] md:text-[36px] lg:text-[42px] xl:text-[48px] font-extrabold leading-tight tracking-tight text-black text-center whitespace-nowrap">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-blue-50/90 px-3.5 py-1 text-xs font-bold text-blue-700 shadow-2xs mb-4">
+              <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+              <span>Free 3D Flipbook Studio • 24 Realistic Book Styles</span>
+            </div>
+            <h1 className="text-[20px] xs:text-[24px] sm:text-[32px] md:text-[40px] lg:text-[48px] font-extrabold leading-tight tracking-tight text-slate-900 text-center">
               Turn any PDF into a 3D page-flip book.
             </h1>
-            <p className="mx-auto mt-3 max-w-2xl text-xs sm:text-sm text-slate-600 font-normal">
+            <p className="mx-auto mt-3 max-w-2xl text-xs sm:text-sm text-slate-600 font-normal leading-relaxed">
               Choose from 24 book styles, add your custom branding, and download an interactive offline HTML file. 100% private in-browser processing.
             </p>
           </div>
@@ -383,7 +437,7 @@ export default function FlipbookClient() {
               e.preventDefault();
               setIsDragging(false);
             }}
-            className={`group relative mx-auto max-w-4xl cursor-pointer rounded-[32px] border-2 border-dashed p-8 sm:p-14 text-center transition-all duration-300 backdrop-blur-xl ${
+            className={`group relative mx-auto max-w-4xl cursor-pointer rounded-[32px] border-2 border-dashed p-8 sm:p-12 text-center transition-all duration-300 backdrop-blur-xl ${
               isDragging
                 ? "border-blue-500 bg-blue-50/95 shadow-[0_0_60px_rgba(59,130,246,0.25)] scale-[1.01]"
                 : "border-blue-200/90 hover:border-blue-400/80 bg-white/95 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.04)] hover:shadow-[0_25px_70px_-15px_rgba(59,130,246,0.14)]"
@@ -418,7 +472,7 @@ export default function FlipbookClient() {
               Supports multi-page PDFs, JPG, PNG, and WebP • 100% private in your browser
             </p>
 
-            {/* BUTTONS */}
+            {/* BUTTONS: UPLOAD & TRY DEMO */}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <span className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -428,6 +482,21 @@ export default function FlipbookClient() {
                 </svg>
                 <span>Choose PDF or Images</span>
               </span>
+
+              <button
+                type="button"
+                id="btn-sample"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const w = window as unknown as Record<string, unknown>;
+                  if (typeof w["loadSampleCatalog"] === "function") {
+                    (w["loadSampleCatalog"] as () => void)();
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-2xl border-1.5 border-slate-200 bg-white/90 px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all duration-200 hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-700 hover:-translate-y-0.5"
+              >
+                <span>✨ Try Demo Catalog</span>
+              </button>
             </div>
 
             {/* BADGES */}
@@ -458,8 +527,8 @@ export default function FlipbookClient() {
           <div className="mx-auto mt-6 max-w-4xl rounded-2xl border border-amber-200 bg-amber-50/90 p-5 shadow-xs" id="ask" hidden>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <b className="text-sm font-bold text-amber-900">Wide pages found.</b>
-                <p className="text-xs text-amber-800 mt-0.5">They look like two-page spreads. How should they appear in the book?</p>
+                <b className="text-sm font-bold text-amber-900">Wide pages detected.</b>
+                <p className="text-xs text-amber-800 mt-0.5">They look like two-page spreads. How would you like to display them?</p>
               </div>
               <div className="flex flex-wrap gap-2.5">
                 <button className="fcta text-xs py-2 px-4" data-m="split">Split into left &amp; right pages</button>
@@ -470,14 +539,26 @@ export default function FlipbookClient() {
 
           {/* FLIPBOOK WORKSPACE: PREVIEW + CUSTOMIZE PANEL */}
           <section id="ed" className="mt-8" hidden>
+            {/* LEFT: INTERACTIVE 3D CANVAS */}
             <div id="pv" className="rounded-3xl border border-slate-200/80 bg-white/95 p-4 sm:p-6 shadow-xl shadow-slate-900/5 backdrop-blur-xl"></div>
+
+            {/* RIGHT: SPELLENSE DESIGNED CUSTOMIZER PANEL */}
             <div className="fpn">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800">Customizer</span>
+                </div>
+                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">24 Styles</span>
+              </div>
+
+              {/* 5-COL COMPACT SEGMENTED TABS */}
               <div className="ftb" role="tablist">
                 <button className="fon" data-p="st">Style</button>
-                <button data-p="br">Branding</button>
-                <button data-p="bg">Background</button>
+                <button data-p="br">Brand</button>
+                <button data-p="bg">Backdrop</button>
                 <button data-p="ly">Layout</button>
-                <button data-p="kt">Brand kit</button>
+                <button data-p="kt">Kit</button>
               </div>
 
               {/* Style panel */}
@@ -485,57 +566,111 @@ export default function FlipbookClient() {
 
               {/* Branding panel */}
               <div className="ftp" id="p-br" hidden>
-                <label>Custom cover image (replaces page 1)<input type="file" id="cv" accept="image/*" className="text-xs mt-1" /></label>
+                <label>
+                  Custom cover image (replaces page 1)
+                  <input type="file" id="cv" accept="image/*" className="text-xs mt-1" />
+                </label>
                 <button className="fsm self-start" id="cvx">Remove cover</button>
-                <label>Your logo (shows top left)<input type="file" id="lg" accept="image/*" className="text-xs mt-1" /></label>
+
+                <label>
+                  Your logo (shows top left)
+                  <input type="file" id="lg" accept="image/*" className="text-xs mt-1" />
+                </label>
                 <button className="fsm self-start" id="lgx">Remove logo</button>
-                <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3" id="lo" hidden>
-                  <p className="text-xs font-semibold text-blue-900">Match background to your logo?</p>
-                  <div className="mt-2"><button className="fcta text-xs py-1.5 px-3" id="lu">Use logo colors</button></div>
+
+                <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-3.5" id="lo" hidden>
+                  <p className="text-xs font-bold text-blue-900">Extracted logo palette ready</p>
+                  <p className="text-[11px] text-blue-700 mt-0.5">Apply your logo brand colors to the flipbook backdrop:</p>
+                  <div className="mt-2.5">
+                    <button className="fcta text-xs py-1.5 px-3.5" id="lu">Use logo colors</button>
+                  </div>
                 </div>
-                <label>Description (shows top right)<textarea id="ds" rows={3} maxLength={160} placeholder="Spring Catalog 2026 • Call 555-0100"></textarea></label>
-                <label className="fck"><input type="checkbox" id="lr" /> Swap sides: logo right, text left</label>
-                <label className="fck"><input type="checkbox" id="cr" /> Show small &ldquo;Made with Spellense&rdquo; credit</label>
+
+                <label>
+                  Description (shows top right)
+                  <textarea id="ds" rows={3} maxLength={160} placeholder="Spring Catalog 2026 • Call 555-0100"></textarea>
+                </label>
+
+                <label className="fck">
+                  <input type="checkbox" id="lr" />
+                  <span>Swap sides: logo right, text left</span>
+                </label>
+
+                <label className="fck">
+                  <input type="checkbox" id="cr" />
+                  <span>Show subtle &ldquo;Made with Spellense&rdquo; credit</span>
+                </label>
               </div>
 
               {/* Background panel */}
               <div className="ftp" id="p-bg" hidden>
-                <label>Palettes</label><div className="fpl" id="pal"></div>
-                <label>From your logo</label>
-                <div className="fpl" id="lp"><span className="text-xs text-slate-400">Add a logo to see matching colors</span></div>
-                <label>Custom colors</label>
+                <label>Theme Palettes</label>
+                <div className="fpl" id="pal"></div>
+
+                <label>Colors from your logo</label>
+                <div className="fpl" id="lp">
+                  <span className="text-xs text-slate-400">Upload a logo in the Brand tab to see matching colors</span>
+                </div>
+
+                <label>Custom Backdrop Colors</label>
                 <div className="fpl items-center">
                   <input type="color" id="c1" aria-label="Color 1" />
                   <input type="color" id="c2" aria-label="Color 2" />
                   <button className="fsm" id="eye">Pick from screen</button>
                 </div>
-                <label className="fck"><input type="checkbox" id="gr" /> Use gradient background</label>
-                <label>Background photo<input type="file" id="bi" accept="image/*" className="text-xs mt-1" /></label>
-                <button className="fsm self-start" id="bix">Remove image</button>
-                <label>Darken overlay <input type="range" id="dm" min="0" max=".8" step=".05" className="accent-blue-600" /></label>
+
+                <label className="fck">
+                  <input type="checkbox" id="gr" />
+                  <span>Use gradient background</span>
+                </label>
+
+                <label>
+                  Backdrop photo
+                  <input type="file" id="bi" accept="image/*" className="text-xs mt-1" />
+                </label>
+                <button className="fsm self-start" id="bix">Remove photo</button>
+
+                <label>
+                  Darken photo overlay
+                  <input type="range" id="dm" min="0" max=".8" step=".05" className="accent-blue-600 mt-1" />
+                </label>
               </div>
 
               {/* Layout panel */}
               <div className="ftp" id="p-ly" hidden>
-                <label>Page layout
+                <label>
+                  Two-page spread handling
                   <select id="md">
                     <option value="ask">Ask me when wide pages are found</option>
                     <option value="single">Keep every page as is</option>
                     <option value="split">Split wide pages into left and right</option>
                   </select>
                 </label>
-                <label className="fck"><input type="checkbox" id="sh" /> Shift by one page (fix misaligned spreads)</label>
-                <label className="fck"><input type="checkbox" id="sn" /> Realistic page-turn sound</label>
+
+                <label className="fck">
+                  <input type="checkbox" id="sh" />
+                  <span>Shift by one page (fix misaligned booklet spreads)</span>
+                </label>
+
+                <label className="fck">
+                  <input type="checkbox" id="sn" />
+                  <span>Realistic page-turn sound effects</span>
+                </label>
               </div>
 
               {/* Brand kit panel */}
               <div className="ftp" id="p-kt" hidden>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Your book style, logo, text, and palette auto-save in this browser. Export to reuse on any other device.
-                </p>
+                <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3">
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Your chosen style, logo, text, and palette automatically save locally in this browser. Export as JSON to reuse on other computers or teammates.
+                  </p>
+                </div>
                 <div className="flex flex-col gap-2 mt-2">
-                  <button className="fbtn w-full" id="ke">Export brand kit (.json)</button>
-                  <label className="fbtn w-full text-center cursor-pointer">Import brand kit<input type="file" id="ki" accept=".json" hidden /></label>
+                  <button className="fbtn w-full justify-center" id="ke">Export brand kit (.json)</button>
+                  <label className="fbtn w-full justify-center text-center cursor-pointer">
+                    Import brand kit
+                    <input type="file" id="ki" accept=".json" hidden />
+                  </label>
                 </div>
               </div>
             </div>
@@ -560,10 +695,10 @@ export default function FlipbookClient() {
             {/* EMBED SNIPPET COLLAPSIBLE */}
             <details className="mt-5 w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
               <summary className="text-xs sm:text-sm font-bold text-slate-800 cursor-pointer">
-                Embed flipbook on your website / WordPress
+                Embed flipbook on your website or blog (Iframe code)
               </summary>
               <p className="mt-2 text-xs text-slate-500">
-                Host the downloaded HTML file on your server or CDN, then enter its URL below to generate an iframe code:
+                Host your exported HTML file on your web hosting or CDN, then enter its URL below to generate the embed code:
               </p>
               <div className="mt-3 grid gap-3">
                 <input
@@ -598,124 +733,65 @@ export default function FlipbookClient() {
                 How Spellense Flipbook Works
               </h2>
             </div>
+
             <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs backdrop-blur-md">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold text-sm">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-black">
                   1
                 </div>
-                <h3 className="mt-4 text-base font-bold text-slate-900">Upload PDF or Images</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                  Drop any multi-page PDF or image set. Pages are converted on your device in-memory with zero server upload.
+                <h3 className="mt-3 text-sm font-bold text-slate-900">Drop PDF or Images</h3>
+                <p className="mt-1 text-xs text-slate-500 leading-relaxed font-normal">
+                  Upload any brochure, catalog, portfolio, or magazine. All rendering happens safely in-browser with zero upload.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs backdrop-blur-md">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 font-bold text-sm">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-black">
                   2
                 </div>
-                <h3 className="mt-4 text-base font-bold text-slate-900">Customize 24 Styles</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                  Pick from luxury dark, scandinavian clean, kraft paper, or ring binder. Add your custom logo and background palette.
+                <h3 className="mt-3 text-sm font-bold text-slate-900">Pick Style &amp; Brand</h3>
+                <p className="mt-1 text-xs text-slate-500 leading-relaxed font-normal">
+                  Select from 24 book styles including Vintage Leather, Spiral Notebook, Neon Cyberpunk, add your logo and sound.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs backdrop-blur-md">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-black">
                   3
                 </div>
-                <h3 className="mt-4 text-base font-bold text-slate-900">Download Offline HTML</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                  Get a standalone HTML file that works on any browser without internet, complete with 3D page flip, thumbnails, and zoom.
+                <h3 className="mt-3 text-sm font-bold text-slate-900">Download Offline HTML</h3>
+                <p className="mt-1 text-xs text-slate-500 leading-relaxed font-normal">
+                  Get a single interactive HTML file with realistic 3D flipping engine embedded. Works on Windows, Mac, iOS, or Android without internet.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* FEATURE GRID */}
-          <div className="mt-14">
+          {/* ACCORDION FAQ */}
+          <section className="mt-16 mx-auto max-w-4xl">
             <div className="text-center">
               <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
-                Crafted for Publications
+                Frequently Asked Questions
               </span>
               <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">
-                Built for Real World Documents
+                Everything About Spellense Flipbook Maker
               </h2>
             </div>
-            <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
-                <h4 className="text-sm font-bold text-slate-900">📐 Fits Your File Proportions</h4>
-                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                  The viewer dynamically adopts your document&apos;s exact aspect ratio. Two-page spreads split cleanly without cropping.
-                </p>
-              </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
-                <h4 className="text-sm font-bold text-slate-900">📱 Mobile Gesture Ready</h4>
-                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                  Touch dragging, swiping, and tap controls work smoothly on iPhones, iPads, and Android devices.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
-                <h4 className="text-sm font-bold text-slate-900">🎨 24 Aesthetic Themes</h4>
-                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                  Minimal, Luxury Dark, Kraft, Vintage Leather, Spiral Notebook, Holographic Foil, Art Deco, and Newspaper styles.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
-                <h4 className="text-sm font-bold text-slate-900">🏷️ Custom Brand Identity</h4>
-                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                  Display your logo on one side, title and phone number on the other. Zero Spellense watermark unless selected.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
-                <h4 className="text-sm font-bold text-slate-900">🔒 100% Private &amp; Client-Side</h4>
-                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                  Zero server uploads. Your PDF files, financial reports, and confidential lookbooks stay strictly in your device RAM.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
-                <h4 className="text-sm font-bold text-slate-900">🔊 Interactive Reader Tools</h4>
-                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                  Page thumbnail grid, multi-level zoom, fullscreen mode, auto-play presenter, and realistic paper rustle sound.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* PAGE-SCOPED FAQ SECTION */}
-          <section className="mx-auto mt-16 max-w-4xl">
-            <div className="text-center">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/70 bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs">
-                Frequently Asked Questions
-              </div>
-              <h2 className="mt-2.5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-                Flipbook Maker FAQ
-              </h2>
-              <p className="mt-2 text-xs sm:text-sm text-slate-500 font-normal">
-                Everything you need to know about creating 3D digital flipbooks with Spellense.
-              </p>
-            </div>
-
-            <div className="mt-10 space-y-3.5">
-              {FAQ_ITEMS.map((faq, index) => {
-                const isOpen = openFaqIndex === index;
+            <div className="mt-8 space-y-3">
+              {FAQ_ITEMS.map((faq, idx) => {
+                const isOpen = openFaqIndex === idx;
                 return (
                   <div
-                    key={faq.q}
-                    className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-2xs backdrop-blur-sm transition"
+                    key={idx}
+                    className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white transition hover:border-blue-200 shadow-2xs"
                   >
                     <button
                       type="button"
-                      onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                      className="flex w-full items-center justify-between p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
+                      onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                      className="flex w-full items-center justify-between p-5 text-left text-sm font-bold text-slate-900"
                     >
-                      <span className="text-sm sm:text-base font-bold text-slate-900">
-                        {faq.q}
-                      </span>
+                      <span>{faq.q}</span>
                       <span
                         className={`ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-transform duration-200 ${
                           isOpen ? "rotate-180 bg-blue-50 text-blue-600" : ""
@@ -817,30 +893,30 @@ function initFlipbookApp() {
     'url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27140%27 height=%27140%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence baseFrequency=%27.85%27 numOctaves=%272%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23n)%27 opacity=%27.3%27/%3E%3C/svg%3E")';
 
   const THEMES = [
-    { n: "Pure Minimal", b: "#fff", pd: 0.012, r: 2, sp: "s", f: "none", x: "0 25px 60px -10px #0004", c1: "#f8fafc", c2: "#e2e8f0" },
-    { n: "Modern Magazine", b: "#111", pd: 0.02, r: 0, sp: "s", f: "none", x: "0 25px 60px #0006", c1: "#e5e7eb", c2: "#cbd5e1" },
-    { n: "Scandinavian Clean", b: "#e8e3da", pd: 0.025, r: 4, sp: "s", f: "none", x: "0 20px 50px #0003", c1: "#f5f1ea", c2: "#e6dfd3" },
-    { n: "Typographic Editorial", b: "#fff", pd: 0.015, r: 0, sp: "s", f: "none", x: "10px 10px 0 #111", c1: "#fde047", c2: "#facc15" },
-    { n: "Midnight Luxury", b: "linear-gradient(135deg,#1a1a1a,#000)", pd: 0.03, r: 3, sp: "s", f: "none", x: "0 0 0 2px #d4af37,0 30px 70px #000", c1: "#0b0b0f", c2: "#1a1a22" },
-    { n: "Glass Dark", b: "rgba(255,255,255,.14)", pd: 0.025, r: 10, sp: "s", f: "none", x: "0 0 0 1px rgba(255,255,255,.4),0 30px 80px #0009", c1: "#0f172a", c2: "#312e81" },
-    { n: "Noir Corporate", b: "linear-gradient(135deg,#2b2f36,#14161a)", pd: 0.028, r: 2, sp: "s", f: "none", x: "0 0 0 2px #9ca3af,0 25px 60px #0008", c1: "#1f2937", c2: "#0b0f14" },
-    { n: "Neon Cyberpunk", b: "#0a0a12", pd: 0.02, r: 2, sp: "s", f: "none", x: "0 0 0 2px #0ff,0 0 30px #0ff,0 0 90px #f0f8", c1: "#050510", c2: "#1b0033" },
-    { n: "Kraft Paper", b: N + ",#b08a5b", pd: 0.03, r: 3, sp: "st", f: "sepia(.12)", x: "0 25px 50px #0004", c1: "#f3e7d3", c2: "#d9c3a0" },
-    { n: "Linen Hardcover", b: "repeating-linear-gradient(45deg,#2f4f6f 0 2px,#345a7d 2px 4px)", pd: 0.035, r: 4, sp: "s", f: "none", x: "0 25px 55px #0005", c1: "#dbe7f3", c2: "#a9c1d9" },
-    { n: "Vintage Leather", b: N + ",#5b3a24", pd: 0.04, r: 3, sp: "st", f: "sepia(.28) contrast(.96)", x: "0 30px 70px #0009", c1: "#3b2a1c", c2: "#1e140c" },
-    { n: "Watercolor Edge", b: "radial-gradient(circle at 20% 20%,#f9a8d4,transparent 50%),radial-gradient(circle at 80% 30%,#93c5fd,transparent 50%),radial-gradient(circle at 50% 90%,#fde68a,transparent 50%),#fff", pd: 0.04, r: 14, sp: "s", f: "none", x: "0 20px 50px #0002", c1: "#fdf2f8", c2: "#e0f2fe" },
-    { n: "Gradient Mesh", b: "radial-gradient(at 0 0,#6366f1,transparent 60%),radial-gradient(at 100% 0,#ec4899,transparent 60%),radial-gradient(at 50% 100%,#14b8a6,transparent 60%),#1e1b4b", pd: 0.03, r: 12, sp: "s", f: "none", x: "0 25px 60px #0006", c1: "#1e1b4b", c2: "#4c1d95" },
-    { n: "Duotone Pop", b: "linear-gradient(135deg,#ff3d81,#ffb400)", pd: 0.03, r: 6, sp: "s", f: "none", x: "8px 8px 0 #111", c1: "#fff4d6", c2: "#ffd6e7" },
-    { n: "Retro Print", b: N + ",#d9822b", pd: 0.035, r: 3, sp: "s", f: "sepia(.2) saturate(1.1)", x: "0 25px 55px #0004", c1: "#fbe8c8", c2: "#e9b872" },
-    { n: "Pastel Soft", b: "#fbcfe8", pd: 0.03, r: 18, sp: "s", f: "none", x: "0 20px 50px #f9a8d488", c1: "#fdf4ff", c2: "#e0f2fe" },
-    { n: "Spiral Notebook", b: "#fff", pd: 0.01, r: 3, sp: "sp", f: "none", x: "0 20px 50px #0003", c1: "#e2e8f0", c2: "#94a3b8" },
-    { n: "Ring Binder", b: "#1d4ed8", pd: 0.035, r: 4, sp: "rg", f: "none", x: "0 25px 55px #0005", c1: "#dbeafe", c2: "#93c5fd" },
-    { n: "Portfolio Case", b: "#222", pd: 0.05, r: 6, sp: "s", f: "none", x: "0 0 0 4px #444,0 30px 70px #0009", c1: "#e5e5e5", c2: "#bdbdbd" },
-    { n: "Newspaper Fold", b: "#e9e4d6", pd: 0.015, r: 0, sp: "s", f: "grayscale(.5) contrast(1.05)", x: "0 20px 45px #0003", c1: "#d6d1c4", c2: "#b9b3a3" },
-    { n: "Art Deco", b: "repeating-linear-gradient(90deg,#0b3d2e 0 10px,#0f4c39 10px 12px)", pd: 0.035, r: 0, sp: "s", f: "none", x: "0 0 0 3px #c9a227,0 30px 70px #000a", c1: "#06281e", c2: "#0b3d2e" },
-    { n: "Terracotta Earth", b: "linear-gradient(135deg,#c2603a,#8f3f21)", pd: 0.03, r: 8, sp: "s", f: "none", x: "0 25px 55px #0005", c1: "#f5e1d3", c2: "#e2b79a" },
-    { n: "Holographic Foil", b: "linear-gradient(120deg,#a5f3fc,#f0abfc,#fde68a,#a7f3d0,#a5f3fc)", pd: 0.03, r: 10, sp: "s", f: "none", x: "0 25px 60px #0006", c1: "#0f172a", c2: "#1e293b" },
-    { n: "Festive Seasonal", b: "linear-gradient(135deg,#b91c1c,#166534)", pd: 0.03, r: 6, sp: "s", f: "none", x: "0 0 0 3px #fde68a,0 25px 60px #0008", c1: "#450a0a", c2: "#052e16" },
+    { n: "Pure Minimal", b: "#fff", pd: 0.016, r: 2, sp: "s", f: "none", x: "0 25px 60px -10px rgba(0,0,0,.25)", c1: "#f8fafc", c2: "#e2e8f0" },
+    { n: "Modern Magazine", b: "#111", pd: 0.024, r: 0, sp: "s", f: "none", x: "0 25px 60px rgba(0,0,0,.4)", c1: "#e2e8f0", c2: "#cbd5e1" },
+    { n: "Scandinavian Clean", b: "#e8e3da", pd: 0.028, r: 4, sp: "s", f: "none", x: "0 20px 50px rgba(0,0,0,.2)", c1: "#f5f1ea", c2: "#e6dfd3" },
+    { n: "Typographic Editorial", b: "#fff", pd: 0.02, r: 0, sp: "s", f: "none", x: "10px 10px 0 #111", c1: "#fef08a", c2: "#facc15" },
+    { n: "Midnight Luxury", b: "linear-gradient(135deg,#1a1a1a,#000)", pd: 0.035, r: 4, sp: "s", f: "none", x: "0 0 0 2px #d4af37,0 30px 70px #000", c1: "#0b0b0f", c2: "#1a1a22" },
+    { n: "Glass Dark", b: "rgba(255,255,255,.18)", pd: 0.028, r: 10, sp: "s", f: "none", x: "0 0 0 1px rgba(255,255,255,.4),0 30px 80px rgba(0,0,0,.6)", c1: "#0f172a", c2: "#312e81" },
+    { n: "Noir Corporate", b: "linear-gradient(135deg,#2b2f36,#14161a)", pd: 0.032, r: 2, sp: "s", f: "none", x: "0 0 0 2px #9ca3af,0 25px 60px rgba(0,0,0,.5)", c1: "#1f2937", c2: "#0b0f14" },
+    { n: "Neon Cyberpunk", b: "#0a0a12", pd: 0.025, r: 2, sp: "s", f: "none", x: "0 0 0 2px #0ff,0 0 30px #0ff,0 0 90px rgba(255,0,255,.5)", c1: "#050510", c2: "#1b0033" },
+    { n: "Kraft Paper", b: N + ",#b08a5b", pd: 0.035, r: 3, sp: "st", f: "sepia(.12)", x: "0 25px 50px rgba(0,0,0,.25)", c1: "#f3e7d3", c2: "#d9c3a0" },
+    { n: "Linen Hardcover", b: "repeating-linear-gradient(45deg,#2f4f6f 0 2px,#345a7d 2px 4px)", pd: 0.038, r: 4, sp: "s", f: "none", x: "0 25px 55px rgba(0,0,0,.35)", c1: "#dbe7f3", c2: "#a9c1d9" },
+    { n: "Vintage Leather", b: N + ",#5b3a24", pd: 0.045, r: 4, sp: "st", f: "sepia(.25) contrast(.96)", x: "0 30px 70px rgba(0,0,0,.6)", c1: "#3b2a1c", c2: "#1e140c" },
+    { n: "Watercolor Edge", b: "radial-gradient(circle at 20% 20%,#f9a8d4,transparent 50%),radial-gradient(circle at 80% 30%,#93c5fd,transparent 50%),radial-gradient(circle at 50% 90%,#fde68a,transparent 50%),#fff", pd: 0.04, r: 14, sp: "s", f: "none", x: "0 20px 50px rgba(0,0,0,.15)", c1: "#fdf2f8", c2: "#e0f2fe" },
+    { n: "Gradient Mesh", b: "radial-gradient(at 0 0,#6366f1,transparent 60%),radial-gradient(at 100% 0,#ec4899,transparent 60%),radial-gradient(at 50% 100%,#14b8a6,transparent 60%),#1e1b4b", pd: 0.035, r: 12, sp: "s", f: "none", x: "0 25px 60px rgba(0,0,0,.4)", c1: "#1e1b4b", c2: "#4c1d95" },
+    { n: "Duotone Pop", b: "linear-gradient(135deg,#ff3d81,#ffb400)", pd: 0.035, r: 6, sp: "s", f: "none", x: "8px 8px 0 #111", c1: "#fff4d6", c2: "#ffd6e7" },
+    { n: "Retro Print", b: N + ",#d9822b", pd: 0.038, r: 3, sp: "s", f: "sepia(.2) saturate(1.1)", x: "0 25px 55px rgba(0,0,0,.25)", c1: "#fbe8c8", c2: "#e9b872" },
+    { n: "Pastel Soft", b: "#fbcfe8", pd: 0.032, r: 18, sp: "s", f: "none", x: "0 20px 50px rgba(249,168,212,.5)", c1: "#fdf4ff", c2: "#e0f2fe" },
+    { n: "Spiral Notebook", b: "#fff", pd: 0.015, r: 3, sp: "sp", f: "none", x: "0 20px 50px rgba(0,0,0,.2)", c1: "#e2e8f0", c2: "#94a3b8" },
+    { n: "Ring Binder", b: "#1d4ed8", pd: 0.038, r: 4, sp: "rg", f: "none", x: "0 25px 55px rgba(0,0,0,.35)", c1: "#dbeafe", c2: "#93c5fd" },
+    { n: "Portfolio Case", b: "#222", pd: 0.05, r: 6, sp: "s", f: "none", x: "0 0 0 4px #444,0 30px 70px rgba(0,0,0,.6)", c1: "#e5e5e5", c2: "#bdbdbd" },
+    { n: "Newspaper Fold", b: "#e9e4d6", pd: 0.018, r: 0, sp: "s", f: "grayscale(.5) contrast(1.05)", x: "0 20px 45px rgba(0,0,0,.2)", c1: "#d6d1c4", c2: "#b9b3a3" },
+    { n: "Art Deco", b: "repeating-linear-gradient(90deg,#0b3d2e 0 10px,#0f4c39 10px 12px)", pd: 0.038, r: 0, sp: "s", f: "none", x: "0 0 0 3px #c9a227,0 30px 70px rgba(0,0,0,.6)", c1: "#06281e", c2: "#0b3d2e" },
+    { n: "Terracotta Earth", b: "linear-gradient(135deg,#c2603a,#8f3f21)", pd: 0.035, r: 8, sp: "s", f: "none", x: "0 25px 55px rgba(0,0,0,.35)", c1: "#f5e1d3", c2: "#e2b79a" },
+    { n: "Holographic Foil", b: "linear-gradient(120deg,#a5f3fc,#f0abfc,#fde68a,#a7f3d0,#a5f3fc)", pd: 0.035, r: 10, sp: "s", f: "none", x: "0 25px 60px rgba(0,0,0,.4)", c1: "#0f172a", c2: "#1e293b" },
+    { n: "Festive Seasonal", b: "linear-gradient(135deg,#b91c1c,#166534)", pd: 0.035, r: 6, sp: "s", f: "none", x: "0 0 0 3px #fde68a,0 25px 60px rgba(0,0,0,.5)", c1: "#450a0a", c2: "#052e16" },
   ];
 
   const esc = (s: unknown) =>
@@ -853,7 +929,30 @@ function initFlipbookApp() {
     return (0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) / 255;
   };
 
-  // ── Viewer engine (runs live AND is embedded in downloaded HTML) ───────────
+  // ── Global Audio Context for Page Turns ────────────────────────────────────
+  let globalAudioCtx: AudioContext | null = null;
+  const playPageSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!globalAudioCtx) globalAudioCtx = new AudioCtx();
+      if (globalAudioCtx.state === "suspended") globalAudioCtx.resume();
+      const b = globalAudioCtx.createBuffer(1, Math.floor(globalAudioCtx.sampleRate * 0.14), globalAudioCtx.sampleRate);
+      const d = b.getChannelData(0);
+      for (let i = 0; i < d.length; i++) {
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3) * 0.35;
+      }
+      const r = globalAudioCtx.createBufferSource();
+      const f = globalAudioCtx.createBiquadFilter();
+      r.buffer = b;
+      f.type = "lowpass";
+      f.frequency.value = 1600;
+      r.connect(f);
+      f.connect(globalAudioCtx.destination);
+      r.start();
+    } catch (_) { /* silent */ }
+  };
+
+  // ── Viewer engine ──────────────────────────────────────────────────────────
   function Viewer(root: HTMLElement & { _off?: () => void }, c: Record<string, unknown>) {
     if (root._off) root._off();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -864,7 +963,8 @@ function initFlipbookApp() {
     const maxS = n % 2 ? L - 1 : L;
     const sp = (c.speed as number) || 0.8;
     const img = c.bgType === "img" && c.bgImg;
-    let s = 0, W = 0, H = 0, z = 1, snd = !!c.sound, tm = 0;
+    let s = typeof c.curPage === "number" ? Math.max(0, Math.min(maxS, c.curPage)) : 0;
+    let W = 0, H = 0, z = 1, snd = !!c.sound, tm = 0;
     let dr: null | { x: number; sd: number; m: number; p: number } = null;
     let au: number | ReturnType<typeof setInterval> = 0;
 
@@ -873,30 +973,32 @@ function initFlipbookApp() {
       ? "url(" + c.bgImg + ") center/cover"
       : c.bgType === "grad"
       ? "linear-gradient(135deg," + c.bg1 + "," + c.bg2 + ")"
-      : c.bg1 as string;
+      : (c.bg1 as string);
     root.style.color = img || lum(c.bg1 as string) < 0.5 ? "#fff" : "#0f172a";
     root.style.setProperty("--pf", T.f);
     root.style.setProperty("--pr", T.r + "px");
 
     let h = img ? '<div class="ov" style="background:rgba(0,0,0,' + (c.dim || 0) + ')"></div>' : "";
-    if (c.logo || c.desc)
+    if (c.logo || c.desc) {
       h +=
         '<div class="fbh' +
         (c.logoRight ? " rv" : "") +
         '">' +
         (c.logo ? '<img src="' + c.logo + '" alt="Logo">' : "<span></span>") +
         "<p>" + esc(c.desc) + "</p></div>";
+    }
 
-    h += '<div class="stage"><div class="bk" style="--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 4) + 'px"></div>';
-    for (let j = 0; j < L; j++)
+    h += '<div class="stage"><div class="bk" style="--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 6) + 'px"></div>';
+    for (let j = 0; j < L; j++) {
       h +=
         '<div class="lf"><div class="fc f"><img src="' + P[2 * j] + '" alt="Page ' + (2 * j + 1) + '" draggable="false"></div><div class="fc b">' +
         (P[2 * j + 1] ? '<img src="' + P[2 * j + 1] + '" alt="Page ' + (2 * j + 2) + '" draggable="false">' : "") +
         "</div></div>";
+    }
 
     h +=
       (T.sp && T.sp !== "s" ? '<div class="sp ' + T.sp + '"></div>' : "") +
-      '</div></div><div class="ct"><button data-a="p" aria-label="Previous page">\u2039</button><span class="pg"></span><button data-a="n" aria-label="Next page">\u203a</button><button data-a="t" aria-label="Thumbnails">\u25a6</button><button data-a="z" aria-label="Zoom">\uff0b</button><button data-a="s" aria-label="Page-turn sound">\ud83d\udd08</button><button data-a="a" aria-label="Auto-play">\u25b6</button><button data-a="f" aria-label="Fullscreen">\u26f6</button></div><div class="th" hidden></div>' +
+      '</div></div><div class="ct"><button data-a="p" title="Previous page" aria-label="Previous page">\u2039</button><span class="pg"></span><button data-a="n" title="Next page" aria-label="Next page">\u203a</button><button data-a="t" title="Thumbnails" aria-label="Thumbnails">\u25a6</button><button data-a="z" title="Zoom" aria-label="Zoom">\uff0b</button><button data-a="s" title="Sound toggle" aria-label="Page-turn sound">' + (snd ? "\ud83d\udd0a" : "\ud83d\udd08") + '</button><button data-a="a" title="Autoplay" aria-label="Auto-play">\u25b6</button><button data-a="f" title="Fullscreen" aria-label="Fullscreen">\u26f6</button></div><div class="th" hidden></div>' +
       (c.credit ? '<a class="cr" href="https://spellense.com/flipbook" target="_blank" rel="noopener">Made with Spellense</a>' : "");
 
     root.innerHTML = h;
@@ -909,21 +1011,7 @@ function initFlipbookApp() {
     const cl = (v: number) => Math.max(0, Math.min(maxS, v));
 
     const tick = () => {
-      if (!snd) return;
-      try {
-        const a = new AudioContext();
-        const b = a.createBuffer(1, Math.floor(a.sampleRate * 0.15), a.sampleRate);
-        const d = b.getChannelData(0);
-        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3) * 0.4;
-        const r = a.createBufferSource();
-        const f = a.createBiquadFilter();
-        r.buffer = b;
-        f.type = "lowpass";
-        f.frequency.value = 1800;
-        r.connect(f);
-        f.connect(a.destination);
-        r.start();
-      } catch (_) { /* silent */ }
+      if (snd) playPageSound();
     };
 
     const place = () => {
@@ -937,18 +1025,19 @@ function initFlipbookApp() {
         s === 0
           ? "1 / " + n
           : (2 * s + 1 > n ? 2 * s : 2 * s + "\u2013" + (2 * s + 1)) + " / " + n;
+      S.curPage = s;
     };
 
     const fit = () => {
-      const aw = Math.max(200, root.clientWidth - 32);
-      const ah = document.fullscreenElement ? innerHeight - 170 : Math.min(innerHeight * 0.72, 760);
+      const aw = Math.max(260, root.clientWidth - 40);
+      const ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
       W = Math.min(aw / 2, ah * (c.ratio as number)) * z;
       H = W / (c.ratio as number);
-      const p = Math.round(W * T.pd);
+      const p = Math.max(6, Math.round(W * T.pd));
       bk.style.width = 2 * W + "px";
       bk.style.height = H + "px";
       bd.style.inset = "-" + p + "px";
-      st.style.padding = p + "px";
+      st.style.padding = p + 4 + "px 0";
       lvs.forEach((e) => { e.style.width = W + "px"; e.style.height = H + "px"; });
       const sq = q(".sp") as HTMLElement | null;
       if (sq) { sq.style.top = sq.style.bottom = "-" + p + "px"; }
@@ -961,7 +1050,7 @@ function initFlipbookApp() {
       const m = dir > 0 ? s : s - 1;
       s = ns;
       place();
-      lvs[m].style.zIndex = String(L + 5);
+      if (lvs[m]) lvs[m].style.zIndex = String(L + 5);
       tick();
       clearTimeout(tm as number);
       tm = setTimeout(place, sp * 1000 + 60) as unknown as number;
@@ -973,13 +1062,15 @@ function initFlipbookApp() {
       if ((sd > 0 && s >= maxS) || (sd < 0 && s <= 0)) return;
       const m = sd > 0 ? s : s - 1;
       dr = { x: e.clientX, sd, m, p: 0 };
-      lvs[m].style.transition = "none";
-      lvs[m].style.zIndex = String(L + 5);
+      if (lvs[m]) {
+        lvs[m].style.transition = "none";
+        lvs[m].style.zIndex = String(L + 5);
+      }
       bk.setPointerCapture(e.pointerId);
     });
 
     bk.addEventListener("pointermove", (e) => {
-      if (!dr) return;
+      if (!dr || !lvs[dr.m]) return;
       dr.p = Math.min(1, Math.max(0, ((e.clientX - dr.x) * -dr.sd) / W));
       lvs[dr.m].style.transform = "rotateY(" + (dr.sd > 0 ? -180 * dr.p : -180 + 180 * dr.p) + "deg)";
     });
@@ -987,7 +1078,7 @@ function initFlipbookApp() {
     const up = () => {
       const d = dr;
       dr = null;
-      if (!d) return;
+      if (!d || !lvs[d.m]) return;
       lvs[d.m].style.transition = "";
       if (d.p < 0.04 || d.p > 0.3) go(d.sd);
       else place();
@@ -1020,17 +1111,36 @@ function initFlipbookApp() {
       const a = b.dataset.a;
       if (a === "p") go(-1);
       if (a === "n") go(1);
-      if (a === "z") { z = z >= 2 ? 1 : z + 0.5; fit(); }
-      if (a === "s") { snd = !snd; b.textContent = snd ? "\ud83d\udd0a" : "\ud83d\udd08"; tick(); }
-      if (a === "f") { document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen && root.requestFullscreen(); }
+      if (a === "z") { z = z >= 2.2 ? 1 : z + 0.4; fit(); }
+      if (a === "s") {
+        snd = !snd;
+        S.sound = snd;
+        const snInput = document.getElementById("sn") as HTMLInputElement | null;
+        if (snInput) snInput.checked = snd;
+        b.textContent = snd ? "\ud83d\udd0a" : "\ud83d\udd08";
+        tick();
+      }
+      if (a === "f") {
+        document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen && root.requestFullscreen();
+      }
       if (a === "a") {
-        if (au) { clearInterval(au as number); au = 0; b.textContent = "\u25b6"; }
-        else { b.textContent = "\u23f8"; au = setInterval(() => { if (s >= maxS) { s = 0; place(); } else go(1); }, 3200); }
+        if (au) {
+          clearInterval(au as number);
+          au = 0;
+          b.textContent = "\u25b6";
+        } else {
+          b.textContent = "\u23f8";
+          au = setInterval(() => {
+            if (s >= maxS) { s = 0; place(); }
+            else go(1);
+          }, 3200);
+        }
       }
       if (a === "t") {
         const t = q(".th") as HTMLElement;
-        if (!t.innerHTML)
+        if (!t.innerHTML) {
           t.innerHTML = P.map((u, i) => (u ? '<img data-i="' + i + '" src="' + u + '" alt="Go to page ' + (i + 1) + '">' : "")).join("");
+        }
         t.hidden = !t.hidden;
       }
     };
@@ -1064,7 +1174,7 @@ function initFlipbookApp() {
   const load1 = () => { try { return JSON.parse(localStorage.spFbKit || "{}"); } catch (_) { return {}; } };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const S: Record<string, any> = Object.assign(
-    { theme: 0, logo: "", desc: "", logoRight: false, credit: false, bgType: "grad", bg1: "#f8fafc", bg2: "#e2e8f0", bgImg: "", dim: 0.35, sound: false, bgTouched: false, mode: "ask", shift: false, cover: "" },
+    { theme: 0, logo: "", desc: "", logoRight: false, credit: false, bgType: "grad", bg1: "#f8fafc", bg2: "#e2e8f0", bgImg: "", dim: 0.35, sound: false, bgTouched: false, mode: "ask", shift: false, cover: "", curPage: 0 },
     load1()
   );
 
@@ -1089,7 +1199,7 @@ function initFlipbookApp() {
   const getEl = (id: string): any => document.getElementById(id);
 
   async function loadFiles(files: FileList | null) {
-    if (!files) return;
+    if (!files || !files.length) return;
     status("Reading files…");
     RAW = [];
     try {
@@ -1116,13 +1226,96 @@ function initFlipbookApp() {
       if (await derive()) {
         getEl("ed").hidden = false;
         getEl("ex").hidden = false;
-        status("Ready. " + pages.length + " pages.");
+        status("Ready. " + pages.length + " pages loaded.");
         getEl("ed").scrollIntoView({ behavior: "smooth" });
       }
     } catch (_) {
       status("Could not read that file. Use a PDF, JPG, PNG or WebP.");
     }
   }
+
+  // ── Sample Catalog Generator for Instant 1-Click Demo ──────────────────────
+  async function loadSampleCatalog() {
+    status("Generating demo catalog pages…");
+    const demoPages: string[] = [];
+    const colors = [
+      { bg1: "#1e1b4b", bg2: "#312e81", title: "SPELLENSE 2026", sub: "EDITORIAL DESIGN & CREATIVE LOOKBOOK", p: 1 },
+      { bg1: "#f8fafc", bg2: "#e2e8f0", title: "TABLE OF CONTENTS", sub: "01 Architecture • 02 Materials • 03 Colorways", p: 2 },
+      { bg1: "#064e3b", bg2: "#022c22", title: "MINIMALIST LIVING", sub: "Crafted for peaceful modern aesthetics", p: 3 },
+      { bg1: "#78350f", bg2: "#451a03", title: "ORGANIC TEXTURES", sub: "Hand-finished walnut, leather & linen", p: 4 },
+      { bg1: "#831843", bg2: "#500724", title: "SEASONAL PALETTES", sub: "Vibrant hues curated for print & digital", p: 5 },
+      { bg1: "#0f172a", bg2: "#020617", title: "SPELLENSE STUDIO", sub: "Thank you for reading • spellense.com", p: 6 },
+    ];
+
+    for (const c of colors) {
+      const cvs = document.createElement("canvas");
+      cvs.width = 800;
+      cvs.height = 1120;
+      const ctx = cvs.getContext("2d")!;
+
+      // Background gradient
+      const grad = ctx.createLinearGradient(0, 0, 800, 1120);
+      grad.addColorStop(0, c.bg1);
+      grad.addColorStop(1, c.bg2);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 800, 1120);
+
+      // Decorative shapes
+      ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.beginPath();
+      ctx.arc(700, 200, 300, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(100, 900, 250, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Border frame
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(40, 40, 720, 1040);
+
+      // Text styling
+      ctx.fillStyle = c.bg1 === "#f8fafc" ? "#0f172a" : "#ffffff";
+      ctx.textAlign = "center";
+
+      // Tag
+      ctx.font = "bold 16px system-ui, sans-serif";
+      ctx.fillStyle = c.bg1 === "#f8fafc" ? "#2563eb" : "#93c5fd";
+      ctx.fillText("SPELLENSE FLIPBOOK DEMO", 400, 380);
+
+      // Title
+      ctx.font = "800 42px system-ui, sans-serif";
+      ctx.fillStyle = c.bg1 === "#f8fafc" ? "#0f172a" : "#ffffff";
+      ctx.fillText(c.title, 400, 450);
+
+      // Subtitle
+      ctx.font = "500 20px system-ui, sans-serif";
+      ctx.fillStyle = c.bg1 === "#f8fafc" ? "#475569" : "#cbd5e1";
+      ctx.fillText(c.sub, 400, 500);
+
+      // Page indicator badge
+      ctx.fillStyle = c.bg1 === "#f8fafc" ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.12)";
+      ctx.beginPath();
+      ctx.roundRect(350, 980, 100, 36, 18);
+      ctx.fill();
+      ctx.fillStyle = c.bg1 === "#f8fafc" ? "#334155" : "#f8fafc";
+      ctx.font = "bold 14px system-ui, sans-serif";
+      ctx.fillText(`PAGE ${c.p}`, 400, 1003);
+
+      demoPages.push(cvs.toDataURL("image/jpeg", 0.9));
+    }
+
+    RAW = demoPages;
+    S.desc = "Spellense Editorial Catalog 2026\nDesigned with 3D Flipbook Studio";
+    if (await derive()) {
+      getEl("ed").hidden = false;
+      getEl("ex").hidden = false;
+      status("Demo catalog loaded. Click styles below to customize!");
+      getEl("ed").scrollIntoView({ behavior: "smooth" });
+    }
+  }
+  // Expose to window for the "Try Demo Catalog" button in JSX
+  (window as unknown as Record<string, unknown>)["loadSampleCatalog"] = loadSampleCatalog;
 
   async function derive(): Promise<boolean> {
     if (S.mode === "auto") S.mode = "ask";
@@ -1171,7 +1364,7 @@ function initFlipbookApp() {
       if (!pages.length) return;
       Viewer(getEl("pv") as HTMLElement & { _off?: () => void }, Object.assign({}, S, { pages, ratio }));
       try { localStorage.spFbKit = JSON.stringify(Object.assign({}, S, { cover: "" })); } catch (_) { /* ok */ }
-    }, 120) as unknown as number;
+    }, 100) as unknown as number;
   }
 
   function sync() {
@@ -1193,7 +1386,7 @@ function initFlipbookApp() {
       (t, i) =>
         '<button class="ftc' + (i === S.theme ? " fon" : "") + '" data-t="' + i + '"><i style="background:' + t.b + '">' +
         (TH ? '<img src="' + TH + '" alt="" style="filter:' + t.f + '">' : "") +
-        "</i>" + t.n + "</button>"
+        "</i><span>" + t.n + "</span></button>"
     ).join("");
   }
   tiles();
@@ -1206,24 +1399,40 @@ function initFlipbookApp() {
   getEl("tg").onclick = (e: Event) => {
     const b = (e.target as HTMLElement).closest(".ftc") as HTMLButtonElement | null;
     if (!b) return;
-    const t = THEMES[(S.theme = +b.dataset.t!)];
-    if (!S.bgTouched) { S.bg1 = t.c1; S.bg2 = t.c2; S.bgType = "grad"; }
-    sync(); show();
+    const idx = +b.dataset.t!;
+    const t = THEMES[idx];
+    S.theme = idx;
+    // Always apply theme background aesthetic immediately
+    S.bg1 = t.c1;
+    S.bg2 = t.c2;
+    S.bgType = "grad";
+    S.bgImg = ""; // clear photo so theme gradient is visible
+    S.bgTouched = false;
+    document.querySelectorAll(".ftc").forEach((btn, i) => btn.classList.toggle("fon", i === idx));
+    sync();
+    show();
   };
 
   getEl("pal").onclick = (e: Event) => {
     const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
     if (!b) return;
     const p = PAL[+b.dataset.i!];
-    Object.assign(S, { bg1: p[1], bg2: p[2], bgType: "grad", bgTouched: true });
-    sync(); show();
+    Object.assign(S, { bg1: p[1], bg2: p[2], bgType: "grad", bgImg: "", bgTouched: true });
+    sync();
+    show();
   };
 
-  document.querySelector(".ftb")!.addEventListener("click", (e) => {
-    const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
-    if (!b) return;
-    document.querySelectorAll(".ftb button").forEach((x) => x.classList.toggle("fon", x === b));
-    document.querySelectorAll(".ftp").forEach((p) => (p as HTMLElement).hidden = (p as HTMLElement).id !== "p-" + b.dataset.p);
+  // ── 5 Tab Navigation Switching ─────────────────────────────────────────────
+  document.querySelectorAll(".ftb button").forEach((tabBtn) => {
+    tabBtn.addEventListener("click", () => {
+      const pId = (tabBtn as HTMLElement).dataset.p;
+      document.querySelectorAll(".ftb button").forEach((x) => x.classList.toggle("fon", x === tabBtn));
+      document.querySelectorAll(".ftp").forEach((panel) => {
+        const match = (panel as HTMLElement).id === "p-" + pId;
+        (panel as HTMLElement).hidden = !match;
+        (panel as HTMLElement).style.display = match ? "flex" : "none";
+      });
+    });
   });
 
   const bind = (id: string, fn: (el: HTMLElement) => void, ev = "input") =>
@@ -1250,16 +1459,30 @@ function initFlipbookApp() {
     show();
   });
 
-  getEl("lgx").onclick = () => { S.logo = ""; LC = []; getEl("lo").hidden = true; getEl("lp").innerHTML = ""; show(); };
+  getEl("lgx").onclick = () => {
+    S.logo = "";
+    LC = [];
+    getEl("lo").hidden = true;
+    getEl("lp").innerHTML = '<span class="text-xs text-slate-400">Upload a logo in the Brand tab to see matching colors</span>';
+    (getEl("lg") as HTMLInputElement).value = "";
+    show();
+  };
 
   getEl("bi").addEventListener("change", async (e: Event) => {
     const f = (e.target as HTMLInputElement).files?.[0];
     if (!f) return;
     S.bgImg = await f2u(f, 1400, "image/jpeg", 0.8);
-    S.bgType = "img"; S.bgTouched = true; show();
+    S.bgType = "img";
+    S.bgTouched = true;
+    show();
   });
 
-  getEl("bix").onclick = () => { S.bgImg = ""; S.bgType = "grad"; show(); };
+  getEl("bix").onclick = () => {
+    S.bgImg = "";
+    S.bgType = "grad";
+    (getEl("bi") as HTMLInputElement).value = "";
+    show();
+  };
 
   getEl("eye").onclick = async () => {
     if (!(window as unknown as Record<string, unknown>)["EyeDropper"]) {
@@ -1298,7 +1521,7 @@ function initFlipbookApp() {
   getEl("lp").onclick = (e: Event) => {
     const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
     if (!b) return;
-    Object.assign(S, { bg1: b.dataset.h, bg2: b.dataset.h, bgType: "color", bgTouched: true });
+    Object.assign(S, { bg1: b.dataset.h, bg2: b.dataset.h, bgType: "color", bgImg: "", bgTouched: true });
     sync(); show();
   };
 
@@ -1320,27 +1543,187 @@ function initFlipbookApp() {
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
 
-  // ── Build standalone HTML for download ────────────────────────────────────
+  // ── Standalone Offline HTML Generator ──────────────────────────────────────
   function buildHTML(): string {
     const cfg = JSON.stringify(Object.assign({}, S, { pages, ratio, full: true })).replace(/</g, "\\u003c");
     const t = (S.desc || "Flipbook").split("\n")[0].slice(0, 60);
 
-    // Reconstruct engine as string for embedding
-    const engineStr = [
-      "const N=" + JSON.stringify(N) + ";",
-      "const THEMES=" + JSON.stringify(THEMES) + ";",
-      "const esc=s=>String(s||'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));",
-      "const lum=h=>{h=String(h||'#fff').replace('#','');if(h.length==3)h=h.replace(/./g,'$&$&');const v=parseInt(h,16);return(.299*(v>>16)+.587*(v>>8&255)+.114*(v&255))/255};",
-      Viewer.toString(),
-    ].join("\n");
+    const standaloneViewerCode = `
+      var N = ${JSON.stringify(N)};
+      var THEMES = ${JSON.stringify(THEMES)};
+      function esc(s) {
+        return String(s || "").replace(/[&<>"]/g, function(m) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m] || m;
+        });
+      }
+      function lum(h) {
+        h = String(h || "#fff").replace("#", "");
+        if (h.length === 3) h = h.replace(/./g, "$&$&");
+        var v = parseInt(h, 16);
+        return (0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) / 255;
+      }
+      var globalAudioCtx = null;
+      function playPageSound() {
+        try {
+          var AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!globalAudioCtx) globalAudioCtx = new AudioCtx();
+          if (globalAudioCtx.state === "suspended") globalAudioCtx.resume();
+          var b = globalAudioCtx.createBuffer(1, Math.floor(globalAudioCtx.sampleRate * 0.14), globalAudioCtx.sampleRate);
+          var d = b.getChannelData(0);
+          for (var i = 0; i < d.length; i++) {
+            d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3) * 0.35;
+          }
+          var r = globalAudioCtx.createBufferSource();
+          var f = globalAudioCtx.createBiquadFilter();
+          r.buffer = b;
+          f.type = "lowpass";
+          f.frequency.value = 1600;
+          r.connect(f);
+          f.connect(globalAudioCtx.destination);
+          r.start();
+        } catch (_) {}
+      }
+      function Viewer(root, c) {
+        if (root._off) root._off();
+        var T = THEMES[c.theme] || THEMES[0];
+        var P = c.pages;
+        var n = P.length;
+        var L = Math.ceil(n / 2);
+        var maxS = n % 2 ? L - 1 : L;
+        var sp = c.speed || 0.8;
+        var img = c.bgType === "img" && c.bgImg;
+        var s = 0, W = 0, H = 0, z = 1, snd = !!c.sound, tm = 0;
+        var dr = null, au = 0;
+        root.className = "fbv" + (c.full ? " full" : "");
+        root.style.background = img ? "url(" + c.bgImg + ") center/cover" : c.bgType === "grad" ? "linear-gradient(135deg," + c.bg1 + "," + c.bg2 + ")" : c.bg1;
+        root.style.color = img || lum(c.bg1) < 0.5 ? "#fff" : "#0f172a";
+        root.style.setProperty("--pf", T.f);
+        root.style.setProperty("--pr", T.r + "px");
+        var h = img ? '<div class="ov" style="background:rgba(0,0,0,' + (c.dim || 0) + ')"></div>' : "";
+        if (c.logo || c.desc) {
+          h += '<div class="fbh' + (c.logoRight ? " rv" : "") + '">' + (c.logo ? '<img src="' + c.logo + '" alt="Logo">' : "<span></span>") + "<p>" + esc(c.desc) + "</p></div>";
+        }
+        h += '<div class="stage"><div class="bk" style="--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 6) + 'px"></div>';
+        for (var j = 0; j < L; j++) {
+          h += '<div class="lf"><div class="fc f"><img src="' + P[2 * j] + '" alt="Page ' + (2 * j + 1) + '" draggable="false"></div><div class="fc b">' + (P[2 * j + 1] ? '<img src="' + P[2 * j + 1] + '" alt="Page ' + (2 * j + 2) + '" draggable="false">' : "") + '</div></div>';
+        }
+        h += (T.sp && T.sp !== "s" ? '<div class="sp ' + T.sp + '"></div>' : "") + '</div></div><div class="ct"><button data-a="p" title="Previous page">\u2039</button><span class="pg"></span><button data-a="n" title="Next page">\u203a</button><button data-a="t" title="Thumbnails">\u25a6</button><button data-a="z" title="Zoom">\uff0b</button><button data-a="s" title="Sound toggle">' + (snd ? "\ud83d\udd0a" : "\ud83d\udd08") + '</button><button data-a="a" title="Autoplay">\u25b6</button><button data-a="f" title="Fullscreen">\u26f6</button></div><div class="th" hidden></div>' + (c.credit ? '<a class="cr" href="https://spellense.com/flipbook" target="_blank" rel="noopener">Made with Spellense</a>' : "");
+        root.innerHTML = h;
+        function q(k) { return root.querySelector(k); }
+        var bk = q(".bk"), bd = q(".bd"), st = q(".stage"), pg = q(".pg"), lvs = [].slice.call(root.querySelectorAll(".lf"));
+        function cl(v) { return Math.max(0, Math.min(maxS, v)); }
+        function tick() { if (snd) playPageSound(); }
+        function place() {
+          lvs.forEach(function(e, idx) {
+            e.style.transform = "rotateY(" + (idx < s ? -180 : 0) + "deg)";
+            e.style.zIndex = String(idx < s ? idx + 1 : L - idx);
+          });
+          bk.style.transform = "translateX(" + (s === 0 ? -W / 2 : s === maxS && n % 2 === 0 ? W / 2 : 0) + "px)";
+          pg.textContent = s === 0 ? "1 / " + n : (2 * s + 1 > n ? 2 * s : 2 * s + "\u2013" + (2 * s + 1)) + " / " + n;
+        }
+        function fit() {
+          var aw = Math.max(260, root.clientWidth - 40);
+          var ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
+          W = Math.min(aw / 2, ah * c.ratio) * z;
+          H = W / c.ratio;
+          var p = Math.max(6, Math.round(W * T.pd));
+          bk.style.width = 2 * W + "px";
+          bk.style.height = H + "px";
+          bd.style.inset = "-" + p + "px";
+          st.style.padding = p + 4 + "px 0";
+          lvs.forEach(function(e) { e.style.width = W + "px"; e.style.height = H + "px"; });
+          var sq = q(".sp");
+          if (sq) { sq.style.top = sq.style.bottom = "-" + p + "px"; }
+          place();
+        }
+        function go(dir) {
+          var ns = cl(s + dir);
+          if (ns === s) { place(); return; }
+          var m = dir > 0 ? s : s - 1;
+          s = ns;
+          place();
+          if (lvs[m]) lvs[m].style.zIndex = String(L + 5);
+          tick();
+          clearTimeout(tm);
+          tm = setTimeout(place, sp * 1000 + 60);
+        }
+        bk.addEventListener("pointerdown", function(e) {
+          var rect = bk.getBoundingClientRect();
+          var sd = e.clientX - rect.left > rect.width / 2 ? 1 : -1;
+          if ((sd > 0 && s >= maxS) || (sd < 0 && s <= 0)) return;
+          var m = sd > 0 ? s : s - 1;
+          dr = { x: e.clientX, sd: sd, m: m, p: 0 };
+          if (lvs[m]) { lvs[m].style.transition = "none"; lvs[m].style.zIndex = String(L + 5); }
+          bk.setPointerCapture(e.pointerId);
+        });
+        bk.addEventListener("pointermove", function(e) {
+          if (!dr || !lvs[dr.m]) return;
+          dr.p = Math.min(1, Math.max(0, ((e.clientX - dr.x) * -dr.sd) / W));
+          lvs[dr.m].style.transform = "rotateY(" + (dr.sd > 0 ? -180 * dr.p : -180 + 180 * dr.p) + "deg)";
+        });
+        function up() {
+          var d = dr; dr = null;
+          if (!d || !lvs[d.m]) return;
+          lvs[d.m].style.transition = "";
+          if (d.p < 0.04 || d.p > 0.3) go(d.sd); else place();
+        }
+        bk.addEventListener("pointerup", up);
+        bk.addEventListener("pointercancel", up);
+        function key(e) {
+          var el = document.activeElement;
+          if (el && /INPUT|TEXTAREA|SELECT/.test(el.tagName)) return;
+          if (e.key === "ArrowRight") go(1);
+          if (e.key === "ArrowLeft") go(-1);
+        }
+        var ro = new ResizeObserver(fit);
+        ro.observe(root);
+        window.addEventListener("keydown", key);
+        document.addEventListener("fullscreenchange", fit);
+        root._off = function() {
+          ro.disconnect();
+          window.removeEventListener("keydown", key);
+          document.removeEventListener("fullscreenchange", fit);
+          clearInterval(au);
+        };
+        q(".ct").onclick = function(e) {
+          var b = e.target.closest("button");
+          if (!b) return;
+          var a = b.dataset.a;
+          if (a === "p") go(-1);
+          if (a === "n") go(1);
+          if (a === "z") { z = z >= 2.2 ? 1 : z + 0.4; fit(); }
+          if (a === "s") { snd = !snd; b.textContent = snd ? "\ud83d\udd0a" : "\ud83d\udd08"; tick(); }
+          if (a === "f") { document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen && root.requestFullscreen(); }
+          if (a === "a") {
+            if (au) { clearInterval(au); au = 0; b.textContent = "\u25b6"; }
+            else { b.textContent = "\u23f8"; au = setInterval(function() { if (s >= maxS) { s = 0; place(); } else go(1); }, 3200); }
+          }
+          if (a === "t") {
+            var tEl = q(".th");
+            if (!tEl.innerHTML) {
+              tEl.innerHTML = P.map(function(u, idx) { return u ? '<img data-i="' + idx + '" src="' + u + '">' : ""; }).join("");
+            }
+            tEl.hidden = !tEl.hidden;
+          }
+        };
+        q(".th").onclick = function(e) {
+          var idx = e.target.dataset.i;
+          if (idx == null) return;
+          s = cl(idx === "0" ? 0 : Math.ceil(Number(idx) / 2));
+          place();
+          tick();
+        };
+        fit();
+      }
+    `;
 
     return (
       "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\"><title>" +
       esc(t) +
-      "</title><style>html,body{margin:0;background:#000;font-family:system-ui,sans-serif}</style><style>" +
+      "</title><style>html,body{margin:0;background:#000;font-family:system-ui,-apple-system,sans-serif}</style><style>" +
       VCSS +
       "</style></head><body><div id=\"r\"></div><script>" +
-      engineStr +
+      standaloneViewerCode +
       "<\\/script><script>Viewer(document.getElementById('r')," +
       cfg +
       ");if(/autoplay=1/.test(location.search)){var b=document.querySelector('[data-a=a]');b&&b.click()}<\\/script></body></html>"
@@ -1386,13 +1769,13 @@ function initFlipbookApp() {
     if (await derive()) {
       getEl("ed").hidden = false;
       getEl("ex").hidden = false;
-      status("Ready. " + pages.length + " pages.");
+      status("Ready. " + pages.length + " pages loaded.");
       getEl("ed").scrollIntoView({ behavior: "smooth" });
     }
   };
 
   getEl("lu").onclick = () => {
-    Object.assign(S, { bg1: LC[0], bg2: LC[1] || LC[0], bgType: "grad", bgTouched: true });
+    Object.assign(S, { bg1: LC[0], bg2: LC[1] || LC[0], bgType: "grad", bgImg: "", bgTouched: true });
     getEl("lo").hidden = true;
     sync(); show();
   };
@@ -1426,7 +1809,11 @@ function initFlipbookApp() {
     await derive();
   });
 
-  getEl("cvx").onclick = async () => { S.cover = ""; await derive(); };
+  getEl("cvx").onclick = async () => {
+    S.cover = "";
+    (getEl("cv") as HTMLInputElement).value = "";
+    await derive();
+  };
 
   // ── PDF download ───────────────────────────────────────────────────────────
   getEl("dp").onclick = () => {
@@ -1459,7 +1846,12 @@ function initFlipbookApp() {
 
   getEl("ec").onclick = () => {
     const el = document.getElementById("emb");
-    if (navigator.clipboard && el) navigator.clipboard.writeText(el.textContent || "");
+    if (navigator.clipboard && el) {
+      navigator.clipboard.writeText(el.textContent || "");
+      const prev = getEl("ec").textContent;
+      getEl("ec").textContent = "✓ Copied to clipboard!";
+      setTimeout(() => { getEl("ec").textContent = prev; }, 2000);
+    }
   };
 
   // ── Init ──────────────────────────────────────────────────────────────────
