@@ -370,10 +370,10 @@ export default function FlipbookClient() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   useEffect(() => {
-    // Poll until both CDN scripts are loaded, then init DOM-driven logic
+    // Poll until pdf.js CDN script is loaded, then init DOM-driven logic
     const id = setInterval(() => {
       const w = window as unknown as Record<string, unknown>;
-      if (w["pdfjsLib"] && w["jspdf"] && !initDone.current) {
+      if (w["pdfjsLib"] && !initDone.current) {
         clearInterval(id);
         initDone.current = true;
         initFlipbookApp();
@@ -390,10 +390,6 @@ export default function FlipbookClient() {
       {/* CDN scripts loaded client-side */}
       <Script
         src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
-        strategy="afterInteractive"
-      />
-      <Script
-        src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
         strategy="afterInteractive"
       />
 
@@ -752,7 +748,6 @@ export default function FlipbookClient() {
                 </svg>
                 Download Offline HTML
               </button>
-              <button className="fbtn" id="dp">Download as PDF</button>
               <button className="fbtn" id="pvw">Preview in New Tab</button>
               <button className="fbtn ml-auto text-slate-500 hover:text-red-600" id="nw">Start Over</button>
             </div>
@@ -945,8 +940,6 @@ function initFlipbookApp() {
   const w = window as unknown as Record<string, unknown>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pdfjsLib = w["pdfjsLib"] as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const jspdfLib = w["jspdf"] as any;
 
   if (pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -1638,11 +1631,20 @@ function initFlipbookApp() {
   });
 
   function dl(name: string, data: string, type: string) {
+    const blob = new Blob([data], { type: `${type};charset=utf-8` });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([data], { type }));
+    a.style.display = "none";
+    a.href = url;
     a.download = name;
+    document.body.appendChild(a);
     a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    setTimeout(() => {
+      if (document.body.contains(a)) {
+        document.body.removeChild(a);
+      }
+      URL.revokeObjectURL(url);
+    }, 4000);
   }
 
   // ── Standalone Offline HTML Generator ──────────────────────────────────────
@@ -1832,19 +1834,77 @@ function initFlipbookApp() {
     );
   }
 
-  getEl("dl").onclick = () => dl("flipbook.html", buildHTML(), "text/html");
+  getEl("dl").onclick = () => {
+    if (!pages || pages.length === 0) {
+      alert("Please upload a PDF or images first.");
+      return;
+    }
+    const dlBtn = getEl("dl");
+    const origHtml = dlBtn.innerHTML;
+    dlBtn.textContent = "Generating Offline HTML...";
+    (dlBtn as HTMLButtonElement).disabled = true;
 
-  getEl("pvw").onclick = () =>
-    window.open(URL.createObjectURL(new Blob([buildHTML()], { type: "text/html" })), "_blank");
+    setTimeout(() => {
+      try {
+        const html = buildHTML();
+        const docName = (S.desc || "flipbook").trim().split("\n")[0].replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase() || "flipbook";
+        dl(`${docName}.html`, html, "text/html");
+        dlBtn.textContent = "✓ Downloaded!";
+        setTimeout(() => {
+          dlBtn.innerHTML = origHtml;
+          (dlBtn as HTMLButtonElement).disabled = false;
+        }, 2500);
+      } catch (err) {
+        console.error("Export error:", err);
+        alert("Failed to generate offline HTML. Please try again.");
+        dlBtn.innerHTML = origHtml;
+        (dlBtn as HTMLButtonElement).disabled = false;
+      }
+    }, 50);
+  };
+
+  getEl("pvw").onclick = () => {
+    if (!pages || pages.length === 0) {
+      alert("Please upload a PDF or images first.");
+      return;
+    }
+    try {
+      const html = buildHTML();
+      const win = window.open("", "_blank");
+      if (win) {
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+      } else {
+        const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.target = "_blank";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          if (document.body.contains(a)) document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 4000);
+      }
+    } catch (err) {
+      console.error("Preview error:", err);
+      alert("Could not open preview. Please allow popups for Spellense.");
+    }
+  };
 
   getEl("nw").onclick = () => {
-    RAW = []; pages = [];
+    RAW = [];
+    pages = [];
     getEl("ed").hidden = true;
     getEl("ex").hidden = true;
     getEl("pv").innerHTML = "";
     const stEl = document.getElementById("st");
     if (stEl) stEl.textContent = "";
-    getEl("fi").value = "";
+    (getEl("fi") as HTMLInputElement).value = "";
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // ── Drop zone ──────────────────────────────────────────────────────────────
@@ -1919,22 +1979,29 @@ function initFlipbookApp() {
     await derive();
   };
 
-  // ── PDF download ───────────────────────────────────────────────────────────
-  getEl("dp").onclick = () => {
-    if (!jspdfLib) { alert("The PDF tool is still loading. Try again in a moment."); return; }
-    const { jsPDF } = jspdfLib;
-    const pw = 595, ph = pw / ratio, o = ph > pw ? "p" : "l";
-    const doc = new jsPDF({ unit: "pt", format: [pw, ph], orientation: o });
-    pages.forEach((u, i) => {
-      if (i) doc.addPage([pw, ph], o);
-      if (u !== BLANK) doc.addImage(u, "JPEG", 0, 0, pw, ph);
-    });
-    doc.save("flipbook.pdf");
-  };
-
   // ── Embed code ────────────────────────────────────────────────────────────
+  function fallbackCopyText(text: string, cb: () => void) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      document.execCommand("copy");
+      cb();
+    } catch (_) {
+      alert("Please copy the code manually from the box.");
+    }
+    document.body.removeChild(ta);
+  }
+
   function emb() {
-    const u = ((document.getElementById("eu") as HTMLInputElement)?.value || "YOUR-FILE-URL") +
+    const defaultUrl = typeof window !== "undefined" ? window.location.origin + "/flipbook" : "https://spellense.com/flipbook";
+    const userUrl = (document.getElementById("eu") as HTMLInputElement)?.value.trim();
+    const u = (userUrl || defaultUrl) +
       ((document.getElementById("ea") as HTMLInputElement)?.checked ? "?autoplay=1" : "");
     const w = (document.getElementById("ew") as HTMLInputElement)?.value || "100%";
     const h = (document.getElementById("eh") as HTMLInputElement)?.value || "600";
@@ -1950,11 +2017,21 @@ function initFlipbookApp() {
 
   getEl("ec").onclick = () => {
     const el = document.getElementById("emb");
-    if (navigator.clipboard && el) {
-      navigator.clipboard.writeText(el.textContent || "");
-      const prev = getEl("ec").textContent;
-      getEl("ec").textContent = "✓ Copied to clipboard!";
-      setTimeout(() => { getEl("ec").textContent = prev; }, 2000);
+    const code = el ? el.textContent || "" : "";
+    if (!code) return;
+    const btn = getEl("ec");
+    const prev = btn.textContent;
+    const onSuccess = () => {
+      btn.textContent = "✓ Copied to clipboard!";
+      setTimeout(() => { btn.textContent = prev; }, 2000);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(onSuccess).catch(() => {
+        fallbackCopyText(code, onSuccess);
+      });
+    } else {
+      fallbackCopyText(code, onSuccess);
     }
   };
 
