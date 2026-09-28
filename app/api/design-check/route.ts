@@ -386,8 +386,8 @@ export async function POST(req: Request) {
 
         const ratio = calculateContrastRatio(textStrokeLum, bgLum);
 
-        // Only flag genuinely poor contrast (ratio < 2.5:1) on substantial words
-        if (ratio < 2.5 && w.text.length >= 3) {
+        // Only flag poor contrast (ratio < 3.5:1 — WCAG AA requires 4.5:1 for normal text)
+        if (ratio < 3.5 && w.text.length >= 3) {
           contrastFailCount++;
           if (contrastFailCount <= 3) {
             issues.push({
@@ -397,7 +397,7 @@ export async function POST(req: Request) {
               title: "Low Contrast Readability",
               description: `Text "${w.text}" blends into the background color.`,
               impact: "Readers in bright daylight or with low phone brightness will struggle to read this copy, leading them to skip past it.",
-              specDetail: `Contrast ratio is ${ratio.toFixed(1)}:1 (WCAG AA requires 4.5:1 for standard body text).`,
+              specDetail: `Contrast ratio is approximately ${ratio.toFixed(1)}:1 (WCAG AA requires 4.5:1 for normal text, 3:1 for large text).`,
               whyItMatters: "Poor contrast reduces reading speed and viewer comprehension.",
               originalText: w.text,
               suggestedFix: "Increase the brightness difference between the text color and background, or add a subtle soft shadow/underlay.",
@@ -424,9 +424,32 @@ export async function POST(req: Request) {
     if (geminiKey) {
       try {
         const base64Data = buffer.toString("base64");
+
+        // Build OCR context string for Gemini — exact words extracted from the image
+        const ocrWordList = words
+          .map((w) => `"${w.text}" (conf:${Math.round(w.confidence)}%, pos: top=${(w.top * 100).toFixed(1)}% left=${(w.left * 100).toFixed(1)}%)`)
+          .join(", ");
+
+        const imageDimContext = `${origWidth}×${origHeight}px (aspect ratio ${aspectRatio})`;
+        const formatHint = origWidth > origHeight
+          ? "landscape / horizontal banner"
+          : origWidth < origHeight
+          ? "portrait / vertical banner or flyer"
+          : "square format";
+
         const prompt = `You are an experienced Creative Director and Senior Pre-Flight QA Auditor at a premier advertising and publishing agency.
 Your role is to review this graphic design asset and provide an insightful, constructive, human pre-flight review.
 You must sound like an experienced human creative director — NEVER like a robotic automated checklist.
+
+IMAGE METADATA (use this for context):
+- Dimensions: ${imageDimContext}
+- Format: ${formatHint}
+- File type: ${mimeType}
+
+OCR-EXTRACTED TEXT (these words were machine-read directly from the image — use this as ground truth for spelling, pricing, and copy checks):
+${ocrWordList || "(no readable text detected by OCR — rely on visual read)"}
+
+IMPORTANT: Cross-reference the OCR text above with what you see visually. If there is a discrepancy, trust the OCR text for spelling issues, and trust your visual read for layout/contrast.
 
 FOLLOW THESE 6 CORE HUMAN REVIEWER PRINCIPLES:
 
@@ -466,14 +489,15 @@ FOLLOW THESE 6 CORE HUMAN REVIEWER PRINCIPLES:
 - If multiple small text elements on a background share the same contrast or safe-zone issue, group them into one unified, actionable note.
 
 AUDIT SCOPE:
-- Price & Discount Math: Verify stated savings match numbers (e.g. "50% off! Was $100 Now $60" is wrong: 100 to 60 is 40%).
-- Day & Date Sanity: Verify day matches calendar date.
-- Contact Details: Incomplete phone numbers, malformed emails (@gmial.com), broken URLs.
-- Placeholder Artifacts: Leftover dummy text ("Lorem Ipsum", "[Insert Date]").
-- Genuine typos in headlines, offers, and body copy. IMPORTANT: Accept BOTH American and British/Commonwealth English spellings ('catalogue' and 'catalog', 'colour' and 'color', 'centre' and 'center' are BOTH 100% valid). Do NOT flag brand names or standard tech acronyms.
-- Asterisk Pairing: Headline claims with (*) must have matching footnote disclaimer, and vice-versa.
-- Watermarks & Logo Distortion: Leftover stock watermarks (Shutterstock, Getty), or disproportionately stretched/squished logos.
-- Typography & Hierarchy: Font chaos (4+ fonts), unreadable decorative fonts, contrast on photos.
+- Price & Discount Math: Use the OCR text to verify stated savings match the numbers (e.g. "50% off! Was AED 100 Now AED 60" is wrong: 100 to 60 is 40%). Perform the arithmetic yourself and flag if wrong.
+- Day & Date Sanity: Verify day/date combinations in the OCR text make calendar sense (e.g. "Monday 30 September" — verify the day matches).
+- Contact Details: Incomplete phone numbers (too few digits), malformed emails (e.g. @gmial.com), broken or obviously fake URLs.
+- Placeholder Artifacts: Leftover dummy text ("Lorem Ipsum", "[Insert Date]", "CLIENT NAME", "SAMPLE", "TBC").
+- Genuine typos in headlines, offers, and body copy using OCR text. IMPORTANT: Accept BOTH American and British/Commonwealth English spellings. Do NOT flag brand names, standard tech acronyms, or proper nouns.
+- Asterisk Pairing: Headline claims with (*) or (T&C) must have a matching footnote disclaimer visible on the design.
+- Watermarks & Logo Distortion: Leftover stock watermarks (Shutterstock, Getty, iStock), or logos that appear visually stretched or squished.
+- Typography & Hierarchy: More than 3 distinct fonts in use, unreadable decorative/script fonts on busy backgrounds, illegible font sizes on key copy.
+- WCAG Contrast: Flag text that appears to have low contrast against its background, especially body copy and small print.
 
 COORDINATES:
 For each issue, return a normalized bounding box [ymin, xmin, ymax, xmax] as integers between 0 and 1000 indicating where the issue occurs on the image.
@@ -493,8 +517,8 @@ Return ONLY a pure JSON object matching this schema:
       "qaRole": "Role title (e.g. Creative Director / Data Integrity QA / Legal Compliance / Pre-Flight)",
       "title": "Natural, clear issue title (e.g., 'Discount calculation doesn\\'t match prices')",
       "description": "Clear explanation of what was observed",
-      "impact": "Real-world consequence for readers, customers, or brand reputation (e.g., 'Customers will notice the math discrepancy at checkout, creating friction and distrust')",
-      "specDetail": "Technical or mathematical details if applicable (e.g., 'Was $100, Now $60 is a 40% discount, but banner claims 50% off')",
+      "impact": "Real-world consequence for readers, customers, or brand reputation",
+      "specDetail": "Technical or mathematical details if applicable",
       "whyItMatters": "Concise summary of business or print risk",
       "suggestedFix": "Actionable, designer-friendly fix in plain language",
       "originalText": "exact text if applicable",
@@ -516,11 +540,13 @@ If the design is completely flawless with zero errors, return:
   "issues": []
 }`;
 
+
+
         let response: Response | null = null;
         for (let attempt = 1; attempt <= 3; attempt++) {
           try {
             response = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`,
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -540,7 +566,11 @@ If the design is completely flawless with zero errors, return:
                   ],
                   generationConfig: {
                     temperature: 0.1,
+                    maxOutputTokens: 8192,
                     responseMimeType: "application/json",
+                  },
+                  thinkingConfig: {
+                    thinkingBudget: 1024,
                   },
                 }),
               }
@@ -767,6 +797,28 @@ If the design is completely flawless with zero errors, return:
       return sevScore + catScore;
     }
 
+    // 7a. DEDUPLICATION — remove near-duplicate issues flagged by both local and Gemini engines
+    // Two issues are considered duplicates if they share the same category AND their bboxes overlap > 50%
+    const deduped: DesignIssue[] = [];
+    for (const issue of issues) {
+      const isDup = deduped.some((existing) => {
+        if (existing.category !== issue.category) return false;
+        // Overlap check
+        const overlapLeft = Math.max(existing.bbox.left, issue.bbox.left);
+        const overlapTop = Math.max(existing.bbox.top, issue.bbox.top);
+        const overlapRight = Math.min(existing.bbox.left + existing.bbox.width, issue.bbox.left + issue.bbox.width);
+        const overlapBottom = Math.min(existing.bbox.top + existing.bbox.height, issue.bbox.top + issue.bbox.height);
+        if (overlapRight <= overlapLeft || overlapBottom <= overlapTop) return false;
+        const overlapArea = (overlapRight - overlapLeft) * (overlapBottom - overlapTop);
+        const issueArea = issue.bbox.width * issue.bbox.height;
+        return issueArea > 0 && overlapArea / issueArea > 0.5;
+      });
+      if (!isDup) deduped.push(issue);
+    }
+    issues.length = 0;
+    issues.push(...deduped);
+
+    // 7b. Sort issues by Real-World Severity (Rule 3: Financial & Reprint Risks First)
     issues.sort((a, b) => getRealWorldSeverityScore(b) - getRealWorldSeverityScore(a));
 
     const criticalIssues = issues.filter(
