@@ -64,6 +64,76 @@ const NAV_ITEMS = [
     ),
   },
   {
+    label: "3D Flipbook",
+    shortLabel: "Flipbook",
+    href: "/flipbook",
+    description: "Convert PDFs & catalogs into interactive 3D flipbooks",
+    tag: "New",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+        <path d="M6 6h10" />
+        <path d="M6 10h10" />
+      </svg>
+    ),
+  },
+  {
+    label: "Image Compressor",
+    shortLabel: "Compressor",
+    href: "/image-compressor",
+    description: "Compress images with live Squoosh-style split comparison",
+    tag: "New",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M4 14h6m0 0v6m0-6L3 21" />
+        <path d="M20 10h-6m0 0V4m0 6 7-7" />
+      </svg>
+    ),
+  },
+  {
+    label: "Image to Text",
+    shortLabel: "Image to Text",
+    href: "/image-to-text",
+    description: "Extract clean, copyable text from photos & screenshots",
+    tag: "New",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+        <line x1="8" y1="13" x2="16" y2="13" />
+        <line x1="8" y1="17" x2="13" y2="17" />
+      </svg>
+    ),
+  },
+  {
     label: "Case Converter",
     shortLabel: "Case",
     href: "/case-converter",
@@ -106,76 +176,6 @@ const NAV_ITEMS = [
         <circle cx="12" cy="12" r="10" />
         <line x1="2" y1="12" x2="22" y2="12" />
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Image to Text",
-    shortLabel: "Image to Text",
-    href: "/image-to-text",
-    description: "Extract clean, copyable text from photos & screenshots",
-    tag: "New",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-        <circle cx="8.5" cy="8.5" r="1.5" />
-        <polyline points="21 15 16 10 5 21" />
-        <line x1="8" y1="13" x2="16" y2="13" />
-        <line x1="8" y1="17" x2="13" y2="17" />
-      </svg>
-    ),
-  },
-  {
-    label: "Image Compressor",
-    shortLabel: "Compressor",
-    href: "/image-compressor",
-    description: "Compress images with live Squoosh-style split comparison",
-    tag: "New",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M4 14h6m0 0v6m0-6L3 21" />
-        <path d="M20 10h-6m0 0V4m0 6 7-7" />
-      </svg>
-    ),
-  },
-  {
-    label: "3D Flipbook",
-    shortLabel: "Flipbook",
-    href: "/flipbook",
-    description: "Convert PDFs & catalogs into interactive 3D flipbooks",
-    tag: "New",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
-        <path d="M6 6h10" />
-        <path d="M6 10h10" />
       </svg>
     ),
   },
@@ -251,27 +251,6 @@ const NAV_ITEMS = [
 ];
 
 const UTILITY_TOOLS = [
-  {
-    label: "3D Flipbook Maker",
-    href: "/flipbook",
-    description: "Turn multi-page PDFs & catalogs into 3D flipbooks",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
-        <path d="M6 6h10" />
-        <path d="M6 10h10" />
-      </svg>
-    ),
-  },
   {
     label: "Case Converter",
     href: "/case-converter",
@@ -366,8 +345,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
 
   const isToolsActive =
     pathname.startsWith("/case-converter") ||
-    pathname.startsWith("/us-uk-converter") ||
-    pathname.startsWith("/flipbook");
+    pathname.startsWith("/us-uk-converter");
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl transition-colors">
@@ -513,6 +491,21 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 }`}
               >
                 <span>Image to Text</span>
+              </Link>
+
+              {/* 3D Flipbook */}
+              <Link
+                href="/flipbook"
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 font-bold ${
+                  pathname.startsWith("/flipbook")
+                    ? "bg-white text-blue-600 shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-700"
+                }`}
+              >
+                <span>3D Flipbook</span>
+                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700">
+                  New
+                </span>
               </Link>
 
               {/* Tools Dropdown */}
