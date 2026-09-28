@@ -347,6 +347,274 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
     pathname.startsWith("/case-converter") ||
     pathname.startsWith("/us-uk-converter");
 
+  const isHomePage = pathname === "/" && !resultMode;
+
+  if (isHomePage) {
+    return (
+      <header className="sticky top-0 z-50 w-full transition-colors">
+        <div className="w-full flex items-stretch h-[68px] sm:h-[76px] bg-[#0055fe] shadow-sm">
+          {/* LEFT WHITE LOGO TAB WITH CURVED NOTCH */}
+          <div className="relative bg-white pl-5 sm:pl-8 pr-6 sm:pr-8 flex items-center gap-3 shrink-0 rounded-br-[36px] sm:rounded-br-[44px] shadow-xs z-10">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6" />
+                  <path d="M8 13h5" />
+                  <path d="M8 17h3" />
+                  <circle cx="17.5" cy="16.5" r="2.7" />
+                  <path d="m19.5 18.5 1.8 1.8" />
+                </svg>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[20px] sm:text-[22px] font-extrabold tracking-[-0.8px] text-slate-900 leading-none">
+                    Spel<span className="text-blue-600">lense</span>
+                  </span>
+                  <span className="hidden sm:inline-flex items-center rounded-md bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                    OCR
+                  </span>
+                </div>
+                <div className="text-[8.5px] sm:text-[9px] font-semibold tracking-[1.4px] text-slate-400 uppercase mt-0.5">
+                  Smart Spell Checking
+                </div>
+              </div>
+            </Link>
+
+            {/* Smooth concave curve into the blue bar */}
+            <div className="absolute -right-[28px] sm:-right-[32px] top-0 w-[28px] sm:w-[32px] h-[28px] sm:h-[32px] overflow-hidden pointer-events-none">
+              <svg viewBox="0 0 32 32" fill="none" className="w-full h-full text-white fill-current">
+                <path d="M0 0 C0 17.673 14.327 32 32 32 L0 32 Z" />
+              </svg>
+            </div>
+          </div>
+
+          {/* RIGHT ROYAL BLUE NAVIGATION BAR */}
+          <div className="flex-1 flex items-center justify-end px-5 sm:px-8 lg:px-10">
+            <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-white text-[13.5px] font-semibold tracking-wide">
+              {/* Design Check */}
+              <Link
+                href="/design-check"
+                className="flex items-center gap-1.5 py-1.5 text-white/95 hover:text-white transition font-bold"
+              >
+                <span>Design Check</span>
+                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-white/20 text-white">
+                  New
+                </span>
+              </Link>
+
+              {/* 3D Flipbook */}
+              <Link
+                href="/flipbook"
+                className="flex items-center gap-1.5 py-1.5 text-white/95 hover:text-white transition font-bold"
+              >
+                <span>3D Flipbook</span>
+                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-white/20 text-white">
+                  New
+                </span>
+              </Link>
+
+              {/* Image Compressor */}
+              <Link
+                href="/image-compressor"
+                className="py-1.5 text-white/95 hover:text-white transition font-bold"
+              >
+                <span>Image Compressor</span>
+              </Link>
+
+              {/* Image to Text */}
+              <Link
+                href="/image-to-text"
+                className="py-1.5 text-white/95 hover:text-white transition font-bold"
+              >
+                <span>Image to Text</span>
+              </Link>
+
+              {/* Tools Dropdown */}
+              <div
+                ref={toolsRef}
+                className="relative"
+                onMouseEnter={() => setToolsDropdownOpen(true)}
+                onMouseLeave={() => setToolsDropdownOpen(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => setToolsDropdownOpen((prev) => !prev)}
+                  className="flex items-center gap-1.5 py-1.5 text-white/95 hover:text-white transition cursor-pointer font-bold"
+                  aria-expanded={toolsDropdownOpen}
+                >
+                  <span>Tools</span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`transition-transform duration-200 ${
+                      toolsDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {toolsDropdownOpen && (
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50">
+                    <div className="w-72 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 text-slate-800">
+                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Text Utilities
+                      </div>
+                      {UTILITY_TOOLS.map((tool) => (
+                        <Link
+                          key={tool.href}
+                          href={tool.href}
+                          onClick={() => setToolsDropdownOpen(false)}
+                          className="flex items-start gap-3 rounded-xl p-2.5 transition-colors hover:bg-blue-50/80 text-slate-700 hover:text-blue-700"
+                        >
+                          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                            {tool.icon}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-bold leading-tight">
+                              {tool.label}
+                            </div>
+                            <div className="mt-0.5 text-[11px] text-slate-500 leading-normal line-clamp-1">
+                              {tool.description}
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* About */}
+              <Link
+                href="/about"
+                className="py-1.5 text-white/95 hover:text-white transition font-bold"
+              >
+                <span>About</span>
+              </Link>
+
+              {/* FAQ */}
+              <Link
+                href="/faq"
+                className="py-1.5 text-white/95 hover:text-white transition font-bold"
+              >
+                <span>FAQ</span>
+              </Link>
+
+              {/* Blog */}
+              <Link
+                href="/blog"
+                className="py-1.5 text-white/95 hover:text-white transition font-bold"
+              >
+                <span>Blog</span>
+              </Link>
+            </nav>
+
+            {/* Mobile Hamburger Button */}
+            <div className="flex lg:hidden items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label={mobileMenuOpen ? "Close menu" : "Open navigation menu"}
+                aria-expanded={mobileMenuOpen}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white hover:bg-white/25 active:scale-95 transition cursor-pointer"
+              >
+                {mobileMenuOpen ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile menu dropdown overlay */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 top-[68px] sm:top-[76px] z-40 bg-slate-900/30 backdrop-blur-md lg:hidden animate-in fade-in duration-200">
+            <div className="mx-auto max-w-lg border-b border-slate-200/80 bg-white/95 px-5 pt-4 pb-6 shadow-2xl backdrop-blur-xl">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Navigation &amp; Tools
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Free • No Signup
+                </span>
+              </div>
+              <div className="mt-3 space-y-1.5">
+                {NAV_ITEMS.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-3.5 rounded-2xl p-3 transition-all ${
+                        active
+                          ? "bg-blue-50/90 text-blue-700 shadow-xs ring-1 ring-blue-200/80"
+                          : "text-slate-700 hover:bg-slate-50 active:bg-slate-100"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${
+                          active
+                            ? "bg-blue-600 text-white shadow-sm shadow-blue-600/20"
+                            : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
+                        }`}
+                      >
+                        {item.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold truncate">
+                            {item.label}
+                          </span>
+                          {item.tag && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                              {item.tag}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-xs text-slate-500 truncate">
+                          {item.description}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </header>
+    );
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl transition-colors">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
@@ -469,6 +737,21 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 </span>
               </Link>
 
+              {/* 3D Flipbook */}
+              <Link
+                href="/flipbook"
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 font-bold ${
+                  pathname.startsWith("/flipbook")
+                    ? "bg-white text-blue-600 shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-700"
+                }`}
+              >
+                <span>3D Flipbook</span>
+                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700">
+                  New
+                </span>
+              </Link>
+
               {/* Image Compressor */}
               <Link
                 href="/image-compressor"
@@ -491,21 +774,6 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 }`}
               >
                 <span>Image to Text</span>
-              </Link>
-
-              {/* 3D Flipbook */}
-              <Link
-                href="/flipbook"
-                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 font-bold ${
-                  pathname.startsWith("/flipbook")
-                    ? "bg-white text-blue-600 shadow-xs ring-1 ring-slate-900/5"
-                    : "hover:bg-white/60 hover:text-slate-900 text-slate-700"
-                }`}
-              >
-                <span>3D Flipbook</span>
-                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700">
-                  New
-                </span>
               </Link>
 
               {/* Tools Dropdown */}
@@ -609,6 +877,18 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 }`}
               >
                 <span>FAQ</span>
+              </Link>
+
+              {/* Blog */}
+              <Link
+                href="/blog"
+                className={`relative rounded-full px-3.5 py-1.5 transition-all duration-150 flex items-center gap-1.5 font-bold ${
+                  pathname.startsWith("/blog")
+                    ? "bg-white text-blue-600 shadow-xs ring-1 ring-slate-900/5"
+                    : "hover:bg-white/60 hover:text-slate-900 text-slate-700"
+                }`}
+              >
+                <span>Blog</span>
               </Link>
             </div>
 

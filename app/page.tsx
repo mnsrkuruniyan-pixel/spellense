@@ -3196,40 +3196,13 @@ export default function Home() {
 
           {/* HERO */}
 
-          <div className="mx-auto max-w-6xl text-center">
-            <div className="min-h-[86px] xs:min-h-[96px] sm:min-h-[108px] lg:min-h-[76px] flex flex-col items-center justify-center">
-              <h1
-                aria-live="polite"
-                className={`pb-1 text-[29px] xs:text-[34px] sm:text-[40px] md:text-[46px] lg:text-[clamp(32px,3.2vw,54px)] xl:text-[clamp(38px,3.4vw,56px)] font-extrabold leading-[1.2] lg:leading-[1.14] tracking-[-0.8px] sm:tracking-[-1.5px] lg:tracking-[-2px] text-black text-center lg:whitespace-nowrap transition-all duration-300 ease-out ${
-                  fadeState === "visible"
-                    ? "opacity-100 translate-y-0 scale-100"
-                    : "opacity-0 -translate-y-2 scale-[0.99]"
-                }`}
-              >
-                <span className="inline-block text-black">{HERO_HEADLINES[headlineIndex].line1}</span>{" "}
-                <br className="lg:hidden" />
-                <span className="inline-block text-black">
-                  {HERO_HEADLINES[headlineIndex].line2}
-                </span>
-              </h1>
-            </div>
-
-            {/* CYCLING INDICATOR PILLS */}
-            <div className="mt-3.5 flex items-center justify-center gap-1.5" aria-hidden="true">
-              {HERO_HEADLINES.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => handleHeadlineSelect(i)}
-                  aria-label={`Show headline ${i + 1}`}
-                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                    i === headlineIndex
-                      ? "w-6 bg-black shadow-2xs"
-                      : "w-1.5 bg-slate-300 hover:bg-slate-400"
-                  }`}
-                />
-              ))}
-            </div>
+          <div className="mx-auto max-w-5xl text-center pt-2 sm:pt-6 pb-2">
+            <h1
+              className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a]"
+            >
+              Not even hiding in a PDF<br />
+              will save <span className="text-[#0055fe]">a typo.</span>
+            </h1>
           </div>
 
 
@@ -3473,14 +3446,14 @@ export default function Home() {
                   openFilePicker();
                 }
               }}
-              className={`group relative rounded-[32px] border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden ${
+              className={`group relative rounded-[28px] border transition-all duration-300 cursor-pointer overflow-hidden ${
                 dragging
-                  ? "border-blue-500 bg-blue-50/95 shadow-[0_0_60px_rgba(59,130,246,0.25)] scale-[1.01]"
-                  : "border-blue-200/90 hover:border-blue-400/80 bg-white/95 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.04)] hover:shadow-[0_25px_70px_-15px_rgba(59,130,246,0.14)]"
+                  ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.01]"
+                  : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
               }`}
             >
 
-              <div className="relative rounded-[32px] backdrop-blur-2xl p-6 sm:p-10 text-center transition-all duration-300">
+              <div className="relative p-8 sm:p-14 text-center transition-all duration-300">
 
                 {/* BEFORE UPLOAD */}
 
@@ -3488,51 +3461,53 @@ export default function Home() {
 
                   <div className="relative transition-all duration-300">
 
-                    {/* FLOATING 3D ICON */}
-                    <div className="relative mx-auto flex h-18 w-18 items-center justify-center">
-                      <div className="absolute inset-0 rounded-3xl bg-blue-500/25 blur-xl transition-all duration-500 group-hover:scale-130 group-hover:bg-blue-500/35" />
-                      <div className="relative flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white shadow-xl shadow-blue-600/35 ring-4 ring-blue-50/90 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:scale-105 group-hover:shadow-blue-600/45">
-                        <svg
-                          width="28"
-                          height="28"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M12 19V5" />
-                          <path d="m5 12 7-7 7 7" />
-                        </svg>
-                      </div>
+                    {/* CLOUD UPLOAD ICON WITH UPWARD ARROW */}
+                    <div className="mx-auto flex justify-center items-center">
+                      <svg
+                        width="68"
+                        height="68"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#0055fe"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="group-hover:-translate-y-1 transition-transform duration-300"
+                      >
+                        <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                        <path d="M12 12v9" />
+                        <path d="m16 16-4-4-4 4" />
+                      </svg>
                     </div>
 
-                    <h2 className="mt-4 text-xl sm:text-2xl font-black tracking-[-0.5px] text-slate-900 group-hover:text-blue-900 transition-colors">
-                      {dragging ? "Release your file to inspect" : "Drop your image, PDF, or document here"}
+                    <h2 className="mt-4 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
+                      {dragging ? "Release your file to inspect" : "Drop your file here"}
                     </h2>
 
                     <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
-                      Drag and drop anywhere inside, or choose a file from your computer • Max 25MB
+                      or click to choose a file
                     </p>
 
                     {/* BUTTONS */}
-                    <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           openFilePicker();
                         }}
-                        className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35 active:translate-y-0 active:scale-98 cursor-pointer"
+                        className="inline-flex items-center gap-2.5 rounded-xl bg-[#0055fe] hover:bg-[#0047d9] px-8 py-3.5 text-sm sm:text-base font-semibold text-white shadow-md shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M12 19V5" />
                           <path d="m5 12 7-7 7 7" />
                         </svg>
-                        <span>Choose a file</span>
+                        <span>Choose File</span>
                       </button>
+                    </div>
 
+                    {/* SAMPLE DOCUMENT LINK */}
+                    <div className="mt-5 flex justify-center">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -3540,20 +3515,20 @@ export default function Home() {
                           loadSampleFile();
                         }}
                         disabled={loadingSample}
-                        className="inline-flex items-center gap-2 rounded-2xl bg-slate-100/90 hover:bg-blue-50/70 px-5 py-3 text-sm font-bold text-slate-700 shadow-2xs backdrop-blur-xs transition hover:text-blue-600 disabled:opacity-60 cursor-pointer"
+                        className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#0055fe] hover:underline cursor-pointer"
                         title="Test immediately with a sample document"
                       >
                         {loadingSample ? (
                           <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
                         ) : (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                             <polyline points="14 2 14 8 20 8" />
                             <line x1="16" y1="13" x2="8" y2="13" />
                             <line x1="16" y1="17" x2="8" y2="17" />
                           </svg>
                         )}
-                        <span>Try Sample Document</span>
+                        <span>Try a Sample Document</span>
                       </button>
                     </div>
 
@@ -3744,34 +3719,83 @@ export default function Home() {
             )}
 
 
-            {/* TRUST BADGES */}
+            {/* 4 FEATURE TRUST PILLARS (MATCHING SCREENSHOT) */}
+            <div className="mt-8 max-w-5xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+                
+                {/* 1. Documents & Images */}
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-[#0055fe]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                      Works with documents &amp; images
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                      PDF, DOCX, PPTX, XLSX, JPG, PNG and more
+                    </div>
+                  </div>
+                </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+                {/* 2. Fast and accurate */}
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100/70 text-purple-600">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                      Fast and accurate
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                      AI-powered checks
+                    </div>
+                  </div>
+                </div>
 
-              <TrustItem
-                icon="signup"
-                title="No signup"
-                text="Start instantly"
-              />
+                {/* 3. No signup required */}
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100/70 text-emerald-600">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                      No signup required
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                      Start instantly
+                    </div>
+                  </div>
+                </div>
 
-              <TrustItem
-                icon="free"
-                title="100% Free"
-                text="No payment required"
-              />
+                {/* 4. Files stay private */}
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100/70 text-amber-600">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                      Your files stay private
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                      No storage, in-memory processing
+                    </div>
+                  </div>
+                </div>
 
-              <TrustItem
-                icon="private"
-                title="Zero storage"
-                text="In-memory processing"
-              />
-
-              <TrustItem
-                icon="easy"
-                title="Precise OCR"
-                text="Visual layout aware"
-              />
-
+              </div>
             </div>
 
           </div>
