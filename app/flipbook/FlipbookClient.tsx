@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
-// ── Viewer CSS (embedded in page AND in every downloaded flipbook) ─────────────
+// ── Viewer CSS (embedded in preview AND in every downloaded standalone flipbook) ──
 const VCSS = `
-.fbv{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 16px;border-radius:18px;overflow:hidden;min-height:280px;box-sizing:border-box;font-family:inherit}
+.fbv{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 20px;border-radius:24px;overflow:hidden;min-height:320px;box-sizing:border-box;font-family:inherit}
 .fbv.full{border-radius:0;min-height:100vh;justify-content:center}
 .fbv .ov{position:absolute;inset:0;pointer-events:none}
-.fbh{display:flex;justify-content:space-between;align-items:center;width:100%;gap:14px;z-index:2}
+.fbh{display:flex;justify-content:space-between;align-items:center;width:100%;gap:16px;z-index:2}
 .fbh.rv{flex-direction:row-reverse}.fbh.rv p{text-align:left}
-.fbh img{max-height:44px;max-width:42%;object-fit:contain}
-.fbh p{margin:0;font-size:.85rem;line-height:1.4;text-align:right;max-width:56%;white-space:pre-line}
+.fbh img{max-height:48px;max-width:40%;object-fit:contain}
+.fbh p{margin:0;font-size:.875rem;line-height:1.45;text-align:right;max-width:56%;white-space:pre-line;font-weight:500}
 .stage{position:relative;width:100%;display:flex;overflow-x:auto;touch-action:pan-y;z-index:2}
 .bk{position:relative;margin:auto;perspective:2400px;transition:transform .5s}
 .bd{position:absolute;z-index:0}
@@ -22,53 +22,302 @@ const VCSS = `
 .fc.f{border-radius:0 var(--pr) var(--pr) 0}.fc.b{transform:rotateY(180deg);border-radius:var(--pr) 0 0 var(--pr)}
 .fc img{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;filter:var(--pf)}
 .fc::after{content:"";position:absolute;inset:0;pointer-events:none}
-.fc.f::after{background:linear-gradient(90deg,rgba(0,0,0,.3),transparent 9%)}
-.fc.b::after{background:linear-gradient(270deg,rgba(0,0,0,.3),transparent 9%)}
+.fc.f::after{background:linear-gradient(90deg,rgba(0,0,0,.28),transparent 10%)}
+.fc.b::after{background:linear-gradient(270deg,rgba(0,0,0,.28),transparent 10%)}
 .sp{position:absolute;left:50%;top:0;bottom:0;width:22px;transform:translateX(-50%);z-index:9999;pointer-events:none;background:radial-gradient(circle,#111 0 3px,#c8c8c8 3.5px 5.5px,transparent 6px) 0 0/22px 20px repeat-y}
 .sp.rg{width:30px;background:radial-gradient(circle,#333 0 4px,#e5e7eb 5px 8px,transparent 9px) 0 0/30px 60px repeat-y}
 .sp.st{width:0;border-left:2px dashed rgba(255,255,255,.6)}
-.ct{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;z-index:2;background:rgba(15,23,42,.6);padding:6px 10px;border-radius:999px;color:#fff;backdrop-filter:blur(8px)}
-.ct button{all:unset;cursor:pointer;min-width:36px;height:36px;text-align:center;line-height:36px;border-radius:50%;font-size:1.05rem}
-.ct button:hover,.ct button:focus-visible{background:rgba(255,255,255,.2)}.ct .pg{font-size:.85rem;min-width:64px;text-align:center}
-.th{display:flex;gap:6px;overflow-x:auto;width:100%;padding:4px 2px;z-index:2}.th[hidden]{display:none}
-.th img{height:64px;border-radius:4px;cursor:pointer;border:2px solid transparent}.th img:hover{border-color:#fff}
-.cr{z-index:2;font-size:.72rem;color:inherit;opacity:.7}
+.ct{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;z-index:2;background:rgba(15,23,42,.75);padding:8px 14px;border-radius:999px;color:#fff;backdrop-filter:blur(12px);box-shadow:0 10px 25px -5px rgba(0,0,0,.3)}
+.ct button{all:unset;cursor:pointer;min-width:36px;height:36px;text-align:center;line-height:36px;border-radius:50%;font-size:1.1rem;transition:all .15s}
+.ct button:hover,.ct button:focus-visible{background:rgba(255,255,255,.2);transform:scale(1.05)}
+.ct .pg{font-size:.875rem;min-width:70px;text-align:center;font-weight:600;letter-spacing:-.01em}
+.th{display:flex;gap:8px;overflow-x:auto;width:100%;padding:8px 4px;z-index:2}.th[hidden]{display:none}
+.th img{height:68px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:all .15s}.th img:hover{border-color:#3b82f6;transform:scale(1.05)}
+.cr{z-index:2;font-size:.75rem;color:inherit;opacity:.75;font-weight:500;text-decoration:none}
+.cr:hover{opacity:1;text-decoration:underline}
 @media (prefers-reduced-motion:reduce){.lf,.bk{transition-duration:.01s!important}}
 `;
 
-// ── Editor / page UI CSS ───────────────────────────────────────────────────────
-const PAGE_CSS = `
-#fbapp{--fbbr:#4f46e5;--fbln:#dfe3ee;--fbmt:#5b6478}
-#fbapp h1{font-size:clamp(1.8rem,5vw,2.8rem);line-height:1.15;margin:.2em 0 .5em}
-#fbapp h2{font-size:1.5rem;margin:1.8em 0 .5em}
-.fblead{color:var(--fbmt);max-width:64ch}
-#drop{border:2px dashed var(--fbbr);border-radius:18px;background:#fff;padding:44px 20px;text-align:center;cursor:pointer;margin:20px 0}
-#drop.on{background:#eef2ff}#drop strong{display:block;font-size:1.2rem}#st{color:var(--fbmt);margin-top:8px;min-height:1.4em}
-#ed{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
-.fpn{background:#fff;border:1px solid var(--fbln);border-radius:16px;padding:12px;position:sticky;top:10px}
-.ftb{display:flex;gap:4px;overflow-x:auto;margin-bottom:10px}.ftb button{flex:0 0 auto;border:0;background:#eef0f7;padding:8px 12px;border-radius:999px;cursor:pointer;font:inherit;font-size:.85rem}.ftb .fon{background:var(--fbbr);color:#fff}
-.ftp{display:flex;flex-direction:column;gap:10px;max-height:56vh;overflow:auto}.ftp[hidden]{display:none}.ftp label{font-size:.85rem;color:var(--fbmt);display:flex;flex-direction:column;gap:4px}.ftp label.fck{flex-direction:row;align-items:center;gap:8px}
-.ftg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.ftc{border:1px solid var(--fbln);background:#fff;border-radius:12px;padding:6px;cursor:pointer;font:inherit;font-size:.78rem;text-align:left}.ftc i{display:flex;align-items:center;justify-content:center;height:58px;padding:6px;border-radius:6px;margin-bottom:4px}.ftc i img{height:100%;border-radius:2px;box-shadow:0 2px 6px #0006}.ftc.fon{outline:2px solid var(--fbbr)}
-.fpl{display:flex;flex-wrap:wrap;gap:8px}.fpl button{width:42px;height:42px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--fbln);cursor:pointer}
-.ftp input[type=color]{appearance:none;border:0;width:42px;height:42px;padding:0;border-radius:50%;cursor:pointer;background:none}.ftp input[type=color]::-webkit-color-swatch{border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--fbln)}
-.ftp textarea,.ftp select{font:inherit;padding:8px;border:1px solid var(--fbln);border-radius:8px;width:100%}
-.fbtn{display:inline-block;border:1px solid var(--fbln);background:#fff;padding:8px 14px;border-radius:10px;cursor:pointer;font:inherit;font-size:.85rem}
-.fcta{background:var(--fbbr);color:#fff;border:0;font-size:1rem;padding:12px 22px;border-radius:10px;cursor:pointer;font:inherit}
-.fsm{display:inline-block;border:1px solid var(--fbln);background:#fff;padding:8px 14px;border-radius:10px;cursor:pointer;font:inherit;font-size:.85rem}
-#ex{margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-#emb{display:block;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:8px;font-size:.78rem;word-break:break-all;margin-top:8px}
-.fg3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.fg3>div{background:#fff;border:1px solid var(--fbln);border-radius:14px;padding:16px}.fg3 h3{margin:0 0 6px;font-size:1.05rem}
-#fbapp details{background:#fff;border:1px solid var(--fbln);border-radius:12px;padding:12px 16px;margin:8px 0}#fbapp summary{cursor:pointer;font-weight:600}
-.fask{background:#fff7ed;border:1px solid #fdba74;border-radius:14px;padding:14px;margin:12px 0;font-size:.9rem}.fask>div{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-#exeu{padding:8px;border:1px solid var(--fbln);border-radius:8px;font:inherit;width:100%}
-@media(max-width:860px){#ed{grid-template-columns:1fr}.fpn{position:static}.ftp{max-height:none}}
+// ── App component specific CSS for editor controls ───────────────────────────
+const APP_CSS = `
+#fbapp {
+  --fb-primary: #2563eb;
+  --fb-line: #e2e8f0;
+}
+#ed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+.fpn {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 16px;
+  position: sticky;
+  top: 24px;
+  box-shadow: 0 10px 25px -5px rgba(15,23,42,.04);
+}
+.ftb {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-bottom: 14px;
+  padding-bottom: 4px;
+}
+.ftb button {
+  flex: 0 0 auto;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: .8125rem;
+  font-weight: 700;
+  transition: all .15s;
+}
+.ftb button:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.ftb .fon {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37,99,235,.25);
+}
+.ftp {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 58vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.ftp[hidden] {
+  display: none;
+}
+.ftp label {
+  font-size: .8125rem;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ftp label.fck {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ftg {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.ftc {
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 8px;
+  cursor: pointer;
+  font-size: .75rem;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: left;
+  transition: all .15s;
+}
+.ftc:hover {
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+}
+.ftc i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  padding: 6px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+.ftc i img {
+  height: 100%;
+  border-radius: 3px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.25);
+}
+.ftc.fon {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+  box-shadow: 0 0 0 2px #2563eb;
+}
+.fpl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fpl button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px #cbd5e1;
+  cursor: pointer;
+  transition: transform .15s;
+}
+.fpl button:hover {
+  transform: scale(1.1);
+}
+.ftp input[type=color] {
+  appearance: none;
+  border: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: none;
+}
+.ftp input[type=color]::-webkit-color-swatch {
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px #cbd5e1;
+}
+.ftp textarea, .ftp select {
+  font: inherit;
+  font-size: .875rem;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  width: 100%;
+  background: #ffffff;
+  color: #0f172a;
+}
+.ftp textarea:focus, .ftp select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+}
+.fbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e293b;
+  padding: 9px 16px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: .875rem;
+  font-weight: 700;
+  transition: all .15s;
+}
+.fbtn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+.fcta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to right, #2563eb, #4f46e5);
+  color: #ffffff;
+  border: 0;
+  font-size: .9375rem;
+  font-weight: 700;
+  padding: 11px 22px;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37,99,235,.25);
+  transition: all .15s;
+}
+.fcta:hover {
+  box-shadow: 0 6px 20px rgba(37,99,235,.35);
+  transform: translateY(-1px);
+}
+.fsm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: .75rem;
+  font-weight: 600;
+  transition: all .15s;
+}
+.fsm:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+#ex {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+#emb {
+  display: block;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: .8125rem;
+  font-family: ui-monospace, monospace;
+  word-break: break-all;
+  margin-top: 10px;
+}
+@media (max-width: 860px) {
+  #ed {
+    grid-template-columns: 1fr;
+  }
+  .fpn {
+    position: static;
+  }
+  .ftp {
+    max-height: none;
+  }
+}
 `;
+
+const FAQ_ITEMS = [
+  {
+    q: "Is the flipbook maker really free, and do I need to sign up?",
+    a: "Yes, it is 100% free with no sign-up, no watermark, and no hidden subscriptions. You can create and export as many flipbooks as you want.",
+  },
+  {
+    q: "Are my confidential PDFs or catalog images uploaded to any server?",
+    a: "Never. Spellense processes your PDF pages and images 100% locally inside your browser memory using WebAssembly and HTML5 Canvas. Your documents never leave your device.",
+  },
+  {
+    q: "My PDF has two-page spreads. Will they fit nicely?",
+    a: "Yes! The tool automatically recognizes two-page spreads and offers to cleanly split them into individual left and right pages for a seamless realistic reading experience.",
+  },
+  {
+    q: "Can I use my own logo and remove Spellense branding?",
+    a: "Yes. You can upload your company logo, set a custom publication title and description, and the 'Made with Spellense' badge is completely optional and off by default.",
+  },
+  {
+    q: "Does the downloaded flipbook work offline without internet?",
+    a: "Yes! When you click 'Download offline HTML', you receive a self-contained single HTML file with the realistic 3D flipping engine, zoom, sound, and all your pages embedded. Double-click it on Windows, Mac, iPad, or Android and it opens anywhere without internet.",
+  },
+];
 
 export default function FlipbookClient() {
   const initDone = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   useEffect(() => {
-    // Poll until both CDN scripts are loaded, then init
+    // Poll until both CDN scripts are loaded, then init DOM-driven logic
     const id = setInterval(() => {
       const w = window as unknown as Record<string, unknown>;
       if (w["pdfjsLib"] && w["jspdf"] && !initDone.current) {
@@ -81,11 +330,11 @@ export default function FlipbookClient() {
   }, []);
 
   return (
-    <>
-      {/* Inject CSS */}
-      <style dangerouslySetInnerHTML={{ __html: VCSS + PAGE_CSS }} />
+    <div className="flex min-h-screen flex-col bg-[#f0f6fe] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+      {/* Inject viewer & editor CSS */}
+      <style dangerouslySetInnerHTML={{ __html: VCSS + APP_CSS }} />
 
-      {/* CDN scripts — afterInteractive so they load after hydration */}
+      {/* CDN scripts loaded client-side */}
       <Script
         src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
         strategy="afterInteractive"
@@ -97,35 +346,131 @@ export default function FlipbookClient() {
 
       <Navbar />
 
-      <div id="fbapp">
-        <main style={{ maxWidth: 1180, margin: "auto", padding: "24px 16px 60px" }}>
-          <h1>Free flipbook maker: turn any PDF into a page-flip book</h1>
-          <p className="fblead">
-            Drop a PDF or images, choose from 24 styles, add your own logo and background, and
-            download a flipbook that works offline. Everything runs in your browser — your file is
-            never uploaded.
-          </p>
+      <main className="flex-1">
+        {/* HERO SECTION — Uniform Spellense tool hero banner */}
+        <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
+          <div className="mx-auto max-w-7xl text-center">
+            <h1 className="text-[17px] xs:text-[21px] sm:text-[28px] md:text-[36px] lg:text-[42px] xl:text-[48px] font-extrabold leading-tight tracking-tight text-black text-center whitespace-nowrap">
+              Turn any PDF into a 3D page-flip book.
+            </h1>
+            <p className="mx-auto mt-3 max-w-2xl text-xs sm:text-sm text-slate-600 font-normal">
+              Choose from 24 book styles, add your custom branding, and download an interactive offline HTML file. 100% private in-browser processing.
+            </p>
+          </div>
+        </section>
 
-          {/* ── Drop zone ── */}
-          <div id="drop" tabIndex={0} role="button" aria-label="Upload PDF or images">
-            <strong>Drop your PDF or images here</strong>
-            <span>or tap to choose files (PDF, JPG, PNG, WebP)</span>
-            <div id="st" aria-live="polite"></div>
+        {/* WORKSPACE CONTAINER */}
+        <div id="fbapp" className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+          {/* DROPZONE */}
+          <div
+            id="drop"
+            tabIndex={0}
+            role="button"
+            aria-label="Upload PDF or images"
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+            }}
+            className={`group relative mx-auto max-w-4xl cursor-pointer rounded-[32px] border-2 border-dashed p-8 sm:p-14 text-center transition-all duration-300 backdrop-blur-xl ${
+              isDragging
+                ? "border-blue-500 bg-blue-50/95 shadow-[0_0_60px_rgba(59,130,246,0.25)] scale-[1.01]"
+                : "border-blue-200/90 hover:border-blue-400/80 bg-white/95 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.04)] hover:shadow-[0_25px_70px_-15px_rgba(59,130,246,0.14)]"
+            }`}
+          >
+            {/* FLOATING 3D ICON */}
+            <div className="relative mx-auto flex h-20 w-20 items-center justify-center">
+              <div className="absolute inset-0 rounded-3xl bg-blue-500/25 blur-xl transition-all duration-500 group-hover:scale-125 group-hover:bg-blue-500/35" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 text-white shadow-xl shadow-blue-600/35 ring-4 ring-blue-50/90 transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-105">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                  <path d="M6 6h10" />
+                  <path d="M6 10h10" />
+                  <path d="M6 14h6" />
+                </svg>
+              </div>
+            </div>
+
+            <h2 className="mt-5 text-xl sm:text-2xl font-black tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
+              Drop your PDF or images here
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
+              Supports multi-page PDFs, JPG, PNG, and WebP • 100% private in your browser
+            </p>
+
+            {/* BUTTONS */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <span className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span>Choose PDF or Images</span>
+              </span>
+            </div>
+
+            {/* BADGES */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-[11px] font-bold text-slate-700">
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                PDF Catalogs
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                24 Book Styles
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Offline HTML Export
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+                Zero Upload
+              </span>
+            </div>
+
+            <div id="st" aria-live="polite" className="mt-4 text-xs font-semibold text-blue-600 min-h-[1.5em]"></div>
           </div>
           <input type="file" id="fi" accept="application/pdf,image/*" multiple hidden />
 
-          {/* ── Wide-page dialog ── */}
-          <div className="fask" id="ask" hidden>
-            <b>Wide pages found.</b> They look like two-page spreads. How should they appear in the book?
-            <div>
-              <button className="fcta" data-m="split">Split into left and right pages</button>
-              <button className="fbtn" data-m="single">Keep each as one page</button>
+          {/* WIDE-PAGE SPREAD DIALOG */}
+          <div className="mx-auto mt-6 max-w-4xl rounded-2xl border border-amber-200 bg-amber-50/90 p-5 shadow-xs" id="ask" hidden>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <b className="text-sm font-bold text-amber-900">Wide pages found.</b>
+                <p className="text-xs text-amber-800 mt-0.5">They look like two-page spreads. How should they appear in the book?</p>
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                <button className="fcta text-xs py-2 px-4" data-m="split">Split into left &amp; right pages</button>
+                <button className="fbtn text-xs py-2 px-4" data-m="single">Keep each as one page</button>
+              </div>
             </div>
           </div>
 
-          {/* ── Editor: preview + panel ── */}
-          <section id="ed" hidden>
-            <div id="pv"></div>
+          {/* FLIPBOOK WORKSPACE: PREVIEW + CUSTOMIZE PANEL */}
+          <section id="ed" className="mt-8" hidden>
+            <div id="pv" className="rounded-3xl border border-slate-200/80 bg-white/95 p-4 sm:p-6 shadow-xl shadow-slate-900/5 backdrop-blur-xl"></div>
             <div className="fpn">
               <div className="ftb" role="tablist">
                 <button className="fon" data-p="st">Style</button>
@@ -140,34 +485,34 @@ export default function FlipbookClient() {
 
               {/* Branding panel */}
               <div className="ftp" id="p-br" hidden>
-                <label>Custom cover image (replaces page 1)<input type="file" id="cv" accept="image/*" /></label>
-                <button className="fsm" id="cvx">Remove cover</button>
-                <label>Your logo (shows top left)<input type="file" id="lg" accept="image/*" /></label>
-                <button className="fsm" id="lgx">Remove logo</button>
-                <div className="fask" id="lo" hidden>
-                  Match the background to your logo?
-                  <div><button className="fcta" id="lu" style={{ fontSize: ".85rem", padding: "8px 14px" }}>Use logo colors</button></div>
+                <label>Custom cover image (replaces page 1)<input type="file" id="cv" accept="image/*" className="text-xs mt-1" /></label>
+                <button className="fsm self-start" id="cvx">Remove cover</button>
+                <label>Your logo (shows top left)<input type="file" id="lg" accept="image/*" className="text-xs mt-1" /></label>
+                <button className="fsm self-start" id="lgx">Remove logo</button>
+                <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3" id="lo" hidden>
+                  <p className="text-xs font-semibold text-blue-900">Match background to your logo?</p>
+                  <div className="mt-2"><button className="fcta text-xs py-1.5 px-3" id="lu">Use logo colors</button></div>
                 </div>
-                <label>Description (shows top right)<textarea id="ds" rows={3} maxLength={160} placeholder="Spring catalog 2026. Call 555-0100"></textarea></label>
+                <label>Description (shows top right)<textarea id="ds" rows={3} maxLength={160} placeholder="Spring Catalog 2026 • Call 555-0100"></textarea></label>
                 <label className="fck"><input type="checkbox" id="lr" /> Swap sides: logo right, text left</label>
-                <label className="fck"><input type="checkbox" id="cr" /> Show a small &ldquo;Made with Spellense&rdquo; credit</label>
+                <label className="fck"><input type="checkbox" id="cr" /> Show small &ldquo;Made with Spellense&rdquo; credit</label>
               </div>
 
               {/* Background panel */}
               <div className="ftp" id="p-bg" hidden>
                 <label>Palettes</label><div className="fpl" id="pal"></div>
                 <label>From your logo</label>
-                <div className="fpl" id="lp"><span style={{ fontSize: ".8rem", color: "var(--fbmt)" }}>Add a logo to see matching colors</span></div>
+                <div className="fpl" id="lp"><span className="text-xs text-slate-400">Add a logo to see matching colors</span></div>
                 <label>Custom colors</label>
-                <div className="fpl">
+                <div className="fpl items-center">
                   <input type="color" id="c1" aria-label="Color 1" />
                   <input type="color" id="c2" aria-label="Color 2" />
-                  <button className="fsm" id="eye" style={{ borderRadius: 10, width: "auto", height: "auto", padding: "8px 12px" }}>Pick from screen</button>
+                  <button className="fsm" id="eye">Pick from screen</button>
                 </div>
-                <label className="fck"><input type="checkbox" id="gr" /> Use gradient</label>
-                <label>Background image<input type="file" id="bi" accept="image/*" /></label>
-                <button className="fsm" id="bix">Remove image</button>
-                <label>Darken image <input type="range" id="dm" min="0" max=".8" step=".05" /></label>
+                <label className="fck"><input type="checkbox" id="gr" /> Use gradient background</label>
+                <label>Background photo<input type="file" id="bi" accept="image/*" className="text-xs mt-1" /></label>
+                <button className="fsm self-start" id="bix">Remove image</button>
+                <label>Darken overlay <input type="range" id="dm" min="0" max=".8" step=".05" className="accent-blue-600" /></label>
               </div>
 
               {/* Layout panel */}
@@ -180,81 +525,277 @@ export default function FlipbookClient() {
                   </select>
                 </label>
                 <label className="fck"><input type="checkbox" id="sh" /> Shift by one page (fix misaligned spreads)</label>
-                <label className="fck"><input type="checkbox" id="sn" /> Page-turn sound</label>
+                <label className="fck"><input type="checkbox" id="sn" /> Realistic page-turn sound</label>
               </div>
 
               {/* Brand kit panel */}
               <div className="ftp" id="p-kt" hidden>
-                <p style={{ margin: 0, fontSize: ".85rem", color: "var(--fbmt)" }}>
-                  Your style, logo, text and background are saved in this browser automatically. Export them to reuse on another device.
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Your book style, logo, text, and palette auto-save in this browser. Export to reuse on any other device.
                 </p>
-                <button className="fbtn" id="ke">Export brand kit</button>
-                <label className="fbtn" style={{ cursor: "pointer" }}>Import brand kit<input type="file" id="ki" accept=".json" hidden /></label>
+                <div className="flex flex-col gap-2 mt-2">
+                  <button className="fbtn w-full" id="ke">Export brand kit (.json)</button>
+                  <label className="fbtn w-full text-center cursor-pointer">Import brand kit<input type="file" id="ki" accept=".json" hidden /></label>
+                </div>
               </div>
             </div>
           </section>
 
-          {/* ── Export row ── */}
-          <div id="ex" hidden>
-            <button className="fbtn" id="pvw">Preview final page</button>
-            <button className="fbtn" id="dp">Download as PDF</button>
-            <button className="fcta" id="dl">Download offline HTML</button>
-            <button className="fbtn" id="nw">Start over</button>
-            <details>
-              <summary>Embed on your website</summary>
-              <p style={{ margin: "8px 0 0", fontSize: ".85rem" }}>
-                Upload the downloaded file to your host, then fill in its address:
+          {/* EXPORT ACTION ROW */}
+          <div id="ex" className="mt-8 rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-lg shadow-slate-900/5 backdrop-blur-xl" hidden>
+            <div className="flex flex-wrap items-center gap-3 w-full">
+              <button className="fcta" id="dl">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Download Offline HTML
+              </button>
+              <button className="fbtn" id="dp">Download as PDF</button>
+              <button className="fbtn" id="pvw">Preview in New Tab</button>
+              <button className="fbtn ml-auto text-slate-500 hover:text-red-600" id="nw">Start Over</button>
+            </div>
+
+            {/* EMBED SNIPPET COLLAPSIBLE */}
+            <details className="mt-5 w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
+              <summary className="text-xs sm:text-sm font-bold text-slate-800 cursor-pointer">
+                Embed flipbook on your website / WordPress
+              </summary>
+              <p className="mt-2 text-xs text-slate-500">
+                Host the downloaded HTML file on your server or CDN, then enter its URL below to generate an iframe code:
               </p>
-              <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
-                <input id="eu" placeholder="https://yoursite.com/flipbook.html" style={{ padding: 8, border: "1px solid var(--fbln)", borderRadius: 8, font: "inherit", width: "100%", boxSizing: "border-box" }} />
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", fontSize: ".85rem" }}>
-                  <label>Width <input id="ew" defaultValue="100%" size={6} /></label>
-                  <label>Height (px) <input id="eh" defaultValue="600" size={6} /></label>
-                  <label><input type="checkbox" id="ea" /> Start auto-play</label>
+              <div className="mt-3 grid gap-3">
+                <input
+                  id="eu"
+                  placeholder="https://yoursite.com/flipbook.html"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-blue-600"
+                />
+                <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-700">
+                  <label className="flex items-center gap-1.5">
+                    Width: <input id="ew" defaultValue="100%" size={6} className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs" />
+                  </label>
+                  <label className="flex items-center gap-1.5">
+                    Height (px): <input id="eh" defaultValue="600" size={6} className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs" />
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="ea" /> Start auto-play
+                  </label>
                 </div>
               </div>
               <code id="emb"></code>
-              <button className="fsm" id="ec" style={{ marginTop: 8 }}>Copy embed code</button>
+              <button className="fsm mt-3" id="ec">Copy embed code</button>
             </details>
           </div>
 
-          {/* ── Content ── */}
-          <h2>How it works</h2>
-          <div className="fg3">
-            <div><h3>1. Upload</h3>Drop a PDF or a set of images. Pages are converted on your device.</div>
-            <div><h3>2. Customize</h3>Pick a style, add your logo and text, then set a color, gradient or photo background.</div>
-            <div><h3>3. Download</h3>Get one offline HTML file that opens anywhere, with the flip, zoom and thumbnails built in.</div>
+          {/* 3-STEP WORKFLOW CARDS */}
+          <div className="mt-16">
+            <div className="text-center">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                Step-by-Step Workflow
+              </span>
+              <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">
+                How Spellense Flipbook Works
+              </h2>
+            </div>
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs backdrop-blur-md">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold text-sm">
+                  1
+                </div>
+                <h3 className="mt-4 text-base font-bold text-slate-900">Upload PDF or Images</h3>
+                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                  Drop any multi-page PDF or image set. Pages are converted on your device in-memory with zero server upload.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs backdrop-blur-md">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 font-bold text-sm">
+                  2
+                </div>
+                <h3 className="mt-4 text-base font-bold text-slate-900">Customize 24 Styles</h3>
+                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                  Pick from luxury dark, scandinavian clean, kraft paper, or ring binder. Add your custom logo and background palette.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs backdrop-blur-md">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm">
+                  3
+                </div>
+                <h3 className="mt-4 text-base font-bold text-slate-900">Download Offline HTML</h3>
+                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                  Get a standalone HTML file that works on any browser without internet, complete with 3D page flip, thumbnails, and zoom.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <h2>Built for real documents</h2>
-          <div className="fg3">
-            <div><h3>Fits your file</h3>The book takes your PDF&apos;s exact proportions. Two-page spreads split cleanly into left and right pages.</div>
-            <div><h3>Works on phones</h3>The full spread scales to any screen, and dragging, tapping and swiping all turn pages.</div>
-            <div><h3>24 book styles</h3>Minimal, luxury dark, kraft, leather, spiral notebook, ring binder, art deco, holographic and more.</div>
-            <div><h3>Your branding</h3>Logo on one side, editable text on the other. No Spellense watermark unless you turn it on.</div>
-            <div><h3>Private</h3>No upload, no account. Your brand kit stays in your browser.</div>
-            <div><h3>Reader tools</h3>Thumbnails, zoom, fullscreen, auto-play and optional page-turn sound.</div>
+          {/* FEATURE GRID */}
+          <div className="mt-14">
+            <div className="text-center">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                Crafted for Publications
+              </span>
+              <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">
+                Built for Real World Documents
+              </h2>
+            </div>
+            <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
+                <h4 className="text-sm font-bold text-slate-900">📐 Fits Your File Proportions</h4>
+                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                  The viewer dynamically adopts your document&apos;s exact aspect ratio. Two-page spreads split cleanly without cropping.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
+                <h4 className="text-sm font-bold text-slate-900">📱 Mobile Gesture Ready</h4>
+                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                  Touch dragging, swiping, and tap controls work smoothly on iPhones, iPads, and Android devices.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
+                <h4 className="text-sm font-bold text-slate-900">🎨 24 Aesthetic Themes</h4>
+                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                  Minimal, Luxury Dark, Kraft, Vintage Leather, Spiral Notebook, Holographic Foil, Art Deco, and Newspaper styles.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
+                <h4 className="text-sm font-bold text-slate-900">🏷️ Custom Brand Identity</h4>
+                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                  Display your logo on one side, title and phone number on the other. Zero Spellense watermark unless selected.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
+                <h4 className="text-sm font-bold text-slate-900">🔒 100% Private &amp; Client-Side</h4>
+                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                  Zero server uploads. Your PDF files, financial reports, and confidential lookbooks stay strictly in your device RAM.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xs">
+                <h4 className="text-sm font-bold text-slate-900">🔊 Interactive Reader Tools</h4>
+                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                  Page thumbnail grid, multi-level zoom, fullscreen mode, auto-play presenter, and realistic paper rustle sound.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <h2>Frequently asked questions</h2>
-          <details><summary>Is the flipbook maker really free, and do I need to sign up?</summary>It is free and needs no account.</details>
-          <details><summary>Are my files uploaded to a server?</summary>No. Conversion happens in your browser, so your PDF never leaves your device.</details>
-          <details><summary>My PDF has two-page spreads. Will they fit?</summary>Yes. The book matches your file&apos;s proportions, and wide spread pages can be split into left and right pages automatically.</details>
-          <details><summary>Can I use my own logo and remove Spellense branding?</summary>Yes. Add your logo and description; the Spellense credit is off by default.</details>
-          <details><summary>Does it work on mobile?</summary>Yes. The two-page spread scales to fit small screens and supports touch dragging.</details>
+          {/* PAGE-SCOPED FAQ SECTION */}
+          <section className="mx-auto mt-16 max-w-4xl">
+            <div className="text-center">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/70 bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs">
+                Frequently Asked Questions
+              </div>
+              <h2 className="mt-2.5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+                Flipbook Maker FAQ
+              </h2>
+              <p className="mt-2 text-xs sm:text-sm text-slate-500 font-normal">
+                Everything you need to know about creating 3D digital flipbooks with Spellense.
+              </p>
+            </div>
 
-          <h2>More free tools</h2>
-          <p>
-            <Link href="/image-compressor">Compress the images first</Link> for a lighter book,{" "}
-            <Link href="/">check spelling</Link> before you publish, or run a{" "}
-            <Link href="/design-check">design check</Link> on your cover.
-          </p>
-        </main>
-        <footer style={{ textAlign: "center", color: "var(--fbmt)", fontSize: ".85rem", padding: "30px 16px" }}>
-          © Spellense &middot; <Link href="/privacy">Privacy</Link> &middot; <Link href="/terms">Terms</Link>
-        </footer>
-      </div>
-    </>
+            <div className="mt-10 space-y-3.5">
+              {FAQ_ITEMS.map((faq, index) => {
+                const isOpen = openFaqIndex === index;
+                return (
+                  <div
+                    key={faq.q}
+                    className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-2xs backdrop-blur-sm transition"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                      className="flex w-full items-center justify-between p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
+                    >
+                      <span className="text-sm sm:text-base font-bold text-slate-900">
+                        {faq.q}
+                      </span>
+                      <span
+                        className={`ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-transform duration-200 ${
+                          isOpen ? "rotate-180 bg-blue-50 text-blue-600" : ""
+                        }`}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </span>
+                    </button>
+
+                    {isOpen && (
+                      <div className="border-t border-slate-100 px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal animate-in fade-in duration-150">
+                        {faq.a}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* MORE FREE TOOLS */}
+          <div className="mt-16 text-center text-xs sm:text-sm text-slate-500">
+            <span>Explore more free tools: </span>
+            <Link href="/image-compressor" className="font-semibold text-blue-600 hover:underline">
+              Compress Images
+            </Link>
+            <span className="mx-2">•</span>
+            <Link href="/" className="font-semibold text-blue-600 hover:underline">
+              Spell Checker
+            </Link>
+            <span className="mx-2">•</span>
+            <Link href="/design-check" className="font-semibold text-blue-600 hover:underline">
+              Design Check QA
+            </Link>
+            <span className="mx-2">•</span>
+            <Link href="/image-to-text" className="font-semibold text-blue-600 hover:underline">
+              Image to Text
+            </Link>
+          </div>
+        </div>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="border-t border-slate-200/70 bg-white px-5 py-8 sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+            <div>
+              <div className="text-lg font-bold">
+                Spel<span className="text-blue-600">lense</span>
+              </div>
+              <p className="mt-1 text-xs text-gray-400 font-normal">
+                Simple English spell checking and text tools.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-xs text-gray-400 font-normal">
+              <Link href="/" className="transition hover:text-gray-700">Home</Link>
+              <Link href="/about" className="transition hover:text-gray-700">About</Link>
+              <Link href="/blog" className="transition hover:text-gray-700">Blog</Link>
+              <Link href="/design-check" className="transition hover:text-gray-700">Design Check</Link>
+              <Link href="/case-converter" className="transition hover:text-gray-700">Case Converter</Link>
+              <Link href="/us-uk-converter" className="transition hover:text-gray-700">US ↔ UK Dialect</Link>
+              <Link href="/image-to-text" className="transition hover:text-gray-700">Image to Text</Link>
+              <Link href="/image-compressor" className="transition hover:text-gray-700">Image Compressor</Link>
+              <Link href="/flipbook" className="font-semibold text-blue-600">Flipbook</Link>
+              <Link href="/faq" className="transition hover:text-gray-700">FAQ</Link>
+              <Link href="/privacy" className="transition hover:text-gray-700">Privacy</Link>
+              <Link href="/terms" className="transition hover:text-gray-700">Terms</Link>
+              <a href="mailto:hello@spellense.com" className="transition hover:text-gray-700">Contact</a>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-gray-100 pt-5 text-center text-[11px] text-gray-300 font-normal">
+            © 2026 Spellense. All rights reserved.
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
 
@@ -395,7 +936,7 @@ function initFlipbookApp() {
       pg.textContent =
         s === 0
           ? "1 / " + n
-          : (2 * s + 1 > n ? 2 * s : 2 * s + "\u20133" + (2 * s + 1)) + " / " + n;
+          : (2 * s + 1 > n ? 2 * s : 2 * s + "\u2013" + (2 * s + 1)) + " / " + n;
     };
 
     const fit = () => {
@@ -506,8 +1047,6 @@ function initFlipbookApp() {
   }
 
   // ── App state & helpers ────────────────────────────────────────────────────
-
-
   const BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
   const PAL = [
     ["Ocean", "#0ea5e9", "#1e3a8a"],
@@ -551,7 +1090,7 @@ function initFlipbookApp() {
 
   async function loadFiles(files: FileList | null) {
     if (!files) return;
-    status("Reading files\u2026");
+    status("Reading files…");
     RAW = [];
     try {
       for (const f of Array.from(files)) {
@@ -820,21 +1359,21 @@ function initFlipbookApp() {
     getEl("pv").innerHTML = "";
     const stEl = document.getElementById("st");
     if (stEl) stEl.textContent = "";
-    (getEl("fi") as HTMLInputElement).value = "";
+    getEl("fi").value = "";
   };
 
   // ── Drop zone ──────────────────────────────────────────────────────────────
   const dz = getEl("drop");
-  dz.onclick = () => (getEl("fi") as HTMLInputElement).click();
+  dz.onclick = () => getEl("fi").click();
   dz.onkeydown = (e: KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (getEl("fi") as HTMLInputElement).click(); }
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); getEl("fi").click(); }
   };
 
   getEl("fi").addEventListener("change", (e: Event) => loadFiles((e.target as HTMLInputElement).files));
-  dz.addEventListener("dragover", (e: Event) => { e.preventDefault(); dz.classList.add("on"); });
-  dz.addEventListener("dragleave", () => dz.classList.remove("on"));
+  dz.addEventListener("dragover", (e: Event) => { e.preventDefault(); });
+  dz.addEventListener("dragleave", () => {});
   dz.addEventListener("drop", (e: Event) => {
-    e.preventDefault(); dz.classList.remove("on");
+    e.preventDefault();
     loadFiles((e as DragEvent).dataTransfer?.files || null);
   });
 
