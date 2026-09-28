@@ -26,7 +26,9 @@ export type BookStyleId =
   | "catalog"
   | "moleskine"
   | "pastel"
-  | "noir";
+  | "noir"
+  | "pull-cards"
+  | "tear-off";
 
 export type StageBgId =
   | "dark-studio"
@@ -51,6 +53,8 @@ export interface BookStyleOption {
   spineType: "crease" | "glossy" | "vintage-stitch" | "spiral" | "clean" | "heavy-crease";
   swatchBg: string;
   swatchBorder?: string;
+  /** "curl" (default) = classic page curl. "pull-side" / "pull-up" = drag a page off the stack by hand. */
+  flipMode?: "curl" | "pull-side" | "pull-up";
 }
 
 export interface StageBgOption {
@@ -321,6 +325,34 @@ export const BOOK_STYLES: BookStyleOption[] = [
     spineType: "heavy-crease",
     swatchBg: "linear-gradient(135deg, #3f3f46 0%, #09090b 100%)",
     swatchBorder: "border-zinc-600",
+  },
+  {
+    id: "pull-cards",
+    name: "Pull-away Cards",
+    badge: "New",
+    desc: "Grab a page and pull it away by hand. Drag left or right and it slides off the stack to reveal the next one.",
+    icon: "🖐️",
+    coverDensity: "soft",
+    shadowOpacity: 0.35,
+    pageFilter: "none",
+    spineType: "clean",
+    swatchBg: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)",
+    swatchBorder: "border-indigo-200",
+    flipMode: "pull-side",
+  },
+  {
+    id: "tear-off",
+    name: "Tear-off Pad",
+    badge: "New",
+    desc: "Pull the page up by its handle and tear it off the pad, like a notepad or a desk calendar.",
+    icon: "📝",
+    coverDensity: "soft",
+    shadowOpacity: 0.3,
+    pageFilter: "none",
+    spineType: "clean",
+    swatchBg: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+    swatchBorder: "border-amber-200",
+    flipMode: "pull-up",
   },
 ];
 
