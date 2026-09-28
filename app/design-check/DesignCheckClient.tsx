@@ -91,6 +91,13 @@ export default function DesignCheckClient() {
   const [isDragging, setIsDragging] = useState(false);
   const [loadingSample, setLoadingSample] = useState(false);
 
+  // PDF support: each PDF page is rendered to an image in the browser, then checked
+  // exactly like an uploaded image (so boxes on the preview always match that page).
+  const [pdfTotalPages, setPdfTotalPages] = useState(0);
+  const [pdfPage, setPdfPage] = useState(1);
+  const pdfBufferRef = useRef<ArrayBuffer | null>(null);
+  const pdfFileRef = useRef<File | null>(null);
+
   // Canvas Viewport State
   const [zoom, setZoom] = useState(1);
   const [panning, setPanning] = useState(false);
@@ -159,11 +166,139 @@ export default function DesignCheckClient() {
     }
   };
 
-  const handleFileSelect = (selectedFile: File) => {
-    if (!selectedFile.type.startsWith("image/")) {
-      setError("Please upload an image file (PNG, JPG, WebP, or SVG).");
+  const isPdfFile = (f: File) =>
+    f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
+
+  const renderPdfPage = async (buffer: ArrayBuffer, pageNum: number) => {
+    const pdfjsLib = await import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+
+    // Pass a copy: pdf.js transfers the buffer to its worker, and we reuse it for other pages.
+    const loadingTask = pdfjsLib.getDocument({
+      data: buffer.slice(0),
+      disableRange: true,
+      disableStream: true,
+    });
+    const pdf = await loadingTask.promise;
+    try {
+      const total = pdf.numPages;
+      const safePage = Math.min(Math.max(pageNum, 1), total);
+      const page = await pdf.getPage(safePage);
+
+      // Target about 2000px on the longest side: sharp enough for OCR/vision, small enough to upload.
+      const base = page.getViewport({ scale: 1 });
+      const scale = Math.min(6, 2000 / Math.max(base.width, base.height, 1));
+      const viewport = page.getViewport({ scale });
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Could not render this PDF page in your browser.");
+      canvas.width = Math.max(1, Math.round(viewport.width));
+      canvas.height = Math.max(1, Math.round(viewport.height));
+
+      // PDFs can be transparent; paint white so text contrast is measured correctly.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9)
+      );
+      if (!blob) throw new Error("Could not convert this PDF page to an image.");
+
+      return { blob, total, page: safePage };
+    } finally {
+      try {
+        await loadingTask.destroy();
+      } catch {
+        // ignore cleanup error
+      }
+    }
+  };
+
+  const analyzePdfPage = async (pdfFile: File, buffer: ArrayBuffer, pageNum: number) => {
+    setLoading(true);
+    setCurrentStepIndex(0);
+    setError(null);
+    setResult(null);
+    setDismissedIssueIds(new Set());
+    setSelectedIssueId(null);
+    setZoom(1);
+    setNaturalDims(null);
+    initialFittedRef.current = false;
+
+    try {
+      const rendered = await renderPdfPage(buffer, pageNum);
+      setPdfTotalPages(rendered.total);
+      setPdfPage(rendered.page);
+
+      const baseName = pdfFile.name.replace(/\.[^/.]+$/, "");
+      const pageFile = new File([rendered.blob], `${baseName}-page-${rendered.page}.jpg`, {
+        type: "image/jpeg",
+      });
+      setImageUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return URL.createObjectURL(pageFile);
+      });
+
+      await runDesignCheck(pageFile);
+    } catch (err: unknown) {
+      setLoading(false);
+      const msg = err instanceof Error ? err.message : "";
+      setError(
+        /password/i.test(msg)
+          ? "This PDF is password-protected. Remove the password and try again."
+          : /^Could not/.test(msg)
+          ? msg
+          : "Could not read this PDF. It may be damaged or not a real PDF file."
+      );
+    }
+  };
+
+  const goToPdfPage = (pageNum: number) => {
+    const buffer = pdfBufferRef.current;
+    const pdfFile = pdfFileRef.current;
+    if (!buffer || !pdfFile || loading) return;
+    if (pageNum < 1 || pageNum > pdfTotalPages || pageNum === pdfPage) return;
+    analyzePdfPage(pdfFile, buffer, pageNum);
+  };
+
+  const handleFileSelect = async (selectedFile: File) => {
+    const isPdf = isPdfFile(selectedFile);
+
+    if (!isPdf && !selectedFile.type.startsWith("image/")) {
+      setError("Please upload an image or PDF file (PNG, JPG, WebP, SVG, or PDF).");
       return;
     }
+
+    if (isPdf && selectedFile.size > 25 * 1024 * 1024) {
+      setError("This PDF is larger than 25MB. Please compress it or upload a smaller file.");
+      return;
+    }
+
+    if (isPdf) {
+      setFile(selectedFile);
+      pdfFileRef.current = selectedFile;
+      setPdfTotalPages(0);
+      setPdfPage(1);
+      let buffer: ArrayBuffer;
+      try {
+        buffer = await selectedFile.arrayBuffer();
+      } catch {
+        setError("Could not read this file. Please try again.");
+        return;
+      }
+      pdfBufferRef.current = buffer;
+      await analyzePdfPage(selectedFile, buffer, 1);
+      return;
+    }
+
+    // Image upload: clear any previous PDF state
+    pdfBufferRef.current = null;
+    pdfFileRef.current = null;
+    setPdfTotalPages(0);
+    setPdfPage(1);
 
     if (imageUrl) {
       URL.revokeObjectURL(imageUrl);
@@ -415,6 +550,7 @@ export default function DesignCheckClient() {
       "       SPELLENSE AI CREATIVE QA PRE-FLIGHT AUDIT REPORT    ",
       "===========================================================",
       `File Name: ${file.name}`,
+      pdfTotalPages > 0 ? `PDF Page Audited: ${pdfPage} of ${pdfTotalPages}` : null,
       `Dimensions: ${result.dimensions.width} x ${result.dimensions.height} px (Aspect: ${result.dimensions.aspectRatio})`,
       `Overall QA Score: ${result.score}/100`,
       `Pre-Flight Verdict: ${(result.verdict || "reviewed").toUpperCase()} - ${result.verdictTitle || ""}`,
@@ -460,7 +596,7 @@ export default function DesignCheckClient() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `creative-qa-audit-${file.name.replace(/\.[^/.]+$/, "")}.txt`;
+    a.download = `creative-qa-audit-${file.name.replace(/\.[^/.]+$/, "")}${pdfTotalPages > 0 ? `-page-${pdfPage}` : ""}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -492,7 +628,7 @@ export default function DesignCheckClient() {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf,.pdf"
           className="hidden"
           onChange={(e) => {
             const selected = e.target.files?.[0];
@@ -536,7 +672,7 @@ export default function DesignCheckClient() {
                 Drop your design here, or browse files
               </h2>
               <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-md mx-auto font-normal">
-                Supports high-res PNG, JPG, WebP, SVG • Up to 25MB
+                Supports high-res PNG, JPG, WebP, SVG, PDF • Up to 25MB
               </p>
 
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -749,6 +885,49 @@ export default function DesignCheckClient() {
         {/* RESULT DASHBOARD */}
         {result && imageUrl && (
           <div className="mt-8 space-y-6">
+            {/* PDF PAGE NAVIGATOR */}
+            {pdfTotalPages > 1 && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:px-5">
+                <div className="text-xs font-semibold text-slate-600 sm:text-sm">
+                  PDF page <span className="text-slate-900">{pdfPage}</span> of {pdfTotalPages}
+                  <span className="ml-2 hidden font-normal text-slate-500 sm:inline">
+                    Each page is checked separately.
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => goToPdfPage(pdfPage - 1)}
+                    disabled={pdfPage <= 1 || loading}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Previous
+                  </button>
+                  <select
+                    value={pdfPage}
+                    onChange={(e) => goToPdfPage(Number(e.target.value))}
+                    disabled={loading}
+                    aria-label="Go to PDF page"
+                    className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-bold text-slate-700"
+                  >
+                    {Array.from({ length: pdfTotalPages }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        Page {n}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => goToPdfPage(pdfPage + 1)}
+                    disabled={pdfPage >= pdfTotalPages || loading}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* TOP SUMMARY BAR: QA PRE-FLIGHT VERDICT */}
             {(() => {
               const isCritical = result.verdict === "critical_issues" || result.score < 65;

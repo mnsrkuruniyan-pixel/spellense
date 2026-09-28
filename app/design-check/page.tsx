@@ -4,7 +4,7 @@ import DesignCheckClient from "./DesignCheckClient";
 export const metadata: Metadata = {
   title: "Catch the Mistake Before Your Client Does — AI Design Check",
   description:
-    "Free AI Design Pre-Flight Quality Checker. Detect spelling, grammar, low WCAG contrast, and bleed margin cutoffs in posters, social ads, flyers, and banners before publishing or printing.",
+    "Free AI Design Pre-Flight Quality Checker. Detect spelling, grammar, low WCAG contrast, and bleed margin cutoffs in posters, social ads, flyers, banners, and PDF pages before publishing or printing.",
   alternates: {
     canonical: "/design-check",
   },
