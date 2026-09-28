@@ -917,7 +917,7 @@ export default function ImageCompressorClient() {
         {/* HERO SECTION — Title color only black, strictly 1 single line, generous spacing */}
         <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
           <div className="mx-auto max-w-7xl text-center">
-            <h1 className="text-[29px] xs:text-[34px] sm:text-[36px] md:text-[40px] lg:text-[42px] xl:text-[48px] font-extrabold leading-[1.2] sm:leading-tight tracking-[-0.8px] sm:tracking-tight text-black text-center lg:whitespace-nowrap">
+            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
               Shrink the file. Not the quality.
             </h1>
           </div>

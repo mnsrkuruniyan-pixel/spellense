@@ -403,12 +403,9 @@ export default function FlipbookClient() {
               <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
               <span>Free 3D Flipbook Studio • 24 Realistic Book Styles</span>
             </div>
-            <h1 className="text-[29px] xs:text-[34px] sm:text-[36px] md:text-[40px] lg:text-[48px] font-extrabold leading-[1.2] sm:leading-tight tracking-[-0.8px] sm:tracking-tight text-slate-900 text-center lg:whitespace-nowrap">
+            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-slate-900 text-center max-w-5xl mx-auto">
               Turn any PDF into a 3D page-flip book.
             </h1>
-            <p className="mx-auto mt-3 max-w-2xl text-xs sm:text-sm text-slate-600 font-normal leading-relaxed">
-              Choose from 24 book styles, add your custom branding, and download an interactive offline HTML file. 100% private in-browser processing.
-            </p>
           </div>
         </section>
 

@@ -15,10 +15,10 @@ interface NavbarProps {
 
 const NAV_ITEMS = [
   {
-    label: "Spell Checker",
-    shortLabel: "Checker",
+    label: "Home",
+    shortLabel: "Home",
     href: "/",
-    description: "Visual OCR proofreading for images & documents",
+    description: "Visual OCR proofreading & spell check for images & docs",
     tag: null,
     icon: (
       <svg
@@ -31,12 +31,8 @@ const NAV_ITEMS = [
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <path d="M14 2v6h6" />
-        <path d="M8 13h5" />
-        <path d="M8 17h3" />
-        <circle cx="17.5" cy="16.5" r="2.7" />
-        <path d="m19.5 18.5 1.8 1.8" />
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
     ),
   },
@@ -449,7 +445,19 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
               </button>
             </div>
           ) : (
-            <nav className="hidden lg:flex items-center gap-2 xl:gap-3 text-white text-[13.5px] font-semibold tracking-wide">
+            <nav className="hidden lg:flex items-center gap-1.5 xl:gap-2.5 text-white text-[13px] xl:text-[13.5px] font-semibold tracking-wide">
+              {/* Home */}
+              <Link
+                href="/"
+                className={`py-1.5 px-3 rounded-full transition font-bold ${
+                  isActive("/")
+                    ? "bg-white/20 text-white shadow-xs"
+                    : "text-white/90 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <span>Home</span>
+              </Link>
+
               {/* Design Check */}
               <Link
                 href="/design-check"

@@ -58,7 +58,7 @@ export default function AboutPage() {
         <div className="relative mx-auto max-w-4xl px-5 sm:px-6 lg:px-8">
           {/* HEADER */}
           <div className="text-center pt-2 pb-2 sm:pt-4 sm:pb-4">
-            <h1 className="text-[29px] xs:text-[34px] sm:text-[36px] md:text-[40px] lg:text-[42px] xl:text-[48px] font-extrabold leading-[1.2] sm:leading-tight tracking-[-0.8px] sm:tracking-tight text-black text-center sm:whitespace-nowrap">
+            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
               About Spellense
             </h1>
           </div>
