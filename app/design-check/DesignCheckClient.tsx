@@ -67,6 +67,14 @@ interface DesignCheckResponse {
   error?: string;
 }
 
+export interface PageAuditData {
+  pageNumber: number;
+  result: DesignCheckResponse | null;
+  imageUrl: string | null;
+  status: "pending" | "loading" | "done" | "error";
+  error?: string;
+}
+
 const ANALYSIS_STEPS = [
   "Auditing prices, discount math, dates & contact details...",
   "Verifying asterisk (*) pairing & mandatory legal disclaimers...",
@@ -91,10 +99,17 @@ export default function DesignCheckClient() {
   const [isDragging, setIsDragging] = useState(false);
   const [loadingSample, setLoadingSample] = useState(false);
 
-  // PDF support: each PDF page is rendered to an image in the browser, then checked
-  // exactly like an uploaded image (so boxes on the preview always match that page).
+  // PDF support: all pages are rendered to images and checked in the background
   const [pdfTotalPages, setPdfTotalPages] = useState(0);
   const [pdfPage, setPdfPage] = useState(1);
+  const [pageAudits, setPageAudits] = useState<Record<number, PageAuditData>>({});
+  const [pdfAuditingProgress, setPdfAuditingProgress] = useState<{
+    current: number;
+    total: number;
+    isAuditing: boolean;
+  } | null>(null);
+  const [activeViewMode, setActiveViewMode] = useState<"page" | "overview">("page");
+  const cancelAuditRef = useRef(false);
   const pdfBufferRef = useRef<ArrayBuffer | null>(null);
   const pdfFileRef = useRef<File | null>(null);
 
@@ -217,107 +232,6 @@ export default function DesignCheckClient() {
     }
   };
 
-  const analyzePdfPage = async (pdfFile: File, buffer: ArrayBuffer, pageNum: number) => {
-    setLoading(true);
-    setCurrentStepIndex(0);
-    setError(null);
-    setResult(null);
-    setDismissedIssueIds(new Set());
-    setSelectedIssueId(null);
-    setZoom(1);
-    setNaturalDims(null);
-    initialFittedRef.current = false;
-
-    try {
-      const rendered = await renderPdfPage(buffer, pageNum);
-      setPdfTotalPages(rendered.total);
-      setPdfPage(rendered.page);
-
-      const baseName = pdfFile.name.replace(/\.[^/.]+$/, "");
-      const pageFile = new File([rendered.blob], `${baseName}-page-${rendered.page}.jpg`, {
-        type: "image/jpeg",
-      });
-      setImageUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return URL.createObjectURL(pageFile);
-      });
-
-      await runDesignCheck(pageFile);
-    } catch (err: unknown) {
-      setLoading(false);
-      const msg = err instanceof Error ? err.message : "";
-      setError(
-        /password/i.test(msg)
-          ? "This PDF is password-protected. Remove the password and try again."
-          : /^Could not/.test(msg)
-          ? msg
-          : "Could not read this PDF. It may be damaged or not a real PDF file."
-      );
-    }
-  };
-
-  const goToPdfPage = (pageNum: number) => {
-    const buffer = pdfBufferRef.current;
-    const pdfFile = pdfFileRef.current;
-    if (!buffer || !pdfFile || loading) return;
-    if (pageNum < 1 || pageNum > pdfTotalPages || pageNum === pdfPage) return;
-    analyzePdfPage(pdfFile, buffer, pageNum);
-  };
-
-  const handleFileSelect = async (selectedFile: File) => {
-    const isPdf = isPdfFile(selectedFile);
-
-    if (!isPdf && !selectedFile.type.startsWith("image/")) {
-      setError("Please upload an image or PDF file (PNG, JPG, WebP, SVG, or PDF).");
-      return;
-    }
-
-    if (isPdf && selectedFile.size > 25 * 1024 * 1024) {
-      setError("This PDF is larger than 25MB. Please compress it or upload a smaller file.");
-      return;
-    }
-
-    if (isPdf) {
-      setFile(selectedFile);
-      pdfFileRef.current = selectedFile;
-      setPdfTotalPages(0);
-      setPdfPage(1);
-      let buffer: ArrayBuffer;
-      try {
-        buffer = await selectedFile.arrayBuffer();
-      } catch {
-        setError("Could not read this file. Please try again.");
-        return;
-      }
-      pdfBufferRef.current = buffer;
-      await analyzePdfPage(selectedFile, buffer, 1);
-      return;
-    }
-
-    // Image upload: clear any previous PDF state
-    pdfBufferRef.current = null;
-    pdfFileRef.current = null;
-    setPdfTotalPages(0);
-    setPdfPage(1);
-
-    if (imageUrl) {
-      URL.revokeObjectURL(imageUrl);
-    }
-
-    setFile(selectedFile);
-    setImageUrl(URL.createObjectURL(selectedFile));
-    setError(null);
-    setResult(null);
-    setDismissedIssueIds(new Set());
-    setSelectedIssueId(null);
-    setZoom(1);
-    setNaturalDims(null);
-    initialFittedRef.current = false;
-
-    // Trigger analysis
-    runDesignCheck(selectedFile);
-  };
-
   const prepareOptimizedImage = async (
     sourceFile: File
   ): Promise<{ file: File; originalWidth: number; originalHeight: number }> => {
@@ -397,50 +311,55 @@ export default function DesignCheckClient() {
     });
   };
 
+  const checkSingleImageFile = async (
+    uploadFile: File
+  ): Promise<DesignCheckResponse> => {
+    const { file: processedFile, originalWidth, originalHeight } =
+      await prepareOptimizedImage(uploadFile);
+
+    const formData = new FormData();
+    formData.append("file", processedFile);
+    if (originalWidth && originalHeight) {
+      formData.append("originalWidth", String(originalWidth));
+      formData.append("originalHeight", String(originalHeight));
+    }
+
+    const res = await fetch("/api/design-check", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      if (res.status === 413) {
+        throw new Error(
+          "The design file is too large for the server to process. Please try an image under 15MB."
+        );
+      }
+      let errorMsg = `Server error (${res.status})`;
+      try {
+        const errorJson = await res.json();
+        if (errorJson.error) errorMsg = errorJson.error;
+      } catch {
+        const errorText = await res.text();
+        if (errorText && errorText.length < 200) errorMsg = errorText;
+      }
+      throw new Error(errorMsg);
+    }
+
+    const data: DesignCheckResponse = await res.json();
+    if (!data.success) {
+      throw new Error(data.error || "Failed to analyze design file.");
+    }
+    return data;
+  };
+
   const runDesignCheck = async (uploadFile: File) => {
     setLoading(true);
     setCurrentStepIndex(0);
     setError(null);
 
     try {
-      const { file: processedFile, originalWidth, originalHeight } =
-        await prepareOptimizedImage(uploadFile);
-
-      const formData = new FormData();
-      formData.append("file", processedFile);
-      if (originalWidth && originalHeight) {
-        formData.append("originalWidth", String(originalWidth));
-        formData.append("originalHeight", String(originalHeight));
-      }
-
-      const res = await fetch("/api/design-check", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        if (res.status === 413) {
-          throw new Error(
-            "The design file is too large for the server to process. Please try an image under 15MB."
-          );
-        }
-        let errorMsg = `Server error (${res.status})`;
-        try {
-          const errorJson = await res.json();
-          if (errorJson.error) errorMsg = errorJson.error;
-        } catch {
-          const errorText = await res.text();
-          if (errorText && errorText.length < 200) errorMsg = errorText;
-        }
-        throw new Error(errorMsg);
-      }
-
-      const data: DesignCheckResponse = await res.json();
-
-      if (!data.success) {
-        throw new Error(data.error || "Failed to analyze design file.");
-      }
-
+      const data = await checkSingleImageFile(uploadFile);
       setResult(data);
     } catch (err: unknown) {
       setError(
@@ -451,6 +370,275 @@ export default function DesignCheckClient() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const executeSinglePageAudit = async (
+    pdfFile: File,
+    buffer: ArrayBuffer,
+    pageNum: number
+  ): Promise<{ result: DesignCheckResponse; imageUrl: string }> => {
+    const rendered = await renderPdfPage(buffer, pageNum);
+    const baseName = pdfFile.name.replace(/\.[^/.]+$/, "");
+    const pageFile = new File([rendered.blob], `${baseName}-page-${rendered.page}.jpg`, {
+      type: "image/jpeg",
+    });
+    const pageUrl = URL.createObjectURL(pageFile);
+    const data = await checkSingleImageFile(pageFile);
+    return { result: data, imageUrl: pageUrl };
+  };
+
+  const analyzeAllPdfPages = async (pdfFile: File, buffer: ArrayBuffer) => {
+    cancelAuditRef.current = false;
+    setLoading(true);
+    setCurrentStepIndex(0);
+    setError(null);
+    setResult(null);
+    setDismissedIssueIds(new Set());
+    setSelectedIssueId(null);
+    setZoom(1);
+    setNaturalDims(null);
+    initialFittedRef.current = false;
+    setActiveViewMode("page");
+
+    let totalPages = 1;
+    try {
+      const pdfjsLib = await import("pdfjs-dist");
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+      const loadingTask = pdfjsLib.getDocument({
+        data: buffer.slice(0),
+        disableRange: true,
+        disableStream: true,
+      });
+      const pdf = await loadingTask.promise;
+      totalPages = pdf.numPages;
+      try {
+        await loadingTask.destroy();
+      } catch {
+        // ignore
+      }
+    } catch (err: unknown) {
+      setLoading(false);
+      const msg = err instanceof Error ? err.message : "";
+      setError(
+        /password/i.test(msg)
+          ? "This PDF is password-protected. Remove the password and try again."
+          : "Could not read this PDF. It may be damaged or not a real PDF file."
+      );
+      return;
+    }
+
+    setPdfTotalPages(totalPages);
+    setPdfPage(1);
+
+    const initialAudits: Record<number, PageAuditData> = {};
+    for (let i = 1; i <= totalPages; i++) {
+      initialAudits[i] = {
+        pageNumber: i,
+        result: null,
+        imageUrl: null,
+        status: i === 1 ? "loading" : "pending",
+      };
+    }
+    setPageAudits(initialAudits);
+
+    if (totalPages > 1) {
+      setPdfAuditingProgress({ current: 1, total: totalPages, isAuditing: true });
+    }
+
+    // 1. Audit Page 1 first and display it immediately
+    try {
+      const page1 = await executeSinglePageAudit(pdfFile, buffer, 1);
+      if (cancelAuditRef.current) return;
+
+      setPageAudits((prev) => ({
+        ...prev,
+        [1]: {
+          pageNumber: 1,
+          result: page1.result,
+          imageUrl: page1.imageUrl,
+          status: "done",
+        },
+      }));
+
+      setImageUrl(page1.imageUrl);
+      setResult(page1.result);
+      setLoading(false); // Unblock so user can inspect Page 1 immediately
+    } catch (err: unknown) {
+      setLoading(false);
+      setPageAudits((prev) => ({
+        ...prev,
+        [1]: {
+          pageNumber: 1,
+          result: null,
+          imageUrl: null,
+          status: "error",
+          error: err instanceof Error ? err.message : "Failed to analyze page 1",
+        },
+      }));
+      setError(err instanceof Error ? err.message : "Failed to analyze page 1");
+      return;
+    }
+
+    // 2. If multi-page, audit remaining pages sequentially
+    if (totalPages > 1) {
+      const maxPagesToAudit = Math.min(totalPages, 20);
+      for (let p = 2; p <= maxPagesToAudit; p++) {
+        if (cancelAuditRef.current) break;
+
+        setPdfAuditingProgress({ current: p, total: totalPages, isAuditing: true });
+        setPageAudits((prev) => ({
+          ...prev,
+          [p]: { ...prev[p], status: "loading" },
+        }));
+
+        try {
+          // Safety delay between Gemini requests to prevent burst limits
+          await new Promise((r) => setTimeout(r, 200));
+          if (cancelAuditRef.current) break;
+
+          const audited = await executeSinglePageAudit(pdfFile, buffer, p);
+          if (cancelAuditRef.current) break;
+
+          setPageAudits((prev) => ({
+            ...prev,
+            [p]: {
+              pageNumber: p,
+              result: audited.result,
+              imageUrl: audited.imageUrl,
+              status: "done",
+            },
+          }));
+
+          // If user navigated to page `p` while it was auditing, update current view!
+          setPdfPage((currPage) => {
+            if (currPage === p) {
+              setResult(audited.result);
+              setImageUrl(audited.imageUrl);
+            }
+            return currPage;
+          });
+        } catch (pageErr: unknown) {
+          setPageAudits((prev) => ({
+            ...prev,
+            [p]: {
+              pageNumber: p,
+              result: null,
+              imageUrl: null,
+              status: "error",
+              error: pageErr instanceof Error ? pageErr.message : `Failed to check page ${p}`,
+            },
+          }));
+        }
+      }
+
+      setPdfAuditingProgress({ current: totalPages, total: totalPages, isAuditing: false });
+    }
+  };
+
+  const goToPdfPage = async (targetPage: number) => {
+    if (targetPage < 1 || targetPage > pdfTotalPages || targetPage === pdfPage) return;
+    setPdfPage(targetPage);
+    setSelectedIssueId(null);
+    setDismissedIssueIds(new Set());
+    setZoom(1);
+    setNaturalDims(null);
+    initialFittedRef.current = false;
+
+    const cached = pageAudits[targetPage];
+    if (cached && cached.status === "done" && cached.result && cached.imageUrl) {
+      setResult(cached.result);
+      setImageUrl(cached.imageUrl);
+      setError(null);
+    } else if (cached && cached.status === "error") {
+      setError(cached.error || `Error auditing page ${targetPage}.`);
+    } else {
+      // Pending or loading
+      const buffer = pdfBufferRef.current;
+      const pdfFile = pdfFileRef.current;
+      if (buffer && pdfFile && cached?.status !== "loading") {
+        setPageAudits((prev) => ({
+          ...prev,
+          [targetPage]: { ...prev[targetPage], status: "loading" },
+        }));
+        try {
+          const audited = await executeSinglePageAudit(pdfFile, buffer, targetPage);
+          setPageAudits((prev) => ({
+            ...prev,
+            [targetPage]: {
+              pageNumber: targetPage,
+              result: audited.result,
+              imageUrl: audited.imageUrl,
+              status: "done",
+            },
+          }));
+          setResult(audited.result);
+          setImageUrl(audited.imageUrl);
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : `Failed to audit page ${targetPage}`);
+        }
+      }
+    }
+  };
+
+  const handleFileSelect = async (selectedFile: File) => {
+    const isPdf = isPdfFile(selectedFile);
+
+    if (!isPdf && !selectedFile.type.startsWith("image/")) {
+      setError("Please upload an image or PDF file (PNG, JPG, WebP, SVG, or PDF).");
+      return;
+    }
+
+    if (isPdf && selectedFile.size > 25 * 1024 * 1024) {
+      setError("This PDF is larger than 25MB. Please compress it or upload a smaller file.");
+      return;
+    }
+
+    cancelAuditRef.current = true; // cancel previous background audits
+    setDismissedIssueIds(new Set());
+    setSelectedIssueId(null);
+    setZoom(1);
+    setNaturalDims(null);
+    initialFittedRef.current = false;
+    setActiveViewMode("page");
+
+    if (isPdf) {
+      setFile(selectedFile);
+      pdfFileRef.current = selectedFile;
+      setPdfTotalPages(0);
+      setPdfPage(1);
+      setPageAudits({});
+      setPdfAuditingProgress(null);
+      let buffer: ArrayBuffer;
+      try {
+        buffer = await selectedFile.arrayBuffer();
+      } catch {
+        setError("Could not read this file. Please try again.");
+        return;
+      }
+      pdfBufferRef.current = buffer;
+      await analyzeAllPdfPages(selectedFile, buffer);
+      return;
+    }
+
+    // Image upload: clear any previous PDF state
+    pdfBufferRef.current = null;
+    pdfFileRef.current = null;
+    setPdfTotalPages(0);
+    setPdfPage(1);
+    setPageAudits({});
+    setPdfAuditingProgress(null);
+
+    if (imageUrl) {
+      URL.revokeObjectURL(imageUrl);
+    }
+
+    setFile(selectedFile);
+    setImageUrl(URL.createObjectURL(selectedFile));
+    setError(null);
+    setResult(null);
+
+    // Trigger analysis
+    runDesignCheck(selectedFile);
   };
 
   // Canvas Display Dimensions
@@ -491,6 +679,48 @@ export default function DesignCheckClient() {
       viewportRef.current.scrollTop = 0;
     }
   };
+
+  const isPdfDoc = Boolean(pdfTotalPages > 0 || (file && isPdfFile(file)));
+
+  const documentMetrics = useMemo(() => {
+    if (pdfTotalPages <= 1) return null;
+    const auditedPages = Object.values(pageAudits).filter(
+      (a) => a.status === "done" && a.result
+    );
+    if (auditedPages.length === 0) return null;
+
+    let totalCritical = 0;
+    let totalWarning = 0;
+    let totalSuggestion = 0;
+    let totalIssuesCount = 0;
+    let scoreSum = 0;
+
+    auditedPages.forEach((a) => {
+      if (a.result) {
+        scoreSum += a.result.score;
+        if (a.result.verdictCounts) {
+          totalCritical += a.result.verdictCounts.critical;
+          totalWarning += a.result.verdictCounts.warning;
+          totalSuggestion += a.result.verdictCounts.suggestion;
+          totalIssuesCount += a.result.verdictCounts.total;
+        } else {
+          totalIssuesCount += a.result.issues.length;
+        }
+      }
+    });
+
+    const avgScore = Math.round(scoreSum / auditedPages.length);
+    return {
+      auditedCount: auditedPages.length,
+      totalPages: pdfTotalPages,
+      avgScore,
+      totalCritical,
+      totalWarning,
+      totalSuggestion,
+      totalIssuesCount,
+      allComplete: auditedPages.length === pdfTotalPages,
+    };
+  }, [pageAudits, pdfTotalPages]);
 
   const activeIssues = useMemo(() => {
     if (!result) return [];
@@ -545,58 +775,121 @@ export default function DesignCheckClient() {
 
   const handleDownloadReport = () => {
     if (!result || !file) return;
-    const lines = [
-      "===========================================================",
-      "       SPELLENSE AI CREATIVE QA PRE-FLIGHT AUDIT REPORT    ",
-      "===========================================================",
-      `File Name: ${file.name}`,
-      pdfTotalPages > 0 ? `PDF Page Audited: ${pdfPage} of ${pdfTotalPages}` : null,
-      `Dimensions: ${result.dimensions.width} x ${result.dimensions.height} px (Aspect: ${result.dimensions.aspectRatio})`,
-      `Overall QA Score: ${result.score}/100`,
-      `Pre-Flight Verdict: ${(result.verdict || "reviewed").toUpperCase()} - ${result.verdictTitle || ""}`,
-      `Verdict Summary: ${result.verdictSummary || ""}`,
-      result.verdictCounts
-        ? `Severity Breakdown: ${result.verdictCounts.critical} Critical, ${result.verdictCounts.warning} Warnings, ${result.verdictCounts.suggestion} Suggestions`
-        : null,
-      `Audit Engine: ${result.engine}`,
-      `Date & Time: ${new Date().toLocaleString()}`,
-      "",
-      ...(result.positiveHighlights && result.positiveHighlights.length > 0
-        ? [
-            "--- WHAT'S WORKING WELL (CREATIVE QA STRENGTHS) ---",
-            ...result.positiveHighlights.map((h) => `[+] ${h}`),
-            "",
-          ]
-        : []),
-      "--- QA PILLAR SCORES ---",
-      `1. Data & Copy Integrity: ${result.categoryScores.dataScore ?? result.categoryScores.copyScore}/100`,
-      `2. Legal & Asterisk (*): ${result.categoryScores.complianceScore ?? result.categoryScores.qualityScore}/100`,
-      `3. Layout & Bleed Margins: ${result.categoryScores.layoutScore ?? result.categoryScores.marginScore}/100`,
-      `4. Visual & WCAG Contrast: ${result.categoryScores.visualScore ?? result.categoryScores.contrastScore}/100`,
-      "",
-      `--- DETECTED AUDIT FINDINGS (${activeIssues.length}) ---`,
-      ...activeIssues.map((issue, idx) => {
-        return [
-          `\n[${idx + 1}] [${issue.severity.toUpperCase()}] ${issue.title.toUpperCase()}`,
-          `Category: ${issue.category.toUpperCase()} | Auditor Role: ${issue.qaRole || "Creative QA"}`,
-          `Observation: ${issue.description}`,
-          issue.impact ? `Real-World Impact: ${issue.impact}` : issue.whyItMatters ? `Impact / Why It Matters: ${issue.whyItMatters}` : null,
-          issue.specDetail ? `Technical Spec: ${issue.specDetail}` : null,
-          issue.originalText ? `Original Text: "${issue.originalText}"` : null,
-          issue.suggestedFix ? `Recommended Action: ${issue.suggestedFix}` : null,
-        ]
-          .filter(Boolean)
-          .join("\n");
-      }),
-      "\n===========================================================",
-      "Generated by Spellense AI Creative QA (https://spellense.com/design-check)",
-    ];
 
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    let lines: (string | null)[] = [];
+
+    if (pdfTotalPages > 1) {
+      const auditedEntries = Object.values(pageAudits)
+        .filter((a) => a.status === "done" && a.result)
+        .sort((a, b) => a.pageNumber - b.pageNumber);
+
+      lines = [
+        "===========================================================",
+        "   SPELLENSE AI CREATIVE QA FULL MULTI-PAGE AUDIT REPORT   ",
+        "===========================================================",
+        `Document Name: ${file.name}`,
+        `Total Document Pages: ${pdfTotalPages}`,
+        `Pages Audited: ${auditedEntries.length} of ${pdfTotalPages}`,
+        `Document Overall Score: ${documentMetrics?.avgScore ?? result.score}/100`,
+        documentMetrics
+          ? `Total Document Issues: ${documentMetrics.totalCritical} Critical, ${documentMetrics.totalWarning} Warnings, ${documentMetrics.totalSuggestion} Suggestions`
+          : null,
+        `Date & Time: ${new Date().toLocaleString()}`,
+        "===========================================================",
+        "",
+      ];
+
+      auditedEntries.forEach((entry) => {
+        const pRes = entry.result!;
+        lines.push(
+          "-----------------------------------------------------------",
+          `PAGE ${entry.pageNumber} OF ${pdfTotalPages} (QA Score: ${pRes.score}/100)`,
+          `Dimensions: ${pRes.dimensions.width} x ${pRes.dimensions.height} px`,
+          `Verdict: ${(pRes.verdict || "reviewed").toUpperCase()} - ${pRes.verdictTitle || ""}`,
+          `Summary: ${pRes.verdictSummary || ""}`,
+          pRes.verdictCounts
+            ? `Page Issues: ${pRes.verdictCounts.critical} Critical, ${pRes.verdictCounts.warning} Warnings, ${pRes.verdictCounts.suggestion} Suggestions`
+            : null,
+          "",
+          `Pillar Scores: Data & Copy ${pRes.categoryScores.dataScore ?? pRes.categoryScores.copyScore}/100 | Legal ${pRes.categoryScores.complianceScore ?? pRes.categoryScores.qualityScore}/100 | Layout ${pRes.categoryScores.layoutScore ?? pRes.categoryScores.marginScore}/100 | Contrast ${pRes.categoryScores.visualScore ?? pRes.categoryScores.contrastScore}/100`,
+          "",
+          `Page ${entry.pageNumber} Detected Findings (${pRes.issues.length}):`,
+          ...pRes.issues.map((issue, idx) => {
+            return [
+              `  [${idx + 1}] [${issue.severity.toUpperCase()}] ${issue.title}`,
+              `      Category: ${issue.category.toUpperCase()} | Role: ${issue.qaRole || "Creative QA"}`,
+              `      Observation: ${issue.description}`,
+              issue.impact ? `      Real-World Impact: ${issue.impact}` : issue.whyItMatters ? `      Why It Matters: ${issue.whyItMatters}` : null,
+              issue.specDetail ? `      Technical Spec: ${issue.specDetail}` : null,
+              issue.originalText ? `      Original Text: "${issue.originalText}"` : null,
+              issue.suggestedFix ? `      Recommended Fix: ${issue.suggestedFix}` : null,
+            ]
+              .filter(Boolean)
+              .join("\n");
+          }),
+          ""
+        );
+      });
+
+      lines.push(
+        "===========================================================",
+        "Generated by Spellense AI Creative QA (https://spellense.com/design-check)"
+      );
+    } else {
+      lines = [
+        "===========================================================",
+        "       SPELLENSE AI CREATIVE QA PRE-FLIGHT AUDIT REPORT    ",
+        "===========================================================",
+        `File Name: ${file.name}`,
+        pdfTotalPages === 1 ? "Document Type: Single-Page PDF" : null,
+        `Dimensions: ${result.dimensions.width} x ${result.dimensions.height} px (Aspect: ${result.dimensions.aspectRatio})`,
+        `Overall QA Score: ${result.score}/100`,
+        `Pre-Flight Verdict: ${(result.verdict || "reviewed").toUpperCase()} - ${result.verdictTitle || ""}`,
+        `Verdict Summary: ${result.verdictSummary || ""}`,
+        result.verdictCounts
+          ? `Severity Breakdown: ${result.verdictCounts.critical} Critical, ${result.verdictCounts.warning} Warnings, ${result.verdictCounts.suggestion} Suggestions`
+          : null,
+        `Audit Engine: ${result.engine}`,
+        `Date & Time: ${new Date().toLocaleString()}`,
+        "",
+        ...(result.positiveHighlights && result.positiveHighlights.length > 0
+          ? [
+              "--- WHAT'S WORKING WELL (CREATIVE QA STRENGTHS) ---",
+              ...result.positiveHighlights.map((h) => `[+] ${h}`),
+              "",
+            ]
+          : []),
+        "--- QA PILLAR SCORES ---",
+        `1. Data & Copy Integrity: ${result.categoryScores.dataScore ?? result.categoryScores.copyScore}/100`,
+        `2. Legal & Asterisk (*): ${result.categoryScores.complianceScore ?? result.categoryScores.qualityScore}/100`,
+        `3. Layout & Bleed Margins: ${result.categoryScores.layoutScore ?? result.categoryScores.marginScore}/100`,
+        `4. Visual & WCAG Contrast: ${result.categoryScores.visualScore ?? result.categoryScores.contrastScore}/100`,
+        "",
+        `--- DETECTED AUDIT FINDINGS (${activeIssues.length}) ---`,
+        ...activeIssues.map((issue, idx) => {
+          return [
+            `\n[${idx + 1}] [${issue.severity.toUpperCase()}] ${issue.title.toUpperCase()}`,
+            `Category: ${issue.category.toUpperCase()} | Auditor Role: ${issue.qaRole || "Creative QA"}`,
+            `Observation: ${issue.description}`,
+            issue.impact ? `Real-World Impact: ${issue.impact}` : issue.whyItMatters ? `Impact / Why It Matters: ${issue.whyItMatters}` : null,
+            issue.specDetail ? `Technical Spec: ${issue.specDetail}` : null,
+            issue.originalText ? `Original Text: "${issue.originalText}"` : null,
+            issue.suggestedFix ? `Recommended Action: ${issue.suggestedFix}` : null,
+          ]
+            .filter(Boolean)
+            .join("\n");
+        }),
+        "\n===========================================================",
+        "Generated by Spellense AI Creative QA (https://spellense.com/design-check)",
+      ];
+    }
+
+    const filteredText = lines.filter((l): l is string => l !== null).join("\n");
+    const blob = new Blob([filteredText], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `creative-qa-audit-${file.name.replace(/\.[^/.]+$/, "")}${pdfTotalPages > 0 ? `-page-${pdfPage}` : ""}.txt`;
+    a.download = `creative-qa-audit-${file.name.replace(/\.[^/.]+$/, "")}${pdfTotalPages > 1 ? "-full-document" : ""}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -885,48 +1178,276 @@ export default function DesignCheckClient() {
         {/* RESULT DASHBOARD */}
         {result && imageUrl && (
           <div className="mt-8 space-y-6">
-            {/* PDF PAGE NAVIGATOR */}
+            {/* MULTI-PAGE PDF CONTROL BAR */}
             {pdfTotalPages > 1 && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:px-5">
-                <div className="text-xs font-semibold text-slate-600 sm:text-sm">
-                  PDF page <span className="text-slate-900">{pdfPage}</span> of {pdfTotalPages}
-                  <span className="ml-2 hidden font-normal text-slate-500 sm:inline">
-                    Each page is checked separately.
-                  </span>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 space-y-4">
+                {/* Header & Overview Status */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-2.5 w-2.5 rounded-full bg-blue-600 animate-pulse" />
+                      <h3 className="text-sm font-bold text-slate-800">
+                        Multi-Page PDF Pre-Flight ({pdfTotalPages} Pages Total)
+                      </h3>
+                      {documentMetrics && (
+                        <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
+                          Overall Document Score: {documentMetrics.avgScore}/100
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {pdfAuditingProgress?.isAuditing
+                        ? `Auditing entire document in background: Checking Page ${pdfAuditingProgress.current} of ${pdfAuditingProgress.total}...`
+                        : `✓ All ${pdfTotalPages} pages audited. Total document findings: ${documentMetrics?.totalCritical || 0} Critical, ${documentMetrics?.totalWarning || 0} Warnings.`}
+                    </p>
+                  </div>
+
+                  {/* View Mode Toggle */}
+                  <div className="flex items-center gap-1.5 rounded-xl bg-slate-100 p-1 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setActiveViewMode("page")}
+                      className={`rounded-lg px-3 py-1.5 transition ${
+                        activeViewMode === "page"
+                          ? "bg-white text-blue-600 shadow-xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      📄 Page Canvas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveViewMode("overview")}
+                      className={`rounded-lg px-3 py-1.5 transition ${
+                        activeViewMode === "overview"
+                          ? "bg-white text-blue-600 shadow-xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      📊 All Pages Overview
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => goToPdfPage(pdfPage - 1)}
-                    disabled={pdfPage <= 1 || loading}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Previous
-                  </button>
-                  <select
-                    value={pdfPage}
-                    onChange={(e) => goToPdfPage(Number(e.target.value))}
-                    disabled={loading}
-                    aria-label="Go to PDF page"
-                    className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-bold text-slate-700"
-                  >
-                    {Array.from({ length: pdfTotalPages }, (_, i) => i + 1).map((n) => (
-                      <option key={n} value={n}>
-                        Page {n}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => goToPdfPage(pdfPage + 1)}
-                    disabled={pdfPage >= pdfTotalPages || loading}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Next
-                  </button>
+
+                {/* Progress Bar when auditing */}
+                {pdfAuditingProgress?.isAuditing && (
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.round(
+                          ((documentMetrics?.auditedCount || 1) / pdfTotalPages) * 100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Page Selection Pills */}
+                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+                  <span className="text-xs font-semibold text-slate-500 mr-1">Switch Page:</span>
+                  {Array.from({ length: pdfTotalPages }, (_, i) => i + 1).map((p) => {
+                    const audit = pageAudits[p];
+                    const isCurrent = pdfPage === p && activeViewMode === "page";
+                    const isDone = audit?.status === "done";
+                    const isLoading = audit?.status === "loading";
+                    const isError = audit?.status === "error";
+
+                    const critCount = audit?.result?.verdictCounts?.critical ?? 0;
+                    const warnCount = audit?.result?.verdictCounts?.warning ?? 0;
+                    const totalPageIssues = audit?.result?.issues?.length ?? 0;
+
+                    let badgeColor = "bg-slate-100 text-slate-600";
+                    let badgeLabel = "Pending";
+
+                    if (isLoading) {
+                      badgeColor = "bg-blue-100 text-blue-700 animate-pulse";
+                      badgeLabel = "Auditing...";
+                    } else if (isError) {
+                      badgeColor = "bg-rose-100 text-rose-700";
+                      badgeLabel = "Error";
+                    } else if (isDone) {
+                      if (critCount > 0) {
+                        badgeColor = "bg-rose-100 text-rose-800 border-rose-200";
+                        badgeLabel = `🚨 ${critCount}`;
+                      } else if (warnCount > 0) {
+                        badgeColor = "bg-amber-100 text-amber-800 border-amber-200";
+                        badgeLabel = `⚠️ ${warnCount}`;
+                      } else if (totalPageIssues > 0) {
+                        badgeColor = "bg-blue-100 text-blue-800 border-blue-200";
+                        badgeLabel = `💡 ${totalPageIssues}`;
+                      } else {
+                        badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                        badgeLabel = "✨ Clean";
+                      }
+                    }
+
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => {
+                          setActiveViewMode("page");
+                          goToPdfPage(p);
+                        }}
+                        className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
+                          isCurrent
+                            ? "border-blue-600 bg-blue-50/70 text-blue-700 ring-2 ring-blue-500/20 shadow-xs"
+                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        }`}
+                      >
+                        <span>Page {p}</span>
+                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold border ${badgeColor}`}>
+                          {badgeLabel}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
+
+            {/* ALL PAGES OVERVIEW GRID */}
+            {activeViewMode === "overview" && pdfTotalPages > 1 && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-800">
+                      Entire Document Pre-Flight QA Overview
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Review all {pdfTotalPages} pages at a glance. Click any page card to inspect it in high-resolution canvas.
+                    </p>
+                  </div>
+                  {documentMetrics && (
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <div className="text-xs text-slate-400 font-medium">Average Document Score</div>
+                        <div className="text-lg font-extrabold text-blue-600">{documentMetrics.avgScore}/100</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleDownloadReport}
+                        className="rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700"
+                      >
+                        Export Full QA Report
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {Array.from({ length: pdfTotalPages }, (_, i) => i + 1).map((p) => {
+                    const audit = pageAudits[p];
+                    const isDone = audit?.status === "done" && audit?.result;
+                    const isLoading = audit?.status === "loading";
+
+                    const score = audit?.result?.score ?? 0;
+                    const verdict = audit?.result?.verdict || "needs_review";
+                    const isCritical = verdict === "critical_issues" || score < 65;
+                    const isReady = verdict === "ready" || score >= 90;
+
+                    return (
+                      <div
+                        key={p}
+                        className={`rounded-xl border p-4 transition hover:shadow-md flex flex-col justify-between ${
+                          isDone
+                            ? isCritical
+                              ? "border-rose-200 bg-rose-50/20"
+                              : isReady
+                              ? "border-emerald-200 bg-emerald-50/20"
+                              : "border-slate-200 bg-white"
+                            : "border-slate-200 bg-slate-50/50"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-700">Page {p} of {pdfTotalPages}</span>
+                            {isDone && (
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase border ${
+                                  isCritical
+                                    ? "bg-rose-100 text-rose-700 border-rose-200"
+                                    : isReady
+                                    ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                    : "bg-amber-100 text-amber-700 border-amber-200"
+                                }`}
+                              >
+                                Score: {score}/100
+                              </span>
+                            )}
+                          </div>
+
+                          {audit?.imageUrl ? (
+                            <div className="mt-3 relative h-48 w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-100 flex items-center justify-center">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={audit.imageUrl}
+                                alt={`Page ${p}`}
+                                className="h-full w-full object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <div className="mt-3 h-48 w-full rounded-lg border border-dashed border-slate-200 bg-slate-100 flex flex-col items-center justify-center text-xs text-slate-400 gap-2">
+                              {isLoading ? (
+                                <>
+                                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                                  <span>Auditing Page {p}...</span>
+                                </>
+                              ) : (
+                                <span>Pending In Queue</span>
+                              )}
+                            </div>
+                          )}
+
+                          {isDone && (
+                            <div className="mt-3 space-y-1">
+                              <p className="text-xs font-bold text-slate-800 line-clamp-1">
+                                {audit.result?.verdictTitle || "Pre-Flight Checked"}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-1 text-[10px] font-semibold pt-1">
+                                {(audit.result?.verdictCounts?.critical ?? 0) > 0 && (
+                                  <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                                    🚨 {audit.result?.verdictCounts?.critical} Critical
+                                  </span>
+                                )}
+                                {(audit.result?.verdictCounts?.warning ?? 0) > 0 && (
+                                  <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                    ⚠️ {audit.result?.verdictCounts?.warning} Warnings
+                                  </span>
+                                )}
+                                {(audit.result?.issues?.length ?? 0) === 0 && (
+                                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                    ✨ 0 Issues Found
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-slate-100">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveViewMode("page");
+                              goToPdfPage(p);
+                            }}
+                            className="w-full rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold py-2 transition"
+                          >
+                            Inspect Page {p} in Canvas ➔
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* PAGE CANVAS VIEW */}
+            {activeViewMode === "page" && (
+              <>
 
             {/* TOP SUMMARY BAR: QA PRE-FLIGHT VERDICT */}
             {(() => {
@@ -1083,7 +1604,9 @@ export default function DesignCheckClient() {
                   <div className="flex items-center gap-2">
                     <span className="flex h-2.5 w-2.5 rounded-full bg-blue-600 animate-pulse" />
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Visual Pre-Flight Canvas
+                      {isPdfDoc && pdfTotalPages > 1
+                        ? `Visual Pre-Flight Canvas (Page ${pdfPage} of ${pdfTotalPages})`
+                        : "Visual Pre-Flight Canvas"}
                     </p>
                   </div>
                   <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-500">
@@ -1342,6 +1865,33 @@ export default function DesignCheckClient() {
                       >
                         Reset
                       </button>
+
+                      {/* Multi-Page Canvas Page Nav */}
+                      {pdfTotalPages > 1 && (
+                        <div className="flex items-center gap-1 border-l border-slate-200 pl-2">
+                          <button
+                            type="button"
+                            onClick={() => goToPdfPage(pdfPage - 1)}
+                            disabled={pdfPage <= 1}
+                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-30"
+                            title="Previous PDF Page"
+                          >
+                            ‹ Prev
+                          </button>
+                          <span className="text-[11px] font-bold text-slate-700 px-1">
+                            {pdfPage}/{pdfTotalPages}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => goToPdfPage(pdfPage + 1)}
+                            disabled={pdfPage >= pdfTotalPages}
+                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-30"
+                            title="Next PDF Page"
+                          >
+                            Next ›
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1606,8 +2156,20 @@ export default function DesignCheckClient() {
                 </div>
               </div>
             </div>
-          </div>
+
+            {/* ADVISORY NOTE FOR PDF RESULTS */}
+            {isPdfDoc && (
+              <div className="rounded-xl border border-slate-200/80 bg-slate-50/90 p-4 text-xs text-slate-500 shadow-xs">
+                <p className="leading-relaxed">
+                  <span className="font-semibold text-slate-700">Checked automatically:</span> spelling and copy, contrast, margins, placeholder text, expired dates, stock watermarks, page size, links.{" "}
+                  <span className="font-semibold text-slate-700">Needs manual review in a PDF:</span> bleed and crop marks, color mode (RGB/CMYK), rich black, image DPI, font embedding.
+                </p>
+              </div>
+            )}
+          </>
         )}
+      </div>
+    )}
       </main>
 
       {/* FOOTER */}
