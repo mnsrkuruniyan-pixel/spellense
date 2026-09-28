@@ -806,7 +806,7 @@ export default function DesignCheckClient() {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`group relative mx-auto max-w-4xl cursor-pointer rounded-[28px] sm:rounded-3xl border p-8 sm:p-14 text-center transition-all duration-300 overflow-hidden ${
+              className={`group relative mx-auto max-w-[920px] cursor-pointer rounded-[28px] border p-8 sm:p-14 text-center transition-all duration-300 overflow-hidden ${
                 isDragging
                   ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.01]"
                   : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
@@ -891,7 +891,7 @@ export default function DesignCheckClient() {
             </div>
 
             {/* 4 Trust Feature Cards */}
-            <div className="mt-8 max-w-4xl mx-auto">
+            <div className="mt-8 max-w-[920px] mx-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
                 <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-[#0055fe]">
