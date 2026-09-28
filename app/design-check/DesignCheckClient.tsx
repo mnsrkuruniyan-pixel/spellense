@@ -806,48 +806,58 @@ export default function DesignCheckClient() {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`relative mx-auto max-w-4xl cursor-pointer rounded-3xl border-2 border-dashed p-10 sm:p-16 text-center transition-all duration-300 shadow-xl backdrop-blur-xl ${
+              className={`group relative mx-auto max-w-4xl cursor-pointer rounded-[28px] sm:rounded-3xl border p-8 sm:p-14 text-center transition-all duration-300 overflow-hidden ${
                 isDragging
-                  ? "border-blue-500 bg-blue-50/80 scale-[1.01]"
-                  : "border-slate-300/80 bg-white/85 hover:border-blue-400 hover:bg-white"
+                  ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.01]"
+                  : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
               }`}
             >
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-500 via-indigo-600 to-blue-700 text-white shadow-lg shadow-blue-500/25">
+              {/* Cloud Upload Icon with Arrow */}
+              <div className="mx-auto flex justify-center items-center">
                 <svg
-                  width="36"
-                  height="36"
+                  width="68"
+                  height="68"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  stroke="#0055fe"
+                  strokeWidth="1.8"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  className="group-hover:-translate-y-1 transition-transform duration-300"
                 >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
+                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                  <path d="M12 12v9" />
+                  <path d="m16 16-4-4-4 4" />
                 </svg>
               </div>
 
-              <h2 className="mt-5 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                Drop your design here, or browse files
+              <h2 className="mt-4 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
+                Drop your design here
               </h2>
-              <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-md mx-auto font-normal">
-                Supports high-res PNG, JPG, WebP, SVG, PDF • Up to 25MB
+              <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
+                or click to choose a design file • Up to 25MB
               </p>
 
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              {/* Action Button */}
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     fileInputRef.current?.click();
                   }}
-                  className="rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-600/25 transition hover:shadow-lg hover:shadow-blue-600/35 active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-2.5 rounded-xl bg-[#0055fe] hover:bg-[#0047d9] px-8 py-3.5 text-sm sm:text-base font-semibold text-white shadow-md shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                 >
-                  Choose Design File
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 19V5" />
+                    <path d="m5 12 7-7 7 7" />
+                  </svg>
+                  <span>Choose Design File</span>
                 </button>
+              </div>
 
+              {/* Sample link */}
+              <div className="mt-5 flex justify-center">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -855,29 +865,19 @@ export default function DesignCheckClient() {
                     handleLoadSample();
                   }}
                   disabled={loadingSample}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-slate-100/90 hover:bg-blue-50/70 px-5 py-3.5 text-xs sm:text-sm font-bold text-slate-700 shadow-2xs backdrop-blur-xs transition hover:text-blue-600 disabled:opacity-60 cursor-pointer"
+                  className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#0055fe] hover:underline cursor-pointer"
                   title="Test immediately with a sample design"
                 >
                   {loadingSample ? (
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
                   ) : (
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-blue-500"
-                    >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                       <circle cx="8.5" cy="8.5" r="1.5" />
                       <polyline points="21 15 16 10 5 21" />
                     </svg>
                   )}
-                  <span>Try sample design</span>
+                  <span>🖼️ Try a Sample Design</span>
                 </button>
               </div>
 
@@ -887,6 +887,79 @@ export default function DesignCheckClient() {
                 <span className="rounded-lg bg-slate-100/80 px-2.5 py-1">📱 Social Media Ads</span>
                 <span className="rounded-lg bg-slate-100/80 px-2.5 py-1">🏷️ Banners &amp; Signage</span>
                 <span className="rounded-lg bg-slate-100/80 px-2.5 py-1">📊 Slide Creatives</span>
+              </div>
+            </div>
+
+            {/* 4 Trust Feature Cards */}
+            <div className="mt-8 max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-[#0055fe]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                      High-Res Pre-Flight
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                      PNG, JPG, WebP, SVG, PDF
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100/70 text-purple-600">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                      Comprehensive QA
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                      Contrast, bleed &amp; layout
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100/70 text-emerald-600">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
+                      <path d="m9 12 2 2 4-4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                      No signup required
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                      Instant check • 100% Free
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100/70 text-amber-600">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                      Strictly Private
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                      In-memory • Zero storage
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -436,52 +436,51 @@ export default function FlipbookClient() {
               e.preventDefault();
               setIsDragging(false);
             }}
-            className={`group relative mx-auto max-w-4xl cursor-pointer rounded-[32px] border-2 border-dashed p-8 sm:p-12 text-center transition-all duration-300 backdrop-blur-xl ${
+            className={`group relative mx-auto max-w-4xl cursor-pointer rounded-[28px] sm:rounded-3xl border p-8 sm:p-14 text-center transition-all duration-300 overflow-hidden ${
               isDragging
-                ? "border-blue-500 bg-blue-50/95 shadow-[0_0_60px_rgba(59,130,246,0.25)] scale-[1.01]"
-                : "border-blue-200/90 hover:border-blue-400/80 bg-white/95 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.04)] hover:shadow-[0_25px_70px_-15px_rgba(59,130,246,0.14)]"
+                ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.01]"
+                : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
             }`}
           >
-            {/* FLOATING 3D ICON */}
-            <div className="relative mx-auto flex h-20 w-20 items-center justify-center">
-              <div className="absolute inset-0 rounded-3xl bg-blue-500/25 blur-xl transition-all duration-500 group-hover:scale-125 group-hover:bg-blue-500/35" />
-              <div className="relative flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 text-white shadow-xl shadow-blue-600/35 ring-4 ring-blue-50/90 transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-105">
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
-                  <path d="M6 6h10" />
-                  <path d="M6 10h10" />
-                  <path d="M6 14h6" />
-                </svg>
-              </div>
+            {/* Cloud Upload Icon */}
+            <div className="mx-auto flex justify-center items-center">
+              <svg
+                width="68"
+                height="68"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#0055fe"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="group-hover:-translate-y-1 transition-transform duration-300"
+              >
+                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                <path d="M12 12v9" />
+                <path d="m16 16-4-4-4 4" />
+              </svg>
             </div>
 
-            <h2 className="mt-5 text-xl sm:text-2xl font-black tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
+            <h2 className="mt-4 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
               Drop your PDF or images here
             </h2>
-            <p className="mx-auto mt-2 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
+            <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
               Supports multi-page PDFs, JPG, PNG, and WebP • 100% private in your browser
             </p>
 
-            {/* BUTTONS: UPLOAD & TRY DEMO */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <span className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
+            {/* Action Button */}
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <span className="inline-flex items-center gap-2.5 rounded-xl bg-[#0055fe] hover:bg-[#0047d9] px-8 py-3.5 text-sm sm:text-base font-semibold text-white shadow-md shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 19V5" />
+                  <path d="m5 12 7-7 7 7" />
                 </svg>
                 <span>Choose PDF or Images</span>
               </span>
+            </div>
 
+            {/* Sample Link */}
+            <div className="mt-5 flex justify-center">
               <button
                 type="button"
                 id="btn-sample"
@@ -492,14 +491,20 @@ export default function FlipbookClient() {
                     (w["loadSampleCatalog"] as () => void)();
                   }
                 }}
-                className="inline-flex items-center gap-2 rounded-2xl border-1.5 border-slate-200 bg-white/90 px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all duration-200 hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-700 hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#0055fe] hover:underline cursor-pointer"
+                title="Test immediately with a demo catalog"
               >
-                <span>✨ Try Demo Catalog</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                  <path d="M6 6h10" />
+                  <path d="M6 10h10" />
+                </svg>
+                <span>📖 Try Demo Catalog</span>
               </button>
             </div>
 
-            {/* BADGES */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-[11px] font-bold text-slate-700">
+            {/* Badges */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-[11px] font-bold text-slate-700">
               <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
                 <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
                 PDF Catalogs
@@ -519,6 +524,80 @@ export default function FlipbookClient() {
             </div>
 
             <div id="st" aria-live="polite" className="mt-4 text-xs font-semibold text-blue-600 min-h-[1.5em]"></div>
+          </div>
+
+          {/* 4 Trust Feature Cards */}
+          <div className="mt-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-[#0055fe]">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                    <path d="M6 6h10" />
+                    <path d="M6 10h10" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                    24 Book Styles
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                    Hardcover, glossy, magazine
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100/70 text-purple-600">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                    WebGL 3D Engine
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                    Smooth 60FPS page turn
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100/70 text-emerald-600">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                    Offline HTML Export
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                    Standalone file • No signup
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100/70 text-amber-600">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
+                    Zero Server Upload
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                    Rendered entirely in browser
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <input type="file" id="fi" accept="application/pdf,image/*" multiple hidden />
 
