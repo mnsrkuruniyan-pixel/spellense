@@ -14,15 +14,16 @@ const VCSS = `
 .fbh.rv{flex-direction:row-reverse}.fbh.rv p{text-align:left}
 .fbh img{max-height:48px;max-width:38%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.15))}
 .fbh p{margin:0;font-size:.875rem;line-height:1.45;text-align:right;max-width:58%;white-space:pre-line;font-weight:600;letter-spacing:-.01em}
-.stage{position:relative;width:100%;display:flex;overflow-x:auto;touch-action:pan-y;z-index:2;padding:12px 0}
-.bk{position:relative;margin:auto;perspective:2600px;transition:transform .5s cubic-bezier(.25,1,.5,1);cursor:grab}
+.stage{position:relative;width:100%;display:flex;justify-content:center;align-items:center;touch-action:pan-y;z-index:2;padding:16px 0;perspective:2600px;-webkit-perspective:2600px}
+.bk{position:relative;margin:auto;perspective:2600px;-webkit-perspective:2600px;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;transition:transform .5s cubic-bezier(.25,1,.5,1);cursor:grab}
 .bk:active{cursor:grabbing}
 .bd{position:absolute;z-index:0;transition:all .3s}
-.lf{position:absolute;top:0;left:50%;transform-origin:left center;transform-style:preserve-3d;transition:transform var(--sp) cubic-bezier(.45,.05,.25,1)}
-.fc{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
-.fc.f{border-radius:0 var(--pr) var(--pr) 0}.fc.b{transform:rotateY(180deg);border-radius:var(--pr) 0 0 var(--pr)}
-.fc img{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;filter:var(--pf);object-fit:fill}
-.fc::after{content:"";position:absolute;inset:0;pointer-events:none}
+.lf{position:absolute;top:0;left:50%;transform-origin:left center;-webkit-transform-origin:left center;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;transition:transform var(--sp) cubic-bezier(.45,.05,.25,1)}
+.fc{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.fc.f{transform:rotateY(0deg) translateZ(0.5px);-webkit-transform:rotateY(0deg) translateZ(0.5px);border-radius:0 var(--pr) var(--pr) 0}
+.fc.b{transform:rotateY(180deg) translateZ(0.5px);-webkit-transform:rotateY(180deg) translateZ(0.5px);border-radius:var(--pr) 0 0 var(--pr)}
+.fc img{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;filter:var(--pf);object-fit:fill;border-radius:inherit}
+.fc::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit}
 .fc.f::after{background:linear-gradient(90deg,rgba(0,0,0,.22),transparent 12%)}
 .fc.b::after{background:linear-gradient(270deg,rgba(0,0,0,.22),transparent 12%)}
 .sp{position:absolute;left:50%;top:0;bottom:0;width:22px;transform:translateX(-50%);z-index:9999;pointer-events:none;background:radial-gradient(circle,#111 0 3px,#c8c8c8 3.5px 5.5px,transparent 6px) 0 0/22px 20px repeat-y}
@@ -44,6 +45,9 @@ const APP_CSS = `
 #fbapp {
   --fb-primary: #2563eb;
   --fb-line: #e2e8f0;
+}
+#ed[hidden], #ex[hidden], #ask[hidden] {
+  display: none !important;
 }
 #ed {
   display: grid;
@@ -370,16 +374,10 @@ export default function FlipbookClient() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   useEffect(() => {
-    // Poll until pdf.js CDN script is loaded, then init DOM-driven logic
-    const id = setInterval(() => {
-      const w = window as unknown as Record<string, unknown>;
-      if (w["pdfjsLib"] && !initDone.current) {
-        clearInterval(id);
-        initDone.current = true;
-        initFlipbookApp();
-      }
-    }, 150);
-    return () => clearInterval(id);
+    if (!initDone.current) {
+      initDone.current = true;
+      initFlipbookApp();
+    }
   }, []);
 
   return (
@@ -1163,16 +1161,18 @@ function initFlipbookApp() {
     };
 
     const fit = () => {
-      const aw = Math.max(260, root.clientWidth - 40);
+      const clientW = root.clientWidth || root.parentElement?.clientWidth || (typeof window !== "undefined" ? window.innerWidth : 800);
+      const aw = Math.max(260, clientW - 40);
       const ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
-      W = Math.min(aw / 2, ah * (c.ratio as number)) * z;
-      H = W / (c.ratio as number);
-      const p = Math.max(6, Math.round(W * T.pd));
-      bk.style.width = 2 * W + "px";
-      bk.style.height = H + "px";
+      const r = (c.ratio as number) || 0.72;
+      W = Math.min(aw / 2, ah * r) * z;
+      H = W / r;
+      const p = Math.max(6, Math.round(W * (T.pd || 0.02)));
+      bk.style.width = Math.round(2 * W) + "px";
+      bk.style.height = Math.round(H) + "px";
       bd.style.inset = "-" + p + "px";
       st.style.padding = p + 4 + "px 0";
-      lvs.forEach((e) => { e.style.width = W + "px"; e.style.height = H + "px"; });
+      lvs.forEach((e) => { e.style.width = Math.round(W) + "px"; e.style.height = Math.round(H) + "px"; });
       const sq = q(".sp") as HTMLElement | null;
       if (sq) { sq.style.top = sq.style.bottom = "-" + p + "px"; }
       place();
@@ -1288,6 +1288,12 @@ function initFlipbookApp() {
     };
 
     fit();
+    if (typeof requestAnimationFrame !== "undefined") {
+      requestAnimationFrame(() => {
+        fit();
+        setTimeout(fit, 80);
+      });
+    }
   }
 
   // ── App state & helpers ────────────────────────────────────────────────────
@@ -1362,6 +1368,7 @@ function initFlipbookApp() {
         getEl("ex").hidden = false;
         status("Ready. " + pages.length + " pages loaded.");
         getEl("ed").scrollIntoView({ behavior: "smooth" });
+        show();
       }
     } catch (_) {
       status("Could not read that file. Use a PDF, JPG, PNG or WebP.");
@@ -1446,6 +1453,7 @@ function initFlipbookApp() {
       getEl("ex").hidden = false;
       status("Demo catalog loaded. Click styles below to customize!");
       getEl("ed").scrollIntoView({ behavior: "smooth" });
+      show();
     }
   }
   // Expose to window for the "Try Demo Catalog" button in JSX
@@ -1802,16 +1810,18 @@ function initFlipbookApp() {
           pg.textContent = s === 0 ? "1 / " + n : (2 * s + 1 > n ? 2 * s : 2 * s + "\u2013" + (2 * s + 1)) + " / " + n;
         }
         function fit() {
-          var aw = Math.max(260, root.clientWidth - 40);
+          var clientW = root.clientWidth || (typeof window !== "undefined" && window.innerWidth ? window.innerWidth : 800);
+          var aw = Math.max(260, clientW - 40);
           var ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
-          W = Math.min(aw / 2, ah * c.ratio) * z;
-          H = W / c.ratio;
-          var p = Math.max(6, Math.round(W * T.pd));
-          bk.style.width = 2 * W + "px";
-          bk.style.height = H + "px";
+          var r = c.ratio || 0.72;
+          W = Math.min(aw / 2, ah * r) * z;
+          H = W / r;
+          var p = Math.max(6, Math.round(W * (T.pd || 0.02)));
+          bk.style.width = Math.round(2 * W) + "px";
+          bk.style.height = Math.round(H) + "px";
           bd.style.inset = "-" + p + "px";
           st.style.padding = p + 4 + "px 0";
-          lvs.forEach(function(e) { e.style.width = W + "px"; e.style.height = H + "px"; });
+          lvs.forEach(function(e) { e.style.width = Math.round(W) + "px"; e.style.height = Math.round(H) + "px"; });
           var sq = q(".sp");
           if (sq) { sq.style.top = sq.style.bottom = "-" + p + "px"; }
           place();
@@ -1894,9 +1904,16 @@ function initFlipbookApp() {
           tick();
         };
         fit();
+        if (typeof requestAnimationFrame !== "undefined") {
+          requestAnimationFrame(function() {
+            fit();
+            setTimeout(fit, 80);
+          });
+        }
       }
     `;
 
+    const closeScript = "</" + "script>";
     return (
       "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\"><title>" +
       esc(t) +
@@ -1904,9 +1921,11 @@ function initFlipbookApp() {
       VCSS +
       "</style></head><body><div id=\"r\"></div><script>" +
       standaloneViewerCode +
-      "<\\/script><script>Viewer(document.getElementById('r')," +
+      "\n;Viewer(document.getElementById('r')," +
       cfg +
-      ");if(/autoplay=1/.test(location.search)){var b=document.querySelector('[data-a=a]');b&&b.click()}<\\/script></body></html>"
+      ");if(/autoplay=1/.test(location.search)){var b=document.querySelector('[data-a=a]');b&&b.click()}\n" +
+      closeScript +
+      "</body></html>"
     );
   }
 
@@ -1946,25 +1965,23 @@ function initFlipbookApp() {
     }
     try {
       const html = buildHTML();
-      const win = window.open("", "_blank");
-      if (win) {
-        win.document.open();
-        win.document.write(html);
-        win.document.close();
-      } else {
-        const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, "_blank");
+      if (!win) {
         const a = document.createElement("a");
-        a.style.display = "none";
         a.href = url;
         a.target = "_blank";
+        a.rel = "noopener noreferrer";
         document.body.appendChild(a);
         a.click();
         setTimeout(() => {
           if (document.body.contains(a)) document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 4000);
+        }, 1000);
       }
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 60000);
     } catch (err) {
       console.error("Preview error:", err);
       alert("Could not open preview. Please allow popups for Spellense.");
