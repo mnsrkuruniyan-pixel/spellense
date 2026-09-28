@@ -267,7 +267,7 @@ export default function CaseConverterClient() {
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           {/* HEADER */}
           <div className="text-center pt-2 pb-2 sm:pt-4 sm:pb-4">
-            <h1 className="text-[17px] xs:text-[21px] sm:text-[28px] md:text-[36px] lg:text-[42px] xl:text-[48px] font-extrabold leading-tight tracking-tight text-black text-center whitespace-nowrap">
+            <h1 className="text-[29px] xs:text-[34px] sm:text-[36px] md:text-[40px] lg:text-[42px] xl:text-[48px] font-extrabold leading-[1.2] sm:leading-tight tracking-[-0.8px] sm:tracking-tight text-black text-center lg:whitespace-nowrap">
               Case Converter &amp; Text Formatter
             </h1>
           </div>

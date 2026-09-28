@@ -28,7 +28,7 @@ export default function BlogClient({ posts, categories }: { posts: BlogPost[]; c
       <section className="relative overflow-hidden px-4 pt-12 pb-8 sm:px-6 sm:pt-16 sm:pb-10 lg:pt-20 lg:pb-12">
         <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl text-center">
-            <h1 className="text-[17px] xs:text-[21px] sm:text-[28px] md:text-[36px] lg:text-[42px] xl:text-[48px] font-extrabold leading-tight tracking-tight text-black text-center whitespace-nowrap">
+            <h1 className="text-[29px] xs:text-[34px] sm:text-[36px] md:text-[40px] lg:text-[42px] xl:text-[48px] font-extrabold leading-[1.2] sm:leading-tight tracking-[-0.8px] sm:tracking-tight text-black text-center lg:whitespace-nowrap">
               Spellense Blog &amp; Guides
             </h1>
 

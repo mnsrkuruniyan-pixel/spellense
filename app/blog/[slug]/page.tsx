@@ -169,7 +169,7 @@ export default async function BlogPostPage({
             </span>
           </div>
 
-          <h1 className="mt-4 text-3xl font-extrabold tracking-[-1.5px] text-black sm:text-4xl lg:text-[46px] leading-[1.18]">
+          <h1 className="mt-4 text-[29px] xs:text-[34px] sm:text-4xl lg:text-[46px] font-extrabold tracking-[-0.8px] sm:tracking-[-1.5px] leading-[1.2] sm:leading-[1.18] text-black">
             {post.title}
           </h1>
 
