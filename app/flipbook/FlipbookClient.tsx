@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Script from "next/script";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -384,12 +383,6 @@ export default function FlipbookClient() {
     <div className="flex min-h-screen flex-col bg-[#f0f6fe] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
       {/* Inject viewer & editor CSS */}
       <style dangerouslySetInnerHTML={{ __html: VCSS + APP_CSS }} />
-
-      {/* CDN scripts loaded client-side */}
-      <Script
-        src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
-        strategy="afterInteractive"
-      />
 
       <Navbar />
 
@@ -1009,16 +1002,8 @@ export default function FlipbookClient() {
   );
 }
 
-// ── All flipbook app logic (pure DOM, called once after CDN scripts load) ──────
+// ── All flipbook app logic (pure DOM) ──────────────────────────────────────────
 function initFlipbookApp() {
-  const w = window as unknown as Record<string, unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pdfjsLib = w["pdfjsLib"] as any;
-
-  if (pdfjsLib) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-  }
 
   // ── Constants ──────────────────────────────────────────────────────────────
   const N =
@@ -1345,7 +1330,14 @@ function initFlipbookApp() {
     try {
       for (const f of Array.from(files)) {
         if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) {
-          const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
+          status("Loading PDF engine…");
+          const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+          pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+          const arrayBuffer = await f.arrayBuffer();
+          const loadingTask = pdfjs.getDocument({
+            data: new Uint8Array(arrayBuffer),
+          });
+          const pdf = await loadingTask.promise;
           for (let i = 1; i <= pdf.numPages; i++) {
             const p = await pdf.getPage(i);
             const v1 = p.getViewport({ scale: 1 });
@@ -1354,8 +1346,11 @@ function initFlipbookApp() {
             const c = document.createElement("canvas");
             c.width = vp.width;
             c.height = vp.height;
-            await p.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
-            RAW.push(c.toDataURL("image/jpeg", 0.85));
+            const ctx = c.getContext("2d");
+            if (ctx) {
+              await p.render({ canvas: c, canvasContext: ctx, viewport: vp }).promise;
+              RAW.push(c.toDataURL("image/jpeg", 0.85));
+            }
             status("Converting page " + i + " of " + pdf.numPages);
           }
         } else if (f.type.startsWith("image/")) {
@@ -1370,7 +1365,8 @@ function initFlipbookApp() {
         getEl("ed").scrollIntoView({ behavior: "smooth" });
         show();
       }
-    } catch (_) {
+    } catch (err) {
+      console.error("Flipbook loadFiles error:", err);
       status("Could not read that file. Use a PDF, JPG, PNG or WebP.");
     }
   }
@@ -1461,23 +1457,21 @@ function initFlipbookApp() {
 
   async function derive(): Promise<boolean> {
     if (S.mode === "auto") S.mode = "ask";
-    if (S.mode === "ask") {
-      let wide = false;
-      for (const u of RAW) { const i = await li(u); if (i.width / i.height > 1.15) wide = true; }
-      if (wide) {
-        getEl("ask").hidden = false;
-        getEl("ed").hidden = true;
-        getEl("ex").hidden = true;
-        status("Wide pages found. Choose how to show them.");
-        return false;
-      }
+    let wide = false;
+    for (const u of RAW) {
+      const i = await li(u);
+      if (i.width / i.height > 1.15) wide = true;
     }
-    getEl("ask").hidden = true;
+    if (wide && S.mode === "ask") {
+      getEl("ask").hidden = false;
+    } else {
+      getEl("ask").hidden = true;
+    }
     const out: string[] = [];
     for (const u of RAW) {
       const i = await li(u);
-      const wide = i.width / i.height > 1.15;
-      if (S.mode === "split" && wide) {
+      const isWide = i.width / i.height > 1.15;
+      if (S.mode === "split" && isWide) {
         for (const k of [0, 1]) {
           const c = document.createElement("canvas");
           const w = Math.floor(i.width / 2);
