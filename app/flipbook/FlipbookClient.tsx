@@ -46,9 +46,8 @@ const VCSS = `
 .stf__outerShadow{position:absolute;left:0;top:0}
 .stf__innerShadow{position:absolute;left:0;top:0}
 .stf__hardShadow{position:absolute;left:0;top:0}
-.stf__hardInnerShadow{position:absolute;left:0;top:0}
-.pf-container-wrap{display:flex;justify-content:center;align-items:center;padding:8px;position:relative;background:transparent!important;box-shadow:none!important}
-.pf-book-mount{display:block;margin:auto;border-radius:var(--pr,4px);transition:transform .45s cubic-bezier(.25,1,.5,1);will-change:transform}
+.pf-container-wrap{display:flex;justify-content:center;align-items:center;padding:8px;position:relative;background:transparent!important;box-shadow:none!important;transition:transform .45s cubic-bezier(.25,1,.5,1);will-change:transform}
+.pf-book-mount{display:block;margin:auto;border-radius:var(--pr,4px)}
 `;
 
 // ── App component specific CSS for editor controls ───────────────────────────
@@ -1449,22 +1448,40 @@ function initFlipbookApp() {
         pfInstance = pf;
         root._pf = pf;
 
-        const updateBookPosition = (curSpread: number) => {
-          if (!mount) return;
+        const updateBookPosition = (curSpread: number, state?: string) => {
+          if (!pfWrap) return;
           const isCover = curSpread === 0;
           const spreadArr = pf.getPageCollection ? pf.getPageCollection().getSpread() : [];
           const isBackCover = spreadArr.length > 1 && curSpread === spreadArr.length - 1 && spreadArr[curSpread]?.length === 1;
 
+          if (state === "flipping" || state === "user_fold") {
+            pfWrap.style.clipPath = "none";
+            pfWrap.style.transform = "translateX(0)";
+            return;
+          }
+
           if (isCover) {
-            mount.style.transform = `translateX(-${Math.round(W / 2)}px)`;
+            pfWrap.style.clipPath = "inset(0 0 0 50%)";
+            pfWrap.style.transform = `translateX(-${Math.round(W / 2)}px)`;
           } else if (isBackCover) {
-            mount.style.transform = `translateX(${Math.round(W / 2)}px)`;
+            pfWrap.style.clipPath = "inset(0 50% 0 0)";
+            pfWrap.style.transform = `translateX(${Math.round(W / 2)}px)`;
           } else {
-            mount.style.transform = "translateX(0)";
+            pfWrap.style.clipPath = "none";
+            pfWrap.style.transform = "translateX(0)";
           }
         };
 
         pf.loadFromImages(P);
+
+        // Ensure canvas clears transparently instead of solid white
+        if (pf.getRender) {
+          try {
+            pf.getRender().clear = function() {
+              this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            };
+          } catch (_) {}
+        }
 
         pf.on("flip", (e: any) => {
           const cur = typeof e.data === "number" ? e.data : pf.getCurrentPageIndex();
@@ -1474,6 +1491,12 @@ function initFlipbookApp() {
           updatePgDisplay(cur, pf.getPageCount());
           const spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
           updateBookPosition(spreadIdx);
+        });
+
+        pf.on("changeState", (e: any) => {
+          const stateStr = typeof e.data === "string" ? e.data : "";
+          const spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
+          updateBookPosition(spreadIdx, stateStr);
         });
 
         pf.on("init", () => {
@@ -2196,18 +2219,27 @@ function initFlipbookApp() {
               mount.style.margin = "0 auto";
               pfWrap.appendChild(mount);
 
-              var updateBookPosition = function(curSpread) {
-                if (!mount) return;
+              var updateBookPosition = function(curSpread, state) {
+                if (!pfWrap) return;
                 var isCover = curSpread === 0;
                 var spreadArr = pf.getPageCollection ? pf.getPageCollection().getSpread() : [];
                 var isBackCover = spreadArr.length > 1 && curSpread === spreadArr.length - 1 && spreadArr[curSpread] && spreadArr[curSpread].length === 1;
 
+                if (state === "flipping" || state === "user_fold") {
+                  pfWrap.style.clipPath = "none";
+                  pfWrap.style.transform = "translateX(0)";
+                  return;
+                }
+
                 if (isCover) {
-                  mount.style.transform = "translateX(-" + Math.round(W / 2) + "px)";
+                  pfWrap.style.clipPath = "inset(0 0 0 50%)";
+                  pfWrap.style.transform = "translateX(-" + Math.round(W / 2) + "px)";
                 } else if (isBackCover) {
-                  mount.style.transform = "translateX(" + Math.round(W / 2) + "px)";
+                  pfWrap.style.clipPath = "inset(0 50% 0 0)";
+                  pfWrap.style.transform = "translateX(" + Math.round(W / 2) + "px)";
                 } else {
-                  mount.style.transform = "translateX(0)";
+                  pfWrap.style.clipPath = "none";
+                  pfWrap.style.transform = "translateX(0)";
                 }
               };
 
@@ -2229,6 +2261,13 @@ function initFlipbookApp() {
                 drawShadow: true,
               });
               pf.loadFromImages(P);
+              if (pf.getRender) {
+                try {
+                  pf.getRender().clear = function() {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                  };
+                } catch (_) {}
+              }
               pf.on("flip", function(e) {
                 var cur = typeof e.data === "number" ? e.data : pf.getCurrentPageIndex();
                 s = cur;
@@ -2236,6 +2275,11 @@ function initFlipbookApp() {
                 updatePgDisplay(cur, pf.getPageCount());
                 var spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
                 updateBookPosition(spreadIdx);
+              });
+              pf.on("changeState", function(e) {
+                var stateStr = typeof e.data === "string" ? e.data : "";
+                var spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
+                updateBookPosition(spreadIdx, stateStr);
               });
               pf.on("init", function() {
                 updatePgDisplay(pf.getCurrentPageIndex(), pf.getPageCount());
