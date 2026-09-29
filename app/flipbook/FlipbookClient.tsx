@@ -842,20 +842,31 @@ export default function FlipbookClient() {
                   <div className="fpl mt-2" id="pal"></div>
                 </div>
 
+                {/* Colors from Logo */}
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-bold text-slate-800">Colors from Logo</span>
-                    <label htmlFor="lg" className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer bg-blue-50 hover:bg-blue-100/80 px-2.5 py-1 rounded-lg transition-colors">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      <span>Upload Logo</span>
-                    </label>
+                  <span className="text-xs font-bold text-slate-800">Colors from Logo</span>
+                  <p className="text-[11px] text-slate-500 mb-2">Auto-extract matching palette from your brand logo</p>
+                  <label htmlFor="lg" className="f-upload-zone group">
+                    <div className="f-upload-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                    </div>
+                    <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Choose Brand Logo</span>
+                    <span className="text-[10px] text-slate-400">PNG, SVG or JPG to extract palette</span>
+                  </label>
+                  <div id="lp-status" className="mt-2.5 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/80 px-3 py-2 shadow-2xs hidden">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-800">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      Logo palette active
+                    </span>
+                    <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 px-2 py-0.5 rounded hover:bg-rose-100/60 transition-colors cursor-pointer" id="lpx">
+                      Remove
+                    </button>
                   </div>
-                  <div className="fpl mt-1" id="lp">
-                    <label htmlFor="lg" className="w-full flex items-center justify-center gap-2 py-2.5 px-3 border border-dashed border-slate-300 hover:border-blue-500 rounded-xl bg-slate-50/60 hover:bg-blue-50/40 text-xs font-semibold text-slate-600 hover:text-blue-700 cursor-pointer transition-all">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      <span>Upload logo to extract brand palette</span>
-                    </label>
-                  </div>
+                  <div className="fpl mt-2.5" id="lp" hidden></div>
                 </div>
 
                 <div>
@@ -1910,6 +1921,11 @@ function initFlipbookApp() {
     if (lgStatus) lgStatus.classList.toggle("hidden", !S.logo);
     if (lgThumb && S.logo) lgThumb.src = S.logo;
 
+    const lpStatus = document.getElementById("lp-status");
+    if (lpStatus) lpStatus.classList.toggle("hidden", !S.logo);
+    const lp = document.getElementById("lp");
+    if (lp) lp.hidden = !LC.length;
+
     // Backdrop photo status
     const biStatus = document.getElementById("bi-status");
     if (biStatus) biStatus.classList.toggle("hidden", !S.bgImg);
@@ -2005,16 +2021,23 @@ function initFlipbookApp() {
     show();
   });
 
-  getEl("lgx").onclick = () => {
+  const removeLogo = () => {
     S.logo = "";
     LC = [];
     getEl("lo").hidden = true;
-    getEl("lp").innerHTML =
-      '<label for="lg" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 border border-dashed border-slate-300 hover:border-blue-500 rounded-xl bg-slate-50/60 hover:bg-blue-50/40 text-xs font-semibold text-slate-600 hover:text-blue-700 cursor-pointer transition-all"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload logo to extract brand palette</span></label>';
+    const lp = document.getElementById("lp");
+    if (lp) { lp.innerHTML = ""; lp.hidden = true; }
+    const lpStatus = document.getElementById("lp-status");
+    if (lpStatus) lpStatus.classList.add("hidden");
+    const lgStatus = document.getElementById("lg-status");
+    if (lgStatus) lgStatus.classList.add("hidden");
     (getEl("lg") as HTMLInputElement).value = "";
     sync();
     show();
   };
+  getEl("lgx").onclick = removeLogo;
+  const lpx = document.getElementById("lpx");
+  if (lpx) lpx.onclick = removeLogo;
 
   getEl("bi").addEventListener("change", async (e: Event) => {
     const f = (e.target as HTMLInputElement).files?.[0];
@@ -2068,9 +2091,13 @@ function initFlipbookApp() {
       .slice(0, 3)
       .map(([k]) => "#" + k.split(",").map((v) => Math.min(255, +v * 32 + 16).toString(16).padStart(2, "0")).join(""));
     LC = cols;
-    getEl("lp").innerHTML =
-      cols.map((h: string) => '<button data-h="' + h + '" title="' + h + '" style="background:' + h + '"></button>').join("") +
-      (cols.length ? '<label for="lg" class="inline-flex items-center text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer ml-2">Change Logo</label>' : "");
+    const lp = document.getElementById("lp");
+    if (lp) {
+      lp.innerHTML = cols.map((h: string) => '<button data-h="' + h + '" title="' + h + '" style="background:' + h + '"></button>').join("");
+      lp.hidden = !cols.length;
+    }
+    const lpStatus = document.getElementById("lp-status");
+    if (lpStatus) lpStatus.classList.toggle("hidden", !S.logo);
   }
 
   getEl("lp").onclick = (e: Event) => {
