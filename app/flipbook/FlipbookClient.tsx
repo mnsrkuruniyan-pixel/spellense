@@ -1323,6 +1323,18 @@ function initFlipbookApp() {
     };
 
     const updatePgDisplay = (cur: number, total: number) => {
+      try {
+        if (pfInstance && pfInstance.getPageCollection) {
+          const spread = pfInstance.getPageCollection().getSpread()[pfInstance.getPageCollection().getCurrentSpreadIndex()];
+          if (spread && spread.length === 1) {
+            pg.textContent = (spread[0] + 1) + " / " + total;
+            return;
+          } else if (spread && spread.length === 2) {
+            pg.textContent = (spread[0] + 1) + "\u2013" + (spread[1] + 1) + " / " + total;
+            return;
+          }
+        }
+      } catch (_) {}
       if (cur === 0) {
         pg.textContent = "1 / " + total;
       } else if (cur >= total - 1) {
@@ -1425,8 +1437,8 @@ function initFlipbookApp() {
           minHeight: 250,
           maxHeight: 1800,
           maxShadowOpacity: 0.65,
-          showCover: false, // 2-page spread immediately (no solitary front cover)
-          usePortrait: false, // Force 2-page spread (never collapse to single page)
+          showCover: true, // Page 1 is single cover, subsequent pages are 2-page spreads
+          usePortrait: false, // Force spread mode always (never collapse to single page)
           mobileScrollSupport: false,
           showPageCorners: true, // 3D realistic corner peeling & curl prompt on hover
           flippingTime: 700,
@@ -2114,6 +2126,18 @@ function initFlipbookApp() {
         function cl(v) { return Math.max(0, Math.min(maxS, v)); }
         function tick() { if (snd) playPageSound(); }
         function updatePgDisplay(cur, total) {
+          try {
+            if (pf && pf.getPageCollection) {
+              var spread = pf.getPageCollection().getSpread()[pf.getPageCollection().getCurrentSpreadIndex()];
+              if (spread && spread.length === 1) {
+                pg.textContent = (spread[0] + 1) + " / " + total;
+                return;
+              } else if (spread && spread.length === 2) {
+                pg.textContent = (spread[0] + 1) + "\u2013" + (spread[1] + 1) + " / " + total;
+                return;
+              }
+            }
+          } catch (_) {}
           if (cur === 0) { pg.textContent = "1 / " + total; }
           else if (cur >= total - 1) { pg.textContent = total + " / " + total; }
           else { var p1 = cur + 1, p2 = Math.min(total, cur + 2); pg.textContent = p1 === p2 ? p1 + " / " + total : p1 + "\u2013" + p2 + " / " + total; }
@@ -2161,8 +2185,8 @@ function initFlipbookApp() {
                 minHeight: 250,
                 maxHeight: 1800,
                 maxShadowOpacity: 0.65,
-                showCover: false,
-                usePortrait: false,
+                showCover: true, // Page 1 is single cover, subsequent pages are 2-page spreads
+                usePortrait: false, // Force spread mode always (never collapse to single page)
                 mobileScrollSupport: false,
                 showPageCorners: true,
                 flippingTime: 700,
