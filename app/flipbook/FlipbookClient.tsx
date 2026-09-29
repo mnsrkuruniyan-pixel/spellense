@@ -77,13 +77,22 @@ const APP_CSS = `
 }
 .ftb {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
   background: #f1f5f9;
   padding: 4px;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
   margin-bottom: 16px;
+}
+@media (max-width: 640px) {
+  .ftb {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .ftb button {
+    flex: 1 1 auto;
+  }
 }
 .ftb button {
   border: 1px solid transparent;
@@ -97,6 +106,8 @@ const APP_CSS = `
   text-align: center;
   transition: all .15s ease;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .ftb button:hover {
   color: #0f172a;
@@ -117,9 +128,6 @@ const APP_CSS = `
   overflow-y: auto;
   padding-right: 4px;
   scrollbar-width: thin;
-}
-.ftp[hidden] {
-  display: none !important;
 }
 .ftp label {
   font-size: .8125rem;
@@ -1368,8 +1376,15 @@ function initFlipbookApp() {
       const aw = Math.max(260, clientW - 40);
       const ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
       const r = (c.ratio as number) || 0.72;
-      W = Math.min(aw / 2, ah * r) * z;
-      H = W / r;
+      const newW = Math.min(aw / 2, ah * r) * z;
+      const newH = newW / r;
+
+      if (pfInstance && Math.abs(W - newW) < 5 && Math.abs(H - newH) < 5) {
+        return;
+      }
+
+      W = newW;
+      H = newH;
 
       const mount = root.querySelector("#pf-book-mount") as HTMLElement | null;
       if (!mount || !P.length) {
