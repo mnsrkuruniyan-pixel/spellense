@@ -1178,6 +1178,10 @@ export default function FlipbookClient() {
 // ── All flipbook app logic (pure DOM) ──────────────────────────────────────────
 function initFlipbookApp() {
 
+  // ── Cache page-flip library source for offline HTML export ──────────────────
+  let pfSourceCache = "";
+  fetch("/page-flip.browser.js").then(r => r.ok ? r.text() : "").then(t => { pfSourceCache = t; }).catch(() => {});
+
   // ── Constants ──────────────────────────────────────────────────────────────
   const N =
     'url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27140%27 height=%27140%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence baseFrequency=%27.85%27 numOctaves=%272%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23n)%27 opacity=%27.3%27/%3E%3C/svg%3E")';
@@ -1403,6 +1407,8 @@ function initFlipbookApp() {
         }
 
         mount.innerHTML = "";
+        mount.style.width = (2 * Math.round(W)) + "px";
+        mount.style.height = Math.round(H) + "px";
         const pf = new PageFlipClass(mount, {
           width: Math.round(W),
           height: Math.round(H),
@@ -2092,14 +2098,21 @@ function initFlipbookApp() {
           var aw = Math.max(260, clientW - 40);
           var ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
           var r = c.ratio || 0.72;
-          W = Math.min(aw / 2, ah * r) * z;
-          H = W / r;
+          var newW = Math.min(aw / 2, ah * r) * z;
+          var newH = newW / r;
+
+          if (pf && Math.abs(W - newW) < 5 && Math.abs(H - newH) < 5) return;
+
+          W = newW;
+          H = newH;
 
           var mount = root.querySelector("#pf-book-mount");
           if (PageFlipClass && mount && P.length) {
             try {
               if (pf) { pf.destroy(); pf = null; }
               mount.innerHTML = "";
+              mount.style.width = (2 * Math.round(W)) + "px";
+              mount.style.height = Math.round(H) + "px";
               pf = new PageFlipClass(mount, {
                 width: Math.round(W),
                 height: Math.round(H),
@@ -2247,9 +2260,9 @@ function initFlipbookApp() {
       "</title><style>html,body{margin:0;background:#000;font-family:system-ui,-apple-system,sans-serif}</style><style>" +
       VCSS +
       "</style></head><body><div id=\"r\"></div>" +
-      "<script src=\"https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js\">" +
-      closeScript +
-      "<script>" +
+      "<script>" + (pfSourceCache || "/* page-flip library */") + closeScript +
+      (pfSourceCache ? "" : "<script src=\"https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js\">" + closeScript) +
+      "<script>"  +
       standaloneViewerCode +
       "\n;Viewer(document.getElementById('r')," +
       cfg +
