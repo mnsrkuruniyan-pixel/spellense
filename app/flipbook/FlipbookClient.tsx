@@ -540,8 +540,8 @@ export default function FlipbookClient() {
         {/* HERO SECTION */}
         <section className="relative overflow-hidden px-4 pt-16 pb-10 sm:px-6 sm:pt-20 sm:pb-12 lg:pt-24 lg:pb-14">
           <div className="mx-auto max-w-5xl text-center px-2">
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.16] sm:leading-[1.18] tracking-[-1.5px] sm:tracking-[-2.5px] text-slate-900 text-center max-w-4xl mx-auto">
-              Turn any PDF into a 3D page-flip book.
+            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.16] sm:leading-[1.18] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-4xl mx-auto">
+              Make your clients actually want to flip through.
             </h1>
           </div>
         </section>
