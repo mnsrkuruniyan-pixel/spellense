@@ -662,7 +662,7 @@ export default function FlipbookClient() {
                       <input type="file" id="lg" accept="image/*" className="hidden" />
                     </label>
                     <div id="lg-status" className="flex items-center gap-2 hidden">
-                      <img id="lg-thumb" src="" alt="Logo" className="h-6 w-auto max-w-[48px] object-contain rounded border border-slate-200" />
+                      <img id="lg-thumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" className="h-6 w-auto max-w-[48px] object-contain rounded border border-slate-200" />
                       <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer" id="lgx">
                         Remove logo
                       </button>
