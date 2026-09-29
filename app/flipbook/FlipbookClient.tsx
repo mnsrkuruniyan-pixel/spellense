@@ -47,8 +47,8 @@ const VCSS = `
 .stf__innerShadow{position:absolute;left:0;top:0}
 .stf__hardShadow{position:absolute;left:0;top:0}
 .stf__hardInnerShadow{position:absolute;left:0;top:0}
-.pf-container-wrap{display:flex;justify-content:center;align-items:center;transition:all .3s ease;padding:8px;border-radius:16px;position:relative}
-.pf-book-mount{display:block;margin:auto;box-shadow:0 15px 40px -8px rgba(0,0,0,.3);border-radius:var(--pr,4px);overflow:hidden}
+.pf-container-wrap{display:flex;justify-content:center;align-items:center;padding:8px;position:relative;background:transparent!important;box-shadow:none!important}
+.pf-book-mount{display:block;margin:auto;border-radius:var(--pr,4px);transition:transform .45s cubic-bezier(.25,1,.5,1);will-change:transform}
 `;
 
 // ── App component specific CSS for editor controls ───────────────────────────
@@ -1291,7 +1291,7 @@ function initFlipbookApp() {
 
     h +=
       '<div class="stage">' +
-      '<div class="pf-container-wrap" style="box-shadow:' + T.x + ';border-radius:' + (T.r + 6) + 'px;background:' + T.b + '">' +
+      '<div class="pf-container-wrap">' +
       '<div id="pf-book-mount" class="pf-book-mount"></div>' +
       '</div>' +
       '<div class="bk bk-fallback" style="display:none;--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 6) + 'px"></div>';
@@ -1448,6 +1448,22 @@ function initFlipbookApp() {
 
         pfInstance = pf;
         root._pf = pf;
+
+        const updateBookPosition = (curSpread: number) => {
+          if (!mount) return;
+          const isCover = curSpread === 0;
+          const spreadArr = pf.getPageCollection ? pf.getPageCollection().getSpread() : [];
+          const isBackCover = spreadArr.length > 1 && curSpread === spreadArr.length - 1 && spreadArr[curSpread]?.length === 1;
+
+          if (isCover) {
+            mount.style.transform = `translateX(-${Math.round(W / 2)}px)`;
+          } else if (isBackCover) {
+            mount.style.transform = `translateX(${Math.round(W / 2)}px)`;
+          } else {
+            mount.style.transform = "translateX(0)";
+          }
+        };
+
         pf.loadFromImages(P);
 
         pf.on("flip", (e: any) => {
@@ -1456,10 +1472,14 @@ function initFlipbookApp() {
           S.curPage = cur;
           if (snd) playPageSound();
           updatePgDisplay(cur, pf.getPageCount());
+          const spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
+          updateBookPosition(spreadIdx);
         });
 
         pf.on("init", () => {
           updatePgDisplay(pf.getCurrentPageIndex(), pf.getPageCount());
+          const spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
+          updateBookPosition(spreadIdx);
         });
       } catch (err) {
         console.warn("Using CSS flipbook fallback:", err);
@@ -2115,7 +2135,7 @@ function initFlipbookApp() {
         if (c.logo || c.desc) {
           h += '<div class="fbh' + (c.logoRight ? " rv" : "") + '">' + (c.logo ? '<img src="' + c.logo + '" alt="Logo">' : "<span></span>") + "<p>" + esc(c.desc) + "</p></div>";
         }
-        h += '<div class="stage"><div class="pf-container-wrap" style="box-shadow:' + T.x + ';border-radius:' + (T.r + 6) + 'px;background:' + T.b + '"><div id="pf-book-mount" class="pf-book-mount"></div></div><div class="bk bk-fallback" style="display:none;--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 6) + 'px"></div>';
+        h += '<div class="stage"><div class="pf-container-wrap"><div id="pf-book-mount" class="pf-book-mount"></div></div><div class="bk bk-fallback" style="display:none;--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 6) + 'px"></div>';
         for (var j = 0; j < L; j++) {
           h += '<div class="lf"><div class="fc f"><img src="' + P[2 * j] + '" alt="Page ' + (2 * j + 1) + '" draggable="false"></div><div class="fc b">' + (P[2 * j + 1] ? '<img src="' + P[2 * j + 1] + '" alt="Page ' + (2 * j + 2) + '" draggable="false">' : "") + '</div></div>';
         }
@@ -2176,6 +2196,21 @@ function initFlipbookApp() {
               mount.style.margin = "0 auto";
               pfWrap.appendChild(mount);
 
+              var updateBookPosition = function(curSpread) {
+                if (!mount) return;
+                var isCover = curSpread === 0;
+                var spreadArr = pf.getPageCollection ? pf.getPageCollection().getSpread() : [];
+                var isBackCover = spreadArr.length > 1 && curSpread === spreadArr.length - 1 && spreadArr[curSpread] && spreadArr[curSpread].length === 1;
+
+                if (isCover) {
+                  mount.style.transform = "translateX(-" + Math.round(W / 2) + "px)";
+                } else if (isBackCover) {
+                  mount.style.transform = "translateX(" + Math.round(W / 2) + "px)";
+                } else {
+                  mount.style.transform = "translateX(0)";
+                }
+              };
+
               pf = new PageFlipClass(mount, {
                 width: Math.round(W),
                 height: Math.round(H),
@@ -2199,9 +2234,13 @@ function initFlipbookApp() {
                 s = cur;
                 if (snd) playPageSound();
                 updatePgDisplay(cur, pf.getPageCount());
+                var spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
+                updateBookPosition(spreadIdx);
               });
               pf.on("init", function() {
                 updatePgDisplay(pf.getCurrentPageIndex(), pf.getPageCount());
+                var spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
+                updateBookPosition(spreadIdx);
               });
               return;
             } catch (err) {}
