@@ -1336,28 +1336,35 @@ function initFlipbookApp() {
           const arrayBuffer = await f.arrayBuffer();
           const loadingTask = pdfjs.getDocument({
             data: new Uint8Array(arrayBuffer),
+            cMapUrl: "/cmaps/",
+            cMapPacked: true,
+            standardFontDataUrl: "/standard_fonts/",
           });
           const pdf = await loadingTask.promise;
           for (let i = 1; i <= pdf.numPages; i++) {
-            const p = await pdf.getPage(i);
-            const v1 = p.getViewport({ scale: 1 });
-            const w = v1.width / v1.height > 1.15 ? 1800 : 1000;
-            const vp = p.getViewport({ scale: w / v1.width });
-            const c = document.createElement("canvas");
-            c.width = vp.width;
-            c.height = vp.height;
-            const ctx = c.getContext("2d");
-            if (ctx) {
-              await p.render({ canvas: c, canvasContext: ctx, viewport: vp }).promise;
-              RAW.push(c.toDataURL("image/jpeg", 0.85));
+            status(`Converting page ${i} of ${pdf.numPages}…`);
+            try {
+              const p = await pdf.getPage(i);
+              const v1 = p.getViewport({ scale: 1 });
+              const w = v1.width / v1.height > 1.15 ? 1800 : 1000;
+              const vp = p.getViewport({ scale: w / v1.width });
+              const c = document.createElement("canvas");
+              c.width = vp.width;
+              c.height = vp.height;
+              const ctx = c.getContext("2d");
+              if (ctx) {
+                await p.render({ canvas: c, canvasContext: ctx, viewport: vp }).promise;
+                RAW.push(c.toDataURL("image/jpeg", 0.85));
+              }
+            } catch (pageErr) {
+              console.warn("Failed rendering page " + i, pageErr);
             }
-            status("Converting page " + i + " of " + pdf.numPages);
           }
         } else if (f.type.startsWith("image/")) {
           RAW.push(await f2u(f, 1600, "image/jpeg", 0.88));
         }
       }
-      if (!RAW.length) throw new Error("no pages");
+      if (!RAW.length) throw new Error("Could not extract pages from file");
       if (await derive()) {
         getEl("ed").hidden = false;
         getEl("ex").hidden = false;
@@ -1367,7 +1374,8 @@ function initFlipbookApp() {
       }
     } catch (err) {
       console.error("Flipbook loadFiles error:", err);
-      status("Could not read that file. Use a PDF, JPG, PNG or WebP.");
+      const msg = err instanceof Error ? err.message : String(err);
+      status("Could not read file (" + msg + "). Use a valid PDF, JPG, PNG or WebP.");
     }
   }
 
@@ -2001,7 +2009,11 @@ function initFlipbookApp() {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); getEl("fi").click(); }
   };
 
-  getEl("fi").addEventListener("change", (e: Event) => loadFiles((e.target as HTMLInputElement).files));
+  getEl("fi").addEventListener("change", (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    loadFiles(input.files);
+    input.value = "";
+  });
   dz.addEventListener("dragover", (e: Event) => { e.preventDefault(); });
   dz.addEventListener("dragleave", () => {});
   dz.addEventListener("drop", (e: Event) => {
