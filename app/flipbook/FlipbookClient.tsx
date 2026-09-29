@@ -37,6 +37,18 @@ const VCSS = `
 .cr{z-index:2;font-size:.75rem;color:inherit;opacity:.75;font-weight:600;text-decoration:none;transition:opacity .15s}
 .cr:hover{opacity:1;text-decoration:underline}
 @media (prefers-reduced-motion:reduce){.lf,.bk{transition-duration:.01s!important}}
+/* StPageFlip 3D Paper Curl & Realistic Corner Fold Styles */
+.stf__parent{position:relative;display:block;box-sizing:border-box;transform:translateZ(0);-ms-touch-action:pan-y;touch-action:pan-y;margin:auto}
+.sft__wrapper{position:relative;width:100%;box-sizing:border-box}
+.stf__parent canvas{position:absolute;width:100%;height:100%;left:0;top:0}
+.stf__block{position:absolute;width:100%;height:100%;box-sizing:border-box;perspective:2200px}
+.stf__item{display:none;position:absolute;transform-style:preserve-3d}
+.stf__outerShadow{position:absolute;left:0;top:0}
+.stf__innerShadow{position:absolute;left:0;top:0}
+.stf__hardShadow{position:absolute;left:0;top:0}
+.stf__hardInnerShadow{position:absolute;left:0;top:0}
+.pf-container-wrap{display:flex;justify-content:center;align-items:center;transition:all .3s ease;padding:8px;border-radius:16px;position:relative}
+.pf-book-mount{display:block;margin:auto;box-shadow:0 15px 40px -8px rgba(0,0,0,.3);border-radius:var(--pr,4px);overflow:hidden}
 `;
 
 // ── App component specific CSS for editor controls ───────────────────────────
@@ -135,54 +147,143 @@ const APP_CSS = `
   transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(15,23,42,.03);
+  box-shadow: 0 1px 3px rgba(15,23,42,.03);
 }
 .ftc:hover {
   border-color: #93c5fd;
   transform: translateY(-2px);
-  box-shadow: 0 10px 22px -5px rgba(37,99,235,.15);
+  box-shadow: 0 8px 20px -4px rgba(37,99,235,.12);
 }
 .ftc i {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 66px;
+  height: 72px;
   padding: 6px;
   border-radius: 12px;
   position: relative;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
   overflow: hidden;
 }
 .ftc i img {
-  height: 90%;
+  height: 92%;
+  width: auto;
+  max-width: 90%;
+  object-fit: contain;
   border-radius: 4px;
-  box-shadow: 0 6px 14px rgba(0,0,0,.3);
+  box-shadow: 0 4px 12px rgba(0,0,0,.22);
 }
 .ftc.fon {
   border-color: #2563eb !important;
-  background: #eff6ff !important;
-  color: #1d4ed8 !important;
-  box-shadow: 0 0 0 2px #2563eb, 0 10px 24px -5px rgba(37,99,235,.22) !important;
+  background: #ffffff !important;
+  color: #2563eb !important;
+  box-shadow: 0 0 0 2px #2563eb, 0 8px 20px -4px rgba(37,99,235,.22) !important;
 }
 .ftc.fon::after {
-  content: "✓";
+  content: "";
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 18px;
-  height: 18px;
-  background: #2563eb;
-  color: #ffffff;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  background-color: #2563eb;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+  background-size: 12px 12px;
+  background-position: center;
+  background-repeat: no-repeat;
   border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(37,99,235,.4);
+}
+/* Modern Toggle Switch Options */
+.f-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  transition: all .15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+.f-toggle-card:hover {
+  border-color: #93c5fd;
+  background: #f8faff;
+}
+.f-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.f-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.f-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #cbd5e1;
+  transition: .2s ease;
+  border-radius: 22px;
+}
+.f-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .2s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+.f-toggle-switch input:checked + .f-toggle-slider {
+  background-color: #2563eb;
+}
+.f-toggle-switch input:checked + .f-toggle-slider:before {
+  transform: translateX(18px);
+}
+/* Modern Upload Dropzone Card */
+.f-upload-zone {
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 18px;
+  background: #f8fafc;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .18s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.f-upload-zone:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.f-upload-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: #dbeafe;
+  color: #2563eb;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: 900;
-  box-shadow: 0 2px 6px rgba(37,99,235,.4);
+  transition: transform .18s ease;
+}
+.f-upload-zone:hover .f-upload-icon {
+  transform: scale(1.08);
 }
 .fpl {
   display: flex;
@@ -634,44 +735,60 @@ export default function FlipbookClient() {
               <div className="ftp" id="p-br" hidden>
                 {/* Custom cover image */}
                 <div>
-                  <span className="text-[13px] font-bold text-slate-800">Custom cover image (replaces page 1)</span>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <label htmlFor="cv" className="fupload-btn">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      <span>Choose Cover Image</span>
-                      <input type="file" id="cv" accept="image/*" className="hidden" />
-                    </label>
-                    <div id="cv-status" className="flex items-center gap-2 hidden">
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 text-[11px] font-bold">
-                        ✓ Cover set
-                      </span>
-                      <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer" id="cvx">
-                        Remove cover
-                      </button>
+                  <span className="text-xs font-bold text-slate-800">Custom Book Cover</span>
+                  <p className="text-[11px] text-slate-500 mb-2">Replaces page 1 with your bespoke cover artwork</p>
+                  <label htmlFor="cv" className="f-upload-zone group">
+                    <input type="file" id="cv" accept="image/*" className="hidden" />
+                    <div className="f-upload-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                        <circle cx="9" cy="9" r="2"/>
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                      </svg>
                     </div>
+                    <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Choose Cover Artwork</span>
+                    <span className="text-[10px] text-slate-400">PNG, JPG, WebP up to 15MB</span>
+                  </label>
+                  <div id="cv-status" className="mt-2.5 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 shadow-2xs hidden">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      Cover image active
+                    </span>
+                    <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 px-2 py-0.5 rounded hover:bg-rose-100/60 transition-colors cursor-pointer" id="cvx">
+                      Remove
+                    </button>
                   </div>
                 </div>
 
                 {/* Your logo */}
                 <div>
-                  <span className="text-[13px] font-bold text-slate-800">Your logo (shows top left)</span>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <label htmlFor="lg" className="fupload-btn">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      <span>Upload Logo</span>
-                      <input type="file" id="lg" accept="image/*" className="hidden" />
-                    </label>
-                    <div id="lg-status" className="flex items-center gap-2 hidden">
-                      <img id="lg-thumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" className="h-6 w-auto max-w-[48px] object-contain rounded border border-slate-200" />
-                      <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer" id="lgx">
-                        Remove logo
-                      </button>
+                  <span className="text-xs font-bold text-slate-800">Brand Logo</span>
+                  <p className="text-[11px] text-slate-500 mb-2">Displayed in header alongside book description</p>
+                  <label htmlFor="lg" className="f-upload-zone group">
+                    <input type="file" id="lg" accept="image/*" className="hidden" />
+                    <div className="f-upload-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
                     </div>
+                    <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Upload Transparent Logo</span>
+                    <span className="text-[10px] text-slate-400">PNG or SVG recommended</span>
+                  </label>
+                  <div id="lg-status" className="mt-2.5 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-2xs hidden">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img id="lg-thumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" className="h-6 w-auto max-w-[48px] object-contain rounded border border-slate-100 p-0.5" />
+                      <span className="text-xs font-semibold text-slate-700 truncate">Logo active</span>
+                    </div>
+                    <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 px-2 py-0.5 rounded hover:bg-rose-50 transition-colors cursor-pointer" id="lgx">
+                      Remove
+                    </button>
                   </div>
                 </div>
 
                 {/* Extracted logo palette banner */}
-                <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-3.5" id="lo" hidden>
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/80 p-3.5 shadow-2xs" id="lo" hidden>
                   <p className="text-xs font-bold text-blue-900">Extracted logo palette ready</p>
                   <p className="text-[11px] text-blue-700 mt-0.5">Apply your logo brand colors to the flipbook backdrop:</p>
                   <div className="mt-2.5">
@@ -679,38 +796,54 @@ export default function FlipbookClient() {
                   </div>
                 </div>
 
-                <label>
-                  Description (shows top right)
-                  <textarea id="ds" rows={3} maxLength={160} placeholder="Spring Catalog 2026 • Call 555-0100"></textarea>
+                <div>
+                  <label htmlFor="ds" className="text-xs font-bold text-slate-800 block mb-1">
+                    Book Header Subtitle
+                  </label>
+                  <textarea id="ds" rows={2} maxLength={160} placeholder="Spellense Editorial 2026 • Designed for print and digital" className="w-full text-xs font-medium"></textarea>
+                </div>
+
+                {/* Option 1: Swap Sides */}
+                <label htmlFor="lr" className="f-toggle-card">
+                  <div className="flex flex-col pr-3">
+                    <span className="text-xs font-bold text-slate-800">Swap Header Sides</span>
+                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Logo on right, text on left</span>
+                  </div>
+                  <label className="f-toggle-switch">
+                    <input type="checkbox" id="lr" />
+                    <span className="f-toggle-slider"></span>
+                  </label>
                 </label>
 
-                <label className="inline-flex items-center gap-2.5 text-xs font-bold text-slate-700 cursor-pointer select-none py-1">
-                  <input type="checkbox" id="lr" className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600" />
-                  <span>Swap sides: logo right, text left</span>
-                </label>
-
-                <label className="inline-flex items-center gap-2.5 text-xs font-bold text-slate-700 cursor-pointer select-none py-1">
-                  <input type="checkbox" id="cr" className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600" />
-                  <span>Show subtle &ldquo;Made with Spellense&rdquo; credit</span>
+                {/* Option 2: Made with Spellense credit */}
+                <label htmlFor="cr" className="f-toggle-card">
+                  <div className="flex flex-col pr-3">
+                    <span className="text-xs font-bold text-slate-800">Brand Watermark</span>
+                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Show subtle &ldquo;Made with Spellense&rdquo; credit</span>
+                  </div>
+                  <label className="f-toggle-switch">
+                    <input type="checkbox" id="cr" />
+                    <span className="f-toggle-slider"></span>
+                  </label>
                 </label>
               </div>
 
               {/* Background panel */}
               <div className="ftp" id="p-bg" hidden>
                 <div>
-                  <span className="text-[13px] font-bold text-slate-800">Theme Palettes</span>
+                  <span className="text-xs font-bold text-slate-800">Curated Palettes</span>
                   <div className="fpl mt-2" id="pal"></div>
                 </div>
 
                 <div>
-                  <span className="text-[13px] font-bold text-slate-800">Colors from your logo</span>
+                  <span className="text-xs font-bold text-slate-800">Colors from Logo</span>
                   <div className="fpl mt-2" id="lp">
-                    <span className="text-xs text-slate-400">Upload a logo in the Brand tab to see matching colors</span>
+                    <span className="text-xs text-slate-400">Upload a logo in Brand tab to extract colors</span>
                   </div>
                 </div>
 
                 <div>
-                  <span className="text-[13px] font-bold text-slate-800">Custom Backdrop Colors</span>
+                  <span className="text-xs font-bold text-slate-800">Custom Backdrop Dual-Tone</span>
                   <div className="flex flex-wrap items-center gap-3 mt-2">
                     <div className="flex items-center gap-2">
                       <div className="relative flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xs">
@@ -733,67 +866,99 @@ export default function FlipbookClient() {
                   </div>
                 </div>
 
-                <label className="inline-flex items-center gap-2.5 text-xs font-bold text-slate-700 cursor-pointer select-none py-1">
-                  <input type="checkbox" id="gr" className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600" />
-                  <span>Use gradient background</span>
+                {/* Option 3: Gradient Toggle */}
+                <label htmlFor="gr" className="f-toggle-card">
+                  <div className="flex flex-col pr-3">
+                    <span className="text-xs font-bold text-slate-800">Gradient Backdrop</span>
+                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Smooth diagonal dual-tone transition</span>
+                  </div>
+                  <label className="f-toggle-switch">
+                    <input type="checkbox" id="gr" />
+                    <span className="f-toggle-slider"></span>
+                  </label>
                 </label>
 
                 {/* Backdrop photo */}
                 <div>
-                  <span className="text-[13px] font-bold text-slate-800">Backdrop photo</span>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <label htmlFor="bi" className="fupload-btn">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      <span>Choose Photo</span>
-                      <input type="file" id="bi" accept="image/*" className="hidden" />
-                    </label>
-                    <div id="bi-status" className="flex items-center gap-2 hidden">
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 text-[11px] font-bold">
-                        ✓ Photo active
-                      </span>
-                      <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer" id="bix">
-                        Remove photo
-                      </button>
+                  <span className="text-xs font-bold text-slate-800">Backdrop Scenic Photo</span>
+                  <p className="text-[11px] text-slate-500 mb-2">Display photography behind the 3D book</p>
+                  <label htmlFor="bi" className="f-upload-zone group">
+                    <input type="file" id="bi" accept="image/*" className="hidden" />
+                    <div className="f-upload-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                        <circle cx="9" cy="9" r="2"/>
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                      </svg>
                     </div>
+                    <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Choose Backdrop Photo</span>
+                    <span className="text-[10px] text-slate-400">High-resolution scenery or studio desk</span>
+                  </label>
+                  <div id="bi-status" className="mt-2.5 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/80 px-3 py-2 shadow-2xs hidden">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-800">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      Photo active
+                    </span>
+                    <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 px-2 py-0.5 rounded hover:bg-rose-100/60 transition-colors cursor-pointer" id="bix">
+                      Remove
+                    </button>
                   </div>
                 </div>
 
-                <label>
-                  Darken photo overlay
-                  <input type="range" id="dm" min="0" max=".8" step=".05" className="accent-blue-600 mt-1" />
-                </label>
+                <div>
+                  <label htmlFor="dm" className="text-xs font-bold text-slate-800 block mb-1">
+                    Photo Dimming Overlay
+                  </label>
+                  <input type="range" id="dm" min="0" max=".8" step=".05" className="w-full accent-blue-600" />
+                </div>
               </div>
 
               {/* Layout panel */}
               <div className="ftp" id="p-ly" hidden>
-                <label>
-                  Two-page spread handling
-                  <select id="md">
+                <div>
+                  <label htmlFor="md" className="text-xs font-bold text-slate-800 block mb-1.5">
+                    Two-Page Spread Handling
+                  </label>
+                  <select id="md" className="w-full">
                     <option value="ask">Ask me when wide pages are found</option>
                     <option value="single">Keep every page as is</option>
                     <option value="split">Split wide pages into left and right</option>
                   </select>
+                </div>
+
+                {/* Option 4: Shift Spread */}
+                <label htmlFor="sh" className="f-toggle-card">
+                  <div className="flex flex-col pr-3">
+                    <span className="text-xs font-bold text-slate-800">Shift By One Page</span>
+                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Fix booklet spreads &amp; facing pairs</span>
+                  </div>
+                  <label className="f-toggle-switch">
+                    <input type="checkbox" id="sh" />
+                    <span className="f-toggle-slider"></span>
+                  </label>
                 </label>
 
-                <label className="inline-flex items-center gap-2.5 text-xs font-bold text-slate-700 cursor-pointer select-none py-1">
-                  <input type="checkbox" id="sh" className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600" />
-                  <span>Shift by one page (fix booklet spreads)</span>
-                </label>
-
-                <label className="inline-flex items-center gap-2.5 text-xs font-bold text-slate-700 cursor-pointer select-none py-1">
-                  <input type="checkbox" id="sn" className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600" />
-                  <span>Realistic page-turn sound effects</span>
+                {/* Option 5: Sound Effects */}
+                <label htmlFor="sn" className="f-toggle-card">
+                  <div className="flex flex-col pr-3">
+                    <span className="text-xs font-bold text-slate-800">Realistic Sound Effects</span>
+                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Physical paper rustle on corner turn</span>
+                  </div>
+                  <label className="f-toggle-switch">
+                    <input type="checkbox" id="sn" />
+                    <span className="f-toggle-slider"></span>
+                  </label>
                 </label>
               </div>
 
               {/* Brand kit panel */}
               <div className="ftp" id="p-kt" hidden>
-                <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3">
+                <div className="rounded-2xl border border-slate-200/90 bg-slate-50/80 p-3.5 shadow-2xs">
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Your chosen style, logo, text, and palette automatically save locally in this browser. Export as JSON to reuse on other computers or teammates.
+                    Your chosen style, logo, text, and palette automatically save locally in this browser. Export as JSON to reuse across devices or teammates.
                   </p>
                 </div>
-                <div className="flex flex-col gap-2 mt-2">
+                <div className="flex flex-col gap-2.5 mt-2">
                   <button className="fbtn w-full justify-center" id="ke">Export brand kit (.json)</button>
                   <label className="fbtn w-full justify-center text-center cursor-pointer">
                     Import brand kit
@@ -1070,8 +1235,14 @@ function initFlipbookApp() {
   };
 
   // ── Viewer engine ──────────────────────────────────────────────────────────
-  function Viewer(root: HTMLElement & { _off?: () => void }, c: Record<string, unknown>) {
+  // ── Viewer engine ──────────────────────────────────────────────────────────
+  function Viewer(root: HTMLElement & { _off?: () => void; _pf?: any }, c: Record<string, unknown>) {
     if (root._off) root._off();
+    if (root._pf && typeof root._pf.destroy === "function") {
+      try { root._pf.destroy(); } catch (_) {}
+      root._pf = null;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const T: any = (THEMES as any[])[c.theme as number] || THEMES[0];
     const P = c.pages as string[];
@@ -1084,6 +1255,7 @@ function initFlipbookApp() {
     let W = 0, H = 0, z = 1, snd = !!c.sound, tm = 0;
     let dr: null | { x: number; sd: number; m: number; p: number } = null;
     let au: number | ReturnType<typeof setInterval> = 0;
+    let pfInstance: any = null;
 
     root.className = "fbv" + (c.full ? " full" : "");
     root.style.background = img
@@ -1105,7 +1277,13 @@ function initFlipbookApp() {
         "<p>" + esc(c.desc) + "</p></div>";
     }
 
-    h += '<div class="stage"><div class="bk" style="--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 6) + 'px"></div>';
+    h +=
+      '<div class="stage">' +
+      '<div class="pf-container-wrap" style="box-shadow:' + T.x + ';border-radius:' + (T.r + 6) + 'px;background:' + T.b + '">' +
+      '<div id="pf-book-mount" class="pf-book-mount"></div>' +
+      '</div>' +
+      '<div class="bk bk-fallback" style="display:none;--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 6) + 'px"></div>';
+
     for (let j = 0; j < L; j++) {
       h +=
         '<div class="lf"><div class="fc f"><img src="' + P[2 * j] + '" alt="Page ' + (2 * j + 1) + '" draggable="false"></div><div class="fc b">' +
@@ -1115,7 +1293,8 @@ function initFlipbookApp() {
 
     h +=
       (T.sp && T.sp !== "s" ? '<div class="sp ' + T.sp + '"></div>' : "") +
-      '</div></div><div class="ct"><button data-a="p" title="Previous page" aria-label="Previous page">\u2039</button><span class="pg"></span><button data-a="n" title="Next page" aria-label="Next page">\u203a</button><button data-a="t" title="Thumbnails" aria-label="Thumbnails">\u25a6</button><button data-a="z" title="Zoom" aria-label="Zoom">\uff0b</button><button data-a="s" title="Sound toggle" aria-label="Page-turn sound">' + (snd ? "\ud83d\udd0a" : "\ud83d\udd08") + '</button><button data-a="a" title="Autoplay" aria-label="Auto-play">\u25b6</button><button data-a="f" title="Fullscreen" aria-label="Fullscreen">\u26f6</button></div><div class="th" hidden></div>' +
+      '</div></div>' +
+      '<div class="ct"><button data-a="p" title="Previous page" aria-label="Previous page">\u2039</button><span class="pg"></span><button data-a="n" title="Next page" aria-label="Next page">\u203a</button><button data-a="t" title="Thumbnails" aria-label="Thumbnails">\u25a6</button><button data-a="z" title="Zoom" aria-label="Zoom">\uff0b</button><button data-a="s" title="Sound toggle" aria-label="Page-turn sound">' + (snd ? "\ud83d\udd0a" : "\ud83d\udd08") + '</button><button data-a="a" title="Autoplay" aria-label="Auto-play">\u25b6</button><button data-a="f" title="Fullscreen" aria-label="Fullscreen">\u26f6</button></div><div class="th" hidden></div>' +
       (c.credit ? '<a class="cr" href="https://spellense.com/flipbook" target="_blank" rel="noopener">Made with Spellense</a>' : "");
 
     root.innerHTML = h;
@@ -1129,6 +1308,18 @@ function initFlipbookApp() {
 
     const tick = () => {
       if (snd) playPageSound();
+    };
+
+    const updatePgDisplay = (cur: number, total: number) => {
+      if (cur === 0) {
+        pg.textContent = "1 / " + total;
+      } else if (cur >= total - 1) {
+        pg.textContent = total + " / " + total;
+      } else {
+        const p1 = cur + 1;
+        const p2 = Math.min(total, cur + 2);
+        pg.textContent = p1 === p2 ? p1 + " / " + total : p1 + "\u2013" + p2 + " / " + total;
+      }
     };
 
     const place = () => {
@@ -1145,24 +1336,6 @@ function initFlipbookApp() {
       S.curPage = s;
     };
 
-    const fit = () => {
-      const clientW = root.clientWidth || root.parentElement?.clientWidth || (typeof window !== "undefined" ? window.innerWidth : 800);
-      const aw = Math.max(260, clientW - 40);
-      const ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
-      const r = (c.ratio as number) || 0.72;
-      W = Math.min(aw / 2, ah * r) * z;
-      H = W / r;
-      const p = Math.max(6, Math.round(W * (T.pd || 0.02)));
-      bk.style.width = Math.round(2 * W) + "px";
-      bk.style.height = Math.round(H) + "px";
-      bd.style.inset = "-" + p + "px";
-      st.style.padding = p + 4 + "px 0";
-      lvs.forEach((e) => { e.style.width = Math.round(W) + "px"; e.style.height = Math.round(H) + "px"; });
-      const sq = q(".sp") as HTMLElement | null;
-      if (sq) { sq.style.top = sq.style.bottom = "-" + p + "px"; }
-      place();
-    };
-
     const go = (dir: number) => {
       const ns = cl(s + dir);
       if (ns === s) { place(); return; }
@@ -1175,41 +1348,95 @@ function initFlipbookApp() {
       tm = setTimeout(place, sp * 1000 + 60) as unknown as number;
     };
 
-    bk.addEventListener("pointerdown", (e) => {
-      const rect = bk.getBoundingClientRect();
-      const sd = e.clientX - rect.left > rect.width / 2 ? 1 : -1;
-      if ((sd > 0 && s >= maxS) || (sd < 0 && s <= 0)) return;
-      const m = sd > 0 ? s : s - 1;
-      dr = { x: e.clientX, sd, m, p: 0 };
-      if (lvs[m]) {
-        lvs[m].style.transition = "none";
-        lvs[m].style.zIndex = String(L + 5);
-      }
-      bk.setPointerCapture(e.pointerId);
-    });
-
-    bk.addEventListener("pointermove", (e) => {
-      if (!dr || !lvs[dr.m]) return;
-      dr.p = Math.min(1, Math.max(0, ((e.clientX - dr.x) * -dr.sd) / W));
-      lvs[dr.m].style.transform = "rotateY(" + (dr.sd > 0 ? -180 * dr.p : -180 + 180 * dr.p) + "deg)";
-    });
-
-    const up = () => {
-      const d = dr;
-      dr = null;
-      if (!d || !lvs[d.m]) return;
-      lvs[d.m].style.transition = "";
-      if (d.p < 0.04 || d.p > 0.3) go(d.sd);
-      else place();
+    const initFallbackCss = () => {
+      const pfWrap = root.querySelector(".pf-container-wrap") as HTMLElement | null;
+      if (pfWrap) pfWrap.style.display = "none";
+      if (bk) bk.style.display = "block";
+      const p = Math.max(6, Math.round(W * (T.pd || 0.02)));
+      bk.style.width = Math.round(2 * W) + "px";
+      bk.style.height = Math.round(H) + "px";
+      bd.style.inset = "-" + p + "px";
+      st.style.padding = p + 4 + "px 0";
+      lvs.forEach((e) => { e.style.width = Math.round(W) + "px"; e.style.height = Math.round(H) + "px"; });
+      const sq = q(".sp") as HTMLElement | null;
+      if (sq) { sq.style.top = sq.style.bottom = "-" + p + "px"; }
+      place();
     };
-    bk.addEventListener("pointerup", up);
-    bk.addEventListener("pointercancel", up);
+
+    const fit = async () => {
+      const clientW = root.clientWidth || root.parentElement?.clientWidth || (typeof window !== "undefined" ? window.innerWidth : 800);
+      const aw = Math.max(260, clientW - 40);
+      const ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
+      const r = (c.ratio as number) || 0.72;
+      W = Math.min(aw / 2, ah * r) * z;
+      H = W / r;
+
+      const mount = root.querySelector("#pf-book-mount") as HTMLElement | null;
+      if (!mount || !P.length) {
+        initFallbackCss();
+        return;
+      }
+
+      try {
+        const mod = await import("page-flip") as any;
+        const PageFlipClass = mod.PageFlip || mod.default?.PageFlip || mod.default;
+        if (!PageFlipClass) throw new Error("PageFlip class not found");
+
+        if (pfInstance) {
+          try { pfInstance.destroy(); } catch (_) {}
+          pfInstance = null;
+        }
+
+        mount.innerHTML = "";
+        const pf = new PageFlipClass(mount, {
+          width: Math.round(W),
+          height: Math.round(H),
+          size: "fixed",
+          minWidth: 240,
+          maxWidth: 1200,
+          minHeight: 320,
+          maxHeight: 1400,
+          maxShadowOpacity: 0.65,
+          showCover: true,
+          mobileScrollSupport: false,
+          showPageCorners: true, // 3D realistic corner peeling & curl prompt on hover
+          flippingTime: 750,
+          useMouseEvents: true,
+          drawShadow: true,
+        });
+
+        pfInstance = pf;
+        root._pf = pf;
+        pf.loadFromImages(P);
+
+        pf.on("flip", (e: any) => {
+          const cur = typeof e.data === "number" ? e.data : pf.getCurrentPageIndex();
+          s = cur;
+          S.curPage = cur;
+          if (snd) playPageSound();
+          updatePgDisplay(cur, pf.getPageCount());
+        });
+
+        pf.on("init", () => {
+          updatePgDisplay(pf.getCurrentPageIndex(), pf.getPageCount());
+        });
+      } catch (err) {
+        console.warn("Using CSS flipbook fallback:", err);
+        initFallbackCss();
+      }
+    };
 
     const key = (e: KeyboardEvent) => {
       const el = document.activeElement as HTMLElement | null;
       if (el && /INPUT|TEXTAREA|SELECT/.test(el.tagName)) return;
-      if (e.key === "ArrowRight") go(1);
-      if (e.key === "ArrowLeft") go(-1);
+      if (e.key === "ArrowRight") {
+        if (pfInstance) pfInstance.flipNext("bottom");
+        else go(1);
+      }
+      if (e.key === "ArrowLeft") {
+        if (pfInstance) pfInstance.flipPrev("bottom");
+        else go(-1);
+      }
     };
 
     const ro = new ResizeObserver(fit);
@@ -1222,15 +1449,29 @@ function initFlipbookApp() {
       removeEventListener("keydown", key);
       document.removeEventListener("fullscreenchange", fit);
       clearInterval(au as number);
+      if (pfInstance) {
+        try { pfInstance.destroy(); } catch (_) {}
+        pfInstance = null;
+        root._pf = null;
+      }
     };
 
     (q(".ct") as HTMLElement).onclick = (e) => {
       const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
       if (!b) return;
       const a = b.dataset.a;
-      if (a === "p") go(-1);
-      if (a === "n") go(1);
-      if (a === "z") { z = z >= 2.2 ? 1 : z + 0.4; fit(); }
+      if (a === "p") {
+        if (pfInstance) pfInstance.flipPrev("bottom");
+        else go(-1);
+      }
+      if (a === "n") {
+        if (pfInstance) pfInstance.flipNext("bottom");
+        else go(1);
+      }
+      if (a === "z") {
+        z = z >= 2.2 ? 1 : z + 0.4;
+        fit();
+      }
       if (a === "s") {
         snd = !snd;
         S.sound = snd;
@@ -1250,8 +1491,16 @@ function initFlipbookApp() {
         } else {
           b.textContent = "\u23f8";
           au = setInterval(() => {
-            if (s >= maxS) { s = 0; place(); }
-            else go(1);
+            if (pfInstance) {
+              if (pfInstance.getCurrentPageIndex() >= pfInstance.getPageCount() - 1) {
+                pfInstance.turnToPage(0);
+              } else {
+                pfInstance.flipNext("bottom");
+              }
+            } else {
+              if (s >= maxS) { s = 0; place(); }
+              else go(1);
+            }
           }, 3200);
         }
       }
@@ -1267,9 +1516,14 @@ function initFlipbookApp() {
     (q(".th") as HTMLElement).onclick = (e) => {
       const i = (e.target as HTMLElement).dataset.i;
       if (i == null) return;
-      s = cl(i === "0" ? 0 : Math.ceil(Number(i) / 2));
-      place();
-      tick();
+      const idx = Number(i);
+      if (pfInstance) {
+        pfInstance.turnToPage(idx);
+      } else {
+        s = cl(idx === 0 ? 0 : Math.ceil(idx / 2));
+        place();
+        tick();
+      }
     };
 
     fit();
@@ -1789,11 +2043,13 @@ function initFlipbookApp() {
         root.style.color = img || lum(c.bg1) < 0.5 ? "#fff" : "#0f172a";
         root.style.setProperty("--pf", T.f);
         root.style.setProperty("--pr", T.r + "px");
+        var PageFlipClass = (window.St && window.St.PageFlip) || window.PageFlip;
+        var pf = null;
         var h = img ? '<div class="ov" style="background:rgba(0,0,0,' + (c.dim || 0) + ')"></div>' : "";
         if (c.logo || c.desc) {
           h += '<div class="fbh' + (c.logoRight ? " rv" : "") + '">' + (c.logo ? '<img src="' + c.logo + '" alt="Logo">' : "<span></span>") + "<p>" + esc(c.desc) + "</p></div>";
         }
-        h += '<div class="stage"><div class="bk" style="--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 6) + 'px"></div>';
+        h += '<div class="stage"><div class="pf-container-wrap" style="box-shadow:' + T.x + ';border-radius:' + (T.r + 6) + 'px;background:' + T.b + '"><div id="pf-book-mount" class="pf-book-mount"></div></div><div class="bk bk-fallback" style="display:none;--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 6) + 'px"></div>';
         for (var j = 0; j < L; j++) {
           h += '<div class="lf"><div class="fc f"><img src="' + P[2 * j] + '" alt="Page ' + (2 * j + 1) + '" draggable="false"></div><div class="fc b">' + (P[2 * j + 1] ? '<img src="' + P[2 * j + 1] + '" alt="Page ' + (2 * j + 2) + '" draggable="false">' : "") + '</div></div>';
         }
@@ -1803,6 +2059,11 @@ function initFlipbookApp() {
         var bk = q(".bk"), bd = q(".bd"), st = q(".stage"), pg = q(".pg"), lvs = [].slice.call(root.querySelectorAll(".lf"));
         function cl(v) { return Math.max(0, Math.min(maxS, v)); }
         function tick() { if (snd) playPageSound(); }
+        function updatePgDisplay(cur, total) {
+          if (cur === 0) { pg.textContent = "1 / " + total; }
+          else if (cur >= total - 1) { pg.textContent = total + " / " + total; }
+          else { var p1 = cur + 1, p2 = Math.min(total, cur + 2); pg.textContent = p1 === p2 ? p1 + " / " + total : p1 + "\u2013" + p2 + " / " + total; }
+        }
         function place() {
           lvs.forEach(function(e, idx) {
             e.style.transform = "rotateY(" + (idx < s ? -180 : 0) + "deg)";
@@ -1818,6 +2079,45 @@ function initFlipbookApp() {
           var r = c.ratio || 0.72;
           W = Math.min(aw / 2, ah * r) * z;
           H = W / r;
+
+          var mount = root.querySelector("#pf-book-mount");
+          if (PageFlipClass && mount && P.length) {
+            try {
+              if (pf) { pf.destroy(); pf = null; }
+              mount.innerHTML = "";
+              pf = new PageFlipClass(mount, {
+                width: Math.round(W),
+                height: Math.round(H),
+                size: "fixed",
+                minWidth: 240,
+                maxWidth: 1200,
+                minHeight: 320,
+                maxHeight: 1400,
+                maxShadowOpacity: 0.65,
+                showCover: true,
+                mobileScrollSupport: false,
+                showPageCorners: true,
+                flippingTime: 750,
+                useMouseEvents: true,
+                drawShadow: true,
+              });
+              pf.loadFromImages(P);
+              pf.on("flip", function(e) {
+                var cur = typeof e.data === "number" ? e.data : pf.getCurrentPageIndex();
+                s = cur;
+                if (snd) playPageSound();
+                updatePgDisplay(cur, pf.getPageCount());
+              });
+              pf.on("init", function() {
+                updatePgDisplay(pf.getCurrentPageIndex(), pf.getPageCount());
+              });
+              return;
+            } catch (err) {}
+          }
+
+          var pfWrap = root.querySelector(".pf-container-wrap");
+          if (pfWrap) pfWrap.style.display = "none";
+          if (bk) bk.style.display = "block";
           var p = Math.max(6, Math.round(W * (T.pd || 0.02)));
           bk.style.width = Math.round(2 * W) + "px";
           bk.style.height = Math.round(H) + "px";
@@ -1864,8 +2164,8 @@ function initFlipbookApp() {
         function key(e) {
           var el = document.activeElement;
           if (el && /INPUT|TEXTAREA|SELECT/.test(el.tagName)) return;
-          if (e.key === "ArrowRight") go(1);
-          if (e.key === "ArrowLeft") go(-1);
+          if (e.key === "ArrowRight") { if (pf) pf.flipNext("bottom"); else go(1); }
+          if (e.key === "ArrowLeft") { if (pf) pf.flipPrev("bottom"); else go(-1); }
         }
         var ro = new ResizeObserver(fit);
         ro.observe(root);
@@ -1876,19 +2176,30 @@ function initFlipbookApp() {
           window.removeEventListener("keydown", key);
           document.removeEventListener("fullscreenchange", fit);
           clearInterval(au);
+          if (pf) { try { pf.destroy(); } catch (_) {} pf = null; }
         };
         q(".ct").onclick = function(e) {
           var b = e.target.closest("button");
           if (!b) return;
           var a = b.dataset.a;
-          if (a === "p") go(-1);
-          if (a === "n") go(1);
+          if (a === "p") { if (pf) pf.flipPrev("bottom"); else go(-1); }
+          if (a === "n") { if (pf) pf.flipNext("bottom"); else go(1); }
           if (a === "z") { z = z >= 2.2 ? 1 : z + 0.4; fit(); }
           if (a === "s") { snd = !snd; b.textContent = snd ? "\ud83d\udd0a" : "\ud83d\udd08"; tick(); }
           if (a === "f") { document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen && root.requestFullscreen(); }
           if (a === "a") {
             if (au) { clearInterval(au); au = 0; b.textContent = "\u25b6"; }
-            else { b.textContent = "\u23f8"; au = setInterval(function() { if (s >= maxS) { s = 0; place(); } else go(1); }, 3200); }
+            else {
+              b.textContent = "\u23f8";
+              au = setInterval(function() {
+                if (pf) {
+                  if (pf.getCurrentPageIndex() >= pf.getPageCount() - 1) pf.turnToPage(0);
+                  else pf.flipNext("bottom");
+                } else {
+                  if (s >= maxS) { s = 0; place(); } else go(1);
+                }
+              }, 3200);
+            }
           }
           if (a === "t") {
             var tEl = q(".th");
@@ -1901,9 +2212,8 @@ function initFlipbookApp() {
         q(".th").onclick = function(e) {
           var idx = e.target.dataset.i;
           if (idx == null) return;
-          s = cl(idx === "0" ? 0 : Math.ceil(Number(idx) / 2));
-          place();
-          tick();
+          if (pf) { pf.turnToPage(Number(idx)); }
+          else { s = cl(idx === "0" ? 0 : Math.ceil(Number(idx) / 2)); place(); tick(); }
         };
         fit();
         if (typeof requestAnimationFrame !== "undefined") {
@@ -1921,7 +2231,10 @@ function initFlipbookApp() {
       esc(t) +
       "</title><style>html,body{margin:0;background:#000;font-family:system-ui,-apple-system,sans-serif}</style><style>" +
       VCSS +
-      "</style></head><body><div id=\"r\"></div><script>" +
+      "</style></head><body><div id=\"r\"></div>" +
+      "<script src=\"https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js\">" +
+      closeScript +
+      "<script>" +
       standaloneViewerCode +
       "\n;Viewer(document.getElementById('r')," +
       cfg +
@@ -2056,9 +2369,15 @@ function initFlipbookApp() {
     try {
       const i = await li(pages[S.shift && pages[1] ? 1 : 0]);
       const c = document.createElement("canvas");
-      c.width = 90; c.height = Math.round(90 / ratio);
-      c.getContext("2d")!.drawImage(i, 0, 0, c.width, c.height);
-      TH = c.toDataURL("image/jpeg", 0.7);
+      c.width = 300;
+      c.height = Math.round(300 / ratio);
+      const ctx = c.getContext("2d");
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(i, 0, 0, c.width, c.height);
+      }
+      TH = c.toDataURL("image/jpeg", 0.92);
       tiles();
     } catch (_) { /* ok */ }
   }
