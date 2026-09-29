@@ -4,53 +4,120 @@ import { useEffect, useRef, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
-// ── Viewer CSS (embedded in preview AND in every downloaded standalone flipbook) ──
+// ── SVG Noise & Texture Filters for Realistic Book Covers ────────────────────
+const enc = (s: string) => `url("data:image/svg+xml,${encodeURIComponent(s)}")`;
+const noise = (f: number | string, o: number, m: number, off: number, seed: number, s: number, c = 0, ty = "fractalNoise") =>
+  enc(`<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}'><filter id='f'><feTurbulence type='${ty}' baseFrequency='${f}' numOctaves='${o}' seed='${seed}'/><feColorMatrix values='0 0 0 0 ${c} 0 0 0 0 ${c} 0 0 0 0 ${c} ${m} 0 0 0 ${off}'/></filter><rect width='100%' height='100%' filter='url(#f)'/></svg>`);
+const croc = enc(`<svg xmlns='http://www.w3.org/2000/svg' width='64' height='48'><defs><radialGradient id='g'><stop offset='0' stop-color='white' stop-opacity='.26'/><stop offset='1' stop-color='white' stop-opacity='0'/></radialGradient></defs>${[[3,3],[35,3],[19,27],[51,27],[-13,27]].map(([x,y])=>`<rect x='${x}' y='${y}' width='26' height='18' rx='9' fill='url(#g)' stroke='rgba(0,0,0,.65)' stroke-width='2'/>`).join("")}</svg>`);
+
+const G1 = noise(0.9, 2, 1.5, -0.42, 7, 200);
+const G2 = noise(0.035, 3, 1.3, -0.38, 3, 420);
+const GW = noise("0.006 0.3", 4, 1.9, -0.62, 9, 500);
+const GP = noise(1.2, 2, 0.7, -0.18, 5, 160, 1);
+const GV = noise(1.7, 1, 0.55, -0.14, 2, 160, 1);
+const GM = noise("0.009 0.014", 5, -9, 2.4, 4, 600, 0.32, "turbulence");
+
+const vig = "radial-gradient(130% 110% at 50% 50%,transparent 50%,rgba(0,0,0,.55))";
+const hl = "radial-gradient(120% 90% at 30% 15%,rgba(255,255,255,.2),transparent 55%)";
+const marb = (a: string, b: string) => `repeating-radial-gradient(ellipse at 25% 35%,${a} 0 5px,#f0e2c0 5px 9px,${b} 9px 13px,#f0e2c0 13px 17px)`;
+const brass = "linear-gradient(135deg,#f7e08e,#9a731f)";
+const GOLD = "linear-gradient(100deg,#8a6a1a,#f7e08e 30%,#b8891f 50%,#f7e08e 70%,#8a6a1a)";
+const DGOLD = "linear-gradient(100deg,#5e430a,#c79a2c 30%,#7d5a12 50%,#c79a2c 70%,#5e430a)";
+const PAP = ["#f4ecd6", "#b9a97f"];
+const GILT = ["#f6dc85", "#9a731f"];
+
+// ── Viewer CSS (Embedded in preview AND downloaded standalone HTML) ──────────
 const VCSS = `
-.fbv{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 24px;border-radius:28px;overflow:hidden;min-height:360px;box-sizing:border-box;font-family:inherit;transition:background .3s}
-.fbv.full{border-radius:0;min-height:100vh;justify-content:center}
+:root {
+  --g1: ${G1};
+  --g2: ${G2};
+  --gw: ${GW};
+  --gp: ${GP};
+  --gv: ${GV};
+  --gm: ${GM};
+  --croc: ${croc};
+  --O: 14px;
+  --e1: #f4ecd6;
+  --e2: #b9a97f;
+  --st: rgba(236,214,160,.7);
+  --foil: linear-gradient(100deg,#8a6a1a,#f7e08e,#8a6a1a);
+  --bc: #d4af37;
+  --wl: 2px;
+  --wr: 12px;
+}
+.fbv{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 18px;border-radius:22px;overflow:hidden;box-sizing:border-box;font-family:inherit;transition:background .3s}
+.fbv.full{border-radius:0;min-height:100vh;height:100vh;padding:12px 18px;justify-content:space-between;box-sizing:border-box}
 .fbv .ov{position:absolute;inset:0;pointer-events:none}
-.fbh{display:flex;justify-content:space-between;align-items:center;width:100%;gap:16px;z-index:2}
+.fbh{display:flex;justify-content:space-between;align-items:center;width:100%;gap:16px;z-index:10}
 .fbh.rv{flex-direction:row-reverse}.fbh.rv p{text-align:left}
-.fbh img{max-height:48px;max-width:38%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.15))}
-.fbh p{margin:0;font-size:.875rem;line-height:1.45;text-align:right;max-width:58%;white-space:pre-line;font-weight:600;letter-spacing:-.01em}
-.stage{position:relative;width:100%;display:flex;justify-content:center;align-items:center;touch-action:pan-y;z-index:2;padding:16px 0;perspective:2600px;-webkit-perspective:2600px}
-.bk{position:relative;margin:auto;perspective:2600px;-webkit-perspective:2600px;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;transition:transform .5s cubic-bezier(.25,1,.5,1);cursor:grab}
-.bk:active{cursor:grabbing}
-.bd{position:absolute;z-index:0;transition:all .3s}
-.lf{position:absolute;top:0;left:50%;transform-origin:left center;-webkit-transform-origin:left center;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;transition:transform var(--sp) cubic-bezier(.45,.05,.25,1)}
-.fc{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
-.fc.f{transform:rotateY(0deg) translateZ(0.5px);-webkit-transform:rotateY(0deg) translateZ(0.5px);border-radius:0 var(--pr) var(--pr) 0}
-.fc.b{transform:rotateY(180deg) translateZ(0.5px);-webkit-transform:rotateY(180deg) translateZ(0.5px);border-radius:var(--pr) 0 0 var(--pr)}
-.fc img{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;filter:var(--pf);object-fit:fill;border-radius:inherit}
-.fc::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit}
-.fc.f::after{background:linear-gradient(90deg,rgba(0,0,0,.22),transparent 12%)}
-.fc.b::after{background:linear-gradient(270deg,rgba(0,0,0,.22),transparent 12%)}
-.sp{position:absolute;left:50%;top:0;bottom:0;width:22px;transform:translateX(-50%);z-index:9999;pointer-events:none;background:radial-gradient(circle,#111 0 3px,#c8c8c8 3.5px 5.5px,transparent 6px) 0 0/22px 20px repeat-y}
-.sp.rg{width:32px;background:radial-gradient(circle,#333 0 4px,#e5e7eb 5px 8px,transparent 9px) 0 0/32px 60px repeat-y}
-.sp.st{width:0;border-left:2px dashed rgba(255,255,255,.65)}
-.ct{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;z-index:2;background:rgba(15,23,42,.85);padding:6px 12px;border-radius:999px;color:#fff;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 30px -5px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15)}
-.ct button{all:unset;cursor:pointer;width:34px;height:34px;text-align:center;line-height:34px;border-radius:50%;font-size:1.05rem;transition:all .15s;display:flex;align-items:center;justify-content:center}
-.ct button:hover,.ct button:focus-visible{background:rgba(255,255,255,.2);transform:scale(1.08)}
-.ct .pg{font-size:.8125rem;min-width:76px;text-align:center;font-weight:700;letter-spacing:-.01em;padding:0 4px}
-.th{display:flex;gap:10px;overflow-x:auto;width:100%;padding:10px 4px;z-index:2;scrollbar-width:thin}.th[hidden]{display:none!important}
-.th img{height:72px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .18s;box-shadow:0 4px 10px rgba(0,0,0,.15)}.th img:hover{border-color:#3b82f6;transform:scale(1.06)}
-.cr{z-index:2;font-size:.75rem;color:inherit;opacity:.75;font-weight:600;text-decoration:none;transition:opacity .15s}
-.cr:hover{opacity:1;text-decoration:underline}
-@media (prefers-reduced-motion:reduce){.lf,.bk{transition-duration:.01s!important}}
-/* StPageFlip 3D Paper Curl & Realistic Corner Fold Styles */
+.fbh img{max-height:44px;max-width:38%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.15))}
+.fbh p{margin:0;font-size:.8125rem;line-height:1.4;text-align:right;max-width:58%;white-space:pre-line;font-weight:600;letter-spacing:-.01em}
+
+/* 3D Realistic Stage & Hard Board Architecture */
+.stage{position:relative;width:100%;height:clamp(380px,52vh,520px);display:flex;align-items:center;justify-content:center;touch-action:pan-y;z-index:2;perspective:2600px;-webkit-perspective:2600px;overflow:hidden}
+.fbv.full .stage{height:calc(100vh - 100px);max-height:none}
+#wrap{position:relative;display:flex;align-items:center;justify-content:center;transition:transform .55s cubic-bezier(.3,.7,.2,1)}
+#book{position:relative;z-index:2}
+#board{position:absolute;z-index:1;border-radius:8px 14px 14px 8px;box-shadow:0 34px 50px -8px rgba(0,0,0,.6),0 10px 16px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.12);transition:left .55s cubic-bezier(.3,.7,.2,1),top .55s,width .55s cubic-bezier(.3,.7,.2,1),height .55s}
+.stk{position:absolute;background:repeating-linear-gradient(90deg,var(--e1) 0 1px,var(--e2) 1px 2px);box-shadow:inset 0 0 4px rgba(0,0,0,.55);transition:width .4s}
+.stk.l{left:calc(var(--O) - var(--wl));width:var(--wl);top:var(--O);bottom:var(--O)}
+.stk.r{right:calc(var(--O) - var(--wr));width:var(--wr);top:var(--O);bottom:var(--O)}
+.stk.b{left:var(--O);right:var(--O);bottom:calc(var(--O) - 5px);height:5px;background:repeating-linear-gradient(0deg,var(--e1) 0 1px,var(--e2) 1px 2px)}
+#rib{position:absolute;left:calc(50% - 6px);bottom:-46px;width:12px;height:58px;clip-path:polygon(0 0,100% 0,100% 100%,50% 86%,0 100%);opacity:0;transition:opacity .4s;pointer-events:none;z-index:3}
+#rings{position:absolute;z-index:6;width:30px;pointer-events:none;display:none;background:radial-gradient(ellipse at 50% 50%,#111 0 4px,transparent 5px),radial-gradient(ellipse at 50% 50%,#e8e8ee 0 9px,#7d7d86 11px,transparent 12px);background-size:30px 30px;filter:drop-shadow(1px 3px 2px rgba(0,0,0,.5))}
+#band{position:absolute;z-index:6;width:11px;display:none;pointer-events:none;background:linear-gradient(90deg,#7d0c20,#c21a3a 50%,#6d0a1b);box-shadow:2px 0 4px rgba(0,0,0,.5);transition:opacity .3s}
+
+/* Page, Endpaper & Cover Textures */
+.page{width:100%;height:100%;overflow:hidden;background-color:#fff}
+.paper{width:100%;height:100%;position:relative;display:flex;flex-direction:column}
+.pi{background:#fff}.pi img{width:100%;height:100%;object-fit:contain;display:block}
+.pi::after,.endp::after{content:"";position:absolute;inset:0;pointer-events:none}
+.--left .pi::after,.--left .endp::after{box-shadow:inset -30px 0 30px -18px rgba(60,40,10,.5)}
+.--right .pi::after,.--right .endp::after{box-shadow:inset 30px 0 30px -18px rgba(60,40,10,.5)}
+.cov{align-items:center;justify-content:center;overflow:hidden}
+.cov.hg::before{content:"";position:absolute;z-index:3;top:0;bottom:0;width:3px;background:rgba(0,0,0,.5);box-shadow:1px 0 0 rgba(255,255,255,.14)}
+.cov-f.hg::before{left:6%}
+.cov-b.hg::before{right:6%}
+.stitch{position:absolute;inset:3.2%;border:2px dashed var(--st);border-radius:8px;pointer-events:none}
+.frame{position:absolute;inset:9% 9% 9% 12%;border:2px solid;box-shadow:0 1px 0 rgba(255,255,255,.16),inset 0 1px 2px rgba(0,0,0,.6);pointer-events:none}
+.cov-b .frame{inset:9% 12% 9% 9%}
+.frame.lx{border-image:var(--foil) 1;box-shadow:0 0 0 6px transparent,0 0 0 7px var(--st)}
+.spn{position:absolute;top:0;bottom:0;box-shadow:inset -6px 0 8px rgba(0,0,0,.5);pointer-events:none}
+.cn{position:absolute;width:34px;height:34px;pointer-events:none}
+.ttl{position:relative;text-align:center;padding:0 6%;max-width:94%;z-index:2}
+.ttl h2{margin:8px 0;font-size:clamp(16px,3vw,30px);font-weight:400;letter-spacing:.06em;line-height:1.25;word-break:break-word}
+.ttl span{font-size:clamp(9px,1.3vw,12px);letter-spacing:.3em}
+.lx{filter:drop-shadow(0 1px 0 rgba(0,0,0,.6))}
+.lx h2{letter-spacing:.14em;text-transform:uppercase;font-family:Georgia,serif}
+.foil{display:inline-block;background:var(--foil);background-size:240% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sh 6s linear infinite}
+@keyframes sh{to{background-position:-240% 0}}
+.mono{display:grid;place-items:center;width:clamp(34px,6vw,54px);height:clamp(34px,6vw,54px);border:2px solid var(--bc);border-radius:50%;margin:0 auto 10px;font:italic clamp(17px,3vw,28px) Georgia,serif}
+.lbl{background:#f3ead2;color:#222!important;padding:12px 16px;border:2px double #8a7a55;text-shadow:none!important;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.glz{position:absolute;inset:0;z-index:2;pointer-events:none}
+
+/* StPageFlip Engine Styles */
 .stf__parent{position:relative;display:block;box-sizing:border-box;transform:translateZ(0);-ms-touch-action:pan-y;touch-action:pan-y;margin:auto}
 .sft__wrapper{position:relative;width:100%;box-sizing:border-box}
 .stf__parent canvas{position:absolute;width:100%;height:100%;left:0;top:0}
-.stf__block{position:absolute;width:100%;height:100%;box-sizing:border-box;perspective:2200px}
+.stf__block{position:absolute;width:100%;height:100%;box-sizing:border-box;perspective:2600px}
 .stf__item{display:none;position:absolute;transform-style:preserve-3d}
 .stf__outerShadow{position:absolute;left:0;top:0}
 .stf__innerShadow{position:absolute;left:0;top:0}
 .stf__hardShadow{position:absolute;left:0;top:0}
-.pf-container-wrap{display:flex;justify-content:center;align-items:center;padding:8px;position:relative;background:transparent!important;box-shadow:none!important;transition:transform .45s cubic-bezier(.25,1,.5,1);will-change:transform}
-.pf-book-mount{display:block;margin:auto;border-radius:var(--pr,4px)}
+.stf__hardInnerShadow{position:absolute;left:0;top:0}
+
+/* Viewer Controls Bar */
+.ct{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;z-index:10;background:rgba(15,23,42,.85);padding:6px 12px;border-radius:999px;color:#fff;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 30px -5px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15);margin-top:4px}
+.ct button{all:unset;cursor:pointer;width:34px;height:34px;text-align:center;line-height:34px;border-radius:50%;font-size:1.05rem;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.ct button:hover,.ct button:focus-visible{background:rgba(255,255,255,.2);transform:scale(1.08)}
+.ct .pg{font-size:.8125rem;min-width:76px;text-align:center;font-weight:700;letter-spacing:-.01em;padding:0 4px}
+.th{display:flex;gap:10px;overflow-x:auto;width:100%;padding:10px 4px;z-index:10;scrollbar-width:thin}.th[hidden]{display:none!important}
+.th img{height:72px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .18s;box-shadow:0 4px 10px rgba(0,0,0,.15)}.th img:hover{border-color:#3b82f6;transform:scale(1.06)}
+.cr{z-index:10;font-size:.75rem;color:inherit;opacity:.75;font-weight:600;text-decoration:none;transition:opacity .15s}
+.cr:hover{opacity:1;text-decoration:underline}
 `;
 
-// ── App component specific CSS for editor controls ───────────────────────────
+// ── App Specific CSS for Customizer & Workspace ───────────────────────────────
 const APP_CSS = `
 #fbapp {
   --fb-primary: #2563eb;
@@ -61,7 +128,7 @@ const APP_CSS = `
 }
 #ed {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 370px;
+  grid-template-columns: minmax(0, 1fr) 390px;
   gap: 24px;
   align-items: start;
 }
@@ -122,10 +189,10 @@ const APP_CSS = `
 .ftp {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-height: 60vh;
+  gap: 12px;
+  max-height: 65vh;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 4px 6px 4px 4px;
   scrollbar-width: thin;
 }
 .ftp label {
@@ -136,74 +203,75 @@ const APP_CSS = `
   flex-direction: column;
   gap: 6px;
 }
+.ft-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ft-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .6875rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-top: 4px;
+}
 .ftg {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 2px 1px;
 }
 .ftc {
   border: 1.5px solid #e2e8f0;
   background: #ffffff;
-  border-radius: 18px;
-  padding: 10px;
+  border-radius: 12px;
+  padding: 6px 8px;
   cursor: pointer;
-  font-size: .75rem;
+  font-size: .6875rem;
   font-weight: 700;
   color: #1e293b;
   text-align: left;
-  transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all .16s ease;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 7px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(15,23,42,.03);
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(15,23,42,.04);
 }
 .ftc:hover {
   border-color: #93c5fd;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px -4px rgba(37,99,235,.12);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -2px rgba(37,99,235,.12);
 }
 .ftc i {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 72px;
-  padding: 6px;
-  border-radius: 12px;
-  position: relative;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
-  overflow: hidden;
+  display: block;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.35), 0 2px 4px rgba(0,0,0,.15);
 }
-.ftc i img {
-  height: 92%;
-  width: auto;
-  max-width: 90%;
-  object-fit: contain;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.22);
+.ftc span {
+  font-size: .6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 .ftc.fon {
   border-color: #2563eb !important;
-  background: #ffffff !important;
-  color: #2563eb !important;
-  box-shadow: 0 0 0 2px #2563eb, 0 8px 20px -4px rgba(37,99,235,.22) !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  box-shadow: inset 0 0 0 1.5px #2563eb, 0 3px 8px -2px rgba(37,99,235,.25) !important;
 }
-.ftc.fon::after {
-  content: "";
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 20px;
-  height: 20px;
-  background-color: #2563eb;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
-  background-size: 12px 12px;
-  background-position: center;
-  background-repeat: no-repeat;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(37,99,235,.4);
-}
+
 /* Modern Toggle Switch Options */
 .f-toggle-card {
   display: flex;
@@ -259,7 +327,7 @@ const APP_CSS = `
 .f-toggle-switch input:checked + .f-toggle-slider:before {
   transform: translateX(18px);
 }
-/* Modern Upload Dropzone Card */
+
 .f-upload-zone {
   border: 1.5px dashed #cbd5e1;
   border-radius: 18px;
@@ -315,8 +383,8 @@ const APP_CSS = `
 .ftp input[type=color] {
   appearance: none;
   border: 0;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border-radius: 50%;
   cursor: pointer;
@@ -328,18 +396,30 @@ const APP_CSS = `
   border: 2px solid #ffffff;
   box-shadow: 0 0 0 1.5px #cbd5e1;
 }
-.ftp textarea, .ftp select {
+.ftp textarea, .ftp select, .ftp input[type=text] {
   font: inherit;
   font-size: .8125rem;
-  padding: 10px 12px;
+  padding: 9px 12px;
   border: 1.5px solid #cbd5e1;
   border-radius: 14px;
   width: 100%;
   background: #ffffff;
   color: #0f172a;
   transition: border-color .15s, box-shadow .15s;
+  box-sizing: border-box;
 }
-.ftp textarea:focus, .ftp select:focus {
+.ftp select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px 16px;
+  padding-right: 38px !important;
+  cursor: pointer;
+}
+.ftp textarea:focus, .ftp select:focus, .ftp input[type=text]:focus {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37,99,235,.15);
@@ -351,10 +431,10 @@ const APP_CSS = `
   border: 1.5px solid #cbd5e1;
   background: #ffffff;
   color: #1e293b;
-  padding: 9px 16px;
-  border-radius: 14px;
+  padding: 8px 14px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: .8125rem;
+  font-size: .75rem;
   font-weight: 700;
   transition: all .15s;
 }
@@ -369,10 +449,10 @@ const APP_CSS = `
   background: linear-gradient(135deg, #2563eb, #4f46e5);
   color: #ffffff;
   border: 0;
-  font-size: .875rem;
+  font-size: .8125rem;
   font-weight: 700;
-  padding: 10px 20px;
-  border-radius: 14px;
+  padding: 9px 16px;
+  border-radius: 12px;
   cursor: pointer;
   box-shadow: 0 6px 16px rgba(37,99,235,.28);
   transition: all .18s;
@@ -380,25 +460,6 @@ const APP_CSS = `
 .fcta:hover {
   box-shadow: 0 8px 22px rgba(37,99,235,.38);
   transform: translateY(-1px);
-}
-.fupload-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1.5px solid #cbd5e1;
-  color: #1e293b;
-  font-size: .75rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all .15s;
-}
-.fupload-btn:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
-  color: #0f172a;
 }
 .feye-btn {
   display: inline-flex;
@@ -419,25 +480,6 @@ const APP_CSS = `
   background: #eff6ff;
   border-color: #93c5fd;
   color: #1d4ed8;
-}
-#ex {
-  margin-top: 24px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-#emb {
-  display: block;
-  background: #0f172a;
-  color: #93c5fd;
-  padding: 12px 14px;
-  border-radius: 14px;
-  font-size: .8125rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  word-break: break-all;
-  margin-top: 10px;
-  border: 1px solid #1e293b;
 }
 @media (max-width: 900px) {
   #ed {
@@ -462,8 +504,8 @@ const FAQ_ITEMS = [
     a: "Never. Spellense processes your PDF pages and images 100% locally inside your browser memory using WebAssembly and HTML5 Canvas. Your documents never leave your device.",
   },
   {
-    q: "My PDF has two-page spreads. Will they fit nicely?",
-    a: "Yes! The tool automatically recognizes two-page spreads and offers to cleanly split them into individual left and right pages for a seamless realistic reading experience.",
+    q: "What styles are included?",
+    a: "Spellense includes 12 authentic physical book editions: 7 Classic styles (Leather, Linen Cloth, Walnut Wood, Spiral Notebook, Elastic Notebook, Glossy Magazine, Ledger), 4 Luxury styles (Black & Gold, Emerald Velvet, Crocodile Cognac, Carrara Marble), plus 'Your Own Cover' with custom front & back artwork on real hard boards.",
   },
   {
     q: "Can I use my own logo and remove Spellense branding?",
@@ -495,14 +537,10 @@ export default function FlipbookClient() {
       <Navbar />
 
       <main className="flex-1">
-        {/* HERO SECTION — Uniform Spellense tool hero banner */}
-        <section className="relative overflow-hidden px-4 pt-12 pb-8 sm:px-6 sm:pt-16 sm:pb-12 lg:pt-20 lg:pb-14">
-          <div className="mx-auto max-w-7xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-blue-50/90 px-3.5 py-1 text-xs font-bold text-blue-700 shadow-2xs mb-4">
-              <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-              <span>Free 3D Flipbook Studio • 24 Realistic Book Styles</span>
-            </div>
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-slate-900 text-center max-w-5xl mx-auto">
+        {/* HERO SECTION */}
+        <section className="relative overflow-hidden px-4 pt-16 pb-10 sm:px-6 sm:pt-20 sm:pb-12 lg:pt-24 lg:pb-14">
+          <div className="mx-auto max-w-5xl text-center px-2">
+            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.16] sm:leading-[1.18] tracking-[-1.5px] sm:tracking-[-2.5px] text-slate-900 text-center max-w-4xl mx-auto">
               Turn any PDF into a 3D page-flip book.
             </h1>
           </div>
@@ -561,7 +599,7 @@ export default function FlipbookClient() {
               Drop your PDF or images here
             </h2>
             <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
-              Supports multi-page PDFs, JPG, PNG, and WebP • 100% private in your browser
+              or click to choose a file
             </p>
 
             {/* Action Button */}
@@ -599,26 +637,6 @@ export default function FlipbookClient() {
               </button>
             </div>
 
-            {/* Badges */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-[11px] font-bold text-slate-700">
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                PDF Catalogs
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                24 Book Styles
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                Offline HTML Export
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
-                Zero Upload
-              </span>
-            </div>
-
             <div id="st" aria-live="polite" className="mt-4 text-xs font-semibold text-blue-600 min-h-[1.5em]"></div>
           </div>
 
@@ -635,10 +653,10 @@ export default function FlipbookClient() {
                 </div>
                 <div>
                   <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                    24 Book Styles
+                    12 Book Styles
                   </div>
                   <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                    Hardcover, glossy, magazine
+                    Leather, velvet, walnut &amp; custom
                   </div>
                 </div>
               </div>
@@ -651,10 +669,10 @@ export default function FlipbookClient() {
                 </div>
                 <div>
                   <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                    WebGL 3D Engine
+                    3D Realistic Board
                   </div>
                   <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                    Smooth 60FPS page turn
+                    Page stack &amp; ribbon bookmark
                   </div>
                 </div>
               </div>
@@ -714,16 +732,16 @@ export default function FlipbookClient() {
           {/* FLIPBOOK WORKSPACE: PREVIEW + CUSTOMIZE PANEL */}
           <section id="ed" className="mt-8" hidden>
             {/* LEFT: INTERACTIVE 3D CANVAS */}
-            <div id="pv" className="rounded-3xl border border-slate-200/80 bg-white/95 p-4 sm:p-6 shadow-xl shadow-slate-900/5 backdrop-blur-xl"></div>
+            <div id="pv" className="rounded-3xl border border-slate-200/80 bg-white/95 p-2 sm:p-3 shadow-xl shadow-slate-900/5 backdrop-blur-xl"></div>
 
-            {/* RIGHT: SPELLENSE DESIGNED CUSTOMIZER PANEL */}
+            {/* RIGHT: CUSTOMIZER PANEL */}
             <div className="fpn">
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800">Customizer</span>
                 </div>
-                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">24 Styles</span>
+                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">12 Realistic Styles</span>
               </div>
 
               {/* 5-COL COMPACT SEGMENTED TABS */}
@@ -735,39 +753,103 @@ export default function FlipbookClient() {
                 <button data-p="kt">Kit</button>
               </div>
 
-              {/* Style panel */}
-              <div className="ftp" id="p-st"><div className="ftg" id="tg"></div></div>
+              {/* 1. Style panel */}
+              <div className="ftp" id="p-st">
+                {/* Active Style Description Box */}
+                <div id="note" className="rounded-xl border border-blue-100 bg-blue-50/80 p-3 text-xs text-blue-900 leading-relaxed font-medium"></div>
 
-              {/* Branding panel */}
-              <div className="ftp" id="p-br" hidden>
-                {/* Custom cover image */}
-                <div>
-                  <span className="text-xs font-bold text-slate-800">Custom Book Cover</span>
-                  <p className="text-[11px] text-slate-500 mb-2">Replaces page 1 with your bespoke cover artwork</p>
-                  <label htmlFor="cv" className="f-upload-zone group">
-                    <input type="file" id="cv" accept="image/*" className="hidden" />
-                    <div className="f-upload-icon">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-                        <circle cx="9" cy="9" r="2"/>
-                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-                      </svg>
+                {/* Custom Cover Studio Panel (Shown when 'Your Own Cover' is selected) */}
+                <div id="cpanel" className="rounded-2xl border border-slate-200/90 bg-slate-50/90 p-3.5 shadow-2xs flex flex-col gap-3" hidden>
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/70">
+                    <span className="text-xs font-bold text-slate-800">Bespoke Hardcover Artwork</span>
+                    <button type="button" className="fcta text-[11px] py-1 px-2.5" id="cpanel-sample">✨ Sample Cover</button>
+                  </div>
+
+                  {/* Front Cover */}
+                  <div>
+                    <span className="text-xs font-bold text-slate-700">Front Cover Artwork</span>
+                    <div className="flex items-center gap-2.5 mt-1.5">
+                      <div id="thF" className="h-14 w-10 rounded-md border border-slate-200 bg-slate-100 bg-center bg-cover shrink-0 shadow-2xs flex items-center justify-center text-slate-400">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                      </div>
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <button type="button" className="fbtn text-xs py-1 px-2.5" id="uF">Upload Front</button>
+                          <button type="button" className="text-xs text-rose-600 hover:text-rose-800 font-bold px-1.5 hidden" id="uFx">Remove</button>
+                        </div>
+                        <span className="text-[10px] text-slate-400">Ratio ~5:7 recommended</span>
+                      </div>
                     </div>
-                    <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Choose Cover Artwork</span>
-                    <span className="text-[10px] text-slate-400">PNG, JPG, WebP up to 15MB</span>
-                  </label>
-                  <div id="cv-status" className="mt-2.5 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 shadow-2xs hidden">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                      Cover image active
-                    </span>
-                    <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 px-2 py-0.5 rounded hover:bg-rose-100/60 transition-colors cursor-pointer" id="cvx">
-                      Remove
-                    </button>
+                    <input id="fF" type="file" accept="image/*" className="hidden" />
+                  </div>
+
+                  {/* Back Cover */}
+                  <div>
+                    <span className="text-xs font-bold text-slate-700">Back Cover Artwork (Optional)</span>
+                    <div className="flex items-center gap-2.5 mt-1.5">
+                      <div id="thB" className="h-14 w-10 rounded-md border border-slate-200 bg-slate-100 bg-center bg-cover shrink-0 shadow-2xs flex items-center justify-center text-slate-400">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                      </div>
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <button type="button" className="fbtn text-xs py-1 px-2.5" id="uB">Upload Back</button>
+                          <button type="button" className="text-xs text-rose-600 hover:text-rose-800 font-bold px-1.5 hidden" id="uBx">Remove</button>
+                        </div>
+                        <span className="text-[10px] text-slate-400">Matches board if empty</span>
+                      </div>
+                    </div>
+                    <input id="fB" type="file" accept="image/*" className="hidden" />
+                  </div>
+
+                  {/* Board & Endpaper Color */}
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-slate-700">Board &amp; Endpaper Color</span>
+                      <span className="text-[10px] text-slate-400" id="cpanel-auto">Auto-extracted from cover</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input type="color" id="col" defaultValue="#2a2545" className="h-8 w-8 rounded-full border-0 cursor-pointer" />
+                    </div>
+                  </div>
+
+                  {/* Matte / Glossy */}
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs font-bold text-slate-700">Cover Finish</span>
+                    <div className="flex items-center gap-3 text-xs font-semibold text-slate-700">
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" name="fin" value="matte" defaultChecked /> Matte
+                      </label>
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" name="fin" value="gloss" /> Glossy
+                      </label>
+                    </div>
                   </div>
                 </div>
 
-                {/* Your logo */}
+                {/* 12 Authentic Book Styles Grouped */}
+                <div id="tg" className="flex flex-col gap-3"></div>
+              </div>
+
+              {/* 2. Brand panel */}
+              <div className="ftp" id="p-br" hidden>
+                {/* Book Title (Embossed on Cover) */}
+                <div>
+                  <label htmlFor="bt" className="text-xs font-bold text-slate-800 block mb-1">
+                    Book Title (Embossed on Cover)
+                  </label>
+                  <input type="text" id="bt" placeholder="Spellense Catalog" maxLength={45} className="w-full text-xs font-semibold" />
+                  <span className="text-[10px] text-slate-400 mt-1">Rendered in gold foil on Luxury editions and stamped ink on Classic</span>
+                </div>
+
+                {/* Book Header Subtitle */}
+                <div>
+                  <label htmlFor="ds" className="text-xs font-bold text-slate-800 block mb-1">
+                    Book Header Subtitle
+                  </label>
+                  <textarea id="ds" rows={2} maxLength={160} placeholder="Spellense Editorial 2026 • Designed for print and digital" className="w-full text-xs font-medium"></textarea>
+                </div>
+
+                {/* Brand Logo */}
                 <div>
                   <span className="text-xs font-bold text-slate-800">Brand Logo</span>
                   <p className="text-[11px] text-slate-500 mb-2">Displayed in header alongside book description</p>
@@ -792,22 +874,6 @@ export default function FlipbookClient() {
                       Remove
                     </button>
                   </div>
-                </div>
-
-                {/* Extracted logo palette banner */}
-                <div className="rounded-2xl border border-blue-200 bg-blue-50/80 p-3.5 shadow-2xs" id="lo" hidden>
-                  <p className="text-xs font-bold text-blue-900">Extracted logo palette ready</p>
-                  <p className="text-[11px] text-blue-700 mt-0.5">Apply your logo brand colors to the flipbook backdrop:</p>
-                  <div className="mt-2.5">
-                    <button className="fcta text-xs py-1.5 px-3.5" id="lu">Use logo colors</button>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="ds" className="text-xs font-bold text-slate-800 block mb-1">
-                    Book Header Subtitle
-                  </label>
-                  <textarea id="ds" rows={2} maxLength={160} placeholder="Spellense Editorial 2026 • Designed for print and digital" className="w-full text-xs font-medium"></textarea>
                 </div>
 
                 {/* Option 1: Swap Sides */}
@@ -835,7 +901,7 @@ export default function FlipbookClient() {
                 </label>
               </div>
 
-              {/* Background panel */}
+              {/* 3. Backdrop panel */}
               <div className="ftp" id="p-bg" hidden>
                 <div>
                   <span className="text-xs font-bold text-slate-800">Curated Palettes</span>
@@ -845,26 +911,36 @@ export default function FlipbookClient() {
                 {/* Colors from Logo */}
                 <div>
                   <span className="text-xs font-bold text-slate-800">Colors from Logo</span>
-                  <p className="text-[11px] text-slate-500 mb-2">Auto-extract matching palette from your brand logo</p>
-                  <label htmlFor="lg" className="f-upload-zone group">
-                    <div className="f-upload-icon">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <p className="text-[11px] text-slate-500 mb-2">Auto-extract matching backdrop palette from your brand logo</p>
+                  
+                  {/* Upload button when logo is not yet uploaded */}
+                  <div id="lp-upload-box" className="mt-1">
+                    <label htmlFor="lg-backdrop" className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/80 text-blue-700 text-xs font-semibold cursor-pointer transition-all hover:shadow-xs">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="17 8 12 3 7 8" />
                         <line x1="12" y1="3" x2="12" y2="15" />
                       </svg>
-                    </div>
-                    <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Choose Brand Logo</span>
-                    <span className="text-[10px] text-slate-400">PNG, SVG or JPG to extract palette</span>
-                  </label>
+                      <span>Upload Brand Logo to Extract Palette</span>
+                      <input type="file" id="lg-backdrop" accept="image/*" className="hidden" />
+                    </label>
+                  </div>
+
                   <div id="lp-status" className="mt-2.5 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/80 px-3 py-2 shadow-2xs hidden">
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-800">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                       Logo palette active
                     </span>
-                    <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 px-2 py-0.5 rounded hover:bg-rose-100/60 transition-colors cursor-pointer" id="lpx">
-                      Remove
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="lg-backdrop-change" className="text-xs font-bold text-blue-600 hover:text-blue-800 cursor-pointer">
+                        Change
+                        <input type="file" id="lg-backdrop-change" accept="image/*" className="hidden" />
+                      </label>
+                      <span className="text-slate-300">•</span>
+                      <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 px-1 py-0.5 rounded hover:bg-rose-100/60 transition-colors cursor-pointer" id="lpx">
+                        Remove
+                      </button>
+                    </div>
                   </div>
                   <div className="fpl mt-2.5" id="lp" hidden></div>
                 </div>
@@ -875,11 +951,11 @@ export default function FlipbookClient() {
                     <div className="flex items-center gap-2">
                       <div className="relative flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xs">
                         <input type="color" id="c1" aria-label="Color 1" />
-                        <span className="text-[11px] font-bold text-slate-500 uppercase pr-1" id="c1-val">#F8FAFC</span>
+                        <span className="text-[11px] font-bold text-slate-500 uppercase pr-1" id="c1-val">#0D0B1A</span>
                       </div>
                       <div className="relative flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xs">
                         <input type="color" id="c2" aria-label="Color 2" />
-                        <span className="text-[11px] font-bold text-slate-500 uppercase pr-1" id="c2-val">#E2E8F0</span>
+                        <span className="text-[11px] font-bold text-slate-500 uppercase pr-1" id="c2-val">#171233</span>
                       </div>
                     </div>
                     <button type="button" className="feye-btn" id="eye" title="Pick color from screen">
@@ -900,7 +976,7 @@ export default function FlipbookClient() {
                     <span className="text-[11px] text-slate-500 font-normal mt-0.5">Smooth diagonal dual-tone transition</span>
                   </div>
                   <label className="f-toggle-switch">
-                    <input type="checkbox" id="gr" />
+                    <input type="checkbox" id="gr" defaultChecked />
                     <span className="f-toggle-slider"></span>
                   </label>
                 </label>
@@ -936,36 +1012,24 @@ export default function FlipbookClient() {
                   <label htmlFor="dm" className="text-xs font-bold text-slate-800 block mb-1">
                     Photo Dimming Overlay
                   </label>
-                  <input type="range" id="dm" min="0" max=".8" step=".05" className="w-full accent-blue-600" />
+                  <input type="range" id="dm" min="0" max=".8" step=".05" defaultValue="0.35" className="w-full accent-blue-600" />
                 </div>
               </div>
 
-              {/* Layout panel */}
+              {/* 4. Layout panel */}
               <div className="ftp" id="p-ly" hidden>
                 <div>
                   <label htmlFor="md" className="text-xs font-bold text-slate-800 block mb-1.5">
                     Two-Page Spread Handling
                   </label>
-                  <select id="md" className="w-full">
+                  <select id="md" className="w-full" defaultValue="keep">
                     <option value="ask">Ask me when wide pages are found</option>
-                    <option value="single">Keep every page as is</option>
+                    <option value="keep">Keep every page as one page</option>
                     <option value="split">Split wide pages into left and right</option>
                   </select>
                 </div>
 
-                {/* Option 4: Shift Spread */}
-                <label htmlFor="sh" className="f-toggle-card">
-                  <div className="flex flex-col pr-3">
-                    <span className="text-xs font-bold text-slate-800">Shift By One Page</span>
-                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Fix booklet spreads &amp; facing pairs</span>
-                  </div>
-                  <label className="f-toggle-switch">
-                    <input type="checkbox" id="sh" />
-                    <span className="f-toggle-slider"></span>
-                  </label>
-                </label>
-
-                {/* Option 5: Sound Effects */}
+                {/* Sound Effects */}
                 <label htmlFor="sn" className="f-toggle-card">
                   <div className="flex flex-col pr-3">
                     <span className="text-xs font-bold text-slate-800">Realistic Sound Effects</span>
@@ -978,11 +1042,11 @@ export default function FlipbookClient() {
                 </label>
               </div>
 
-              {/* Brand kit panel */}
+              {/* 5. Brand kit panel */}
               <div className="ftp" id="p-kt" hidden>
                 <div className="rounded-2xl border border-slate-200/90 bg-slate-50/80 p-3.5 shadow-2xs">
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Your chosen style, logo, text, and palette automatically save locally in this browser. Export as JSON to reuse across devices or teammates.
+                    Your chosen style, custom cover, title, logo, and palette automatically save locally. Export as JSON to reuse across devices or teammates.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2.5 mt-2">
@@ -1068,9 +1132,9 @@ export default function FlipbookClient() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-black">
                   2
                 </div>
-                <h3 className="mt-3 text-sm font-bold text-slate-900">Pick Style &amp; Brand</h3>
+                <h3 className="mt-3 text-sm font-bold text-slate-900">Pick a Style or Custom Cover</h3>
                 <p className="mt-1 text-xs text-slate-500 leading-relaxed font-normal">
-                  Select from 24 book styles including Vintage Leather, Spiral Notebook, Neon Cyberpunk, add your logo and sound.
+                  Choose from 7 classic books, 4 luxury gold editions, or wrap your own cover with hard board, ribbon &amp; gilded edges.
                 </p>
               </div>
 
@@ -1194,42 +1258,277 @@ export default function FlipbookClient() {
   );
 }
 
-// ── All flipbook app logic (pure DOM) ──────────────────────────────────────────
+// ── All Flipbook App Logic ───────────────────────────────────────────────────
 function initFlipbookApp() {
-
-  // ── Cache page-flip library source for offline HTML export ──────────────────
   let pfSourceCache = "";
-  fetch("/page-flip.browser.js").then(r => r.ok ? r.text() : "").then(t => { pfSourceCache = t; }).catch(() => {});
+  fetch("/page-flip.browser.js")
+    .then((r) => (r.ok ? r.text() : ""))
+    .then((t) => { pfSourceCache = t; })
+    .catch(() => {});
 
-  // ── Constants ──────────────────────────────────────────────────────────────
-  const N =
-    'url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27140%27 height=%27140%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence baseFrequency=%27.85%27 numOctaves=%272%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23n)%27 opacity=%27.3%27/%3E%3C/svg%3E")';
-
-  const THEMES = [
-    { n: "Pure Minimal", b: "#fff", pd: 0.016, r: 2, sp: "s", f: "none", x: "0 25px 60px -10px rgba(0,0,0,.25)", c1: "#f8fafc", c2: "#e2e8f0" },
-    { n: "Modern Magazine", b: "#111", pd: 0.024, r: 0, sp: "s", f: "none", x: "0 25px 60px rgba(0,0,0,.4)", c1: "#e2e8f0", c2: "#cbd5e1" },
-    { n: "Scandinavian Clean", b: "#e8e3da", pd: 0.028, r: 4, sp: "s", f: "none", x: "0 20px 50px rgba(0,0,0,.2)", c1: "#f5f1ea", c2: "#e6dfd3" },
-    { n: "Typographic Editorial", b: "#fff", pd: 0.02, r: 0, sp: "s", f: "none", x: "10px 10px 0 #111", c1: "#fef08a", c2: "#facc15" },
-    { n: "Midnight Luxury", b: "linear-gradient(135deg,#1a1a1a,#000)", pd: 0.035, r: 4, sp: "s", f: "none", x: "0 0 0 2px #d4af37,0 30px 70px #000", c1: "#0b0b0f", c2: "#1a1a22" },
-    { n: "Glass Dark", b: "rgba(255,255,255,.18)", pd: 0.028, r: 10, sp: "s", f: "none", x: "0 0 0 1px rgba(255,255,255,.4),0 30px 80px rgba(0,0,0,.6)", c1: "#0f172a", c2: "#312e81" },
-    { n: "Noir Corporate", b: "linear-gradient(135deg,#2b2f36,#14161a)", pd: 0.032, r: 2, sp: "s", f: "none", x: "0 0 0 2px #9ca3af,0 25px 60px rgba(0,0,0,.5)", c1: "#1f2937", c2: "#0b0f14" },
-    { n: "Neon Cyberpunk", b: "#0a0a12", pd: 0.025, r: 2, sp: "s", f: "none", x: "0 0 0 2px #0ff,0 0 30px #0ff,0 0 90px rgba(255,0,255,.5)", c1: "#050510", c2: "#1b0033" },
-    { n: "Kraft Paper", b: N + ",#b08a5b", pd: 0.035, r: 3, sp: "st", f: "sepia(.12)", x: "0 25px 50px rgba(0,0,0,.25)", c1: "#f3e7d3", c2: "#d9c3a0" },
-    { n: "Linen Hardcover", b: "repeating-linear-gradient(45deg,#2f4f6f 0 2px,#345a7d 2px 4px)", pd: 0.038, r: 4, sp: "s", f: "none", x: "0 25px 55px rgba(0,0,0,.35)", c1: "#dbe7f3", c2: "#a9c1d9" },
-    { n: "Vintage Leather", b: N + ",#5b3a24", pd: 0.045, r: 4, sp: "st", f: "sepia(.25) contrast(.96)", x: "0 30px 70px rgba(0,0,0,.6)", c1: "#3b2a1c", c2: "#1e140c" },
-    { n: "Watercolor Edge", b: "radial-gradient(circle at 20% 20%,#f9a8d4,transparent 50%),radial-gradient(circle at 80% 30%,#93c5fd,transparent 50%),radial-gradient(circle at 50% 90%,#fde68a,transparent 50%),#fff", pd: 0.04, r: 14, sp: "s", f: "none", x: "0 20px 50px rgba(0,0,0,.15)", c1: "#fdf2f8", c2: "#e0f2fe" },
-    { n: "Gradient Mesh", b: "radial-gradient(at 0 0,#6366f1,transparent 60%),radial-gradient(at 100% 0,#ec4899,transparent 60%),radial-gradient(at 50% 100%,#14b8a6,transparent 60%),#1e1b4b", pd: 0.035, r: 12, sp: "s", f: "none", x: "0 25px 60px rgba(0,0,0,.4)", c1: "#1e1b4b", c2: "#4c1d95" },
-    { n: "Duotone Pop", b: "linear-gradient(135deg,#ff3d81,#ffb400)", pd: 0.035, r: 6, sp: "s", f: "none", x: "8px 8px 0 #111", c1: "#fff4d6", c2: "#ffd6e7" },
-    { n: "Retro Print", b: N + ",#d9822b", pd: 0.038, r: 3, sp: "s", f: "sepia(.2) saturate(1.1)", x: "0 25px 55px rgba(0,0,0,.25)", c1: "#fbe8c8", c2: "#e9b872" },
-    { n: "Pastel Soft", b: "#fbcfe8", pd: 0.032, r: 18, sp: "s", f: "none", x: "0 20px 50px rgba(249,168,212,.5)", c1: "#fdf4ff", c2: "#e0f2fe" },
-    { n: "Spiral Notebook", b: "#fff", pd: 0.015, r: 3, sp: "sp", f: "none", x: "0 20px 50px rgba(0,0,0,.2)", c1: "#e2e8f0", c2: "#94a3b8" },
-    { n: "Ring Binder", b: "#1d4ed8", pd: 0.038, r: 4, sp: "rg", f: "none", x: "0 25px 55px rgba(0,0,0,.35)", c1: "#dbeafe", c2: "#93c5fd" },
-    { n: "Portfolio Case", b: "#222", pd: 0.05, r: 6, sp: "s", f: "none", x: "0 0 0 4px #444,0 30px 70px rgba(0,0,0,.6)", c1: "#e5e5e5", c2: "#bdbdbd" },
-    { n: "Newspaper Fold", b: "#e9e4d6", pd: 0.018, r: 0, sp: "s", f: "grayscale(.5) contrast(1.05)", x: "0 20px 45px rgba(0,0,0,.2)", c1: "#d6d1c4", c2: "#b9b3a3" },
-    { n: "Art Deco", b: "repeating-linear-gradient(90deg,#0b3d2e 0 10px,#0f4c39 10px 12px)", pd: 0.038, r: 0, sp: "s", f: "none", x: "0 0 0 3px #c9a227,0 30px 70px rgba(0,0,0,.6)", c1: "#06281e", c2: "#0b3d2e" },
-    { n: "Terracotta Earth", b: "linear-gradient(135deg,#c2603a,#8f3f21)", pd: 0.035, r: 8, sp: "s", f: "none", x: "0 25px 55px rgba(0,0,0,.35)", c1: "#f5e1d3", c2: "#e2b79a" },
-    { n: "Holographic Foil", b: "linear-gradient(120deg,#a5f3fc,#f0abfc,#fde68a,#a7f3d0,#a5f3fc)", pd: 0.035, r: 10, sp: "s", f: "none", x: "0 25px 60px rgba(0,0,0,.4)", c1: "#0f172a", c2: "#1e293b" },
-    { n: "Festive Seasonal", b: "linear-gradient(135deg,#b91c1c,#166534)", pd: 0.035, r: 6, sp: "s", f: "none", x: "0 0 0 3px #fde68a,0 25px 60px rgba(0,0,0,.5)", c1: "#450a0a", c2: "#052e16" },
+  // ── 12 Authentic Book Styles from Desktop Source ───────────────────────────
+  const BOOK_STYLES = [
+    {
+      g: "Classic",
+      n: "Leather",
+      dot: "#7a1f1f",
+      note: "Full-grain leather, gold-foil frame, stitched border, marbled endpapers, ribbon.",
+      cov: `${hl},${vig},var(--g1),var(--g2),linear-gradient(145deg,#7a1f1f,#3a0c0c)`,
+      ink: "#e3c374",
+      font: "Georgia,serif",
+      tfx: "0 -1px 0 #000,0 1px 0 rgba(255,255,255,.28)",
+      frame: 1,
+      stitch: 1,
+      hg: 1,
+      r: 12,
+      O: 14,
+      th: 12,
+      hard: 1,
+      endp: marb("#8a1f2f", "#22436b"),
+      rib: "#a3122a",
+      ft: 1000,
+      c1: "#1f1414",
+      c2: "#0d0707"
+    },
+    {
+      g: "Classic",
+      n: "Linen Cloth",
+      dot: "#27406f",
+      note: "Woven linen over board with a pasted title label – classic library hardback.",
+      cov: `${vig},repeating-linear-gradient(0deg,rgba(255,255,255,.08) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px),linear-gradient(145deg,#2c4a80,#141f3c)`,
+      ink: "#f0e6c8",
+      font: "Georgia,serif",
+      tfx: "none",
+      label: 1,
+      hg: 1,
+      r: 4,
+      O: 11,
+      th: 12,
+      hard: 1,
+      endp: marb("#27406f", "#8a7a55"),
+      rib: "#d9b24a",
+      ft: 900,
+      c1: "#141c2c",
+      c2: "#0b0f1a"
+    },
+    {
+      g: "Classic",
+      n: "Walnut Wood",
+      dot: "#7a4c25",
+      note: "Carved walnut boards with grain, engraved title, brass corners.",
+      cov: `linear-gradient(90deg,rgba(0,0,0,.28),transparent 12%),var(--gw),${vig},linear-gradient(90deg,#a06f3e,#6a4322)`,
+      ink: "#2a1a0c",
+      font: "Georgia,serif",
+      tfx: "0 1px 0 rgba(255,225,175,.4),0 -1px 1px rgba(0,0,0,.75)",
+      frame: 1,
+      corner: brass,
+      hg: 1,
+      r: 6,
+      O: 13,
+      th: 14,
+      hard: 1,
+      endp: marb("#5b3517", "#8a7a55"),
+      rib: "#1d5a3a",
+      ft: 1100,
+      c1: "#25180f",
+      c2: "#140c07"
+    },
+    {
+      g: "Classic",
+      n: "Spiral Notebook",
+      dot: "#2f6f8f",
+      note: "Wire-o rings down the middle, frosted poly cover, smooth flip.",
+      cov: `${vig},linear-gradient(145deg,#2b6cb0,#1a365d)`,
+      ink: "#e2e8f0",
+      font: "system-ui,-apple-system,sans-serif",
+      tfx: "0 1px 2px rgba(0,0,0,.5)",
+      rings: 1,
+      r: 6,
+      O: 8,
+      th: 8,
+      hard: 1,
+      endp: "#e2e8f0",
+      ft: 750,
+      c1: "#1a202c",
+      c2: "#0f172a"
+    },
+    {
+      g: "Classic",
+      n: "Elastic Notebook",
+      dot: "#1c1c1f",
+      note: "Pebbled black cover, red elastic band that drops off when opened, ribbon.",
+      cov: `${vig},var(--gp),#1c1c1f`,
+      ink: "#8a8a92",
+      font: "Helvetica,Arial,sans-serif",
+      tfx: "0 1px 0 rgba(255,255,255,.12),0 -1px 0 #000",
+      hg: 1,
+      band: 1,
+      r: 10,
+      O: 9,
+      th: 10,
+      hard: 1,
+      endp: "#d9d2bf",
+      rib: "#b0122b",
+      ft: 800,
+      c1: "#18181b",
+      c2: "#09090b"
+    },
+    {
+      g: "Classic",
+      n: "Glossy Magazine",
+      dot: "#ff2e6e",
+      note: "Soft perfect-bound cover with gloss sheen and thin stock. Fast snap flip.",
+      cov: "linear-gradient(115deg,rgba(255,255,255,.5),transparent 35%),linear-gradient(160deg,#ff2e6e,#ff9a3d)",
+      ink: "#fff",
+      font: "'Helvetica Neue',Arial,sans-serif",
+      tfx: "0 2px 8px rgba(0,0,0,.35)",
+      tt: 1,
+      r: 3,
+      O: 6,
+      th: 6,
+      hard: 1,
+      endp: "#f8fafc",
+      ft: 650,
+      c1: "#2e0f22",
+      c2: "#150610"
+    },
+    {
+      g: "Classic",
+      n: "Ledger",
+      dot: "#3a1a1a",
+      note: "Marbled boards, black cloth spine and corners. Old accounting book.",
+      cov: `${vig},${marb("#3a1a1a", "#1d3a4a")}`,
+      ink: "#111",
+      font: "Georgia,serif",
+      tfx: "none",
+      label: 1,
+      spine: ["repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),#141414", "17%"],
+      corner: "linear-gradient(135deg,#222,#050505)",
+      hg: 1,
+      r: 3,
+      O: 12,
+      th: 15,
+      hard: 1,
+      endp: marb("#3a1a1a", "#1d3a4a"),
+      rib: "#a3122a",
+      ft: 1000,
+      c1: "#1f1816",
+      c2: "#0f0b0a"
+    },
+    {
+      g: "Luxury",
+      lux: 1,
+      n: "Black & Gold",
+      dot: "#0a0a0a",
+      note: "Matte soft-touch black, hot-stamped gold foil, shimmering title, gilded edges.",
+      cov: `${vig},var(--gp),linear-gradient(145deg,#171717,#040404)`,
+      foil: GOLD,
+      bc: "#d4af37",
+      st: "rgba(212,175,55,.7)",
+      frame: 1,
+      hg: 1,
+      r: 10,
+      O: 14,
+      th: 14,
+      hard: 1,
+      gilt: 1,
+      endp: "radial-gradient(circle,rgba(212,175,55,.5) 0 1.5px,transparent 2.5px) 0 0/18px 18px,#0c0c0c",
+      rib: "#c79a2c",
+      ft: 1050,
+      c1: "#0b0b0f",
+      c2: "#1a1a22"
+    },
+    {
+      g: "Luxury",
+      lux: 1,
+      n: "Emerald Velvet",
+      dot: "#0f5a45",
+      note: "Deep emerald velvet, gold-thread stitching, brass corners, silk endpapers.",
+      cov: `linear-gradient(115deg,rgba(255,255,255,.14),transparent 30%,rgba(255,255,255,.07) 62%,transparent),${vig},var(--gv),linear-gradient(145deg,#12664e,#052a20)`,
+      foil: GOLD,
+      bc: "#e8c76b",
+      st: "rgba(232,199,107,.75)",
+      stitch: 1,
+      frame: 1,
+      corner: brass,
+      hg: 1,
+      r: 8,
+      O: 13,
+      th: 13,
+      hard: 1,
+      gilt: 1,
+      endp: "repeating-linear-gradient(60deg,#0b4a38 0 2px,#0f5a45 2px 4px)",
+      rib: "#e8c76b",
+      ft: 1000,
+      c1: "#06281e",
+      c2: "#021510"
+    },
+    {
+      g: "Luxury",
+      lux: 1,
+      n: "Crocodile Cognac",
+      dot: "#8a4a1c",
+      note: "Hand-cut crocodile scales in cognac leather, gold corners and stitching.",
+      cov: `${hl},${vig},var(--croc) 0 0/64px 48px,linear-gradient(145deg,#a5581f,#4a230a)`,
+      foil: GOLD,
+      bc: "#f0d78a",
+      st: "rgba(240,215,138,.75)",
+      stitch: 1,
+      frame: 1,
+      corner: brass,
+      hg: 1,
+      r: 12,
+      O: 14,
+      th: 14,
+      hard: 1,
+      gilt: 1,
+      endp: "repeating-radial-gradient(ellipse at 25% 35%,#5a2c10 0 5px,#f0e2c0 5px 9px,#c9a45c 9px 13px,#f0e2c0 13px 17px)",
+      rib: "#6a1420",
+      ft: 1150,
+      c1: "#251207",
+      c2: "#120803"
+    },
+    {
+      g: "Luxury",
+      lux: 1,
+      n: "Carrara Marble",
+      dot: "#ecebe6",
+      note: "Italian marble boards with veining, polished gold spine, art-deco endpaper.",
+      cov: `${hl},var(--gm),linear-gradient(145deg,#fdfcf9,#dedbd3)`,
+      foil: DGOLD,
+      bc: "#a9801f",
+      st: "rgba(169,128,31,.8)",
+      frame: 1,
+      spine: ["linear-gradient(90deg,#9a731f,#f7e08e 45%,#8a6a1a)", "15%"],
+      corner: brass,
+      hg: 1,
+      r: 5,
+      O: 14,
+      th: 15,
+      hard: 1,
+      gilt: 1,
+      endp: "radial-gradient(circle at 50% 100%,transparent 0 10px,#c9a24a 10px 11px,transparent 11px 20px,#c9a24a 20px 21px,transparent 21px) 0 0/40px 22px,#f7f1e1",
+      rib: "#111",
+      ft: 1100,
+      c1: "#1e1e24",
+      c2: "#121217"
+    },
+    {
+      g: "Custom",
+      custom: 1,
+      n: "Your Own Cover",
+      dot: "linear-gradient(135deg,#8b7bff,#ff7ac6)",
+      note: "Upload your own front (and back) cover – it is wrapped on real hard boards with hinge, ribbon and page thickness.",
+      hg: 1,
+      r: 8,
+      O: 13,
+      th: 13,
+      hard: 1,
+      rib: "#c79a2c",
+      ft: 1000,
+      c1: "#171233",
+      c2: "#0d0b1a"
+    }
   ];
 
   const esc = (s: unknown) =>
@@ -1241,6 +1540,15 @@ function initFlipbookApp() {
     const v = parseInt(h, 16);
     return (0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) / 255;
   };
+
+  const dk = (c: string) => `color-mix(in srgb,${c} 55%,black)`;
+  const lt = (c: string) => `color-mix(in srgb,${c} 55%,white)`;
+  const hex = (r: number, g: number, b: number) => "#" + [r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("");
+
+  const cn = (c: string) =>
+    ["0 0,100% 0,0 100%", "0 0,100% 0,100% 100%", "0 100%,100% 0,100% 100%", "0 0,100% 100%,0 100%"]
+      .map((p, i) => `<i class="cn" style="background:${c};clip-path:polygon(${p});${i < 2 ? "top" : "bottom"}:0;${i % 2 ? "right" : "left"}:0"></i>`)
+      .join("");
 
   // ── Global Audio Context for Page Turns ────────────────────────────────────
   let globalAudioCtx: AudioContext | null = null;
@@ -1262,11 +1570,61 @@ function initFlipbookApp() {
       r.connect(f);
       f.connect(globalAudioCtx.destination);
       r.start();
-    } catch (_) { /* silent */ }
+    } catch (_) {}
   };
 
-  // ── Viewer engine ──────────────────────────────────────────────────────────
-  // ── Viewer engine ──────────────────────────────────────────────────────────
+  // ── Cover Generators ───────────────────────────────────────────────────────
+  function ccover(s: any, f: number, cust: any) {
+    const img = f ? cust.front : cust.back;
+    const rad = f ? `3px ${s.r}px ${s.r}px 3px` : `${s.r}px 3px 3px ${s.r}px`;
+    const bg = img
+      ? `url(${img}) center/cover`
+      : f
+      ? "repeating-linear-gradient(45deg,#2a2545 0 12px,#332d55 12px 24px)"
+      : `${vig},linear-gradient(145deg,${cust.col},${dk(cust.col)})`;
+    const ov = (cust.gloss
+      ? "linear-gradient(115deg,rgba(255,255,255,.5),rgba(255,255,255,.08) 30%,transparent 42%,rgba(255,255,255,.12) 70%,transparent)"
+      : "var(--g1)") + "," + (f ? "linear-gradient(90deg,rgba(0,0,0,.4),transparent 9%)" : "linear-gradient(270deg,rgba(0,0,0,.4),transparent 9%)");
+    return `<div class="paper cov ${f ? "cov-f" : "cov-b"} hg" style="background:${bg};border-radius:${rad}">${!img && f ? '<div class="ttl" style="color:#cfc8ff"><span>⬆</span><h2>Upload your cover</h2><span>USE THE STYLE PANEL</span></div>' : ""}<i class="glz" style="background:${ov};border-radius:${rad}"></i></div>`;
+  }
+
+  function cover(s: any, f: number, cust: any, title: string) {
+    if (s.custom) return ccover(s, f, cust);
+    const r = s.r, rad = f ? `3px ${r}px ${r}px 3px` : `${r}px 3px 3px ${r}px`;
+    const t = s.lux
+      ? (f ? `<div class="mono foil">S</div><h2 class="foil">${esc(title)}</h2><span class="foil">3D FLIPBOOK</span>` : `<div class="mono foil">S</div><span class="foil">SPELLENSE · MAISON</span>`)
+      : (f ? `<span>❖</span><h2>${esc(title)}</h2><span>3D FLIPBOOK</span>` : `<span>❦</span><h2>Spellense</h2>`);
+    const st = s.lux ? "" : `font-family:${s.font};color:${s.ink};text-shadow:${s.tfx};${s.tt ? "text-transform:uppercase;font-weight:900;" : ""}`;
+    return `<div class="paper cov ${f ? "cov-f" : "cov-b"} ${s.hg ? "hg" : ""}" style="background:${s.cov};color:${s.ink || "inherit"};border-radius:${rad}">${s.spine ? `<i class="spn" style="${f ? "left" : "right"}:0;width:${s.spine[1]};background:${s.spine[0]}"></i>` : ""}${s.stitch ? '<i class="stitch"></i>' : ""}${s.frame ? `<i class="frame ${s.lux ? "lx" : ""}" ${s.lux ? "" : `style="border-color:${s.ink}"`}></i>` : ""}${s.corner ? cn(s.corner) : ""}<div class="ttl ${s.label ? "lbl" : ""} ${s.lux ? "lx" : ""}" style="${st}${s.spine && f ? "margin-left:14%" : ""}">${t}</div></div>`;
+  }
+
+  const endpOf = (s: any, cust: any) =>
+    s.custom
+      ? `repeating-linear-gradient(45deg,${cust.col} 0 2px,${lt(cust.col)} 2px 4px)`
+      : s.endp;
+
+  function pagesFor(s: any, pgs: string[], cust: any, title: string) {
+    const hc = !s.nocov;
+    const ep = hc && (s.endp || s.custom);
+    const a: { h: string; hd?: number }[] = [];
+    if (hc) {
+      a.push({ h: cover(s, 1, cust, title), hd: 1 });
+      if (ep) a.push({ h: `<div class="paper endp" style="background:${endpOf(s, cust)}"></div>`, hd: 1 });
+    }
+    pgs.forEach((u) => {
+      a.push({ h: `<div class="paper pi"><img src="${u}" alt=""></div>` });
+    });
+    if ((a.length + (hc ? (ep ? 2 : 1) : 0)) % 2) {
+      a.push({ h: '<div class="paper pi"></div>' });
+    }
+    if (hc) {
+      if (ep) a.push({ h: `<div class="paper endp" style="background:${endpOf(s, cust)}"></div>`, hd: 1 });
+      a.push({ h: cover(s, 0, cust, title), hd: 1 });
+    }
+    return a;
+  }
+
+  // ── Viewer Engine ──────────────────────────────────────────────────────────
   function Viewer(root: HTMLElement & { _off?: () => void; _pf?: any }, c: Record<string, unknown>) {
     if (root._off) root._off();
     if (root._pf && typeof root._pf.destroy === "function") {
@@ -1274,19 +1632,18 @@ function initFlipbookApp() {
       root._pf = null;
     }
 
+    const cur = typeof c.theme === "number" ? Math.max(0, Math.min(BOOK_STYLES.length - 1, c.theme)) : 0;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const T: any = (THEMES as any[])[c.theme as number] || THEMES[0];
-    const P = c.pages as string[];
-    const n = P.length;
-    const L = Math.ceil(n / 2);
-    const maxS = n % 2 ? L - 1 : L;
-    const sp = (c.speed as number) || 0.8;
+    const s: any = BOOK_STYLES[cur] || BOOK_STYLES[0];
+    const P = (c.pages as string[]) || [];
+    const title = (c.title as string) || "Spellense Catalog";
+    const cust = (c.cust as any) || { front: null, back: null, col: "#2a2545", auto: true, gloss: false };
     const img = c.bgType === "img" && c.bgImg;
-    let s = typeof c.curPage === "number" ? Math.max(0, Math.min(maxS, c.curPage)) : 0;
-    let W = 0, H = 0, z = 1, snd = !!c.sound, tm = 0;
-    let dr: null | { x: number; sd: number; m: number; p: number } = null;
-    let au: number | ReturnType<typeof setInterval> = 0;
-    let pfInstance: any = null;
+    let snd = !!c.sound;
+    let z = 1, au: number | ReturnType<typeof setInterval> = 0;
+    let flip: any = null;
+    let T = 0, port = false;
+    let w = 0, h = 0, pw = 0;
 
     root.className = "fbv" + (c.full ? " full" : "");
     root.style.background = img
@@ -1295,12 +1652,20 @@ function initFlipbookApp() {
       ? "linear-gradient(135deg," + c.bg1 + "," + c.bg2 + ")"
       : (c.bg1 as string);
     root.style.color = img || lum(c.bg1 as string) < 0.5 ? "#fff" : "#0f172a";
-    root.style.setProperty("--pf", T.f);
-    root.style.setProperty("--pr", T.r + "px");
 
-    let h = img ? '<div class="ov" style="background:rgba(0,0,0,' + (c.dim || 0) + ')"></div>' : "";
+    // Inject style root variables
+    root.style.setProperty("--O", s.O + "px");
+    root.style.setProperty("--e1", s.gilt ? GILT[0] : PAP[0]);
+    root.style.setProperty("--e2", s.gilt ? GILT[1] : PAP[1]);
+    root.style.setProperty("--st", s.st || "rgba(236,214,160,.7)");
+    if (s.lux) {
+      root.style.setProperty("--foil", s.foil);
+      root.style.setProperty("--bc", s.bc);
+    }
+
+    let hHtml = img ? '<div class="ov" style="background:rgba(0,0,0,' + (c.dim || 0) + ')"></div>' : "";
     if (c.logo || c.desc) {
-      h +=
+      hHtml +=
         '<div class="fbh' +
         (c.logoRight ? " rv" : "") +
         '">' +
@@ -1308,301 +1673,308 @@ function initFlipbookApp() {
         "<p>" + esc(c.desc) + "</p></div>";
     }
 
-    h +=
-      '<div class="stage">' +
-      '<div class="pf-container-wrap">' +
-      '<div id="pf-book-mount" class="pf-book-mount"></div>' +
-      '</div>' +
-      '<div class="bk bk-fallback" style="display:none;--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 6) + 'px"></div>';
-
-    for (let j = 0; j < L; j++) {
-      h +=
-        '<div class="lf"><div class="fc f"><img src="' + P[2 * j] + '" alt="Page ' + (2 * j + 1) + '" draggable="false"></div><div class="fc b">' +
-        (P[2 * j + 1] ? '<img src="' + P[2 * j + 1] + '" alt="Page ' + (2 * j + 2) + '" draggable="false">' : "") +
-        "</div></div>";
-    }
-
-    h +=
-      (T.sp && T.sp !== "s" ? '<div class="sp ' + T.sp + '"></div>' : "") +
+    hHtml +=
+      '<div class="stage" id="stage">' +
+      '<div id="wrap">' +
+      '<div id="board"><i class="stk l"></i><i class="stk r"></i><i class="stk b"></i><i id="rib"></i></div>' +
+      '<i id="rings"></i><i id="band"></i>' +
+      '<div id="book"></div>' +
       '</div></div>' +
-      '<div class="ct"><button data-a="p" title="Previous page" aria-label="Previous page">\u2039</button><span class="pg"></span><button data-a="n" title="Next page" aria-label="Next page">\u203a</button><button data-a="t" title="Thumbnails" aria-label="Thumbnails">\u25a6</button><button data-a="z" title="Zoom" aria-label="Zoom">\uff0b</button><button data-a="s" title="Sound toggle" aria-label="Page-turn sound">' + (snd ? "\ud83d\udd0a" : "\ud83d\udd08") + '</button><button data-a="a" title="Autoplay" aria-label="Auto-play">\u25b6</button><button data-a="f" title="Fullscreen" aria-label="Fullscreen">\u26f6</button></div><div class="th" hidden></div>' +
+      '<div class="ct">' +
+      '<button data-a="p" title="Previous page" aria-label="Previous page">‹</button>' +
+      '<span class="pg">1 / 1</span>' +
+      '<button data-a="n" title="Next page" aria-label="Next page">›</button>' +
+      '<button data-a="t" title="Thumbnails" aria-label="Thumbnails">▦</button>' +
+      '<button data-a="z" title="Zoom" aria-label="Zoom">＋</button>' +
+      '<button data-a="s" title="Sound toggle" aria-label="Page-turn sound">' + (snd ? "🔊" : "🔈") + '</button>' +
+      '<button data-a="a" title="Autoplay" aria-label="Auto-play">▶</button>' +
+      '<button data-a="f" title="Fullscreen" aria-label="Fullscreen">⛶</button>' +
+      '</div><div class="th" hidden></div>' +
       (c.credit ? '<a class="cr" href="https://spellense.com/flipbook" target="_blank" rel="noopener">Made with Spellense</a>' : "");
 
-    root.innerHTML = h;
-    const q = (k: string) => root.querySelector(k) as HTMLElement;
-    const bk = q(".bk") as HTMLElement;
-    const bd = q(".bd") as HTMLElement;
-    const st = q(".stage") as HTMLElement;
-    const pg = q(".pg") as HTMLElement;
-    const lvs = [...root.querySelectorAll(".lf")] as HTMLElement[];
-    const cl = (v: number) => Math.max(0, Math.min(maxS, v));
+    root.innerHTML = hHtml;
 
-    const tick = () => {
-      if (snd) playPageSound();
-    };
+    const stageEl = root.querySelector("#stage") as HTMLElement;
+    const wrapEl = root.querySelector("#wrap") as HTMLElement;
+    const boardEl = root.querySelector("#board") as HTMLElement;
+    const ribEl = root.querySelector("#rib") as HTMLElement;
+    const ringsEl = root.querySelector("#rings") as HTMLElement;
+    const bandEl = root.querySelector("#band") as HTMLElement;
+    const pgEl = root.querySelector(".pg") as HTMLElement;
 
-    const updatePgDisplay = (cur: number, total: number) => {
-      try {
-        if (pfInstance && pfInstance.getPageCollection) {
-          const spread = pfInstance.getPageCollection().getSpread()[pfInstance.getPageCollection().getCurrentSpreadIndex()];
-          if (spread && spread.length === 1) {
-            pg.textContent = (spread[0] + 1) + " / " + total;
-            return;
-          } else if (spread && spread.length === 2) {
-            pg.textContent = (spread[0] + 1) + "\u2013" + (spread[1] + 1) + " / " + total;
-            return;
-          }
-        }
-      } catch (_) {}
-      if (cur === 0) {
-        pg.textContent = "1 / " + total;
-      } else if (cur >= total - 1) {
-        pg.textContent = total + " / " + total;
-      } else {
-        const p1 = cur + 1;
-        const p2 = Math.min(total, cur + 2);
-        pg.textContent = p1 === p2 ? p1 + " / " + total : p1 + "\u2013" + p2 + " / " + total;
-      }
-    };
+    boardEl.style.background = s.nb
+      ? "transparent"
+      : s.custom
+      ? `${vig},linear-gradient(145deg,${cust.col},${dk(cust.col)})`
+      : (s.bb || s.cov);
+    boardEl.style.boxShadow = s.nb ? "none" : "";
+    ribEl.style.background = `linear-gradient(90deg,${s.rib || "#a3122a"},rgba(255,255,255,.4) 50%,${s.rib || "#a3122a"})`;
 
-    const place = () => {
-      lvs.forEach((e, j) => {
-        e.style.transform = "rotateY(" + (j < s ? -180 : 0) + "deg)";
-        e.style.zIndex = String(j < s ? j + 1 : L - j);
+    const fit = () => {
+      if (!flip || !wrapEl || !boardEl) return;
+      const wr = wrapEl.getBoundingClientRect();
+      let L = 1e9, Rr = -1e9, Tp = 1e9, B = -1e9;
+      const bookEl = root.querySelector("#book");
+      if (!bookEl) return;
+
+      bookEl.querySelectorAll(".page").forEach((p) => {
+        if (getComputedStyle(p).display === "none") return;
+        const r = p.getBoundingClientRect();
+        if (r.width < 5) return;
+        L = Math.min(L, r.left);
+        Rr = Math.max(Rr, r.right);
+        Tp = Math.min(Tp, r.top);
+        B = Math.max(B, r.bottom);
       });
-      bk.style.transform =
-        "translateX(" + (s === 0 ? -W / 2 : s === maxS && n % 2 === 0 ? W / 2 : 0) + "px)";
-      pg.textContent =
-        s === 0
-          ? "1 / " + n
-          : (2 * s + 1 > n ? 2 * s : 2 * s + "\u2013" + (2 * s + 1)) + " / " + n;
-      S.curPage = s;
-    };
 
-    const go = (dir: number) => {
-      const ns = cl(s + dir);
-      if (ns === s) { place(); return; }
-      const m = dir > 0 ? s : s - 1;
-      s = ns;
-      place();
-      if (lvs[m]) lvs[m].style.zIndex = String(L + 5);
-      tick();
-      clearTimeout(tm as number);
-      tm = setTimeout(place, sp * 1000 + 60) as unknown as number;
-    };
+      const O = s.O;
+      const i = flip.getCurrentPageIndex();
+      const fr = Math.min(1, i / Math.max(1, T - 1));
+      const k = Math.min(1, 0.35 + T / 24);
 
-    const initFallbackCss = () => {
-      const pfWrap = root.querySelector(".pf-container-wrap") as HTMLElement | null;
-      if (pfWrap) pfWrap.style.display = "none";
-      if (bk) bk.style.display = "block";
-      const p = Math.max(6, Math.round(W * (T.pd || 0.02)));
-      bk.style.width = Math.round(2 * W) + "px";
-      bk.style.height = Math.round(H) + "px";
-      bd.style.inset = "-" + p + "px";
-      st.style.padding = p + 4 + "px 0";
-      lvs.forEach((e) => { e.style.width = Math.round(W) + "px"; e.style.height = Math.round(H) + "px"; });
-      const sq = q(".sp") as HTMLElement | null;
-      if (sq) { sq.style.top = sq.style.bottom = "-" + p + "px"; }
-      place();
-    };
-
-    const fit = async (force = false) => {
-      const clientW = root.clientWidth || root.parentElement?.clientWidth || (typeof window !== "undefined" ? window.innerWidth : 800);
-      const aw = Math.max(260, clientW - 40);
-      const ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
-      const r = (c.ratio as number) || 0.72;
-      const newW = Math.min(aw / 2, ah * r) * z;
-      const newH = newW / r;
-
-      if (!force && pfInstance && Math.abs(W - newW) < 15 && Math.abs(H - newH) < 15) {
+      if (L > Rr) {
+        if (w > 0 && h > 0) {
+          const isCover = !s.nocov && i === 0;
+          const isBack = !s.nocov && i >= T - 1;
+          const bW = (isCover || isBack) ? pw + 2 * O : w + 2 * O;
+          const bL = isCover ? pw - O : -O;
+          Object.assign(boardEl.style, {
+            left: bL + "px",
+            top: -O + "px",
+            width: bW + "px",
+            height: h + 2 * O + "px"
+          });
+        }
         return;
       }
 
-      W = newW;
-      H = newH;
+      Object.assign(boardEl.style, {
+        left: L - wr.left - O + "px",
+        top: Tp - wr.top - O + "px",
+        width: Rr - L + 2 * O + "px",
+        height: B - Tp + 2 * O + "px"
+      });
+      boardEl.style.setProperty("--wl", (1 + (s.th - 1) * fr * k) + "px");
+      boardEl.style.setProperty("--wr", (1 + (s.th - 1) * (1 - fr) * k) + "px");
 
-      const pfWrap = root.querySelector(".pf-container-wrap") as HTMLElement | null;
-      if (!pfWrap || !P.length) {
-        initFallbackCss();
-        return;
+      ribEl.style.opacity = (i > 0 && i < T - 1 && !port && s.rib) ? "1" : "0";
+
+      Object.assign(ringsEl.style, {
+        display: s.rings ? "block" : "none",
+        left: (L + Rr) / 2 - wr.left - 15 + "px",
+        top: Tp - wr.top + 4 + "px",
+        height: B - Tp - 8 + "px"
+      });
+
+      Object.assign(bandEl.style, {
+        display: s.band ? "block" : "none",
+        opacity: i === 0 ? "1" : "0",
+        left: Rr - wr.left - 38 + "px",
+        top: Tp - wr.top - O + "px",
+        height: B - Tp + 2 * O + "px"
+      });
+
+      // Center front cover when closed, center back cover when closed
+      if (!s.nocov && !port && pw > 0) {
+        if (i === 0) {
+          wrapEl.style.transform = `translateX(-${Math.round(pw / 2)}px)`;
+        } else if (i >= T - 1) {
+          wrapEl.style.transform = `translateX(${Math.round(pw / 2)}px)`;
+        } else {
+          wrapEl.style.transform = "translateX(0)";
+        }
+      } else {
+        wrapEl.style.transform = "translateX(0)";
       }
+
+      // Update page display badge
+      if (pgEl) {
+        if (!s.nocov && i === 0) {
+          pgEl.textContent = "Cover";
+        } else if (!s.nocov && i >= T - 1) {
+          pgEl.textContent = "Back Cover";
+        } else {
+          pgEl.textContent = `${i + 1} / ${T}`;
+        }
+      }
+    };
+
+    const build = async () => {
+      const clientW = stageEl.clientWidth || stageEl.parentElement?.clientWidth || (typeof window !== "undefined" ? window.innerWidth - 440 : 800);
+      const isFull = !!c.full || (typeof document !== "undefined" && !!document.fullscreenElement);
+      const clientH = stageEl.clientHeight || (typeof window !== "undefined" ? (isFull ? window.innerHeight - 100 : Math.min(window.innerHeight * 0.52, 520)) : 460);
+      const W = Math.max(280, clientW - (isFull ? 24 : 32));
+      const H = Math.max(260, clientH - (isFull ? 16 : 24));
+      const A = (c.ratio as number) || 0.714;
+      let w: number, h: number;
+      port = W < 520;
+      if (port) {
+        h = Math.min(H, W / A) * z;
+        w = h * A;
+      } else {
+        h = Math.min(H, W / (2 * A)) * z;
+        w = 2 * h * A;
+      }
+
+      wrapEl.style.width = Math.round(w) + "px";
+      wrapEl.style.height = Math.round(h) + "px";
+      const pw = Math.round(port ? w : w / 2);
+
+      if (flip) {
+        try { flip.destroy(); } catch (_) {}
+        flip = null;
+      }
+
+      const oldBook = root.querySelector("#book");
+      if (oldBook) oldBook.remove();
+
+      const bk = document.createElement("div");
+      bk.id = "book";
+      wrapEl.appendChild(bk);
+
+      const pg = pagesFor(s, P, cust, title);
+      T = pg.length;
+
+      const els = pg.map((p) => {
+        const d = document.createElement("div");
+        d.className = "page";
+        if (s.hard && p.hd) d.dataset.density = "hard";
+        d.innerHTML = p.h;
+        return d;
+      });
 
       try {
         const mod = await import("page-flip") as any;
         const PageFlipClass = mod.PageFlip || mod.default?.PageFlip || mod.default;
-        if (!PageFlipClass) throw new Error("PageFlip class not found");
+        if (!PageFlipClass) return;
 
-        if (pfInstance) {
-          try { pfInstance.destroy(); } catch (_) {}
-          pfInstance = null;
-        }
-
-        // Always recreate fresh mount element inside pfWrap so destroy() never leaves DOM detached
-        pfWrap.innerHTML = "";
-        const mount = document.createElement("div");
-        mount.id = "pf-book-mount";
-        mount.className = "pf-book-mount";
-        mount.style.width = (2 * Math.round(W)) + "px";
-        mount.style.height = Math.round(H) + "px";
-        mount.style.margin = "0 auto";
-        pfWrap.appendChild(mount);
-
-        const pf = new PageFlipClass(mount, {
-          width: Math.round(W),
-          height: Math.round(H),
-          size: "fixed",
-          minWidth: 200,
-          maxWidth: 1600,
-          minHeight: 250,
-          maxHeight: 1800,
-          maxShadowOpacity: 0.65,
-          showCover: true, // Page 1 is single cover, subsequent pages are 2-page spreads
-          usePortrait: false, // Force spread mode always (never collapse to single page)
-          mobileScrollSupport: false,
-          showPageCorners: true, // 3D realistic corner peeling & curl prompt on hover
-          flippingTime: 700,
-          useMouseEvents: true,
+        flip = new PageFlipClass(bk, {
+          width: pw,
+          height: Math.round(h),
+          size: "stretch",
+          minWidth: Math.round(pw * 0.6),
+          maxWidth: 2400,
+          minHeight: 200,
+          maxHeight: 2200,
+          showCover: s.showCover !== false,
+          flippingTime: s.ft || 800,
+          maxShadowOpacity: 0.6,
           drawShadow: true,
+          usePortrait: true,
+          mobileScrollSupport: false,
+          autoSize: true,
         });
 
-        pfInstance = pf;
-        root._pf = pf;
+        root._pf = flip;
+        flip.loadFromHTML(els);
 
-        const updateBookPosition = (curSpread: number, state?: string) => {
-          if (!pfWrap) return;
-          const isCover = curSpread === 0;
-          const spreadArr = pf.getPageCollection ? pf.getPageCollection().getSpread() : [];
-          const isBackCover = spreadArr.length > 1 && curSpread === spreadArr.length - 1 && spreadArr[curSpread]?.length === 1;
-
-          if (state === "flipping" || state === "user_fold") {
-            pfWrap.style.clipPath = "none";
-            pfWrap.style.transform = "translateX(0)";
-            return;
-          }
-
-          if (isCover) {
-            pfWrap.style.clipPath = "inset(0 0 0 50%)";
-            pfWrap.style.transform = `translateX(-${Math.round(W / 2)}px)`;
-          } else if (isBackCover) {
-            pfWrap.style.clipPath = "inset(0 50% 0 0)";
-            pfWrap.style.transform = `translateX(${Math.round(W / 2)}px)`;
-          } else {
-            pfWrap.style.clipPath = "none";
-            pfWrap.style.transform = "translateX(0)";
-          }
-        };
-
-        pf.loadFromImages(P);
-
-        // Ensure canvas clears transparently instead of solid white
-        if (pf.getRender) {
-          try {
-            pf.getRender().clear = function() {
-              this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            };
-          } catch (_) {}
-        }
-
-        pf.on("flip", (e: any) => {
-          const cur = typeof e.data === "number" ? e.data : pf.getCurrentPageIndex();
-          s = cur;
-          S.curPage = cur;
+        flip.on("flip", () => {
           if (snd) playPageSound();
-          updatePgDisplay(cur, pf.getPageCount());
-          const spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
-          updateBookPosition(spreadIdx);
+          setTimeout(fit, 80);
         });
 
-        pf.on("changeState", (e: any) => {
-          const stateStr = typeof e.data === "string" ? e.data : "";
-          const spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
-          updateBookPosition(spreadIdx, stateStr);
+        flip.on("changeState", (e: any) => {
+          if (e.data === "read") setTimeout(fit, 40);
         });
 
-        pf.on("init", () => {
-          updatePgDisplay(pf.getCurrentPageIndex(), pf.getPageCount());
-          const spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
-          updateBookPosition(spreadIdx);
+        flip.on("init", () => {
+          setTimeout(fit, 50);
         });
+
+        setTimeout(fit, 100);
+        setTimeout(fit, 350);
+        setTimeout(fit, 900);
       } catch (err) {
-        console.warn("Using CSS flipbook fallback:", err);
-        initFallbackCss();
+        console.warn("PageFlip build error:", err);
       }
     };
+
+    build();
+
+    const ro = new ResizeObserver(() => {
+      clearTimeout(rt);
+      rt = setTimeout(() => {
+        if (P.length && stageEl.clientWidth > 50) fit();
+      }, 100);
+    });
+    ro.observe(stageEl);
 
     const key = (e: KeyboardEvent) => {
       const el = document.activeElement as HTMLElement | null;
       if (el && /INPUT|TEXTAREA|SELECT/.test(el.tagName)) return;
       if (e.key === "ArrowRight") {
-        if (pfInstance) {
+        if (flip) {
           try {
-            if (pfInstance.getState() === "read") pfInstance.flipNext("bottom");
-            else pfInstance.turnToNextPage();
-          } catch (_) { pfInstance.turnToNextPage(); }
-        } else go(1);
+            if (flip.getState() === "read") flip.flipNext("bottom");
+            else flip.turnToNextPage();
+          } catch (_) { flip.turnToNextPage(); }
+        }
       }
       if (e.key === "ArrowLeft") {
-        if (pfInstance) {
+        if (flip) {
           try {
-            if (pfInstance.getState() === "read") pfInstance.flipPrev("bottom");
-            else pfInstance.turnToPrevPage();
-          } catch (_) { pfInstance.turnToPrevPage(); }
-        } else go(-1);
+            if (flip.getState() === "read") flip.flipPrev("bottom");
+            else flip.turnToPrevPage();
+          } catch (_) { flip.turnToPrevPage(); }
+        }
       }
     };
 
-    const ro = new ResizeObserver(() => fit(false));
-    ro.observe(root);
+    let rt: any;
+    const onResize = () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => {
+        if (P.length) build();
+      }, 250);
+    };
+
+    window.addEventListener("resize", onResize);
     addEventListener("keydown", key);
-    document.addEventListener("fullscreenchange", () => fit(true));
+    document.addEventListener("fullscreenchange", () => setTimeout(build, 100));
 
     root._off = () => {
       ro.disconnect();
+      window.removeEventListener("resize", onResize);
       removeEventListener("keydown", key);
-      document.removeEventListener("fullscreenchange", () => fit(true));
       clearInterval(au as number);
-      if (pfInstance) {
-        try { pfInstance.destroy(); } catch (_) {}
-        pfInstance = null;
+      if (flip) {
+        try { flip.destroy(); } catch (_) {}
+        flip = null;
         root._pf = null;
       }
     };
 
-    (q(".ct") as HTMLElement).onclick = (e) => {
+    // Viewer Bottom Controls Handlers
+    (root.querySelector(".ct") as HTMLElement).onclick = (e) => {
       const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
       if (!b) return;
       const a = b.dataset.a;
       if (a === "p") {
-        if (pfInstance) {
+        if (flip) {
           try {
-            if (pfInstance.getState() === "read") pfInstance.flipPrev("bottom");
-            else pfInstance.turnToPrevPage();
-          } catch (_) { pfInstance.turnToPrevPage(); }
-        } else {
-          go(-1);
+            if (flip.getState() === "read") flip.flipPrev("bottom");
+            else flip.turnToPrevPage();
+          } catch (_) { flip.turnToPrevPage(); }
         }
       }
       if (a === "n") {
-        if (pfInstance) {
+        if (flip) {
           try {
-            if (pfInstance.getState() === "read") pfInstance.flipNext("bottom");
-            else pfInstance.turnToNextPage();
-          } catch (_) { pfInstance.turnToNextPage(); }
-        } else {
-          go(1);
+            if (flip.getState() === "read") flip.flipNext("bottom");
+            else flip.turnToNextPage();
+          } catch (_) { flip.turnToNextPage(); }
         }
       }
       if (a === "z") {
-        z = z >= 2.2 ? 1 : z + 0.4;
-        fit(true);
+        z = z >= 1.6 ? 1 : z + 0.3;
+        build();
       }
       if (a === "s") {
         snd = !snd;
-        S.sound = snd;
-        const snInput = document.getElementById("sn") as HTMLInputElement | null;
-        if (snInput) snInput.checked = snd;
-        b.textContent = snd ? "\ud83d\udd0a" : "\ud83d\udd08";
-        tick();
+        b.textContent = snd ? "🔊" : "🔈";
+        const snEl = document.getElementById("sn") as HTMLInputElement | null;
+        if (snEl) snEl.checked = snd;
+        if (snd) playPageSound();
       }
       if (a === "f") {
         document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen && root.requestFullscreen();
@@ -1611,61 +1983,41 @@ function initFlipbookApp() {
         if (au) {
           clearInterval(au as number);
           au = 0;
-          b.textContent = "\u25b6";
+          b.textContent = "▶";
         } else {
-          b.textContent = "\u23f8";
+          b.textContent = "⏸";
           au = setInterval(() => {
-            if (pfInstance) {
-              if (pfInstance.getCurrentPageIndex() >= pfInstance.getPageCount() - 1) {
-                pfInstance.turnToPage(0);
+            if (flip) {
+              if (flip.getCurrentPageIndex() >= flip.getPageCount() - 1) {
+                flip.turnToPage(0);
               } else {
                 try {
-                  if (pfInstance.getState() === "read") pfInstance.flipNext("bottom");
-                  else pfInstance.turnToNextPage();
-                } catch (_) {
-                  pfInstance.turnToNextPage();
-                }
+                  if (flip.getState() === "read") flip.flipNext("bottom");
+                  else flip.turnToNextPage();
+                } catch (_) { flip.turnToNextPage(); }
               }
-            } else {
-              if (s >= maxS) { s = 0; place(); }
-              else go(1);
             }
           }, 3200);
         }
       }
       if (a === "t") {
-        const t = q(".th") as HTMLElement;
-        if (!t.innerHTML) {
-          t.innerHTML = P.map((u, i) => (u ? '<img data-i="' + i + '" src="' + u + '" alt="Go to page ' + (i + 1) + '">' : "")).join("");
+        const thEl = root.querySelector(".th") as HTMLElement;
+        if (!thEl.innerHTML) {
+          thEl.innerHTML = P.map((u, idx) => `<img data-i="${idx}" src="${u}" alt="Page ${idx + 1}">`).join("");
         }
-        t.hidden = !t.hidden;
+        thEl.hidden = !thEl.hidden;
       }
     };
 
-    (q(".th") as HTMLElement).onclick = (e) => {
+    (root.querySelector(".th") as HTMLElement).onclick = (e) => {
       const i = (e.target as HTMLElement).dataset.i;
-      if (i == null) return;
+      if (i == null || !flip) return;
       const idx = Number(i);
-      if (pfInstance) {
-        pfInstance.turnToPage(idx);
-      } else {
-        s = cl(idx === 0 ? 0 : Math.ceil(idx / 2));
-        place();
-        tick();
-      }
+      try { flip.turnToPage(s.nocov ? idx : idx + 1); } catch (_) {}
     };
-
-    fit();
-    if (typeof requestAnimationFrame !== "undefined") {
-      requestAnimationFrame(() => {
-        fit();
-        setTimeout(fit, 80);
-      });
-    }
   }
 
-  // ── App state & helpers ────────────────────────────────────────────────────
-  const BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+  // ── App State & Settings ───────────────────────────────────────────────────
   const PAL = [
     ["Ocean", "#0ea5e9", "#1e3a8a"],
     ["Sunset", "#fb7185", "#f59e0b"],
@@ -1679,15 +2031,37 @@ function initFlipbookApp() {
     ["Snow", "#ffffff", "#e5e7eb"],
   ];
 
-  const load1 = () => { try { return JSON.parse(localStorage.spFbKit || "{}"); } catch (_) { return {}; } };
+  const loadSaved = () => {
+    try { return JSON.parse(localStorage.spFbKit || "{}"); } catch (_) { return {}; }
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const S: Record<string, any> = Object.assign(
-    { theme: 0, logo: "", desc: "", logoRight: false, credit: false, bgType: "grad", bg1: "#f8fafc", bg2: "#e2e8f0", bgImg: "", dim: 0.35, sound: false, bgTouched: false, mode: "ask", shift: false, cover: "", curPage: 0 },
-    load1()
+    {
+      theme: 0,
+      title: "Spellense Catalog",
+      logo: "",
+      desc: "",
+      logoRight: false,
+      credit: false,
+      bgType: "grad",
+      bg1: "#0d0b1a",
+      bg2: "#171233",
+      bgImg: "",
+      dim: 0.35,
+      sound: false,
+      mode: "keep",
+      cust: { front: null, back: null, col: "#2a2545", auto: true, gloss: false },
+    },
+    loadSaved()
   );
 
-  let RAW: string[] = [], pages: string[] = [], ratio = 0.72, tmr = 0;
-  let LC: string[] = [], TH = "";
+  if (typeof S.theme !== "number" || S.theme < 0 || S.theme >= BOOK_STYLES.length) {
+    S.theme = 0;
+  }
+
+  let RAW: string[] = [], pages: string[] = [], ratio = 0.714, tmr = 0;
+  let LC: string[] = [];
 
   const li = (u: string): Promise<HTMLImageElement> =>
     new Promise((r, j) => { const i = new Image(); i.onload = () => r(i); i.onerror = j; i.src = u; });
@@ -1701,6 +2075,24 @@ function initFlipbookApp() {
     c.getContext("2d")!.drawImage(i, 0, 0, c.width, c.height);
     return c.toDataURL(type, q);
   }
+
+  async function coverFrom(file: File): Promise<{ u: string; col: string }> {
+    const im = await li(await readURL(file));
+    const k = Math.min(1, 1000 / Math.max(im.width, im.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(im.width * k);
+    c.height = Math.round(im.height * k);
+    c.getContext("2d")!.drawImage(im, 0, 0, c.width, c.height);
+    const s = document.createElement("canvas");
+    s.width = s.height = 1;
+    const x = s.getContext("2d")!;
+    x.drawImage(im, 0, 0, 1, 1);
+    const d = x.getImageData(0, 0, 1, 1).data;
+    return { u: c.toDataURL("image/jpeg", 0.9), col: hex(d[0], d[1], d[2]) };
+  }
+
+  const readURL = (f: File): Promise<string> =>
+    new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(f); });
 
   const status = (t: string) => { const el = document.getElementById("st"); if (el) el.textContent = t; };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1724,6 +2116,7 @@ function initFlipbookApp() {
             standardFontDataUrl: "/standard_fonts/",
           });
           const pdf = await loadingTask.promise;
+          S.title = f.name.replace(/\.[^.]+$/, "").slice(0, 36);
           for (let i = 1; i <= pdf.numPages; i++) {
             status(`Converting page ${i} of ${pdf.numPages}…`);
             try {
@@ -1744,13 +2137,14 @@ function initFlipbookApp() {
             }
           }
         } else if (f.type.startsWith("image/")) {
+          S.title = f.name.replace(/\.[^.]+$/, "").slice(0, 36);
           RAW.push(await f2u(f, 1600, "image/jpeg", 0.88));
         }
       }
       if (!RAW.length) throw new Error("Could not extract pages from file");
+      getEl("ed").hidden = false;
+      getEl("ex").hidden = false;
       if (await derive()) {
-        getEl("ed").hidden = false;
-        getEl("ex").hidden = false;
         status("Ready. " + pages.length + " pages loaded.");
         getEl("ed").scrollIntoView({ behavior: "smooth" });
         show();
@@ -1762,92 +2156,58 @@ function initFlipbookApp() {
     }
   }
 
-  // ── Sample Catalog Generator for Instant 1-Click Demo ──────────────────────
+  // ── Demo Catalog Generator ─────────────────────────────────────────────────
   async function loadSampleCatalog() {
     status("Generating demo catalog pages…");
-    const demoPages: string[] = [];
-    const colors = [
-      { bg1: "#1e1b4b", bg2: "#312e81", title: "SPELLENSE 2026", sub: "EDITORIAL DESIGN & CREATIVE LOOKBOOK", p: 1 },
-      { bg1: "#f8fafc", bg2: "#e2e8f0", title: "TABLE OF CONTENTS", sub: "01 Architecture • 02 Materials • 03 Colorways", p: 2 },
-      { bg1: "#064e3b", bg2: "#022c22", title: "MINIMALIST LIVING", sub: "Crafted for peaceful modern aesthetics", p: 3 },
-      { bg1: "#78350f", bg2: "#451a03", title: "ORGANIC TEXTURES", sub: "Hand-finished walnut, leather & linen", p: 4 },
-      { bg1: "#831843", bg2: "#500724", title: "SEASONAL PALETTES", sub: "Vibrant hues curated for print & digital", p: 5 },
-      { bg1: "#0f172a", bg2: "#020617", title: "SPELLENSE STUDIO", sub: "Thank you for reading • spellense.com", p: 6 },
+    const W = 600, H = 840;
+    const cols = [
+      ["#5b4bff", "#ff7ac6"],
+      ["#0ea5e9", "#22d3ee"],
+      ["#f97316", "#facc15"],
+      ["#10b981", "#84cc16"],
+      ["#ec4899", "#8b5cf6"],
+      ["#14b8a6", "#3b82f6"],
+      ["#f43f5e", "#fb923c"],
+      ["#6366f1", "#06b6d4"]
     ];
+    const ti = ["Welcome", "New Arrivals", "Bestsellers", "Studio Picks", "Colour Story", "Materials", "Care Guide", "Contact"];
 
-    for (const c of colors) {
-      const cvs = document.createElement("canvas");
-      cvs.width = 800;
-      cvs.height = 1120;
-      const ctx = cvs.getContext("2d")!;
+    RAW = ti.map((t, i) => {
+      const c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const x = c.getContext("2d")!;
+      const g = x.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, cols[i][0]);
+      g.addColorStop(1, cols[i][1]);
+      x.fillStyle = "#fffdf8";
+      x.fillRect(0, 0, W, H);
+      x.fillStyle = g;
+      x.fillRect(0, 0, W, 16);
+      x.fillRect(40, 300, W - 80, 300);
+      x.fillStyle = "#1c1640";
+      x.font = "bold 110px system-ui";
+      x.fillText(String(i + 1).padStart(2, "0"), 40, 200);
+      x.font = "bold 46px system-ui";
+      x.fillText(t, 40, 270);
+      x.font = "20px system-ui";
+      x.globalAlpha = 0.6;
+      x.fillText("Spellense Demo Catalog", 40, H - 48);
+      return c.toDataURL("image/jpeg", 0.9);
+    });
 
-      // Background gradient
-      const grad = ctx.createLinearGradient(0, 0, 800, 1120);
-      grad.addColorStop(0, c.bg1);
-      grad.addColorStop(1, c.bg2);
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 800, 1120);
-
-      // Decorative shapes
-      ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
-      ctx.beginPath();
-      ctx.arc(700, 200, 300, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(100, 900, 250, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Border frame
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(40, 40, 720, 1040);
-
-      // Text styling
-      ctx.fillStyle = c.bg1 === "#f8fafc" ? "#0f172a" : "#ffffff";
-      ctx.textAlign = "center";
-
-      // Tag
-      ctx.font = "bold 16px system-ui, sans-serif";
-      ctx.fillStyle = c.bg1 === "#f8fafc" ? "#2563eb" : "#93c5fd";
-      ctx.fillText("SPELLENSE FLIPBOOK DEMO", 400, 380);
-
-      // Title
-      ctx.font = "800 42px system-ui, sans-serif";
-      ctx.fillStyle = c.bg1 === "#f8fafc" ? "#0f172a" : "#ffffff";
-      ctx.fillText(c.title, 400, 450);
-
-      // Subtitle
-      ctx.font = "500 20px system-ui, sans-serif";
-      ctx.fillStyle = c.bg1 === "#f8fafc" ? "#475569" : "#cbd5e1";
-      ctx.fillText(c.sub, 400, 500);
-
-      // Page indicator badge
-      ctx.fillStyle = c.bg1 === "#f8fafc" ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.12)";
-      ctx.beginPath();
-      ctx.roundRect(350, 980, 100, 36, 18);
-      ctx.fill();
-      ctx.fillStyle = c.bg1 === "#f8fafc" ? "#334155" : "#f8fafc";
-      ctx.font = "bold 14px system-ui, sans-serif";
-      ctx.fillText(`PAGE ${c.p}`, 400, 1003);
-
-      demoPages.push(cvs.toDataURL("image/jpeg", 0.9));
-    }
-
-    RAW = demoPages;
-    S.desc = "Spellense Editorial Catalog 2026\nDesigned with 3D Flipbook Studio";
+    S.title = "Demo Catalog";
+    S.desc = "Spellense Editorial 2026\nDesigned with 3D Flipbook Studio";
+    getEl("ed").hidden = false;
+    getEl("ex").hidden = false;
     if (await derive()) {
-      getEl("ed").hidden = false;
-      getEl("ex").hidden = false;
       status("Demo catalog loaded. Click styles below to customize!");
       getEl("ed").scrollIntoView({ behavior: "smooth" });
       show();
     }
   }
-  // Expose to window for the "Try Demo Catalog" button in JSX
   (window as unknown as Record<string, unknown>)["loadSampleCatalog"] = loadSampleCatalog;
 
   async function derive(): Promise<boolean> {
-    if (S.mode === "auto") S.mode = "ask";
     let wide = false;
     for (const u of RAW) {
       const i = await li(u);
@@ -1874,13 +2234,11 @@ function initFlipbookApp() {
         out.push(u);
       }
     }
-    if (S.shift) out.unshift(BLANK);
     pages = out;
-    const first = await li(out[S.shift && out[1] ? 1 : 0]);
-    ratio = first.width / first.height;
-    if (S.cover) out[0] = await fitTo(S.cover, ratio);
-    pages = out;
-    mkThumb();
+    if (out.length) {
+      const first = await li(out[0]);
+      ratio = first.width / first.height;
+    }
     show();
     return true;
   }
@@ -1890,12 +2248,14 @@ function initFlipbookApp() {
     tmr = setTimeout(() => {
       if (!pages.length) return;
       Viewer(getEl("pv") as HTMLElement & { _off?: () => void }, Object.assign({}, S, { pages, ratio }));
-      try { localStorage.spFbKit = JSON.stringify(Object.assign({}, S, { cover: "" })); } catch (_) { /* ok */ }
+      try { localStorage.spFbKit = JSON.stringify(S); } catch (_) {}
     }, 100) as unknown as number;
   }
 
   function sync() {
-    (getEl("ds") as HTMLTextAreaElement).value = S.desc;
+    const curStyle = BOOK_STYLES[S.theme] || BOOK_STYLES[0];
+    (getEl("bt") as HTMLInputElement).value = S.title || "";
+    (getEl("ds") as HTMLTextAreaElement).value = S.desc || "";
     (getEl("lr") as HTMLInputElement).checked = S.logoRight;
     (getEl("cr") as HTMLInputElement).checked = S.credit;
     (getEl("c1") as HTMLInputElement).value = S.bg1;
@@ -1907,13 +2267,58 @@ function initFlipbookApp() {
     (getEl("gr") as HTMLInputElement).checked = S.bgType !== "color";
     (getEl("dm") as HTMLInputElement).value = S.dim;
     (getEl("md") as HTMLSelectElement).value = S.mode;
-    (getEl("sh") as HTMLInputElement).checked = S.shift;
     (getEl("sn") as HTMLInputElement).checked = S.sound;
-    document.querySelectorAll(".ftc").forEach((b, i) => b.classList.toggle("fon", i === S.theme));
 
-    // Cover image status
-    const cvStatus = document.getElementById("cv-status");
-    if (cvStatus) cvStatus.classList.toggle("hidden", !S.cover);
+    // Update style buttons state
+    document.querySelectorAll(".ftc").forEach((b) => {
+      const idx = +(b as HTMLElement).dataset.t!;
+      b.classList.toggle("fon", idx === S.theme);
+    });
+
+    // Update Style Note
+    const noteEl = document.getElementById("note");
+    if (noteEl) noteEl.textContent = curStyle.note;
+
+    // Custom cover panel visibility
+    const cpanel = document.getElementById("cpanel");
+    if (cpanel) cpanel.hidden = !curStyle.custom;
+
+    // Custom cover thumbnails
+    const thF = document.getElementById("thF");
+    const uFx = document.getElementById("uFx");
+    if (thF) {
+      if (S.cust.front) {
+        thF.style.backgroundImage = `url(${S.cust.front})`;
+        thF.innerHTML = "";
+        if (uFx) uFx.classList.remove("hidden");
+      } else {
+        thF.style.backgroundImage = "none";
+        thF.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`;
+        if (uFx) uFx.classList.add("hidden");
+      }
+    }
+
+    const thB = document.getElementById("thB");
+    const uBx = document.getElementById("uBx");
+    if (thB) {
+      if (S.cust.back) {
+        thB.style.backgroundImage = `url(${S.cust.back})`;
+        thB.innerHTML = "";
+        if (uBx) uBx.classList.remove("hidden");
+      } else {
+        thB.style.backgroundImage = "none";
+        thB.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`;
+        if (uBx) uBx.classList.add("hidden");
+      }
+    }
+
+    (getEl("col") as HTMLInputElement).value = S.cust.col || "#2a2545";
+    const cpanelAuto = document.getElementById("cpanel-auto");
+    if (cpanelAuto) cpanelAuto.textContent = S.cust.auto ? "Auto-extracted from cover" : "Custom selected color";
+
+    document.querySelectorAll("input[name=fin]").forEach((r) => {
+      (r as HTMLInputElement).checked = (r as HTMLInputElement).value === (S.cust.gloss ? "gloss" : "matte");
+    });
 
     // Logo status
     const lgStatus = document.getElementById("lg-status");
@@ -1921,44 +2326,70 @@ function initFlipbookApp() {
     if (lgStatus) lgStatus.classList.toggle("hidden", !S.logo);
     if (lgThumb && S.logo) lgThumb.src = S.logo;
 
+    const lpUploadBox = document.getElementById("lp-upload-box");
+    if (lpUploadBox) lpUploadBox.classList.toggle("hidden", !!S.logo);
     const lpStatus = document.getElementById("lp-status");
     if (lpStatus) lpStatus.classList.toggle("hidden", !S.logo);
     const lp = document.getElementById("lp");
-    if (lp) lp.hidden = !LC.length;
+    if (lp) lp.hidden = !LC.length || !S.logo;
 
     // Backdrop photo status
     const biStatus = document.getElementById("bi-status");
     if (biStatus) biStatus.classList.toggle("hidden", !S.bgImg);
   }
 
-  function tiles() {
-    getEl("tg").innerHTML = THEMES.map(
-      (t, i) =>
-        '<button class="ftc' + (i === S.theme ? " fon" : "") + '" data-t="' + i + '"><i style="background:' + t.b + '">' +
-        (TH ? '<img src="' + TH + '" alt="" style="filter:' + t.f + '">' : "") +
-        "</i><span>" + t.n + "</span></button>"
-    ).join("");
+  // ── Render 12 Style Cards Grouped by Classic, Luxury, Custom ───────────────
+  function renderStyleCards() {
+    const tg = getEl("tg");
+    if (!tg) return;
+
+    const groups: { [k: string]: { s: typeof BOOK_STYLES[0]; idx: number }[] } = {};
+    BOOK_STYLES.forEach((s, idx) => {
+      if (!groups[s.g]) groups[s.g] = [];
+      groups[s.g].push({ s, idx });
+    });
+
+    let html = "";
+    Object.entries(groups).forEach(([groupName, items]) => {
+      html += `
+        <div class="ft-section">
+          <div class="ft-header">
+            <span>${groupName === "Classic" ? "Classic Editions" : groupName === "Luxury" ? "Luxury Editions" : "Custom Edition"}</span>
+            <span class="text-[10px] text-slate-400">(${items.length})</span>
+          </div>
+          <div class="ftg">
+            ${items.map(({ s, idx }) => `
+              <button type="button" class="ftc${idx === S.theme ? " fon" : ""}" data-t="${idx}">
+                <i style="background:${s.dot}"></i>
+                <span>${s.n}</span>
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    });
+
+    tg.innerHTML = html;
   }
-  tiles();
+  renderStyleCards();
 
   getEl("pal").innerHTML = PAL.map(
-    (p, i) => '<button data-i="' + i + '" title="' + p[0] + '" style="background:linear-gradient(135deg,' + p[1] + "," + p[2] + ')"></button>'
+    (p, i) => `<button data-i="${i}" title="${p[0]}" style="background:linear-gradient(135deg,${p[1]},${p[2]})"></button>`
   ).join("");
 
-  // ── Event listeners ────────────────────────────────────────────────────────
+  // ── Style Selection Listener ───────────────────────────────────────────────
   getEl("tg").onclick = (e: Event) => {
     const b = (e.target as HTMLElement).closest(".ftc") as HTMLButtonElement | null;
     if (!b) return;
     const idx = +b.dataset.t!;
-    const t = THEMES[idx];
+    const st = BOOK_STYLES[idx];
     S.theme = idx;
-    // Always apply theme background aesthetic immediately
-    S.bg1 = t.c1;
-    S.bg2 = t.c2;
-    S.bgType = "grad";
-    S.bgImg = ""; // clear photo so theme gradient is visible
-    S.bgTouched = false;
-    document.querySelectorAll(".ftc").forEach((btn, i) => btn.classList.toggle("fon", i === idx));
+    // Update default backdrop palette to match style if not user touched
+    if (st.c1 && st.c2) {
+      S.bg1 = st.c1;
+      S.bg2 = st.c2;
+      S.bgType = "grad";
+    }
     sync();
     show();
   };
@@ -1967,12 +2398,12 @@ function initFlipbookApp() {
     const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
     if (!b) return;
     const p = PAL[+b.dataset.i!];
-    Object.assign(S, { bg1: p[1], bg2: p[2], bgType: "grad", bgImg: "", bgTouched: true });
+    Object.assign(S, { bg1: p[1], bg2: p[2], bgType: "grad", bgImg: "" });
     sync();
     show();
   };
 
-  // ── 5 Tab Navigation Switching ─────────────────────────────────────────────
+  // ── Tab Navigation ─────────────────────────────────────────────────────────
   document.querySelectorAll(".ftb button").forEach((tabBtn) => {
     tabBtn.addEventListener("click", () => {
       const pId = (tabBtn as HTMLElement).dataset.p;
@@ -1985,9 +2416,12 @@ function initFlipbookApp() {
     });
   });
 
-  const bind = (id: string, fn: (el: HTMLElement) => void, ev = "input") =>
-    getEl(id).addEventListener(ev, () => { fn(getEl(id)); show(); });
+  const bind = (id: string, fn: (el: HTMLElement) => void, ev = "input") => {
+    const el = getEl(id);
+    if (el) el.addEventListener(ev, () => { fn(el); show(); });
+  };
 
+  bind("bt", (e) => { S.title = (e as HTMLInputElement).value; });
   bind("ds", (e) => { S.desc = (e as HTMLTextAreaElement).value; });
   bind("lr", (e) => { S.logoRight = (e as HTMLInputElement).checked; }, "change");
   bind("cr", (e) => { S.credit = (e as HTMLInputElement).checked; }, "change");
@@ -1995,43 +2429,144 @@ function initFlipbookApp() {
   bind("dm", (e) => { S.dim = +(e as HTMLInputElement).value; });
   bind("c1", (e) => {
     S.bg1 = (e as HTMLInputElement).value;
-    S.bgTouched = true;
     if (S.bgType === "img") S.bgType = "grad";
     const c1Val = document.getElementById("c1-val");
     if (c1Val) c1Val.textContent = S.bg1.toUpperCase();
   });
   bind("c2", (e) => {
     S.bg2 = (e as HTMLInputElement).value;
-    S.bgTouched = true;
     const c2Val = document.getElementById("c2-val");
     if (c2Val) c2Val.textContent = S.bg2.toUpperCase();
   });
-  bind("gr", (e) => { S.bgType = (e as HTMLInputElement).checked ? "grad" : "color"; S.bgTouched = true; }, "change");
+  bind("gr", (e) => { S.bgType = (e as HTMLInputElement).checked ? "grad" : "color"; }, "change");
 
-  getEl("md").addEventListener("change", (e: Event) => { S.mode = (e.target as HTMLSelectElement).value; derive(); });
-  getEl("sh").addEventListener("change", (e: Event) => { S.shift = (e.target as HTMLInputElement).checked; derive(); });
+  getEl("md").addEventListener("change", (e: Event) => {
+    S.mode = (e.target as HTMLSelectElement).value;
+    derive();
+  });
 
-  getEl("lg").addEventListener("change", async (e: Event) => {
+  // ── Custom Cover Controls ──────────────────────────────────────────────────
+  getEl("uF").onclick = () => getEl("fF").click();
+  getEl("uB").onclick = () => getEl("fB").click();
+
+  getEl("fF").onchange = async (e: Event) => {
     const f = (e.target as HTMLInputElement).files?.[0];
+    if (!f) return;
+    const res = await coverFrom(f);
+    S.cust.front = res.u;
+    if (S.cust.auto) {
+      S.cust.col = res.col;
+      (getEl("col") as HTMLInputElement).value = res.col;
+    }
+    sync();
+    show();
+  };
+
+  getEl("fB").onchange = async (e: Event) => {
+    const f = (e.target as HTMLInputElement).files?.[0];
+    if (!f) return;
+    const res = await coverFrom(f);
+    S.cust.back = res.u;
+    sync();
+    show();
+  };
+
+  getEl("uFx").onclick = () => {
+    S.cust.front = null;
+    (getEl("fF") as HTMLInputElement).value = "";
+    sync();
+    show();
+  };
+
+  getEl("uBx").onclick = () => {
+    S.cust.back = null;
+    (getEl("fB") as HTMLInputElement).value = "";
+    sync();
+    show();
+  };
+
+  getEl("col").onchange = (e: Event) => {
+    S.cust.col = (e.target as HTMLInputElement).value;
+    S.cust.auto = false;
+    sync();
+    show();
+  };
+
+  document.querySelectorAll("input[name=fin]").forEach((r) => {
+    r.addEventListener("change", () => {
+      S.cust.gloss = (r as HTMLInputElement).value === "gloss";
+      show();
+    });
+  });
+
+  getEl("cpanel-sample").onclick = () => {
+    const W = 600, H = 840;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d")!;
+    const g = x.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, "#1e3a8a");
+    g.addColorStop(1, "#7c3aed");
+    x.fillStyle = g;
+    x.fillRect(0, 0, W, H);
+    x.strokeStyle = "#f7e08e";
+    x.lineWidth = 4;
+    x.strokeRect(40, 40, W - 80, H - 80);
+    x.fillStyle = "#f7e08e";
+    x.textAlign = "center";
+    x.font = "bold 64px Georgia";
+    x.fillText("SPELLENSE", W / 2, H / 2 - 30);
+    x.fillText("LOOKBOOK", W / 2, H / 2 + 50);
+    x.font = "22px Georgia";
+    x.fillText("— 2026 EDITION —", W / 2, H / 2 + 110);
+    S.cust.front = c.toDataURL("image/jpeg", 0.9);
+    S.cust.col = "#3b2fa6";
+    S.cust.auto = false;
+    sync();
+    show();
+  };
+
+  // ── Brand Logo & Palette ───────────────────────────────────────────────────
+  const handleLogoFile = async (f: File | undefined) => {
     if (!f) return;
     S.logo = await f2u(f, 320, "image/png", 1);
     await logoPal(S.logo);
-    getEl("lo").hidden = !LC.length;
     sync();
     show();
+  };
+
+  getEl("lg").addEventListener("change", (e: Event) => {
+    handleLogoFile((e.target as HTMLInputElement).files?.[0]);
   });
+  const lgBackdrop = document.getElementById("lg-backdrop");
+  if (lgBackdrop) {
+    lgBackdrop.addEventListener("change", (e: Event) => {
+      handleLogoFile((e.target as HTMLInputElement).files?.[0]);
+    });
+  }
+  const lgBackdropChange = document.getElementById("lg-backdrop-change");
+  if (lgBackdropChange) {
+    lgBackdropChange.addEventListener("change", (e: Event) => {
+      handleLogoFile((e.target as HTMLInputElement).files?.[0]);
+    });
+  }
 
   const removeLogo = () => {
     S.logo = "";
     LC = [];
-    getEl("lo").hidden = true;
     const lp = document.getElementById("lp");
     if (lp) { lp.innerHTML = ""; lp.hidden = true; }
     const lpStatus = document.getElementById("lp-status");
     if (lpStatus) lpStatus.classList.add("hidden");
+    const lpUploadBox = document.getElementById("lp-upload-box");
+    if (lpUploadBox) lpUploadBox.classList.remove("hidden");
     const lgStatus = document.getElementById("lg-status");
     if (lgStatus) lgStatus.classList.add("hidden");
     (getEl("lg") as HTMLInputElement).value = "";
+    const lgB = document.getElementById("lg-backdrop") as HTMLInputElement | null;
+    if (lgB) lgB.value = "";
+    const lgBC = document.getElementById("lg-backdrop-change") as HTMLInputElement | null;
+    if (lgBC) lgBC.value = "";
     sync();
     show();
   };
@@ -2039,12 +2574,49 @@ function initFlipbookApp() {
   const lpx = document.getElementById("lpx");
   if (lpx) lpx.onclick = removeLogo;
 
+  async function logoPal(u: string) {
+    const i = await li(u);
+    const c = document.createElement("canvas");
+    c.width = c.height = 24;
+    c.height = 24;
+    const x = c.getContext("2d")!;
+    x.drawImage(i, 0, 0, 24, 24);
+    const d = x.getImageData(0, 0, 24, 24).data;
+    const m: Record<string, number> = {};
+    for (let k = 0; k < d.length; k += 4) {
+      if (d[k + 3] < 128) continue;
+      const key = (d[k] >> 5) + "," + (d[k + 1] >> 5) + "," + (d[k + 2] >> 5);
+      m[key] = (m[key] || 0) + 1;
+    }
+    const cols = Object.entries(m)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([k]) => "#" + k.split(",").map((v) => Math.min(255, +v * 32 + 16).toString(16).padStart(2, "0")).join(""));
+    LC = cols;
+    const lp = document.getElementById("lp");
+    if (lp) {
+      lp.innerHTML = cols.map((h: string) => `<button data-h="${h}" title="${h}" style="background:${h}"></button>`).join("");
+      lp.hidden = !cols.length;
+    }
+    const lpUploadBox = document.getElementById("lp-upload-box");
+    if (lpUploadBox) lpUploadBox.classList.toggle("hidden", !!S.logo);
+    const lpStatus = document.getElementById("lp-status");
+    if (lpStatus) lpStatus.classList.toggle("hidden", !S.logo);
+  }
+
+  getEl("lp").onclick = (e: Event) => {
+    const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
+    if (!b) return;
+    Object.assign(S, { bg1: b.dataset.h, bg2: b.dataset.h, bgType: "color", bgImg: "" });
+    sync(); show();
+  };
+
+  // ── Backdrop Scenic Photo ──────────────────────────────────────────────────
   getEl("bi").addEventListener("change", async (e: Event) => {
     const f = (e.target as HTMLInputElement).files?.[0];
     if (!f) return;
     S.bgImg = await f2u(f, 1400, "image/jpeg", 0.8);
     S.bgType = "img";
-    S.bgTouched = true;
     sync();
     show();
   });
@@ -2067,46 +2639,12 @@ function initFlipbookApp() {
       const r = await new (window as any).EyeDropper().open();
       S.bg1 = r.sRGBHex;
       S.bgType = "grad";
-      S.bgTouched = true;
       sync();
       show();
-    } catch (_) { /* dismissed */ }
+    } catch (_) {}
   };
 
-  async function logoPal(u: string) {
-    const i = await li(u);
-    const c = document.createElement("canvas");
-    c.width = c.height = 24;
-    const x = c.getContext("2d")!;
-    x.drawImage(i, 0, 0, 24, 24);
-    const d = x.getImageData(0, 0, 24, 24).data;
-    const m: Record<string, number> = {};
-    for (let k = 0; k < d.length; k += 4) {
-      if (d[k + 3] < 128) continue;
-      const key = (d[k] >> 5) + "," + (d[k + 1] >> 5) + "," + (d[k + 2] >> 5);
-      m[key] = (m[key] || 0) + 1;
-    }
-    const cols = Object.entries(m)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([k]) => "#" + k.split(",").map((v) => Math.min(255, +v * 32 + 16).toString(16).padStart(2, "0")).join(""));
-    LC = cols;
-    const lp = document.getElementById("lp");
-    if (lp) {
-      lp.innerHTML = cols.map((h: string) => '<button data-h="' + h + '" title="' + h + '" style="background:' + h + '"></button>').join("");
-      lp.hidden = !cols.length;
-    }
-    const lpStatus = document.getElementById("lp-status");
-    if (lpStatus) lpStatus.classList.toggle("hidden", !S.logo);
-  }
-
-  getEl("lp").onclick = (e: Event) => {
-    const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
-    if (!b) return;
-    Object.assign(S, { bg1: b.dataset.h, bg2: b.dataset.h, bgType: "color", bgImg: "", bgTouched: true });
-    sync(); show();
-  };
-
+  // ── Brand Kit Export / Import ──────────────────────────────────────────────
   getEl("ke").onclick = () => dl("spellense-brand-kit.json", JSON.stringify(S), "application/json");
 
   getEl("ki").addEventListener("change", async (e: Event) => {
@@ -2127,9 +2665,7 @@ function initFlipbookApp() {
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
-      if (document.body.contains(a)) {
-        document.body.removeChild(a);
-      }
+      if (document.body.contains(a)) document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }, 4000);
   }
@@ -2137,11 +2673,25 @@ function initFlipbookApp() {
   // ── Standalone Offline HTML Generator ──────────────────────────────────────
   function buildHTML(): string {
     const cfg = JSON.stringify(Object.assign({}, S, { pages, ratio, full: true })).replace(/</g, "\\u003c");
-    const t = (S.desc || "Flipbook").split("\n")[0].slice(0, 60);
+    const t = (S.title || S.desc || "Flipbook").split("\n")[0].slice(0, 60);
 
     const standaloneViewerCode = `
-      var N = ${JSON.stringify(N)};
-      var THEMES = ${JSON.stringify(THEMES)};
+      var BOOK_STYLES = ${JSON.stringify(BOOK_STYLES)};
+      var G1 = ${JSON.stringify(G1)};
+      var G2 = ${JSON.stringify(G2)};
+      var GW = ${JSON.stringify(GW)};
+      var GP = ${JSON.stringify(GP)};
+      var GV = ${JSON.stringify(GV)};
+      var GM = ${JSON.stringify(GM)};
+      var croc = ${JSON.stringify(croc)};
+      var vig = ${JSON.stringify(vig)};
+      var hl = ${JSON.stringify(hl)};
+      var brass = ${JSON.stringify(brass)};
+      var GOLD = ${JSON.stringify(GOLD)};
+      var DGOLD = ${JSON.stringify(DGOLD)};
+      var PAP = ${JSON.stringify(PAP)};
+      var GILT = ${JSON.stringify(GILT)};
+
       function esc(s) {
         return String(s || "").replace(/[&<>"]/g, function(m) {
           return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m] || m;
@@ -2153,6 +2703,47 @@ function initFlipbookApp() {
         var v = parseInt(h, 16);
         return (0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) / 255;
       }
+      function dk(c) { return "color-mix(in srgb," + c + " 55%,black)"; }
+      function lt(c) { return "color-mix(in srgb," + c + " 55%,white)"; }
+      function cn(c) {
+        return ["0 0,100% 0,0 100%", "0 0,100% 0,100% 100%", "0 100%,100% 0,100% 100%", "0 0,100% 100%,0 100%"]
+          .map(function(p, i) { return '<i class="cn" style="background:' + c + ';clip-path:polygon(' + p + ');' + (i < 2 ? 'top' : 'bottom') + ':0;' + (i % 2 ? 'right' : 'left') + ':0"></i>'; })
+          .join("");
+      }
+      function ccover(s, f, cust) {
+        var img = f ? cust.front : cust.back;
+        var rad = f ? "3px " + s.r + "px " + s.r + "px 3px" : s.r + "px 3px 3px " + s.r + "px";
+        var bg = img ? "url(" + img + ") center/cover" : (f ? "repeating-linear-gradient(45deg,#2a2545 0 12px,#332d55 12px 24px)" : vig + ",linear-gradient(145deg," + cust.col + "," + dk(cust.col) + ")");
+        var ov = (cust.gloss ? "linear-gradient(115deg,rgba(255,255,255,.5),rgba(255,255,255,.08) 30%,transparent 42%,rgba(255,255,255,.12) 70%,transparent)" : "var(--g1)") + "," + (f ? "linear-gradient(90deg,rgba(0,0,0,.4),transparent 9%)" : "linear-gradient(270deg,rgba(0,0,0,.4),transparent 9%)");
+        return '<div class="paper cov ' + (f ? 'cov-f' : 'cov-b') + ' hg" style="background:' + bg + ';border-radius:' + rad + '">' + (!img && f ? '<div class="ttl" style="color:#cfc8ff"><span>⬆</span><h2>Upload your cover</h2></div>' : '') + '<i class="glz" style="background:' + ov + ';border-radius:' + rad + '"></i></div>';
+      }
+      function cover(s, f, cust, title) {
+        if (s.custom) return ccover(s, f, cust);
+        var r = s.r, rad = f ? "3px " + r + "px " + r + "px 3px" : r + "px 3px 3px " + r + "px";
+        var t = s.lux
+          ? (f ? '<div class="mono foil">S</div><h2 class="foil">' + esc(title) + '</h2><span class="foil">3D FLIPBOOK</span>' : '<div class="mono foil">S</div><span class="foil">SPELLENSE · MAISON</span>')
+          : (f ? '<span>❖</span><h2>' + esc(title) + '</h2><span>3D FLIPBOOK</span>' : '<span>❦</span><h2>Spellense</h2>');
+        var st = s.lux ? '' : 'font-family:' + s.font + ';color:' + s.ink + ';text-shadow:' + s.tfx + ';' + (s.tt ? 'text-transform:uppercase;font-weight:900;' : '');
+        return '<div class="paper cov ' + (f ? 'cov-f' : 'cov-b') + ' ' + (s.hg ? 'hg' : '') + '" style="background:' + s.cov + ';color:' + (s.ink || 'inherit') + ';border-radius:' + rad + '">' + (s.spine ? '<i class="spn" style="' + (f ? 'left' : 'right') + ':0;width:' + s.spine[1] + ';background:' + s.spine[0] + '"></i>' : '') + (s.stitch ? '<i class="stitch"></i>' : '') + (s.frame ? '<i class="frame ' + (s.lux ? 'lx' : '') + '" ' + (s.lux ? '' : 'style="border-color:' + s.ink + '"') + '></i>' : '') + (s.corner ? cn(s.corner) : '') + '<div class="ttl ' + (s.label ? 'lbl' : '') + ' ' + (s.lux ? 'lx' : '') + '" style="' + st + (s.spine && f ? 'margin-left:14%' : '') + '">' + t + '</div></div>';
+      }
+      function endpOf(s, cust) {
+        return s.custom ? "repeating-linear-gradient(45deg," + cust.col + " 0 2px," + lt(cust.col) + " 2px 4px)" : s.endp;
+      }
+      function pagesFor(s, pgs, cust, title) {
+        var hc = !s.nocov, ep = hc && (s.endp || s.custom), a = [];
+        if (hc) {
+          a.push({ h: cover(s, 1, cust, title), hd: 1 });
+          if (ep) a.push({ h: '<div class="paper endp" style="background:' + endpOf(s, cust) + '"></div>', hd: 1 });
+        }
+        pgs.forEach(function(u) { a.push({ h: '<div class="paper pi"><img src="' + u + '" alt=""></div>' }); });
+        if ((a.length + (hc ? (ep ? 2 : 1) : 0)) % 2) a.push({ h: '<div class="paper pi"></div>' });
+        if (hc) {
+          if (ep) a.push({ h: '<div class="paper endp" style="background:' + endpOf(s, cust) + '"></div>', hd: 1 });
+          a.push({ h: cover(s, 0, cust, title), hd: 1 });
+        }
+        return a;
+      }
+
       var globalAudioCtx = null;
       function playPageSound() {
         try {
@@ -2174,303 +2765,235 @@ function initFlipbookApp() {
           r.start();
         } catch (_) {}
       }
+
       function Viewer(root, c) {
         if (root._off) root._off();
-        var T = THEMES[c.theme] || THEMES[0];
-        var P = c.pages;
-        var n = P.length;
-        var L = Math.ceil(n / 2);
-        var maxS = n % 2 ? L - 1 : L;
-        var sp = c.speed || 0.8;
+        var cur = typeof c.theme === "number" ? Math.max(0, Math.min(BOOK_STYLES.length - 1, c.theme)) : 0;
+        var s = BOOK_STYLES[cur] || BOOK_STYLES[0];
+        var P = c.pages || [];
+        var title = c.title || "Spellense Catalog";
+        var cust = c.cust || { front: null, back: null, col: "#2a2545", auto: true, gloss: false };
         var img = c.bgType === "img" && c.bgImg;
-        var s = 0, W = 0, H = 0, z = 1, snd = !!c.sound, tm = 0;
-        var dr = null, au = 0;
+        var snd = !!c.sound, z = 1, au = 0, flip = null, T = 0, port = false, pw = 0, curH = 0;
+
         root.className = "fbv" + (c.full ? " full" : "");
         root.style.background = img ? "url(" + c.bgImg + ") center/cover" : c.bgType === "grad" ? "linear-gradient(135deg," + c.bg1 + "," + c.bg2 + ")" : c.bg1;
         root.style.color = img || lum(c.bg1) < 0.5 ? "#fff" : "#0f172a";
-        root.style.setProperty("--pf", T.f);
-        root.style.setProperty("--pr", T.r + "px");
-        var PageFlipClass = (window.St && window.St.PageFlip) || window.PageFlip;
-        var pf = null;
+
+        root.style.setProperty("--O", s.O + "px");
+        root.style.setProperty("--e1", s.gilt ? GILT[0] : PAP[0]);
+        root.style.setProperty("--e2", s.gilt ? GILT[1] : PAP[1]);
+        root.style.setProperty("--st", s.st || "rgba(236,214,160,.7)");
+        if (s.lux) { root.style.setProperty("--foil", s.foil); root.style.setProperty("--bc", s.bc); }
+
         var h = img ? '<div class="ov" style="background:rgba(0,0,0,' + (c.dim || 0) + ')"></div>' : "";
         if (c.logo || c.desc) {
-          h += '<div class="fbh' + (c.logoRight ? " rv" : "") + '">' + (c.logo ? '<img src="' + c.logo + '" alt="Logo">' : "<span></span>") + "<p>" + esc(c.desc) + "</p></div>";
+          h += '<div class="fbh' + (c.logoRight ? ' rv' : '') + '">' + (c.logo ? '<img src="' + c.logo + '" alt="Logo">' : '<span></span>') + '<p>' + esc(c.desc) + '</p></div>';
         }
-        h += '<div class="stage"><div class="pf-container-wrap"><div id="pf-book-mount" class="pf-book-mount"></div></div><div class="bk bk-fallback" style="display:none;--sp:' + sp + 's"><div class="bd" style="background:' + T.b + ";box-shadow:" + T.x + ";border-radius:" + (T.r + 6) + 'px"></div>';
-        for (var j = 0; j < L; j++) {
-          h += '<div class="lf"><div class="fc f"><img src="' + P[2 * j] + '" alt="Page ' + (2 * j + 1) + '" draggable="false"></div><div class="fc b">' + (P[2 * j + 1] ? '<img src="' + P[2 * j + 1] + '" alt="Page ' + (2 * j + 2) + '" draggable="false">' : "") + '</div></div>';
-        }
-        h += (T.sp && T.sp !== "s" ? '<div class="sp ' + T.sp + '"></div>' : "") + '</div></div><div class="ct"><button data-a="p" title="Previous page">\u2039</button><span class="pg"></span><button data-a="n" title="Next page">\u203a</button><button data-a="t" title="Thumbnails">\u25a6</button><button data-a="z" title="Zoom">\uff0b</button><button data-a="s" title="Sound toggle">' + (snd ? "\ud83d\udd0a" : "\ud83d\udd08") + '</button><button data-a="a" title="Autoplay">\u25b6</button><button data-a="f" title="Fullscreen">\u26f6</button></div><div class="th" hidden></div>' + (c.credit ? '<a class="cr" href="https://spellense.com/flipbook" target="_blank" rel="noopener">Made with Spellense</a>' : "");
+        h += '<div class="stage" id="stage"><div id="wrap"><div id="board"><i class="stk l"></i><i class="stk r"></i><i class="stk b"></i><i id="rib"></i></div><i id="rings"></i><i id="band"></i><div id="book"></div></div></div>' +
+             '<div class="ct"><button data-a="p" title="Previous page">‹</button><span class="pg">1 / 1</span><button data-a="n" title="Next page">›</button><button data-a="t" title="Thumbnails">▦</button><button data-a="z" title="Zoom">＋</button><button data-a="s" title="Sound toggle">' + (snd ? '🔊' : '🔈') + '</button><button data-a="a" title="Autoplay">▶</button><button data-a="f" title="Fullscreen">⛶</button></div><div class="th" hidden></div>' +
+             (c.credit ? '<a class="cr" href="https://spellense.com/flipbook" target="_blank" rel="noopener">Made with Spellense</a>' : '');
         root.innerHTML = h;
-        function q(k) { return root.querySelector(k); }
-        var bk = q(".bk"), bd = q(".bd"), st = q(".stage"), pg = q(".pg"), lvs = [].slice.call(root.querySelectorAll(".lf"));
-        function cl(v) { return Math.max(0, Math.min(maxS, v)); }
-        function tick() { if (snd) playPageSound(); }
-        function updatePgDisplay(cur, total) {
-          try {
-            if (pf && pf.getPageCollection) {
-              var spread = pf.getPageCollection().getSpread()[pf.getPageCollection().getCurrentSpreadIndex()];
-              if (spread && spread.length === 1) {
-                pg.textContent = (spread[0] + 1) + " / " + total;
-                return;
-              } else if (spread && spread.length === 2) {
-                pg.textContent = (spread[0] + 1) + "\u2013" + (spread[1] + 1) + " / " + total;
-                return;
-              }
-            }
-          } catch (_) {}
-          if (cur === 0) { pg.textContent = "1 / " + total; }
-          else if (cur >= total - 1) { pg.textContent = total + " / " + total; }
-          else { var p1 = cur + 1, p2 = Math.min(total, cur + 2); pg.textContent = p1 === p2 ? p1 + " / " + total : p1 + "\u2013" + p2 + " / " + total; }
-        }
-        function place() {
-          lvs.forEach(function(e, idx) {
-            e.style.transform = "rotateY(" + (idx < s ? -180 : 0) + "deg)";
-            e.style.zIndex = String(idx < s ? idx + 1 : L - idx);
+
+        var stageEl = root.querySelector("#stage");
+        var wrapEl = root.querySelector("#wrap");
+        var boardEl = root.querySelector("#board");
+        var ribEl = root.querySelector("#rib");
+        var ringsEl = root.querySelector("#rings");
+        var bandEl = root.querySelector("#band");
+        var pgEl = root.querySelector(".pg");
+
+        boardEl.style.background = s.nb ? "transparent" : s.custom ? (vig + ",linear-gradient(145deg," + cust.col + "," + dk(cust.col) + ")") : (s.bb || s.cov);
+        boardEl.style.boxShadow = s.nb ? "none" : "";
+        ribEl.style.background = "linear-gradient(90deg," + (s.rib || "#a3122a") + ",rgba(255,255,255,.4) 50%," + (s.rib || "#a3122a") + ")";
+
+        function fit() {
+          if (!flip || !wrapEl || !boardEl) return;
+          var wr = wrapEl.getBoundingClientRect();
+          var L = 1e9, Rr = -1e9, Tp = 1e9, B = -1e9;
+          var bookEl = root.querySelector("#book");
+          if (!bookEl) return;
+          bookEl.querySelectorAll(".page").forEach(function(p) {
+            if (getComputedStyle(p).display === "none") return;
+            var r = p.getBoundingClientRect();
+            if (r.width < 5) return;
+            L = Math.min(L, r.left); Rr = Math.max(Rr, r.right); Tp = Math.min(Tp, r.top); B = Math.max(B, r.bottom);
           });
-          bk.style.transform = "translateX(" + (s === 0 ? -W / 2 : s === maxS && n % 2 === 0 ? W / 2 : 0) + "px)";
-          pg.textContent = s === 0 ? "1 / " + n : (2 * s + 1 > n ? 2 * s : 2 * s + "\u2013" + (2 * s + 1)) + " / " + n;
-        }
-        function fit(force) {
-          var clientW = root.clientWidth || (typeof window !== "undefined" && window.innerWidth ? window.innerWidth : 800);
-          var aw = Math.max(260, clientW - 40);
-          var ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
-          var r = c.ratio || 0.72;
-          var newW = Math.min(aw / 2, ah * r) * z;
-          var newH = newW / r;
-
-          if (!force && pf && Math.abs(W - newW) < 15 && Math.abs(H - newH) < 15) return;
-
-          W = newW;
-          H = newH;
-
-          var pfWrap = root.querySelector(".pf-container-wrap");
-          if (PageFlipClass && pfWrap && P.length) {
-            try {
-              if (pf) { pf.destroy(); pf = null; }
-              pfWrap.innerHTML = "";
-              var mount = document.createElement("div");
-              mount.id = "pf-book-mount";
-              mount.className = "pf-book-mount";
-              mount.style.width = (2 * Math.round(W)) + "px";
-              mount.style.height = Math.round(H) + "px";
-              mount.style.margin = "0 auto";
-              pfWrap.appendChild(mount);
-
-              var updateBookPosition = function(curSpread, state) {
-                if (!pfWrap) return;
-                var isCover = curSpread === 0;
-                var spreadArr = pf.getPageCollection ? pf.getPageCollection().getSpread() : [];
-                var isBackCover = spreadArr.length > 1 && curSpread === spreadArr.length - 1 && spreadArr[curSpread] && spreadArr[curSpread].length === 1;
-
-                if (state === "flipping" || state === "user_fold") {
-                  pfWrap.style.clipPath = "none";
-                  pfWrap.style.transform = "translateX(0)";
-                  return;
-                }
-
-                if (isCover) {
-                  pfWrap.style.clipPath = "inset(0 0 0 50%)";
-                  pfWrap.style.transform = "translateX(-" + Math.round(W / 2) + "px)";
-                } else if (isBackCover) {
-                  pfWrap.style.clipPath = "inset(0 50% 0 0)";
-                  pfWrap.style.transform = "translateX(" + Math.round(W / 2) + "px)";
-                } else {
-                  pfWrap.style.clipPath = "none";
-                  pfWrap.style.transform = "translateX(0)";
-                }
-              };
-
-              pf = new PageFlipClass(mount, {
-                width: Math.round(W),
-                height: Math.round(H),
-                size: "fixed",
-                minWidth: 200,
-                maxWidth: 1600,
-                minHeight: 250,
-                maxHeight: 1800,
-                maxShadowOpacity: 0.65,
-                showCover: true, // Page 1 is single cover, subsequent pages are 2-page spreads
-                usePortrait: false, // Force spread mode always (never collapse to single page)
-                mobileScrollSupport: false,
-                showPageCorners: true,
-                flippingTime: 700,
-                useMouseEvents: true,
-                drawShadow: true,
+          var O = s.O;
+          if (L > Rr || Rr === -1e9) {
+            if (!s.nocov && !port && pw > 0) {
+              var bW = pw + 2 * O;
+              Object.assign(boardEl.style, {
+                left: ((wr.width - bW) / 2) + "px",
+                top: -O + "px",
+                width: bW + "px",
+                height: (curH + 2 * O) + "px"
               });
-              pf.loadFromImages(P);
-              if (pf.getRender) {
-                try {
-                  pf.getRender().clear = function() {
-                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                  };
-                } catch (_) {}
-              }
-              pf.on("flip", function(e) {
-                var cur = typeof e.data === "number" ? e.data : pf.getCurrentPageIndex();
-                s = cur;
-                if (snd) playPageSound();
-                updatePgDisplay(cur, pf.getPageCount());
-                var spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
-                updateBookPosition(spreadIdx);
-              });
-              pf.on("changeState", function(e) {
-                var stateStr = typeof e.data === "string" ? e.data : "";
-                var spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
-                updateBookPosition(spreadIdx, stateStr);
-              });
-              pf.on("init", function() {
-                updatePgDisplay(pf.getCurrentPageIndex(), pf.getPageCount());
-                var spreadIdx = pf.getPageCollection ? pf.getPageCollection().getCurrentSpreadIndex() : 0;
-                updateBookPosition(spreadIdx);
-              });
-              return;
-            } catch (err) {}
+            }
+            return;
           }
+          var i = flip.getCurrentPageIndex(), fr = Math.min(1, i / Math.max(1, T - 1)), k = Math.min(1, 0.35 + T / 24);
+          Object.assign(boardEl.style, {
+            left: L - wr.left - O + "px",
+            top: Tp - wr.top - O + "px",
+            width: Rr - L + 2 * O + "px",
+            height: B - Tp + 2 * O + "px"
+          });
+          boardEl.style.setProperty("--wl", (1 + (s.th - 1) * fr * k) + "px");
+          boardEl.style.setProperty("--wr", (1 + (s.th - 1) * (1 - fr) * k) + "px");
+          ribEl.style.opacity = (i > 0 && i < T - 1 && !port && s.rib) ? "1" : "0";
+          Object.assign(ringsEl.style, {
+            display: s.rings ? "block" : "none",
+            left: (L + Rr) / 2 - wr.left - 15 + "px",
+            top: Tp - wr.top + 4 + "px",
+            height: B - Tp - 8 + "px"
+          });
+          Object.assign(bandEl.style, {
+            display: s.band ? "block" : "none",
+            opacity: i === 0 ? "1" : "0",
+            left: Rr - wr.left - 38 + "px",
+            top: Tp - wr.top - O + "px",
+            height: B - Tp + 2 * O + "px"
+          });
+          if (!s.nocov && !port && pw > 0) {
+            if (i === 0) wrapEl.style.transform = "translateX(-" + Math.round(pw / 2) + "px)";
+            else if (i >= T - 1) wrapEl.style.transform = "translateX(" + Math.round(pw / 2) + "px)";
+            else wrapEl.style.transform = "translateX(0)";
+          } else {
+            wrapEl.style.transform = "translateX(0)";
+          }
+          if (pgEl) {
+            if (!s.nocov && i === 0) pgEl.textContent = "Cover";
+            else if (!s.nocov && i >= T - 1) pgEl.textContent = "Back Cover";
+            else pgEl.textContent = (i + 1) + " / " + T;
+          }
+        }
 
-          var pfWrapEl = root.querySelector(".pf-container-wrap");
-          if (pfWrapEl) pfWrapEl.style.display = "none";
-          if (bk) bk.style.display = "block";
-          var p = Math.max(6, Math.round(W * (T.pd || 0.02)));
-          bk.style.width = Math.round(2 * W) + "px";
-          bk.style.height = Math.round(H) + "px";
-          bd.style.inset = "-" + p + "px";
-          st.style.padding = p + 4 + "px 0";
-          lvs.forEach(function(e) { e.style.width = Math.round(W) + "px"; e.style.height = Math.round(H) + "px"; });
-          var sq = q(".sp");
-          if (sq) { sq.style.top = sq.style.bottom = "-" + p + "px"; }
-          place();
+        function build() {
+          var clientW = stageEl.clientWidth || (typeof window !== "undefined" && window.innerWidth ? window.innerWidth : 800);
+          var isFull = !!c.full || (typeof document !== "undefined" && !!document.fullscreenElement);
+          var clientH = stageEl.clientHeight || (typeof window !== "undefined" ? (isFull ? window.innerHeight - 100 : Math.min(window.innerHeight * 0.78, 880)) : 650);
+          var W = Math.max(280, clientW - (isFull ? 24 : 36)), H = Math.max(280, clientH - (isFull ? 16 : 32));
+          var A = c.ratio || 0.714, w, h;
+          port = W < 520;
+          if (port) { h = Math.min(H, W / A) * z; w = h * A; }
+          else { h = Math.min(H, W / (2 * A)) * z; w = 2 * h * A; }
+          curH = Math.round(h);
+          wrapEl.style.width = Math.round(w) + "px";
+          wrapEl.style.height = Math.round(h) + "px";
+          pw = Math.round(port ? w : w / 2);
+
+          if (flip) { try { flip.destroy(); } catch (_) {} flip = null; }
+          var oldBook = root.querySelector("#book");
+          if (oldBook) oldBook.remove();
+          var bk = document.createElement("div");
+          bk.id = "book";
+          wrapEl.appendChild(bk);
+
+          var pg = pagesFor(s, P, cust, title);
+          T = pg.length;
+          var els = pg.map(function(p) {
+            var d = document.createElement("div");
+            d.className = "page";
+            if (s.hard && p.hd) d.dataset.density = "hard";
+            d.innerHTML = p.h;
+            return d;
+          });
+
+          var PageFlipClass = (window.St && window.St.PageFlip) || window.PageFlip;
+          if (!PageFlipClass) return;
+
+          flip = new PageFlipClass(bk, {
+            width: pw,
+            height: Math.round(h),
+            size: "stretch",
+            minWidth: Math.round(pw * 0.6),
+            maxWidth: 2400,
+            minHeight: 200,
+            maxHeight: 2200,
+            showCover: s.showCover !== false,
+            flippingTime: s.ft || 800,
+            maxShadowOpacity: 0.6,
+            drawShadow: true,
+            usePortrait: true,
+            mobileScrollSupport: false,
+            autoSize: true,
+          });
+
+          flip.loadFromHTML(els);
+          flip.on("flip", function() {
+            if (snd) playPageSound();
+            setTimeout(fit, 80);
+          });
+          flip.on("changeState", function(e) {
+            if (e.data === "read") setTimeout(fit, 40);
+          });
+          flip.on("init", function() {
+            setTimeout(fit, 50);
+          });
+          setTimeout(fit, 100);
+          setTimeout(fit, 350);
+          setTimeout(fit, 900);
         }
-        function go(dir) {
-          var ns = cl(s + dir);
-          if (ns === s) { place(); return; }
-          var m = dir > 0 ? s : s - 1;
-          s = ns;
-          place();
-          if (lvs[m]) lvs[m].style.zIndex = String(L + 5);
-          tick();
-          clearTimeout(tm);
-          tm = setTimeout(place, sp * 1000 + 60);
-        }
-        bk.addEventListener("pointerdown", function(e) {
-          var rect = bk.getBoundingClientRect();
-          var sd = e.clientX - rect.left > rect.width / 2 ? 1 : -1;
-          if ((sd > 0 && s >= maxS) || (sd < 0 && s <= 0)) return;
-          var m = sd > 0 ? s : s - 1;
-          dr = { x: e.clientX, sd: sd, m: m, p: 0 };
-          if (lvs[m]) { lvs[m].style.transition = "none"; lvs[m].style.zIndex = String(L + 5); }
-          bk.setPointerCapture(e.pointerId);
+
+        build();
+
+        var rt;
+        window.addEventListener("resize", function() {
+          clearTimeout(rt);
+          rt = setTimeout(function() { if (P.length) build(); }, 250);
         });
-        bk.addEventListener("pointermove", function(e) {
-          if (!dr || !lvs[dr.m]) return;
-          dr.p = Math.min(1, Math.max(0, ((e.clientX - dr.x) * -dr.sd) / W));
-          lvs[dr.m].style.transform = "rotateY(" + (dr.sd > 0 ? -180 * dr.p : -180 + 180 * dr.p) + "deg)";
+
+        window.addEventListener("keydown", function(e) {
+          if (e.key === "ArrowRight" && flip) {
+            try { if (flip.getState() === "read") flip.flipNext("bottom"); else flip.turnToNextPage(); } catch (_) { flip.turnToNextPage(); }
+          }
+          if (e.key === "ArrowLeft" && flip) {
+            try { if (flip.getState() === "read") flip.flipPrev("bottom"); else flip.turnToPrevPage(); } catch (_) { flip.turnToPrevPage(); }
+          }
         });
-        function up() {
-          var d = dr; dr = null;
-          if (!d || !lvs[d.m]) return;
-          lvs[d.m].style.transition = "";
-          if (d.p < 0.04 || d.p > 0.3) go(d.sd); else place();
-        }
-        bk.addEventListener("pointerup", up);
-        bk.addEventListener("pointercancel", up);
-        function key(e) {
-          var el = document.activeElement;
-          if (el && /INPUT|TEXTAREA|SELECT/.test(el.tagName)) return;
-          if (e.key === "ArrowRight") {
-            if (pf) {
-              try {
-                if (pf.getState() === "read") pf.flipNext("bottom");
-                else pf.turnToNextPage();
-              } catch (_) { pf.turnToNextPage(); }
-            } else go(1);
-          }
-          if (e.key === "ArrowLeft") {
-            if (pf) {
-              try {
-                if (pf.getState() === "read") pf.flipPrev("bottom");
-                else pf.turnToPrevPage();
-              } catch (_) { pf.turnToPrevPage(); }
-            } else go(-1);
-          }
-        }
-        var ro = new ResizeObserver(function() { fit(false); });
-        ro.observe(root);
-        window.addEventListener("keydown", key);
-        document.addEventListener("fullscreenchange", function() { fit(true); });
-        root._off = function() {
-          ro.disconnect();
-          window.removeEventListener("keydown", key);
-          document.removeEventListener("fullscreenchange", function() { fit(true); });
-          clearInterval(au);
-          if (pf) { try { pf.destroy(); } catch (_) {} pf = null; }
-        };
-        q(".ct").onclick = function(e) {
+
+        root.querySelector(".ct").onclick = function(e) {
           var b = e.target.closest("button");
           if (!b) return;
           var a = b.dataset.a;
-          if (a === "p") {
-            if (pf) {
-              try {
-                if (pf.getState() === "read") pf.flipPrev("bottom");
-                else pf.turnToPrevPage();
-              } catch (_) { pf.turnToPrevPage(); }
-            } else go(-1);
+          if (a === "p" && flip) {
+            try { if (flip.getState() === "read") flip.flipPrev("bottom"); else flip.turnToPrevPage(); } catch (_) { flip.turnToPrevPage(); }
           }
-          if (a === "n") {
-            if (pf) {
-              try {
-                if (pf.getState() === "read") pf.flipNext("bottom");
-                else pf.turnToNextPage();
-              } catch (_) { pf.turnToNextPage(); }
-            } else go(1);
+          if (a === "n" && flip) {
+            try { if (flip.getState() === "read") flip.flipNext("bottom"); else flip.turnToNextPage(); } catch (_) { flip.turnToNextPage(); }
           }
-          if (a === "z") { z = z >= 2.2 ? 1 : z + 0.4; fit(true); }
-          if (a === "s") { snd = !snd; b.textContent = snd ? "\ud83d\udd0a" : "\ud83d\udd08"; tick(); }
+          if (a === "z") { z = z >= 1.6 ? 1 : z + 0.3; build(); }
+          if (a === "s") { snd = !snd; b.textContent = snd ? "🔊" : "🔈"; if (snd) playPageSound(); }
           if (a === "f") { document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen && root.requestFullscreen(); }
           if (a === "a") {
-            if (au) { clearInterval(au); au = 0; b.textContent = "\u25b6"; }
+            if (au) { clearInterval(au); au = 0; b.textContent = "▶"; }
             else {
-              b.textContent = "\u23f8";
+              b.textContent = "⏸";
               au = setInterval(function() {
-                if (pf) {
-                  if (pf.getCurrentPageIndex() >= pf.getPageCount() - 1) pf.turnToPage(0);
+                if (flip) {
+                  if (flip.getCurrentPageIndex() >= flip.getPageCount() - 1) flip.turnToPage(0);
                   else {
-                    try {
-                      if (pf.getState() === "read") pf.flipNext("bottom");
-                      else pf.turnToNextPage();
-                    } catch (_) { pf.turnToNextPage(); }
+                    try { if (flip.getState() === "read") flip.flipNext("bottom"); else flip.turnToNextPage(); } catch (_) { flip.turnToNextPage(); }
                   }
-                } else {
-                  if (s >= maxS) { s = 0; place(); } else go(1);
                 }
               }, 3200);
             }
           }
           if (a === "t") {
-            var tEl = q(".th");
-            if (!tEl.innerHTML) {
-              tEl.innerHTML = P.map(function(u, idx) { return u ? '<img data-i="' + idx + '" src="' + u + '">' : ""; }).join("");
+            var thEl = root.querySelector(".th");
+            if (!thEl.innerHTML) {
+              thEl.innerHTML = P.map(function(u, idx) { return '<img data-i="' + idx + '" src="' + u + '">'; }).join("");
             }
-            tEl.hidden = !tEl.hidden;
+            thEl.hidden = !thEl.hidden;
           }
         };
-        q(".th").onclick = function(e) {
-          var idx = e.target.dataset.i;
-          if (idx == null) return;
-          if (pf) {
-            try { pf.turnToPage(Number(idx)); } catch (_) {}
-          } else {
-            s = cl(idx === "0" ? 0 : Math.ceil(Number(idx) / 2)); place(); tick();
-          }
+
+        root.querySelector(".th").onclick = function(e) {
+          var i = e.target.dataset.i;
+          if (i == null || !flip) return;
+          try { flip.turnToPage(s.nocov ? Number(i) : Number(i) + 1); } catch (_) {}
         };
-        fit(true);
-        if (typeof requestAnimationFrame !== "undefined") {
-          requestAnimationFrame(function() {
-            fit(true);
-            setTimeout(function() { fit(true); }, 80);
-          });
-        }
       }
     `;
 
@@ -2478,12 +3001,12 @@ function initFlipbookApp() {
     return (
       "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\"><title>" +
       esc(t) +
-      "</title><style>html,body{margin:0;background:#000;font-family:system-ui,-apple-system,sans-serif}</style><style>" +
+      "</title><style>html,body{margin:0;background:#0d0b1a;font-family:Inter,system-ui,-apple-system,sans-serif}</style><style>" +
       VCSS +
       "</style></head><body><div id=\"r\"></div>" +
       "<script>" + (pfSourceCache || "/* page-flip library */") + closeScript +
       (pfSourceCache ? "" : "<script src=\"https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js\">" + closeScript) +
-      "<script>"  +
+      "<script>" +
       standaloneViewerCode +
       "\n;Viewer(document.getElementById('r')," +
       cfg +
@@ -2511,7 +3034,7 @@ function initFlipbookApp() {
         } catch (_) {}
       }
       const html = buildHTML();
-      const docName = (S.desc || "flipbook").trim().split("\n")[0].replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase() || "flipbook";
+      const docName = (S.title || "flipbook").trim().replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase() || "flipbook";
       dl(`${docName}.html`, html, "text/html");
       dlBtn.textContent = "✓ Downloaded!";
       setTimeout(() => {
@@ -2574,7 +3097,7 @@ function initFlipbookApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ── Drop zone ──────────────────────────────────────────────────────────────
+  // ── Dropzone & Uploads ─────────────────────────────────────────────────────
   const dz = getEl("drop");
   dz.onclick = () => getEl("fi").click();
   dz.onkeydown = (e: KeyboardEvent) => {
@@ -2593,7 +3116,7 @@ function initFlipbookApp() {
     loadFiles((e as DragEvent).dataTransfer?.files || null);
   });
 
-  // ── Spread dialog ──────────────────────────────────────────────────────────
+  // ── Spread Dialog ──────────────────────────────────────────────────────────
   getEl("ask").onclick = async (e: Event) => {
     const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
     if (!b) return;
@@ -2607,56 +3130,7 @@ function initFlipbookApp() {
     }
   };
 
-  getEl("lu").onclick = () => {
-    Object.assign(S, { bg1: LC[0], bg2: LC[1] || LC[0], bgType: "grad", bgImg: "", bgTouched: true });
-    getEl("lo").hidden = true;
-    sync(); show();
-  };
-
-  // ── Cover image fit ────────────────────────────────────────────────────────
-  async function fitTo(u: string, r: number): Promise<string> {
-    const i = await li(u);
-    const c = document.createElement("canvas");
-    let w = i.width, h = w / r;
-    if (h > i.height) { h = i.height; w = h * r; }
-    c.width = Math.round(w); c.height = Math.round(h);
-    c.getContext("2d")!.drawImage(i, (i.width - w) / 2, (i.height - h) / 2, w, h, 0, 0, c.width, c.height);
-    return c.toDataURL("image/jpeg", 0.88);
-  }
-
-  async function mkThumb() {
-    try {
-      const i = await li(pages[S.shift && pages[1] ? 1 : 0]);
-      const c = document.createElement("canvas");
-      c.width = 300;
-      c.height = Math.round(300 / ratio);
-      const ctx = c.getContext("2d");
-      if (ctx) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
-        ctx.drawImage(i, 0, 0, c.width, c.height);
-      }
-      TH = c.toDataURL("image/jpeg", 0.92);
-      tiles();
-    } catch (_) { /* ok */ }
-  }
-
-  getEl("cv").addEventListener("change", async (e: Event) => {
-    const f = (e.target as HTMLInputElement).files?.[0];
-    if (!f) return;
-    S.cover = await f2u(f, 1400, "image/jpeg", 0.88);
-    sync();
-    await derive();
-  });
-
-  getEl("cvx").onclick = async () => {
-    S.cover = "";
-    (getEl("cv") as HTMLInputElement).value = "";
-    sync();
-    await derive();
-  };
-
-  // ── Embed code ────────────────────────────────────────────────────────────
+  // ── Embed Code Generator ───────────────────────────────────────────────────
   function fallbackCopyText(text: string, cb: () => void) {
     const ta = document.createElement("textarea");
     ta.value = text;
@@ -2712,8 +3186,6 @@ function initFlipbookApp() {
     }
   };
 
-  // ── Init ──────────────────────────────────────────────────────────────────
-  if (S.mode === "auto") S.mode = "ask";
   sync();
   if (S.logo) logoPal(S.logo);
 }
