@@ -1375,7 +1375,7 @@ function initFlipbookApp() {
       place();
     };
 
-    const fit = async () => {
+    const fit = async (force = false) => {
       const clientW = root.clientWidth || root.parentElement?.clientWidth || (typeof window !== "undefined" ? window.innerWidth : 800);
       const aw = Math.max(260, clientW - 40);
       const ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
@@ -1383,15 +1383,15 @@ function initFlipbookApp() {
       const newW = Math.min(aw / 2, ah * r) * z;
       const newH = newW / r;
 
-      if (pfInstance && Math.abs(W - newW) < 5 && Math.abs(H - newH) < 5) {
+      if (!force && pfInstance && Math.abs(W - newW) < 15 && Math.abs(H - newH) < 15) {
         return;
       }
 
       W = newW;
       H = newH;
 
-      const mount = root.querySelector("#pf-book-mount") as HTMLElement | null;
-      if (!mount || !P.length) {
+      const pfWrap = root.querySelector(".pf-container-wrap") as HTMLElement | null;
+      if (!pfWrap || !P.length) {
         initFallbackCss();
         return;
       }
@@ -1406,22 +1406,30 @@ function initFlipbookApp() {
           pfInstance = null;
         }
 
-        mount.innerHTML = "";
+        // Always recreate fresh mount element inside pfWrap so destroy() never leaves DOM detached
+        pfWrap.innerHTML = "";
+        const mount = document.createElement("div");
+        mount.id = "pf-book-mount";
+        mount.className = "pf-book-mount";
         mount.style.width = (2 * Math.round(W)) + "px";
         mount.style.height = Math.round(H) + "px";
+        mount.style.margin = "0 auto";
+        pfWrap.appendChild(mount);
+
         const pf = new PageFlipClass(mount, {
           width: Math.round(W),
           height: Math.round(H),
           size: "fixed",
-          minWidth: 240,
-          maxWidth: 1200,
-          minHeight: 320,
-          maxHeight: 1400,
+          minWidth: 200,
+          maxWidth: 1600,
+          minHeight: 250,
+          maxHeight: 1800,
           maxShadowOpacity: 0.65,
-          showCover: true,
+          showCover: false, // 2-page spread immediately (no solitary front cover)
+          usePortrait: false, // Force 2-page spread (never collapse to single page)
           mobileScrollSupport: false,
           showPageCorners: true, // 3D realistic corner peeling & curl prompt on hover
-          flippingTime: 750,
+          flippingTime: 700,
           useMouseEvents: true,
           drawShadow: true,
         });
@@ -1451,24 +1459,32 @@ function initFlipbookApp() {
       const el = document.activeElement as HTMLElement | null;
       if (el && /INPUT|TEXTAREA|SELECT/.test(el.tagName)) return;
       if (e.key === "ArrowRight") {
-        if (pfInstance) pfInstance.flipNext("bottom");
-        else go(1);
+        if (pfInstance) {
+          try {
+            if (pfInstance.getState() === "read") pfInstance.flipNext("bottom");
+            else pfInstance.turnToNextPage();
+          } catch (_) { pfInstance.turnToNextPage(); }
+        } else go(1);
       }
       if (e.key === "ArrowLeft") {
-        if (pfInstance) pfInstance.flipPrev("bottom");
-        else go(-1);
+        if (pfInstance) {
+          try {
+            if (pfInstance.getState() === "read") pfInstance.flipPrev("bottom");
+            else pfInstance.turnToPrevPage();
+          } catch (_) { pfInstance.turnToPrevPage(); }
+        } else go(-1);
       }
     };
 
-    const ro = new ResizeObserver(fit);
+    const ro = new ResizeObserver(() => fit(false));
     ro.observe(root);
     addEventListener("keydown", key);
-    document.addEventListener("fullscreenchange", fit);
+    document.addEventListener("fullscreenchange", () => fit(true));
 
     root._off = () => {
       ro.disconnect();
       removeEventListener("keydown", key);
-      document.removeEventListener("fullscreenchange", fit);
+      document.removeEventListener("fullscreenchange", () => fit(true));
       clearInterval(au as number);
       if (pfInstance) {
         try { pfInstance.destroy(); } catch (_) {}
@@ -1482,16 +1498,28 @@ function initFlipbookApp() {
       if (!b) return;
       const a = b.dataset.a;
       if (a === "p") {
-        if (pfInstance) pfInstance.flipPrev("bottom");
-        else go(-1);
+        if (pfInstance) {
+          try {
+            if (pfInstance.getState() === "read") pfInstance.flipPrev("bottom");
+            else pfInstance.turnToPrevPage();
+          } catch (_) { pfInstance.turnToPrevPage(); }
+        } else {
+          go(-1);
+        }
       }
       if (a === "n") {
-        if (pfInstance) pfInstance.flipNext("bottom");
-        else go(1);
+        if (pfInstance) {
+          try {
+            if (pfInstance.getState() === "read") pfInstance.flipNext("bottom");
+            else pfInstance.turnToNextPage();
+          } catch (_) { pfInstance.turnToNextPage(); }
+        } else {
+          go(1);
+        }
       }
       if (a === "z") {
         z = z >= 2.2 ? 1 : z + 0.4;
-        fit();
+        fit(true);
       }
       if (a === "s") {
         snd = !snd;
@@ -1516,7 +1544,12 @@ function initFlipbookApp() {
               if (pfInstance.getCurrentPageIndex() >= pfInstance.getPageCount() - 1) {
                 pfInstance.turnToPage(0);
               } else {
-                pfInstance.flipNext("bottom");
+                try {
+                  if (pfInstance.getState() === "read") pfInstance.flipNext("bottom");
+                  else pfInstance.turnToNextPage();
+                } catch (_) {
+                  pfInstance.turnToNextPage();
+                }
               }
             } else {
               if (s >= maxS) { s = 0; place(); }
@@ -2093,7 +2126,7 @@ function initFlipbookApp() {
           bk.style.transform = "translateX(" + (s === 0 ? -W / 2 : s === maxS && n % 2 === 0 ? W / 2 : 0) + "px)";
           pg.textContent = s === 0 ? "1 / " + n : (2 * s + 1 > n ? 2 * s : 2 * s + "\u2013" + (2 * s + 1)) + " / " + n;
         }
-        function fit() {
+        function fit(force) {
           var clientW = root.clientWidth || (typeof window !== "undefined" && window.innerWidth ? window.innerWidth : 800);
           var aw = Math.max(260, clientW - 40);
           var ah = document.fullscreenElement ? innerHeight - 160 : Math.min(innerHeight * 0.72, 740);
@@ -2101,31 +2134,38 @@ function initFlipbookApp() {
           var newW = Math.min(aw / 2, ah * r) * z;
           var newH = newW / r;
 
-          if (pf && Math.abs(W - newW) < 5 && Math.abs(H - newH) < 5) return;
+          if (!force && pf && Math.abs(W - newW) < 15 && Math.abs(H - newH) < 15) return;
 
           W = newW;
           H = newH;
 
-          var mount = root.querySelector("#pf-book-mount");
-          if (PageFlipClass && mount && P.length) {
+          var pfWrap = root.querySelector(".pf-container-wrap");
+          if (PageFlipClass && pfWrap && P.length) {
             try {
               if (pf) { pf.destroy(); pf = null; }
-              mount.innerHTML = "";
+              pfWrap.innerHTML = "";
+              var mount = document.createElement("div");
+              mount.id = "pf-book-mount";
+              mount.className = "pf-book-mount";
               mount.style.width = (2 * Math.round(W)) + "px";
               mount.style.height = Math.round(H) + "px";
+              mount.style.margin = "0 auto";
+              pfWrap.appendChild(mount);
+
               pf = new PageFlipClass(mount, {
                 width: Math.round(W),
                 height: Math.round(H),
                 size: "fixed",
-                minWidth: 240,
-                maxWidth: 1200,
-                minHeight: 320,
-                maxHeight: 1400,
+                minWidth: 200,
+                maxWidth: 1600,
+                minHeight: 250,
+                maxHeight: 1800,
                 maxShadowOpacity: 0.65,
-                showCover: true,
+                showCover: false,
+                usePortrait: false,
                 mobileScrollSupport: false,
                 showPageCorners: true,
-                flippingTime: 750,
+                flippingTime: 700,
                 useMouseEvents: true,
                 drawShadow: true,
               });
@@ -2143,8 +2183,8 @@ function initFlipbookApp() {
             } catch (err) {}
           }
 
-          var pfWrap = root.querySelector(".pf-container-wrap");
-          if (pfWrap) pfWrap.style.display = "none";
+          var pfWrapEl = root.querySelector(".pf-container-wrap");
+          if (pfWrapEl) pfWrapEl.style.display = "none";
           if (bk) bk.style.display = "block";
           var p = Math.max(6, Math.round(W * (T.pd || 0.02)));
           bk.style.width = Math.round(2 * W) + "px";
@@ -2192,17 +2232,31 @@ function initFlipbookApp() {
         function key(e) {
           var el = document.activeElement;
           if (el && /INPUT|TEXTAREA|SELECT/.test(el.tagName)) return;
-          if (e.key === "ArrowRight") { if (pf) pf.flipNext("bottom"); else go(1); }
-          if (e.key === "ArrowLeft") { if (pf) pf.flipPrev("bottom"); else go(-1); }
+          if (e.key === "ArrowRight") {
+            if (pf) {
+              try {
+                if (pf.getState() === "read") pf.flipNext("bottom");
+                else pf.turnToNextPage();
+              } catch (_) { pf.turnToNextPage(); }
+            } else go(1);
+          }
+          if (e.key === "ArrowLeft") {
+            if (pf) {
+              try {
+                if (pf.getState() === "read") pf.flipPrev("bottom");
+                else pf.turnToPrevPage();
+              } catch (_) { pf.turnToPrevPage(); }
+            } else go(-1);
+          }
         }
-        var ro = new ResizeObserver(fit);
+        var ro = new ResizeObserver(function() { fit(false); });
         ro.observe(root);
         window.addEventListener("keydown", key);
-        document.addEventListener("fullscreenchange", fit);
+        document.addEventListener("fullscreenchange", function() { fit(true); });
         root._off = function() {
           ro.disconnect();
           window.removeEventListener("keydown", key);
-          document.removeEventListener("fullscreenchange", fit);
+          document.removeEventListener("fullscreenchange", function() { fit(true); });
           clearInterval(au);
           if (pf) { try { pf.destroy(); } catch (_) {} pf = null; }
         };
@@ -2210,9 +2264,23 @@ function initFlipbookApp() {
           var b = e.target.closest("button");
           if (!b) return;
           var a = b.dataset.a;
-          if (a === "p") { if (pf) pf.flipPrev("bottom"); else go(-1); }
-          if (a === "n") { if (pf) pf.flipNext("bottom"); else go(1); }
-          if (a === "z") { z = z >= 2.2 ? 1 : z + 0.4; fit(); }
+          if (a === "p") {
+            if (pf) {
+              try {
+                if (pf.getState() === "read") pf.flipPrev("bottom");
+                else pf.turnToPrevPage();
+              } catch (_) { pf.turnToPrevPage(); }
+            } else go(-1);
+          }
+          if (a === "n") {
+            if (pf) {
+              try {
+                if (pf.getState() === "read") pf.flipNext("bottom");
+                else pf.turnToNextPage();
+              } catch (_) { pf.turnToNextPage(); }
+            } else go(1);
+          }
+          if (a === "z") { z = z >= 2.2 ? 1 : z + 0.4; fit(true); }
           if (a === "s") { snd = !snd; b.textContent = snd ? "\ud83d\udd0a" : "\ud83d\udd08"; tick(); }
           if (a === "f") { document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen && root.requestFullscreen(); }
           if (a === "a") {
@@ -2222,7 +2290,12 @@ function initFlipbookApp() {
               au = setInterval(function() {
                 if (pf) {
                   if (pf.getCurrentPageIndex() >= pf.getPageCount() - 1) pf.turnToPage(0);
-                  else pf.flipNext("bottom");
+                  else {
+                    try {
+                      if (pf.getState() === "read") pf.flipNext("bottom");
+                      else pf.turnToNextPage();
+                    } catch (_) { pf.turnToNextPage(); }
+                  }
                 } else {
                   if (s >= maxS) { s = 0; place(); } else go(1);
                 }
@@ -2240,14 +2313,17 @@ function initFlipbookApp() {
         q(".th").onclick = function(e) {
           var idx = e.target.dataset.i;
           if (idx == null) return;
-          if (pf) { pf.turnToPage(Number(idx)); }
-          else { s = cl(idx === "0" ? 0 : Math.ceil(Number(idx) / 2)); place(); tick(); }
+          if (pf) {
+            try { pf.turnToPage(Number(idx)); } catch (_) {}
+          } else {
+            s = cl(idx === "0" ? 0 : Math.ceil(Number(idx) / 2)); place(); tick();
+          }
         };
-        fit();
+        fit(true);
         if (typeof requestAnimationFrame !== "undefined") {
           requestAnimationFrame(function() {
-            fit();
-            setTimeout(fit, 80);
+            fit(true);
+            setTimeout(function() { fit(true); }, 80);
           });
         }
       }
@@ -2272,7 +2348,7 @@ function initFlipbookApp() {
     );
   }
 
-  getEl("dl").onclick = () => {
+  getEl("dl").onclick = async () => {
     if (!pages || pages.length === 0) {
       alert("Please upload a PDF or images first.");
       return;
@@ -2282,31 +2358,41 @@ function initFlipbookApp() {
     dlBtn.textContent = "Generating Offline HTML...";
     (dlBtn as HTMLButtonElement).disabled = true;
 
-    setTimeout(() => {
-      try {
-        const html = buildHTML();
-        const docName = (S.desc || "flipbook").trim().split("\n")[0].replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase() || "flipbook";
-        dl(`${docName}.html`, html, "text/html");
-        dlBtn.textContent = "✓ Downloaded!";
-        setTimeout(() => {
-          dlBtn.innerHTML = origHtml;
-          (dlBtn as HTMLButtonElement).disabled = false;
-        }, 2500);
-      } catch (err) {
-        console.error("Export error:", err);
-        alert("Failed to generate offline HTML. Please try again.");
+    try {
+      if (!pfSourceCache) {
+        try {
+          const res = await fetch("/page-flip.browser.js");
+          if (res.ok) pfSourceCache = await res.text();
+        } catch (_) {}
+      }
+      const html = buildHTML();
+      const docName = (S.desc || "flipbook").trim().split("\n")[0].replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase() || "flipbook";
+      dl(`${docName}.html`, html, "text/html");
+      dlBtn.textContent = "✓ Downloaded!";
+      setTimeout(() => {
         dlBtn.innerHTML = origHtml;
         (dlBtn as HTMLButtonElement).disabled = false;
-      }
-    }, 50);
+      }, 2500);
+    } catch (err) {
+      console.error("Export error:", err);
+      alert("Failed to generate offline HTML. Please try again.");
+      dlBtn.innerHTML = origHtml;
+      (dlBtn as HTMLButtonElement).disabled = false;
+    }
   };
 
-  getEl("pvw").onclick = () => {
+  getEl("pvw").onclick = async () => {
     if (!pages || pages.length === 0) {
       alert("Please upload a PDF or images first.");
       return;
     }
     try {
+      if (!pfSourceCache) {
+        try {
+          const res = await fetch("/page-flip.browser.js");
+          if (res.ok) pfSourceCache = await res.text();
+        } catch (_) {}
+      }
       const html = buildHTML();
       const blob = new Blob([html], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
