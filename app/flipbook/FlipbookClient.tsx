@@ -843,9 +843,18 @@ export default function FlipbookClient() {
                 </div>
 
                 <div>
-                  <span className="text-xs font-bold text-slate-800">Colors from Logo</span>
-                  <div className="fpl mt-2" id="lp">
-                    <span className="text-xs text-slate-400">Upload a logo in Brand tab to extract colors</span>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-slate-800">Colors from Logo</span>
+                    <label htmlFor="lg" className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer bg-blue-50 hover:bg-blue-100/80 px-2.5 py-1 rounded-lg transition-colors">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      <span>Upload Logo</span>
+                    </label>
+                  </div>
+                  <div className="fpl mt-1" id="lp">
+                    <label htmlFor="lg" className="w-full flex items-center justify-center gap-2 py-2.5 px-3 border border-dashed border-slate-300 hover:border-blue-500 rounded-xl bg-slate-50/60 hover:bg-blue-50/40 text-xs font-semibold text-slate-600 hover:text-blue-700 cursor-pointer transition-all">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      <span>Upload logo to extract brand palette</span>
+                    </label>
                   </div>
                 </div>
 
@@ -2000,7 +2009,8 @@ function initFlipbookApp() {
     S.logo = "";
     LC = [];
     getEl("lo").hidden = true;
-    getEl("lp").innerHTML = '<span class="text-xs text-slate-400">Upload a logo in the Brand tab to see matching colors</span>';
+    getEl("lp").innerHTML =
+      '<label for="lg" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 border border-dashed border-slate-300 hover:border-blue-500 rounded-xl bg-slate-50/60 hover:bg-blue-50/40 text-xs font-semibold text-slate-600 hover:text-blue-700 cursor-pointer transition-all"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload logo to extract brand palette</span></label>';
     (getEl("lg") as HTMLInputElement).value = "";
     sync();
     show();
@@ -2059,7 +2069,8 @@ function initFlipbookApp() {
       .map(([k]) => "#" + k.split(",").map((v) => Math.min(255, +v * 32 + 16).toString(16).padStart(2, "0")).join(""));
     LC = cols;
     getEl("lp").innerHTML =
-      cols.map((h: string) => '<button data-h="' + h + '" title="' + h + '" style="background:' + h + '"></button>').join("") || "";
+      cols.map((h: string) => '<button data-h="' + h + '" title="' + h + '" style="background:' + h + '"></button>').join("") +
+      (cols.length ? '<label for="lg" class="inline-flex items-center text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer ml-2">Change Logo</label>' : "");
   }
 
   getEl("lp").onclick = (e: Event) => {
