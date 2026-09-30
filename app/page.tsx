@@ -3205,40 +3205,21 @@ export default function Home() {
           {/* HERO */}
 
           <div className="mx-auto max-w-5xl text-center pt-2 sm:pt-6 pb-2">
-            <div className="min-h-[86px] xs:min-h-[110px] sm:min-h-[135px] md:min-h-[155px] lg:min-h-[175px] flex flex-col items-center justify-center">
-              <h1
-                aria-live="polite"
-                className={`text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center transition-all duration-300 ease-out ${
-                  fadeState === "visible"
-                    ? "opacity-100 translate-y-0 scale-100"
-                    : "opacity-0 -translate-y-2 scale-[0.99]"
-                }`}
-              >
-                <span>{HERO_HEADLINES[headlineIndex].line1}</span>
-                <br />
-                <span>
-                  {HERO_HEADLINES[headlineIndex].line2Prefix}
-                  <span className="text-[#0055fe]">{HERO_HEADLINES[headlineIndex].line2Accent}</span>
-                </span>
-              </h1>
-            </div>
-
-            {/* CYCLING INDICATOR PILLS */}
-            <div className="mt-4 flex items-center justify-center gap-2" aria-hidden="true">
-              {HERO_HEADLINES.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => handleHeadlineSelect(i)}
-                  aria-label={`Show headline ${i + 1}`}
-                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                    i === headlineIndex
-                      ? "w-7 bg-[#0055fe] opacity-100 shadow-xs shadow-blue-500/30"
-                      : "w-5 bg-[#0055fe] opacity-25 hover:opacity-50"
-                  }`}
-                />
-              ))}
-            </div>
+            <h1
+              aria-live="polite"
+              className={`text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center transition-all duration-300 ease-out ${
+                fadeState === "visible"
+                  ? "opacity-100 translate-y-0 scale-100"
+                  : "opacity-0 -translate-y-2 scale-[0.99]"
+              }`}
+            >
+              <span>{HERO_HEADLINES[headlineIndex].line1}</span>
+              <br />
+              <span>
+                {HERO_HEADLINES[headlineIndex].line2Prefix}
+                <span className="text-[#0055fe]">{HERO_HEADLINES[headlineIndex].line2Accent}</span>
+              </span>
+            </h1>
           </div>
 
 

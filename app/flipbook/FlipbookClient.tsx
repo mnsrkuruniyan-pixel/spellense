@@ -56,6 +56,8 @@ const VCSS = `
 /* 3D Realistic Stage & Hard Board Architecture */
 .stage{position:relative;width:100%;height:clamp(380px,52vh,520px);display:flex;align-items:center;justify-content:center;touch-action:pan-y;z-index:2;perspective:2600px;-webkit-perspective:2600px;overflow:hidden}
 .fbv.full .stage{height:calc(100vh - 100px);max-height:none}
+.rh{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);background:rgba(15,23,42,.92);color:#fff;font:600 12px system-ui,sans-serif;padding:8px 14px;border-radius:999px;z-index:20;pointer-events:none;white-space:nowrap;animation:rhf 4.5s ease forwards}@keyframes rhf{0%,85%{opacity:1}100%{opacity:0}}
+@media (orientation:landscape) and (max-height:520px){.fbv{padding:6px 10px;gap:4px;border-radius:0}.stage{height:calc(100vh - 78px);height:calc(100dvh - 78px);max-height:none}.fbv.full .stage{height:calc(100vh - 66px);height:calc(100dvh - 66px)}}
 #wrap{position:relative;display:flex;align-items:center;justify-content:center;transition:transform .55s cubic-bezier(.3,.7,.2,1)}
 #book{position:relative;z-index:2}
 #board{position:absolute;z-index:1;border-radius:8px 14px 14px 8px;box-shadow:0 34px 50px -8px rgba(0,0,0,.6),0 10px 16px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.12);transition:left .55s cubic-bezier(.3,.7,.2,1),top .55s,width .55s cubic-bezier(.3,.7,.2,1),height .55s}
@@ -110,6 +112,33 @@ const VCSS = `
 .ct{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;z-index:10;background:rgba(15,23,42,.85);padding:6px 12px;border-radius:999px;color:#fff;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 30px -5px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15);margin-top:4px}
 .ct button{all:unset;cursor:pointer;width:34px;height:34px;text-align:center;line-height:34px;border-radius:50%;font-size:1.05rem;transition:all .15s;display:flex;align-items:center;justify-content:center}
 .ct button:hover,.ct button:focus-visible{background:rgba(255,255,255,.2);transform:scale(1.08)}
+.ct button svg{display:block;pointer-events:none}
+.ct .sep{display:none}
+.fbv.clean .ct{background:#fff;color:#334155;gap:2px;padding:4px 8px;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(15,23,42,.06),0 10px 28px -14px rgba(15,23,42,.22);-webkit-backdrop-filter:none;backdrop-filter:none}
+.fbv.clean .ct button{width:32px;height:32px;color:#475569}
+.fbv.clean .ct button:hover,.fbv.clean .ct button:focus-visible{background:#f1f5f9;color:#0f172a;transform:none}
+.fbv.clean .ct .pg{color:#334155;font-weight:600;font-variant-numeric:tabular-nums;min-width:64px}
+.fbv.clean .ct .sep{display:block;width:1px;height:18px;background:#e2e8f0;margin:0 6px}
+.fbv.clean .th img{box-shadow:0 1px 4px rgba(15,23,42,.18);border-radius:6px}
+.fbv.clean .cr{opacity:.6}
+.nv{display:none}
+.fbv.clean .nv{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:760px;z-index:10;color:#475569}
+.fbv.clean .nv button{all:unset;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#0f172a;transition:background .15s}
+.fbv.clean .nv button:hover,.fbv.clean .nv button:focus-visible{background:rgba(15,23,42,.08)}
+.fbv.clean .nv svg{width:26px;height:26px}
+.fbv.clean .nv .pg{font-size:.75rem;min-width:64px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;color:#475569}
+.fbv.clean .sl{-webkit-appearance:none;appearance:none;flex:1;min-width:80px;height:6px;border-radius:999px;background:rgba(15,23,42,.14);outline:none;cursor:pointer;margin:0}
+.fbv.clean .sl::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:44px;height:6px;border-radius:999px;background:#64748b;border:0}
+.fbv.clean .sl::-moz-range-thumb{width:44px;height:6px;border-radius:999px;background:#64748b;border:0}
+.fbv.clean .ct{position:absolute;top:10px;right:10px;margin:0;flex-wrap:nowrap;border-radius:12px;padding:4px;gap:0}
+.fbv.clean.hh .ct{top:64px}
+.fbv.clean .ct button{width:38px;height:38px;color:#0f172a}
+.fbv.clean .ct svg{width:21px;height:21px}
+.fbv.clean .stage{height:clamp(420px,68vh,760px)}
+.fbv.clean.full .stage{height:calc(100vh - 84px)}
+.fbv.flat #book{filter:drop-shadow(0 16px 24px rgba(15,23,42,.2))}
+@media (max-width:640px) and (orientation:portrait){.fbv.clean .ct,.fbv.clean.hh .ct{position:static;top:auto;right:auto;align-self:center}}
+@media (orientation:landscape) and (max-height:520px){.fbv.clean .stage{height:calc(100vh - 84px);height:calc(100dvh - 84px)}.fbv.clean.full .stage{height:calc(100vh - 76px);height:calc(100dvh - 76px)}.fbv.clean .ct,.fbv.clean.hh .ct{top:6px;right:6px}}
 .ct .pg{font-size:.8125rem;min-width:76px;text-align:center;font-weight:700;letter-spacing:-.01em;padding:0 4px}
 .th{display:flex;gap:10px;overflow-x:auto;width:100%;padding:10px 4px;z-index:10;scrollbar-width:thin}.th[hidden]{display:none!important}
 .th img{height:72px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .18s;box-shadow:0 4px 10px rgba(0,0,0,.15)}.th img:hover{border-color:#3b82f6;transform:scale(1.06)}
@@ -143,7 +172,7 @@ const APP_CSS = `
 }
 .ftb {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 4px;
   background: #f1f5f9;
   padding: 4px;
@@ -186,6 +215,20 @@ const APP_CSS = `
   box-shadow: 0 2px 8px rgba(15,23,42,.07) !important;
   font-weight: 800 !important;
 }
+.pm-bar{display:flex;flex-wrap:wrap;gap:6px}
+.pm-bar button:disabled{opacity:.45;cursor:not-allowed}
+.pm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
+.pm-item{position:relative;border:2px solid #e2e8f0;border-radius:10px;background:#fff;padding:4px;cursor:grab;transition:border-color .15s,box-shadow .15s}
+.pm-item.sel{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.18)}
+.pm-item.drag{opacity:.4}
+.pm-item.over{border-color:#f59e0b}
+.pm-item img{display:block;width:100%;aspect-ratio:.714/1;object-fit:contain;background:#f1f5f9;border-radius:6px;pointer-events:none}
+.pm-n{position:absolute;left:8px;bottom:38px;background:rgba(15,23,42,.82);color:#fff;font:700 10px system-ui,sans-serif;padding:1px 6px;border-radius:999px;pointer-events:none}
+.pm-chk{position:absolute;left:8px;top:8px;width:18px;height:18px;z-index:2;cursor:pointer;margin:0}
+.pm-acts{display:flex;gap:3px;padding-top:4px}
+.pm-acts button{all:unset;cursor:pointer;flex:1;text-align:center;font-size:12px;font-weight:800;color:#475569;border-radius:6px;padding:4px 0;background:#f1f5f9}
+.pm-acts button:hover{background:#e2e8f0;color:#0f172a}
+.pm-acts button[data-a=del]:hover{background:#fee2e2;color:#b91c1c}
 .ftp {
   display: flex;
   flex-direction: column;
@@ -747,6 +790,7 @@ export default function FlipbookClient() {
               {/* 5-COL COMPACT SEGMENTED TABS */}
               <div className="ftb" role="tablist">
                 <button className="fon" data-p="st">Style</button>
+                <button data-p="pm">Pages</button>
                 <button data-p="br">Brand</button>
                 <button data-p="bg">Backdrop</button>
                 <button data-p="ly">Layout</button>
@@ -757,6 +801,22 @@ export default function FlipbookClient() {
               <div className="ftp" id="p-st">
                 {/* Active Style Description Box */}
                 <div id="note" className="rounded-xl border border-blue-100 bg-blue-50/80 p-3 text-xs text-blue-900 leading-relaxed font-medium"></div>
+
+                {/* Optional inside-cover image (available for every style) */}
+                <div id="ic-box" className="rounded-2xl border border-slate-200/90 bg-slate-50/90 p-3 shadow-2xs">
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                    <input type="checkbox" id="icOn" /> Add an inside-cover image
+                  </label>
+                  <div id="icPanel" hidden>
+                    <div className="flex items-center gap-2 pt-2.5">
+                      <div id="thI" className="h-10 w-8 rounded border border-slate-300 bg-white bg-cover bg-center"></div>
+                      <button type="button" className="fbtn text-xs py-1 px-2.5" id="uI">Upload image</button>
+                      <button type="button" className="text-xs text-rose-600 hover:text-rose-800 font-bold px-1.5 hidden" id="uIx">Remove</button>
+                    </div>
+                    <span className="block pt-1.5 text-[10px] text-slate-400">Shown on the page just inside the front cover.</span>
+                  </div>
+                  <input id="fI" type="file" accept="image/*" className="hidden" />
+                </div>
 
                 {/* Custom Cover Studio Panel (Shown when 'Your Own Cover' is selected) */}
                 <div id="cpanel" className="rounded-2xl border border-slate-200/90 bg-slate-50/90 p-3.5 shadow-2xs flex flex-col gap-3" hidden>
@@ -1016,6 +1076,20 @@ export default function FlipbookClient() {
                 </div>
               </div>
 
+              {/* Pages panel: delete / add / reorder */}
+              <div className="ftp" id="p-pm" hidden>
+                <div className="pm-bar">
+                  <button type="button" className="fcta text-xs py-1.5 px-3" id="pmAdd">＋ Add pages</button>
+                  <button type="button" className="fbtn text-xs py-1.5 px-3" id="pmBlank">＋ Blank page</button>
+                  <button type="button" className="fbtn text-xs py-1.5 px-3" id="pmDel" disabled>Delete selected</button>
+                  <button type="button" className="fbtn text-xs py-1.5 px-3" id="pmUndo" disabled>↶ Undo</button>
+                  <button type="button" className="fbtn text-xs py-1.5 px-3" id="pmRedo" disabled>↷ Redo</button>
+                </div>
+                <p id="pmInfo" className="text-[11px] text-slate-500 leading-relaxed"></p>
+                <div id="pmGrid" className="pm-grid"></div>
+                <input id="pmFile" type="file" accept="application/pdf,image/*" multiple className="hidden" />
+              </div>
+
               {/* 4. Layout panel */}
               <div className="ftp" id="p-ly" hidden>
                 <div>
@@ -1028,6 +1102,30 @@ export default function FlipbookClient() {
                     <option value="split">Split wide pages into left and right</option>
                   </select>
                 </div>
+
+                {/* Clean toolbar */}
+                <label htmlFor="cl" className="f-toggle-card">
+                  <div className="flex flex-col pr-3">
+                    <span className="text-xs font-bold text-slate-800">Clean minimal toolbar</span>
+                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Flat white toolbar with simple line icons</span>
+                  </div>
+                  <label className="f-toggle-switch">
+                    <input type="checkbox" id="cl" />
+                    <span className="f-toggle-slider"></span>
+                  </label>
+                </label>
+
+                {/* Flat pages */}
+                <label htmlFor="fl" className="f-toggle-card">
+                  <div className="flex flex-col pr-3">
+                    <span className="text-xs font-bold text-slate-800">Flat pages (no cover board)</span>
+                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Plain flat pages like a PDF viewer. Turns off the book cover and inside-cover image.</span>
+                  </div>
+                  <label className="f-toggle-switch">
+                    <input type="checkbox" id="fl" />
+                    <span className="f-toggle-slider"></span>
+                  </label>
+                </label>
 
                 {/* Sound Effects */}
                 <label htmlFor="sn" className="f-toggle-card">
@@ -1606,10 +1704,13 @@ function initFlipbookApp() {
   function pagesFor(s: any, pgs: string[], cust: any, title: string) {
     const hc = !s.nocov;
     const ep = hc && (s.endp || s.custom);
+    const inn = cust && cust.innerOn && cust.inner
+      ? `<div class="paper pi" style="background:#111"><img src="${cust.inner}" alt="" style="object-fit:cover"></div>`
+      : "";
     const a: { h: string; hd?: number }[] = [];
     if (hc) {
       a.push({ h: cover(s, 1, cust, title), hd: 1 });
-      if (ep) a.push({ h: `<div class="paper endp" style="background:${endpOf(s, cust)}"></div>`, hd: 1 });
+      if (ep) a.push({ h: inn || `<div class="paper endp" style="background:${endpOf(s, cust)}"></div>`, hd: 1 });
     }
     pgs.forEach((u) => {
       a.push({ h: `<div class="paper pi"><img src="${u}" alt=""></div>` });
@@ -1625,6 +1726,9 @@ function initFlipbookApp() {
   }
 
   // ── Viewer Engine ──────────────────────────────────────────────────────────
+  const IC: Record<string, string> = {p2:"<path d=\"M9 5L4 10l5 5\"/><path d=\"M4 10h10a6 6 0 010 11h-3\"/>",n2:"<path d=\"M15 5l5 5-5 5\"/><path d=\"M20 10H10a6 6 0 000 11h3\"/>",p:"<path d=\"M15 5l-7 7 7 7\"/>",n:"<path d=\"M9 5l7 7-7 7\"/>",t:"<rect x=\"4\" y=\"4\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"13\" y=\"4\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"4\" y=\"13\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"13\" y=\"13\" width=\"7\" height=\"7\" rx=\"1\"/>",z:"<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"M20 20l-4.2-4.2M11 8v6M8 11h6\"/>",s1:"<path d=\"M4 9.5v5h4l5 4v-13l-5 4z\"/><path d=\"M16.5 9a4 4 0 010 6M19 6.5a8 8 0 010 11\"/>",s0:"<path d=\"M4 9.5v5h4l5 4v-13l-5 4z\"/><path d=\"M17 9.5l4.5 5M21.5 9.5l-4.5 5\"/>",a0:"<path d=\"M8 5.5v13l10.5-6.5z\" fill=\"currentColor\"/>",a1:"<rect x=\"6.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\"/><rect x=\"13.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\"/>",v:"<rect x=\"3\" y=\"5\" width=\"8\" height=\"14\" rx=\"1\"/><rect x=\"13\" y=\"5\" width=\"8\" height=\"14\" rx=\"1\"/>",f:"<path d=\"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5\"/>"};
+  const ic = (k: string) => "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + IC[k] + "</svg>";
+
   function Viewer(root: HTMLElement & { _off?: () => void; _pf?: any }, c: Record<string, unknown>) {
     if (root._off) root._off();
     if (root._pf && typeof root._pf.destroy === "function") {
@@ -1634,7 +1738,10 @@ function initFlipbookApp() {
 
     const cur = typeof c.theme === "number" ? Math.max(0, Math.min(BOOK_STYLES.length - 1, c.theme)) : 0;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const s: any = BOOK_STYLES[cur] || BOOK_STYLES[0];
+    const baseStyle: any = BOOK_STYLES[cur] || BOOK_STYLES[0];
+    const s: any = c.flat
+      ? Object.assign({}, baseStyle, { nocov: true, flat: true, nb: true, endp: "", custom: false, hard: 0, rib: "", rings: false, band: false, lux: false, gilt: false, O: 0 })
+      : baseStyle;
     const P = (c.pages as string[]) || [];
     const title = (c.title as string) || "Spellense Catalog";
     const cust = (c.cust as any) || { front: null, back: null, col: "#2a2545", auto: true, gloss: false };
@@ -1642,10 +1749,10 @@ function initFlipbookApp() {
     let snd = !!c.sound;
     let z = 1, au: number | ReturnType<typeof setInterval> = 0;
     let flip: any = null;
-    let T = 0, port = false;
+    let T = 0, port = false, vm = (c.view as string) || "auto", hinted = false;
     let w = 0, h = 0, pw = 0;
 
-    root.className = "fbv" + (c.full ? " full" : "");
+    root.className = "fbv" + (c.full ? " full" : "") + (c.clean !== false ? " clean" : "") + (c.flat ? " flat" : "") + ((c.logo || c.desc) ? " hh" : "");
     root.style.background = img
       ? "url(" + c.bgImg + ") center/cover"
       : c.bgType === "grad"
@@ -1680,16 +1787,32 @@ function initFlipbookApp() {
       '<i id="rings"></i><i id="band"></i>' +
       '<div id="book"></div>' +
       '</div></div>' +
-      '<div class="ct">' +
-      '<button data-a="p" title="Previous page" aria-label="Previous page">‹</button>' +
+      (c.clean !== false
+        ? '<div class="ct">' +
+          '<button data-a="z" title="Zoom" aria-label="Zoom">' + ic("z") + '</button>' +
+          '<button data-a="t" title="Thumbnails" aria-label="Thumbnails">' + ic("t") + '</button>' +
+          '<button data-a="v" title="Single page / Two-page spread" aria-label="Toggle single page or spread view">' + ic("v") + '</button>' +
+          '<button data-a="s" title="Sound toggle" aria-label="Page-turn sound">' + ic(snd ? "s1" : "s0") + '</button>' +
+          '<button data-a="a" title="Autoplay" aria-label="Auto-play">' + ic("a0") + '</button>' +
+          '<button data-a="f" title="Fullscreen" aria-label="Fullscreen">' + ic("f") + '</button>' +
+          '</div>' +
+          '<div class="nv"><button data-a="p" title="Previous page" aria-label="Previous page">' + ic("p2") + '</button>' +
+          '<input class="sl" type="range" min="1" max="1" value="1" aria-label="Go to page">' +
+          '<span class="pg">1 / 1</span>' +
+          '<button data-a="n" title="Next page" aria-label="Next page">' + ic("n2") + '</button></div>'
+        : '<div class="ct">' +
+      '<button data-a="p" title="Previous page" aria-label="Previous page">' + ic("p") + '</button>' +
       '<span class="pg">1 / 1</span>' +
-      '<button data-a="n" title="Next page" aria-label="Next page">›</button>' +
-      '<button data-a="t" title="Thumbnails" aria-label="Thumbnails">▦</button>' +
-      '<button data-a="z" title="Zoom" aria-label="Zoom">＋</button>' +
-      '<button data-a="s" title="Sound toggle" aria-label="Page-turn sound">' + (snd ? "🔊" : "🔈") + '</button>' +
-      '<button data-a="a" title="Autoplay" aria-label="Auto-play">▶</button>' +
-      '<button data-a="f" title="Fullscreen" aria-label="Fullscreen">⛶</button>' +
-      '</div><div class="th" hidden></div>' +
+      '<button data-a="n" title="Next page" aria-label="Next page">' + ic("n") + '</button>' +
+      '<i class="sep"></i>' +
+      '<button data-a="t" title="Thumbnails" aria-label="Thumbnails">' + ic("t") + '</button>' +
+      '<button data-a="z" title="Zoom" aria-label="Zoom">' + ic("z") + '</button>' +
+      '<button data-a="v" title="Single page / Two-page spread" aria-label="Toggle single page or spread view">' + ic("v") + '</button>' +
+      '<button data-a="s" title="Sound toggle" aria-label="Page-turn sound">' + ic(snd ? "s1" : "s0") + '</button>' +
+      '<button data-a="a" title="Autoplay" aria-label="Auto-play">' + ic("a0") + '</button>' +
+      '<button data-a="f" title="Fullscreen" aria-label="Fullscreen">' + ic("f") + '</button>'
+          + '</div>') +
+      '<div class="th" hidden></div>' +
       (c.credit ? '<a class="cr" href="https://spellense.com/flipbook" target="_blank" rel="noopener">Made with Spellense</a>' : "");
 
     root.innerHTML = hHtml;
@@ -1701,6 +1824,7 @@ function initFlipbookApp() {
     const ringsEl = root.querySelector("#rings") as HTMLElement;
     const bandEl = root.querySelector("#band") as HTMLElement;
     const pgEl = root.querySelector(".pg") as HTMLElement;
+    const slEl = root.querySelector(".sl") as HTMLInputElement | null;
 
     boardEl.style.background = s.nb
       ? "transparent"
@@ -1775,7 +1899,7 @@ function initFlipbookApp() {
       });
 
       // Center front cover when closed, center back cover when closed
-      if (!s.nocov && !port && pw > 0) {
+      if ((!s.nocov || s.flat) && !port && pw > 0) {
         if (i === 0) {
           wrapEl.style.transform = `translateX(-${Math.round(pw / 2)}px)`;
         } else if (i >= T - 1) {
@@ -1797,9 +1921,19 @@ function initFlipbookApp() {
           pgEl.textContent = `${i + 1} / ${T}`;
         }
       }
+      if (slEl) { slEl.max = String(T); slEl.value = String(i + 1); }
+    };
+
+    const showHint = () => {
+      const d = document.createElement("div");
+      d.className = "rh";
+      d.textContent = "Rotate your phone for spread view ↻";
+      root.appendChild(d);
+      setTimeout(() => d.remove(), 4500);
     };
 
     const build = async () => {
+      const keepIdx = flip ? Math.max(0, flip.getCurrentPageIndex()) : 0;
       const clientW = stageEl.clientWidth || stageEl.parentElement?.clientWidth || (typeof window !== "undefined" ? window.innerWidth - 440 : 800);
       const isFull = !!c.full || (typeof document !== "undefined" && !!document.fullscreenElement);
       const clientH = stageEl.clientHeight || (typeof window !== "undefined" ? (isFull ? window.innerHeight - 100 : Math.min(window.innerHeight * 0.52, 520)) : 460);
@@ -1807,7 +1941,11 @@ function initFlipbookApp() {
       const H = Math.max(260, clientH - (isFull ? 16 : 24));
       const A = (c.ratio as number) || 0.714;
       let w: number, h: number;
-      port = W < 520;
+      port = vm === "single" ? true : vm === "spread" ? false : W < 520;
+      if (port && vm === "auto" && !hinted && typeof window !== "undefined" && window.matchMedia && window.matchMedia("(orientation: portrait) and (pointer: coarse)").matches) {
+        hinted = true;
+        showHint();
+      }
       if (port) {
         h = Math.min(H, W / A) * z;
         w = h * A;
@@ -1867,6 +2005,9 @@ function initFlipbookApp() {
 
         root._pf = flip;
         flip.loadFromHTML(els);
+        if (keepIdx > 0) {
+          try { flip.turnToPage(Math.min(keepIdx, els.length - 1)); } catch (_) {}
+        }
 
         flip.on("flip", () => {
           if (snd) playPageSound();
@@ -1894,7 +2035,12 @@ function initFlipbookApp() {
     const ro = new ResizeObserver(() => {
       clearTimeout(rt);
       rt = setTimeout(() => {
-        if (P.length && stageEl.clientWidth > 50) fit();
+        if (P.length && stageEl.clientWidth > 50) {
+          const fullNow = !!c.full || !!document.fullscreenElement;
+          const wantPort = vm === "single" ? true : vm === "spread" ? false : Math.max(280, stageEl.clientWidth - (fullNow ? 24 : 32)) < 520;
+          if (wantPort !== port) build();
+          else fit();
+        }
       }, 100);
     });
     ro.observe(stageEl);
@@ -1969,9 +2115,13 @@ function initFlipbookApp() {
         z = z >= 1.6 ? 1 : z + 0.3;
         build();
       }
+      if (a === "v") {
+        vm = port ? "spread" : "single";
+        build();
+      }
       if (a === "s") {
         snd = !snd;
-        b.textContent = snd ? "🔊" : "🔈";
+        b.innerHTML = ic(snd ? "s1" : "s0");
         const snEl = document.getElementById("sn") as HTMLInputElement | null;
         if (snEl) snEl.checked = snd;
         if (snd) playPageSound();
@@ -1983,9 +2133,9 @@ function initFlipbookApp() {
         if (au) {
           clearInterval(au as number);
           au = 0;
-          b.textContent = "▶";
+          b.innerHTML = ic("a0");
         } else {
-          b.textContent = "⏸";
+          b.innerHTML = ic("a1");
           au = setInterval(() => {
             if (flip) {
               if (flip.getCurrentPageIndex() >= flip.getPageCount() - 1) {
@@ -2008,12 +2158,18 @@ function initFlipbookApp() {
         thEl.hidden = !thEl.hidden;
       }
     };
+    const nvEl = root.querySelector(".nv") as HTMLElement | null;
+    if (nvEl) nvEl.onclick = (root.querySelector(".ct") as HTMLElement).onclick;
+    if (slEl) slEl.oninput = () => {
+      if (flip) { try { flip.turnToPage(Math.max(0, Number(slEl.value) - 1)); } catch (_) {} }
+    };
+
 
     (root.querySelector(".th") as HTMLElement).onclick = (e) => {
       const i = (e.target as HTMLElement).dataset.i;
       if (i == null || !flip) return;
       const idx = Number(i);
-      try { flip.turnToPage(s.nocov ? idx : idx + 1); } catch (_) {}
+      try { flip.turnToPage(s.nocov ? idx : idx + (s.endp || s.custom ? 2 : 1)); } catch (_) {}
     };
   }
 
@@ -2044,9 +2200,11 @@ function initFlipbookApp() {
       desc: "",
       logoRight: false,
       credit: false,
+      clean: true,
+      flat: false,
       bgType: "grad",
-      bg1: "#0d0b1a",
-      bg2: "#171233",
+      bg1: "#f8fafc",
+      bg2: "#e2e8f0",
       bgImg: "",
       dim: 0.35,
       sound: false,
@@ -2061,6 +2219,11 @@ function initFlipbookApp() {
   }
 
   let RAW: string[] = [], pages: string[] = [], ratio = 0.714, tmr = 0;
+  // Page manager state: items are the pages shown in the book (after spread handling)
+  type PmItem = { id: string; url: string; th?: string };
+  let items: PmItem[] = [], hist: PmItem[][] = [], hi = 0, edited = false, pmSeq = 0, pmToken = 0, pmInsertAt = -1;
+  const sel = new Set<string>();
+  const pmMk = (url: string): PmItem => ({ id: "p" + (++pmSeq), url });
   let LC: string[] = [];
 
   const li = (u: string): Promise<HTMLImageElement> =>
@@ -2098,12 +2261,8 @@ function initFlipbookApp() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getEl = (id: string): any => document.getElementById(id);
 
-  async function loadFiles(files: FileList | null) {
-    if (!files || !files.length) return;
-    status("Reading files…");
-    RAW = [];
-    try {
-      for (const f of Array.from(files)) {
+  async function extractPages(list: File[], out: string[], setTitle: boolean) {
+      for (const f of list) {
         if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) {
           status("Loading PDF engine…");
           const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
@@ -2116,7 +2275,7 @@ function initFlipbookApp() {
             standardFontDataUrl: "/standard_fonts/",
           });
           const pdf = await loadingTask.promise;
-          S.title = f.name.replace(/\.[^.]+$/, "").slice(0, 36);
+          if (setTitle) S.title = f.name.replace(/\.[^.]+$/, "").slice(0, 36);
           for (let i = 1; i <= pdf.numPages; i++) {
             status(`Converting page ${i} of ${pdf.numPages}…`);
             try {
@@ -2130,17 +2289,25 @@ function initFlipbookApp() {
               const ctx = c.getContext("2d");
               if (ctx) {
                 await p.render({ canvas: c, canvasContext: ctx, viewport: vp }).promise;
-                RAW.push(c.toDataURL("image/jpeg", 0.85));
+                out.push(c.toDataURL("image/jpeg", 0.85));
               }
             } catch (pageErr) {
               console.warn("Failed rendering page " + i, pageErr);
             }
           }
         } else if (f.type.startsWith("image/")) {
-          S.title = f.name.replace(/\.[^.]+$/, "").slice(0, 36);
-          RAW.push(await f2u(f, 1600, "image/jpeg", 0.88));
+          if (setTitle) S.title = f.name.replace(/\.[^.]+$/, "").slice(0, 36);
+          out.push(await f2u(f, 1600, "image/jpeg", 0.88));
         }
       }
+  }
+
+  async function loadFiles(files: FileList | null) {
+    if (!files || !files.length) return;
+    status("Reading files…");
+    RAW = [];
+    try {
+      await extractPages(Array.from(files), RAW, true);
       if (!RAW.length) throw new Error("Could not extract pages from file");
       getEl("ed").hidden = false;
       getEl("ex").hidden = false;
@@ -2235,6 +2402,12 @@ function initFlipbookApp() {
       }
     }
     pages = out;
+    items = out.map(pmMk);
+    hist = [items];
+    hi = 0;
+    edited = false;
+    sel.clear();
+    renderPM();
     if (out.length) {
       const first = await li(out[0]);
       ratio = first.width / first.height;
@@ -2242,6 +2415,139 @@ function initFlipbookApp() {
     show();
     return true;
   }
+
+  // ── Page Manager (delete / add / reorder) ─────────────────────────────────
+  const pmInfo = (t: string) => { const el = document.getElementById("pmInfo"); if (el) el.textContent = t; };
+
+  async function applyItems(list: PmItem[]) {
+    items = list;
+    pages = list.map((i) => i.url);
+    renderPM();
+    if (pages.length) {
+      try {
+        const first = await li(pages[0]);
+        ratio = first.width / first.height;
+      } catch (_) {}
+    }
+    show();
+  }
+
+  function commit(list: PmItem[]) {
+    hist = hist.slice(0, hi + 1);
+    hist.push(list);
+    if (hist.length > 60) hist.shift();
+    hi = hist.length - 1;
+    edited = true;
+    applyItems(list);
+  }
+
+  function blankPageUrl(): string {
+    const W = 600, H = Math.round(W / (ratio || 0.714));
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d")!;
+    x.fillStyle = "#ffffff";
+    x.fillRect(0, 0, W, H);
+    return c.toDataURL("image/jpeg", 0.8);
+  }
+
+  async function thumbOf(url: string): Promise<string> {
+    const im = await li(url);
+    const k = 150 / Math.max(1, im.width);
+    const c = document.createElement("canvas");
+    c.width = 150; c.height = Math.max(1, Math.round(im.height * k));
+    c.getContext("2d")!.drawImage(im, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", 0.6);
+  }
+
+  async function fillThumbs(token: number) {
+    for (const it of items) {
+      if (token !== pmToken) return;
+      if (it.th) continue;
+      try { it.th = await thumbOf(it.url); } catch (_) { it.th = it.url; }
+      const img = document.querySelector('.pm-item[data-id="' + it.id + '"] img') as HTMLImageElement | null;
+      if (img) img.src = it.th;
+      await new Promise((r) => setTimeout(r, 0));
+    }
+  }
+
+  function renderPM() {
+    const grid = document.getElementById("pmGrid");
+    if (!grid) return;
+    for (const id of Array.from(sel)) if (!items.some((i) => i.id === id)) sel.delete(id);
+    const EMPTY = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+    grid.innerHTML = items.map((it, i) =>
+      '<div class="pm-item' + (sel.has(it.id) ? " sel" : "") + '" draggable="true" data-i="' + i + '" data-id="' + it.id + '">' +
+        '<input type="checkbox" class="pm-chk" data-a="sel" aria-label="Select page ' + (i + 1) + '"' + (sel.has(it.id) ? " checked" : "") + ">" +
+        '<img src="' + (it.th || EMPTY) + '" alt="Page ' + (i + 1) + '">' +
+        '<span class="pm-n">' + (i + 1) + "</span>" +
+        '<div class="pm-acts">' +
+          '<button type="button" data-a="L" title="Move earlier" aria-label="Move page ' + (i + 1) + ' earlier">←</button>' +
+          '<button type="button" data-a="R" title="Move later" aria-label="Move page ' + (i + 1) + ' later">→</button>' +
+          '<button type="button" data-a="ins" title="Add pages after this one" aria-label="Add pages after page ' + (i + 1) + '">＋</button>' +
+          '<button type="button" data-a="del" title="Delete page" aria-label="Delete page ' + (i + 1) + '">✕</button>' +
+        "</div></div>"
+    ).join("");
+    const delBtn = document.getElementById("pmDel") as HTMLButtonElement | null;
+    if (delBtn) { delBtn.disabled = sel.size === 0; delBtn.textContent = sel.size ? "Delete selected (" + sel.size + ")" : "Delete selected"; }
+    const un = document.getElementById("pmUndo") as HTMLButtonElement | null;
+    const re = document.getElementById("pmRedo") as HTMLButtonElement | null;
+    if (un) un.disabled = hi <= 0;
+    if (re) re.disabled = hi >= hist.length - 1;
+    const n = items.length;
+    pmInfo(n + (n === 1 ? " page" : " pages") + ". Drag pages (or use ← →) to reorder." +
+      (n % 2 ? " Odd page count: a blank page is added at the end so the last spread is complete." : ""));
+    fillThumbs(++pmToken);
+  }
+
+  function pmDelete(ids: string[]) {
+    if (!ids.length) return;
+    const left = items.filter((i) => !ids.includes(i.id));
+    if (!left.length) { pmInfo("A flipbook needs at least one page."); return; }
+    sel.clear();
+    commit(left);
+  }
+
+  function pmMove(from: number, to: number) {
+    if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length) return;
+    const l = items.slice();
+    const [m] = l.splice(from, 1);
+    l.splice(to, 0, m);
+    commit(l);
+  }
+
+  async function pmAddFiles(files: FileList | null, at: number) {
+    if (!files || !files.length) return;
+    pmInfo("Adding pages…");
+    try {
+      const urls: string[] = [];
+      await extractPages(Array.from(files), urls, false);
+      if (!urls.length) { pmInfo("Could not read those files. Use PDF, JPG, PNG or WebP."); return; }
+      const outUrls: string[] = [];
+      for (const u of urls) {
+        const im = await li(u);
+        if (S.mode === "split" && im.width / im.height > 1.15) {
+          for (const k of [0, 1]) {
+            const c = document.createElement("canvas");
+            const w = Math.floor(im.width / 2);
+            c.width = w; c.height = im.height;
+            c.getContext("2d")!.drawImage(im, k * w, 0, w, im.height, 0, 0, w, im.height);
+            outUrls.push(c.toDataURL("image/jpeg", 0.85));
+          }
+        } else outUrls.push(u);
+      }
+      const pos = at < 0 || at > items.length ? items.length : at;
+      const l = items.slice();
+      l.splice(pos, 0, ...outUrls.map(pmMk));
+      commit(l);
+    } catch (err) {
+      console.error("Add pages error:", err);
+      pmInfo("Could not add pages. Use a valid PDF, JPG, PNG or WebP.");
+    }
+  }
+
+  function pmUndo() { if (hi > 0) { hi--; sel.clear(); applyItems(hist[hi]); } }
+  function pmRedo() { if (hi < hist.length - 1) { hi++; sel.clear(); applyItems(hist[hi]); } }
 
   function show() {
     clearTimeout(tmr);
@@ -2268,6 +2574,8 @@ function initFlipbookApp() {
     (getEl("dm") as HTMLInputElement).value = S.dim;
     (getEl("md") as HTMLSelectElement).value = S.mode;
     (getEl("sn") as HTMLInputElement).checked = S.sound;
+    (getEl("cl") as HTMLInputElement).checked = S.clean !== false;
+    (getEl("fl") as HTMLInputElement).checked = !!S.flat;
 
     // Update style buttons state
     document.querySelectorAll(".ftc").forEach((b) => {
@@ -2278,6 +2586,16 @@ function initFlipbookApp() {
     // Update Style Note
     const noteEl = document.getElementById("note");
     if (noteEl) noteEl.textContent = curStyle.note;
+
+    // Inside-cover image controls
+    const icOn = document.getElementById("icOn") as HTMLInputElement | null;
+    if (icOn) icOn.checked = !!S.cust.innerOn;
+    const icPanel = document.getElementById("icPanel");
+    if (icPanel) icPanel.hidden = !S.cust.innerOn;
+    const thI = document.getElementById("thI");
+    const uIx = document.getElementById("uIx");
+    if (thI) thI.style.backgroundImage = S.cust.inner ? `url(${S.cust.inner})` : "none";
+    if (uIx) uIx.classList.toggle("hidden", !S.cust.inner);
 
     // Custom cover panel visibility
     const cpanel = document.getElementById("cpanel");
@@ -2403,6 +2721,74 @@ function initFlipbookApp() {
     show();
   };
 
+  // ── Page Manager wiring ────────────────────────────────────────────────────
+  {
+    const grid = getEl("pmGrid");
+    let dragId = "";
+    grid.addEventListener("click", (e: Event) => {
+      const t = (e.target as HTMLElement).closest("[data-a]") as HTMLElement | null;
+      if (!t) return;
+      const it = t.closest(".pm-item") as HTMLElement | null;
+      if (!it) return;
+      const i = +(it.dataset.i as string), id = it.dataset.id as string, a = t.dataset.a;
+      if (a === "sel") {
+        if ((t as HTMLInputElement).checked) sel.add(id); else sel.delete(id);
+        it.classList.toggle("sel", sel.has(id));
+        const d = getEl("pmDel") as HTMLButtonElement;
+        d.disabled = sel.size === 0;
+        d.textContent = sel.size ? "Delete selected (" + sel.size + ")" : "Delete selected";
+      } else if (a === "del") pmDelete([id]);
+      else if (a === "L") pmMove(i, i - 1);
+      else if (a === "R") pmMove(i, i + 1);
+      else if (a === "ins") { pmInsertAt = i + 1; getEl("pmFile").click(); }
+    });
+    grid.addEventListener("dragstart", (e: Event) => {
+      const it = (e.target as HTMLElement).closest(".pm-item") as HTMLElement | null;
+      if (!it) return;
+      dragId = it.dataset.id as string;
+      it.classList.add("drag");
+      try { (e as DragEvent).dataTransfer!.setData("text/plain", dragId); (e as DragEvent).dataTransfer!.effectAllowed = "move"; } catch (_) {}
+    });
+    grid.addEventListener("dragend", () => {
+      dragId = "";
+      grid.querySelectorAll(".drag,.over").forEach((x: Element) => x.classList.remove("drag", "over"));
+    });
+    grid.addEventListener("dragover", (e: Event) => {
+      const it = (e.target as HTMLElement).closest(".pm-item") as HTMLElement | null;
+      if (!it || !dragId) return;
+      e.preventDefault();
+      grid.querySelectorAll(".over").forEach((x: Element) => x.classList.remove("over"));
+      it.classList.add("over");
+    });
+    grid.addEventListener("drop", (e: Event) => {
+      const it = (e.target as HTMLElement).closest(".pm-item") as HTMLElement | null;
+      if (!it || !dragId) return;
+      e.preventDefault();
+      const from = items.findIndex((x) => x.id === dragId);
+      const to = +(it.dataset.i as string);
+      dragId = "";
+      pmMove(from, to);
+    });
+    getEl("pmAdd").onclick = () => { pmInsertAt = -1; getEl("pmFile").click(); };
+    getEl("pmBlank").onclick = () => {
+      const one = items.findIndex((x) => sel.has(x.id));
+      const at = sel.size === 1 && one >= 0 ? one + 1 : items.length;
+      const l = items.slice();
+      l.splice(at, 0, pmMk(blankPageUrl()));
+      commit(l);
+    };
+    getEl("pmDel").onclick = () => pmDelete(Array.from(sel));
+    getEl("pmUndo").onclick = pmUndo;
+    getEl("pmRedo").onclick = pmRedo;
+    getEl("pmFile").addEventListener("change", (e: Event) => {
+      const input = e.target as HTMLInputElement;
+      const at = pmInsertAt;
+      pmInsertAt = -1;
+      pmAddFiles(input.files, at);
+      input.value = "";
+    });
+  }
+
   // ── Tab Navigation ─────────────────────────────────────────────────────────
   document.querySelectorAll(".ftb button").forEach((tabBtn) => {
     tabBtn.addEventListener("click", () => {
@@ -2426,6 +2812,8 @@ function initFlipbookApp() {
   bind("lr", (e) => { S.logoRight = (e as HTMLInputElement).checked; }, "change");
   bind("cr", (e) => { S.credit = (e as HTMLInputElement).checked; }, "change");
   bind("sn", (e) => { S.sound = (e as HTMLInputElement).checked; }, "change");
+  bind("cl", (e) => { S.clean = (e as HTMLInputElement).checked; }, "change");
+  bind("fl", (e) => { S.flat = (e as HTMLInputElement).checked; }, "change");
   bind("dm", (e) => { S.dim = +(e as HTMLInputElement).value; });
   bind("c1", (e) => {
     S.bg1 = (e as HTMLInputElement).value;
@@ -2441,6 +2829,10 @@ function initFlipbookApp() {
   bind("gr", (e) => { S.bgType = (e as HTMLInputElement).checked ? "grad" : "color"; }, "change");
 
   getEl("md").addEventListener("change", (e: Event) => {
+    if (edited && !window.confirm("Changing spread handling rebuilds the pages and resets your page edits (deleted, added, reordered pages). Continue?")) {
+      (e.target as HTMLSelectElement).value = S.mode;
+      return;
+    }
     S.mode = (e.target as HTMLSelectElement).value;
     derive();
   });
@@ -2481,6 +2873,34 @@ function initFlipbookApp() {
   getEl("uBx").onclick = () => {
     S.cust.back = null;
     (getEl("fB") as HTMLInputElement).value = "";
+    sync();
+    show();
+  };
+
+  // ── Inside-cover image (optional, any style) ───────────────────────────────
+  getEl("icOn").onchange = (e: Event) => {
+    const on = (e.target as HTMLInputElement).checked;
+    S.cust.innerOn = on;
+    if (!on) {
+      S.cust.inner = null;
+      (getEl("fI") as HTMLInputElement).value = "";
+    }
+    sync();
+    show();
+  };
+  getEl("uI").onclick = () => getEl("fI").click();
+  getEl("fI").onchange = async (e: Event) => {
+    const f = (e.target as HTMLInputElement).files?.[0];
+    if (!f) return;
+    const res = await coverFrom(f);
+    S.cust.inner = res.u;
+    S.cust.innerOn = true;
+    sync();
+    show();
+  };
+  getEl("uIx").onclick = () => {
+    S.cust.inner = null;
+    (getEl("fI") as HTMLInputElement).value = "";
     sync();
     show();
   };
@@ -2731,9 +3151,12 @@ function initFlipbookApp() {
       }
       function pagesFor(s, pgs, cust, title) {
         var hc = !s.nocov, ep = hc && (s.endp || s.custom), a = [];
+        var inn = (cust && cust.innerOn && cust.inner)
+          ? '<div class="paper pi" style="background:#111"><img src="' + cust.inner + '" alt="" style="object-fit:cover"></div>'
+          : "";
         if (hc) {
           a.push({ h: cover(s, 1, cust, title), hd: 1 });
-          if (ep) a.push({ h: '<div class="paper endp" style="background:' + endpOf(s, cust) + '"></div>', hd: 1 });
+          if (ep) a.push({ h: inn || ('<div class="paper endp" style="background:' + endpOf(s, cust) + '"></div>'), hd: 1 });
         }
         pgs.forEach(function(u) { a.push({ h: '<div class="paper pi"><img src="' + u + '" alt=""></div>' }); });
         if ((a.length + (hc ? (ep ? 2 : 1) : 0)) % 2) a.push({ h: '<div class="paper pi"></div>' });
@@ -2766,17 +3189,23 @@ function initFlipbookApp() {
         } catch (_) {}
       }
 
+      var IC = {p2:"<path d=\"M9 5L4 10l5 5\"/><path d=\"M4 10h10a6 6 0 010 11h-3\"/>",n2:"<path d=\"M15 5l5 5-5 5\"/><path d=\"M20 10H10a6 6 0 000 11h3\"/>",p:"<path d=\"M15 5l-7 7 7 7\"/>",n:"<path d=\"M9 5l7 7-7 7\"/>",t:"<rect x=\"4\" y=\"4\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"13\" y=\"4\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"4\" y=\"13\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"13\" y=\"13\" width=\"7\" height=\"7\" rx=\"1\"/>",z:"<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"M20 20l-4.2-4.2M11 8v6M8 11h6\"/>",s1:"<path d=\"M4 9.5v5h4l5 4v-13l-5 4z\"/><path d=\"M16.5 9a4 4 0 010 6M19 6.5a8 8 0 010 11\"/>",s0:"<path d=\"M4 9.5v5h4l5 4v-13l-5 4z\"/><path d=\"M17 9.5l4.5 5M21.5 9.5l-4.5 5\"/>",a0:"<path d=\"M8 5.5v13l10.5-6.5z\" fill=\"currentColor\"/>",a1:"<rect x=\"6.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\"/><rect x=\"13.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\"/>",v:"<rect x=\"3\" y=\"5\" width=\"8\" height=\"14\" rx=\"1\"/><rect x=\"13\" y=\"5\" width=\"8\" height=\"14\" rx=\"1\"/>",f:"<path d=\"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5\"/>"};
+      function ic(k) { return "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + IC[k] + '</svg>'; }
+
       function Viewer(root, c) {
         if (root._off) root._off();
         var cur = typeof c.theme === "number" ? Math.max(0, Math.min(BOOK_STYLES.length - 1, c.theme)) : 0;
-        var s = BOOK_STYLES[cur] || BOOK_STYLES[0];
+        var baseStyle = BOOK_STYLES[cur] || BOOK_STYLES[0];
+        var s = c.flat
+          ? Object.assign({}, baseStyle, { nocov: true, flat: true, nb: true, endp: "", custom: false, hard: 0, rib: "", rings: false, band: false, lux: false, gilt: false, O: 0 })
+          : baseStyle;
         var P = c.pages || [];
         var title = c.title || "Spellense Catalog";
         var cust = c.cust || { front: null, back: null, col: "#2a2545", auto: true, gloss: false };
         var img = c.bgType === "img" && c.bgImg;
-        var snd = !!c.sound, z = 1, au = 0, flip = null, T = 0, port = false, pw = 0, curH = 0;
+        var snd = !!c.sound, z = 1, au = 0, flip = null, T = 0, port = false, pw = 0, curH = 0, vm = c.view || "auto", hinted = false;
 
-        root.className = "fbv" + (c.full ? " full" : "");
+        root.className = "fbv" + (c.full ? " full" : "") + (c.clean !== false ? " clean" : "") + (c.flat ? " flat" : "") + ((c.logo || c.desc) ? " hh" : "");
         root.style.background = img ? "url(" + c.bgImg + ") center/cover" : c.bgType === "grad" ? "linear-gradient(135deg," + c.bg1 + "," + c.bg2 + ")" : c.bg1;
         root.style.color = img || lum(c.bg1) < 0.5 ? "#fff" : "#0f172a";
 
@@ -2791,7 +3220,12 @@ function initFlipbookApp() {
           h += '<div class="fbh' + (c.logoRight ? ' rv' : '') + '">' + (c.logo ? '<img src="' + c.logo + '" alt="Logo">' : '<span></span>') + '<p>' + esc(c.desc) + '</p></div>';
         }
         h += '<div class="stage" id="stage"><div id="wrap"><div id="board"><i class="stk l"></i><i class="stk r"></i><i class="stk b"></i><i id="rib"></i></div><i id="rings"></i><i id="band"></i><div id="book"></div></div></div>' +
-             '<div class="ct"><button data-a="p" title="Previous page">‹</button><span class="pg">1 / 1</span><button data-a="n" title="Next page">›</button><button data-a="t" title="Thumbnails">▦</button><button data-a="z" title="Zoom">＋</button><button data-a="s" title="Sound toggle">' + (snd ? '🔊' : '🔈') + '</button><button data-a="a" title="Autoplay">▶</button><button data-a="f" title="Fullscreen">⛶</button></div><div class="th" hidden></div>' +
+             (c.clean !== false
+               ? '<div class="ct"><button data-a="z" title="Zoom" aria-label="Zoom">' + ic('z') + '</button><button data-a="t" title="Thumbnails" aria-label="Thumbnails">' + ic('t') + '</button><button data-a="v" title="Single page / Two-page spread" aria-label="Toggle single page or spread view">' + ic('v') + '</button><button data-a="s" title="Sound toggle" aria-label="Page-turn sound">' + ic(snd ? 's1' : 's0') + '</button><button data-a="a" title="Autoplay" aria-label="Auto-play">' + ic('a0') + '</button><button data-a="f" title="Fullscreen" aria-label="Fullscreen">' + ic('f') + '</button></div>' +
+                 '<div class="nv"><button data-a="p" title="Previous page" aria-label="Previous page">' + ic('p2') + '</button><input class="sl" type="range" min="1" max="1" value="1" aria-label="Go to page"><span class="pg">1 / 1</span><button data-a="n" title="Next page" aria-label="Next page">' + ic('n2') + '</button></div>'
+               : '<div class="ct"><button data-a="p" title="Previous page" aria-label="Previous page">' + ic('p') + '</button><span class="pg">1 / 1</span><button data-a="n" title="Next page" aria-label="Next page">' + ic('n') + '</button><i class="sep"></i>' +
+             '<button data-a="t" title="Thumbnails" aria-label="Thumbnails">' + ic('t') + '</button><button data-a="z" title="Zoom" aria-label="Zoom">' + ic('z') + '</button><button data-a="v" title="Single page / Two-page spread" aria-label="Toggle single page or spread view">' + ic('v') + '</button><button data-a="s" title="Sound toggle" aria-label="Page-turn sound">' + ic(snd ? 's1' : 's0') + '</button><button data-a="a" title="Autoplay" aria-label="Auto-play">' + ic('a0') + '</button><button data-a="f" title="Fullscreen" aria-label="Fullscreen">' + ic('f') + '</button></div>') +
+             '<div class="th" hidden></div>' +
              (c.credit ? '<a class="cr" href="https://spellense.com/flipbook" target="_blank" rel="noopener">Made with Spellense</a>' : '');
         root.innerHTML = h;
 
@@ -2802,6 +3236,7 @@ function initFlipbookApp() {
         var ringsEl = root.querySelector("#rings");
         var bandEl = root.querySelector("#band");
         var pgEl = root.querySelector(".pg");
+        var slEl = root.querySelector(".sl");
 
         boardEl.style.background = s.nb ? "transparent" : s.custom ? (vig + ",linear-gradient(145deg," + cust.col + "," + dk(cust.col) + ")") : (s.bb || s.cov);
         boardEl.style.boxShadow = s.nb ? "none" : "";
@@ -2821,7 +3256,7 @@ function initFlipbookApp() {
           });
           var O = s.O;
           if (L > Rr || Rr === -1e9) {
-            if (!s.nocov && !port && pw > 0) {
+            if ((!s.nocov || s.flat) && !port && pw > 0) {
               var bW = pw + 2 * O;
               Object.assign(boardEl.style, {
                 left: ((wr.width - bW) / 2) + "px",
@@ -2855,7 +3290,7 @@ function initFlipbookApp() {
             top: Tp - wr.top - O + "px",
             height: B - Tp + 2 * O + "px"
           });
-          if (!s.nocov && !port && pw > 0) {
+          if ((!s.nocov || s.flat) && !port && pw > 0) {
             if (i === 0) wrapEl.style.transform = "translateX(-" + Math.round(pw / 2) + "px)";
             else if (i >= T - 1) wrapEl.style.transform = "translateX(" + Math.round(pw / 2) + "px)";
             else wrapEl.style.transform = "translateX(0)";
@@ -2867,15 +3302,26 @@ function initFlipbookApp() {
             else if (!s.nocov && i >= T - 1) pgEl.textContent = "Back Cover";
             else pgEl.textContent = (i + 1) + " / " + T;
           }
+          if (slEl) { slEl.max = String(T); slEl.value = String(i + 1); }
+        }
+
+        function showHint() {
+          var d = document.createElement("div");
+          d.className = "rh";
+          d.textContent = "Rotate your phone for spread view \u21BB";
+          root.appendChild(d);
+          setTimeout(function() { if (d.parentNode) d.parentNode.removeChild(d); }, 4500);
         }
 
         function build() {
+          var keepIdx = flip ? Math.max(0, flip.getCurrentPageIndex()) : 0;
           var clientW = stageEl.clientWidth || (typeof window !== "undefined" && window.innerWidth ? window.innerWidth : 800);
           var isFull = !!c.full || (typeof document !== "undefined" && !!document.fullscreenElement);
           var clientH = stageEl.clientHeight || (typeof window !== "undefined" ? (isFull ? window.innerHeight - 100 : Math.min(window.innerHeight * 0.78, 880)) : 650);
           var W = Math.max(280, clientW - (isFull ? 24 : 36)), H = Math.max(280, clientH - (isFull ? 16 : 32));
           var A = c.ratio || 0.714, w, h;
-          port = W < 520;
+          port = vm === "single" ? true : vm === "spread" ? false : W < 520;
+          if (port && vm === "auto" && !hinted && window.matchMedia && window.matchMedia("(orientation: portrait) and (pointer: coarse)").matches) { hinted = true; showHint(); }
           if (port) { h = Math.min(H, W / A) * z; w = h * A; }
           else { h = Math.min(H, W / (2 * A)) * z; w = 2 * h * A; }
           curH = Math.round(h);
@@ -2921,6 +3367,7 @@ function initFlipbookApp() {
           });
 
           flip.loadFromHTML(els);
+          if (keepIdx > 0) { try { flip.turnToPage(Math.min(keepIdx, els.length - 1)); } catch (_) {} }
           flip.on("flip", function() {
             if (snd) playPageSound();
             setTimeout(fit, 80);
@@ -2964,12 +3411,13 @@ function initFlipbookApp() {
             try { if (flip.getState() === "read") flip.flipNext("bottom"); else flip.turnToNextPage(); } catch (_) { flip.turnToNextPage(); }
           }
           if (a === "z") { z = z >= 1.6 ? 1 : z + 0.3; build(); }
-          if (a === "s") { snd = !snd; b.textContent = snd ? "🔊" : "🔈"; if (snd) playPageSound(); }
+          if (a === "v") { vm = port ? "spread" : "single"; build(); }
+          if (a === "s") { snd = !snd; b.innerHTML = ic(snd ? 's1' : 's0'); if (snd) playPageSound(); }
           if (a === "f") { document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen && root.requestFullscreen(); }
           if (a === "a") {
-            if (au) { clearInterval(au); au = 0; b.textContent = "▶"; }
+            if (au) { clearInterval(au); au = 0; b.innerHTML = ic('a0'); }
             else {
-              b.textContent = "⏸";
+              b.innerHTML = ic('a1');
               au = setInterval(function() {
                 if (flip) {
                   if (flip.getCurrentPageIndex() >= flip.getPageCount() - 1) flip.turnToPage(0);
@@ -2988,11 +3436,17 @@ function initFlipbookApp() {
             thEl.hidden = !thEl.hidden;
           }
         };
+        var nvEl = root.querySelector(".nv");
+        if (nvEl) nvEl.onclick = root.querySelector(".ct").onclick;
+        if (slEl) slEl.oninput = function() {
+          if (flip) { try { flip.turnToPage(Math.max(0, Number(slEl.value) - 1)); } catch (_) {} }
+        };
+
 
         root.querySelector(".th").onclick = function(e) {
           var i = e.target.dataset.i;
           if (i == null || !flip) return;
-          try { flip.turnToPage(s.nocov ? Number(i) : Number(i) + 1); } catch (_) {}
+          try { flip.turnToPage(s.nocov ? Number(i) : Number(i) + ((s.endp || s.custom) ? 2 : 1)); } catch (_) {}
         };
       }
     `;
@@ -3088,6 +3542,7 @@ function initFlipbookApp() {
   getEl("nw").onclick = () => {
     RAW = [];
     pages = [];
+    items = []; hist = []; hi = 0; edited = false; sel.clear(); renderPM();
     getEl("ed").hidden = true;
     getEl("ex").hidden = true;
     getEl("pv").innerHTML = "";

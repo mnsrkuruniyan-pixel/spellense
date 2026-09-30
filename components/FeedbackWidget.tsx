@@ -22,13 +22,14 @@ export default function FeedbackWidget() {
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [lastSubmitted, setLastSubmitted] = useState<{ type: string; message: string } | null>(null);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // Close when clicking outside
+  // Close when clicking outside (mouse and touch)
   useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
       if (
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
@@ -39,6 +40,7 @@ export default function FeedbackWidget() {
 
     if (isOpen) {
       document.addEventListener("mousedown", handleOutsideClick);
+      document.addEventListener("touchstart", handleOutsideClick);
       // Focus textarea on open
       setTimeout(() => {
         textareaRef.current?.focus();
@@ -47,6 +49,7 @@ export default function FeedbackWidget() {
 
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
     };
   }, [isOpen]);
 
@@ -64,38 +67,44 @@ export default function FeedbackWidget() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) {
-      setErrorMessage("Please enter your message or suggestion.");
+      setErrorMessage("Please enter your message or suggestion before submitting.");
+      textareaRef.current?.focus();
       return;
     }
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
+    const payload = {
+      type,
+      message: message.trim(),
+      email: email.trim(),
+    };
+
     try {
       const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type,
-          message: message.trim(),
-          email: email.trim(),
+          ...payload,
           path: pathname || "/",
           userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
         }),
       });
 
       if (!res.ok) {
-        throw new Error("Failed to send feedback");
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "Failed to send feedback");
       }
 
+      setLastSubmitted(payload);
       setSubmitted(true);
       setMessage("");
       setEmail("");
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Feedback submit error:", err);
-      // Fallback: provide direct mailto action
       setErrorMessage(
-        "Could not send automatically. Please email us directly at hello@spellense.com"
+        "Could not submit online. Please email us directly at hello@spellense.com"
       );
     } finally {
       setIsSubmitting(false);
@@ -111,11 +120,17 @@ export default function FeedbackWidget() {
     setIsOpen(!isOpen);
   };
 
+  const mailtoUrl = `mailto:hello@spellense.com?subject=${encodeURIComponent(
+    `[Spellense Feedback: ${type.toUpperCase()}] from ${pathname || "/"}`
+  )}&body=${encodeURIComponent(
+    `${message || ""}\n\n---\nSent from: ${pathname || "/"}${email ? `\nReply to: ${email}` : ""}`
+  )}`;
+
   return (
-    <div ref={containerRef} className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40">
+    <div ref={containerRef} className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50">
       {/* FLOATING FEEDBACK POP-UP CARD */}
       {isOpen && (
-        <div className="absolute bottom-16 right-0 w-[350px] max-w-[calc(100vw-2.5rem)] rounded-3xl border border-slate-200/80 bg-white/95 p-5 sm:p-6 shadow-2xl shadow-blue-900/15 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="absolute bottom-18 right-0 w-[350px] max-w-[calc(100vw-2.5rem)] rounded-3xl border border-slate-200/90 bg-white/95 p-5 sm:p-6 shadow-2xl shadow-blue-900/20 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
           {/* HEADER */}
           <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
             <div>
@@ -152,8 +167,14 @@ export default function FeedbackWidget() {
                 Thank You!
               </h4>
               <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal max-w-xs mx-auto">
-                Your feedback has been received. Thank you for helping us improve Spellense!
+                Your feedback has been saved! Thank you for helping us improve Spellense.
               </p>
+              {lastSubmitted && (
+                <div className="mt-3 mx-auto max-w-[280px] p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-left text-[11px] text-slate-600">
+                  <span className="font-bold text-slate-800 block text-[10px] uppercase tracking-wider mb-0.5">Recorded:</span>
+                  <p className="line-clamp-2 italic text-slate-700">&ldquo;{lastSubmitted.message}&rdquo;</p>
+                </div>
+              )}
               <div className="mt-5 flex items-center justify-center gap-2">
                 <button
                   type="button"
@@ -201,13 +222,16 @@ export default function FeedbackWidget() {
               {/* MESSAGE TEXTAREA */}
               <div>
                 <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
-                  Your Message
+                  Your Message <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   ref={textareaRef}
                   rows={3}
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  onChange={(e) => {
+                    setMessage(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
                   placeholder="What's on your mind? What can we improve, add, or fix?"
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition resize-none font-normal"
                 />
@@ -229,14 +253,21 @@ export default function FeedbackWidget() {
 
               {errorMessage && (
                 <div className="rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-center text-xs font-semibold text-rose-700">
-                  {errorMessage}
+                  <p>{errorMessage}</p>
+                  <a
+                    href={mailtoUrl}
+                    className="mt-1.5 inline-flex items-center gap-1 font-bold text-blue-600 underline hover:text-blue-800"
+                  >
+                    <span>Open Mail App</span>
+                    <span>↗</span>
+                  </a>
                 </div>
               )}
 
               {/* SUBMIT BUTTON */}
               <button
                 type="submit"
-                disabled={isSubmitting || !message.trim()}
+                disabled={isSubmitting}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-2.5 px-4 text-xs shadow-md shadow-blue-600/20 transition active:scale-95 disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? (
@@ -245,9 +276,21 @@ export default function FeedbackWidget() {
                     <span>Submitting...</span>
                   </>
                 ) : (
-                  <span>Submit</span>
+                  <span>Submit Feedback</span>
                 )}
               </button>
+
+              {/* DIRECT EMAIL OPTION */}
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                <span>Or email directly:</span>
+                <a
+                  href={mailtoUrl}
+                  className="font-bold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
+                >
+                  <span>hello@spellense.com</span>
+                  <span>↗</span>
+                </a>
+              </div>
             </form>
           )}
         </div>
@@ -268,7 +311,7 @@ export default function FeedbackWidget() {
           onClick={handleToggle}
           aria-label={isOpen ? "Close feedback form" : "Open feedback form"}
           aria-expanded={isOpen}
-          className={`flex h-13 w-13 items-center justify-center rounded-full text-white shadow-xl shadow-blue-600/30 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${
+          className={`flex h-14 w-14 items-center justify-center rounded-full text-white shadow-xl shadow-blue-600/30 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${
             isOpen
               ? "bg-slate-900 hover:bg-black rotate-90 shadow-slate-900/30"
               : "bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 border-2 border-white/40 hover:shadow-blue-600/50"

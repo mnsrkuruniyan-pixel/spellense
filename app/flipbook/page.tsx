@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import FlipbookClient from "./FlipbookClient";
 
 export const metadata: Metadata = {
-  title: "Free 3D Flipbook Maker — Convert PDF & Images to Digital Flipbook | Spellense",
+  // absolute: stops the root layout's title template from appending "| Spellense" a second time
+  title: { absolute: "Free 3D Flipbook Maker — Convert PDF & Images to Digital Flipbook | Spellense" },
   description:
     "Convert multi-page PDFs and images into interactive 3D digital flipbooks. Realistic page turn animations, offline HTML download, ZIP export, and embed code. 100% private in-browser processing.",
   alternates: {
