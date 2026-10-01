@@ -5,11 +5,53 @@ import { usePathname } from "next/navigation";
 
 type FeedbackType = "idea" | "bug" | "praise" | "general";
 
-const FEEDBACK_TYPES: { id: FeedbackType; label: string; icon: string }[] = [
-  { id: "idea", label: "Idea", icon: "💡" },
-  { id: "bug", label: "Bug", icon: "🐛" },
-  { id: "praise", label: "Love it", icon: "❤️" },
-  { id: "general", label: "Other", icon: "💬" },
+const FEEDBACK_TYPES: { id: FeedbackType; label: string; icon: React.ReactNode }[] = [
+  {
+    id: "idea",
+    label: "Idea",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+        <path d="M9 18h6" />
+        <path d="M10 22h4" />
+      </svg>
+    ),
+  },
+  {
+    id: "bug",
+    label: "Bug",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="8" height="14" x="8" y="6" rx="4" />
+        <path d="m19 7-3 2" />
+        <path d="m5 7 3 2" />
+        <path d="m19 19-3-2" />
+        <path d="m5 19 3-2" />
+        <path d="M20 13h-4" />
+        <path d="M4 13h4" />
+        <path d="m10 4 1 2" />
+        <path d="m14 4-1 2" />
+      </svg>
+    ),
+  },
+  {
+    id: "praise",
+    label: "Love it",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+      </svg>
+    ),
+  },
+  {
+    id: "general",
+    label: "Other",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+      </svg>
+    ),
+  },
 ];
 
 export default function FeedbackWidget() {
@@ -160,8 +202,10 @@ export default function FeedbackWidget() {
           {submitted ? (
             /* SUCCESS STATE */
             <div className="py-6 text-center animate-in fade-in duration-200">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-2xl text-emerald-600 shadow-xs">
-                🎉
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 shadow-xs ring-1 ring-emerald-500/20">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               </div>
               <h4 className="mt-3.5 text-base font-extrabold text-slate-900">
                 Thank You!
@@ -300,9 +344,11 @@ export default function FeedbackWidget() {
       <div className="relative flex items-center gap-2">
         {/* HOVER TOOLTIP PILL */}
         {!isOpen && !hasInteracted && (
-          <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-blue-200/80 bg-white/95 px-3 py-1.5 text-xs font-bold text-blue-700 shadow-md shadow-blue-900/5 backdrop-blur-md animate-bounce">
-            <span>💬</span>
-            <span>Feedback?</span>
+          <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-md shadow-slate-900/5 backdrop-blur-md">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+            </svg>
+            <span>Feedback</span>
           </div>
         )}
 

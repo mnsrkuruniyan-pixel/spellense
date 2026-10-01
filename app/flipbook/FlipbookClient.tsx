@@ -130,15 +130,55 @@ const VCSS = `
 .fbv.clean .sl{-webkit-appearance:none;appearance:none;flex:1;min-width:80px;height:6px;border-radius:999px;background:rgba(15,23,42,.14);outline:none;cursor:pointer;margin:0}
 .fbv.clean .sl::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:44px;height:6px;border-radius:999px;background:#64748b;border:0}
 .fbv.clean .sl::-moz-range-thumb{width:44px;height:6px;border-radius:999px;background:#64748b;border:0}
-.fbv.clean .ct{position:absolute;top:10px;right:10px;margin:0;flex-wrap:nowrap;border-radius:12px;padding:4px;gap:0}
-.fbv.clean.hh .ct{top:64px}
+.fbv.clean .ct{position:relative;order:1;align-self:flex-end;margin:0;flex-wrap:nowrap;border-radius:12px;padding:4px;gap:0;z-index:12}
+.fbv.clean .fbh{order:0;align-self:stretch}.fbv.clean .stage{order:2}.fbv.clean .nv{order:3}.fbv.clean .th{order:4}
 .fbv.clean .ct button{width:38px;height:38px;color:#0f172a}
 .fbv.clean .ct svg{width:21px;height:21px}
 .fbv.clean .stage{height:clamp(420px,68vh,760px)}
-.fbv.clean.full .stage{height:calc(100vh - 84px)}
+.fbv.clean.full{justify-content:flex-start}
+.fbv.clean.full .stage{height:auto;flex:1 1 0;min-height:240px;max-height:none}
 .fbv.flat #book{filter:drop-shadow(0 16px 24px rgba(15,23,42,.2))}
-@media (max-width:640px) and (orientation:portrait){.fbv.clean .ct,.fbv.clean.hh .ct{position:static;top:auto;right:auto;align-self:center}}
-@media (orientation:landscape) and (max-height:520px){.fbv.clean .stage{height:calc(100vh - 84px);height:calc(100dvh - 84px)}.fbv.clean.full .stage{height:calc(100vh - 76px);height:calc(100dvh - 76px)}.fbv.clean .ct,.fbv.clean.hh .ct{top:6px;right:6px}}
+.fbv.clean.dk .nv{color:#e2e8f0}
+.fbv.clean.dk .nv button{color:#fff}
+.fbv.clean.dk .nv button:hover,.fbv.clean.dk .nv button:focus-visible{background:rgba(255,255,255,.16)}
+.fbv.clean.dk .nv .pg{color:#cbd5e1}
+.fbv.clean.dk .sl{background:rgba(255,255,255,.24)}
+.fbv.clean.dk .sl::-webkit-slider-thumb{background:#e2e8f0}
+.fbv.clean.dk .sl::-moz-range-thumb{background:#e2e8f0}
+/* Browse display modes (Glide, Deck, Arc, Single, Scroll, Wall, Fan) */
+.fbv.alt .stage{perspective:none;-webkit-perspective:none;overflow:hidden;touch-action:pan-y}
+.fbv.alt.alt-glide .stage,.fbv.alt.alt-scroll .stage,.fbv.alt.alt-wall .stage{touch-action:auto}
+.astg{position:absolute;inset:0}
+.alt-arc .astg{perspective:1500px;-webkit-perspective:1500px;transform-style:preserve-3d}
+.ai{position:absolute;left:50%;top:50%;width:var(--iw);height:var(--ih);margin:calc(var(--ih) / -2) 0 0 calc(var(--iw) / -2);border-radius:6px;background:#fff;box-shadow:0 12px 32px -10px rgba(15,23,42,.4),0 0 0 1px rgba(15,23,42,.05);overflow:hidden;transition:transform .5s cubic-bezier(.3,.7,.2,1),opacity .4s,filter .4s;will-change:transform;cursor:pointer}
+.ai img{width:100%;height:100%;object-fit:contain;display:block;background:#fff;user-select:none;-webkit-user-drag:none}
+.alt-single .ai{cursor:default}
+.alt-arc .ai{transform-style:preserve-3d}
+.alt-fan .ai{transform-origin:50% 135%}
+.gl,.sc,.wl{position:absolute;inset:0;box-sizing:border-box}
+.gl{display:flex;align-items:center;gap:18px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.gl::-webkit-scrollbar,.sc::-webkit-scrollbar{display:none}
+.gl .ai,.sc .ai,.wl .ai{position:relative;left:auto;top:auto;margin:0;transition:none;flex:0 0 auto;scroll-snap-align:center}
+.gl .ai{width:var(--iw);height:var(--ih)}
+.sc{overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:14px;padding:12px 0;scrollbar-width:none}
+.sc .ai{width:var(--iw);height:var(--ih);cursor:default}
+.wl{overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;padding:16px;align-content:start}
+.wl .ai{width:100%;height:auto;aspect-ratio:var(--iw) / var(--ih)}
+.wl .ai:hover{box-shadow:0 14px 34px -10px rgba(15,23,42,.55),0 0 0 2px #2563eb}
+.fbv.alt .th img.on{border-color:#2563eb}
+.alt-wall .nv,.alt-wall .th{display:none!important}
+.lb{position:absolute;inset:0;z-index:30;background:rgba(15,23,42,.94);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
+.lb img{max-width:min(78%,900px);max-height:88%;object-fit:contain;background:#fff;border-radius:4px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.lb button{all:unset;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.12);transition:background .15s}
+.lb button:hover,.lb button:focus-visible{background:rgba(255,255,255,.28)}
+.lbx{position:absolute;top:12px;right:14px;width:40px;height:40px;font-size:26px;line-height:1}
+.lbn{position:absolute;top:50%;margin-top:-22px;width:44px;height:44px}
+.lbn.l{left:14px}.lbn.r{right:14px}
+.lbn svg{width:24px;height:24px}
+.lbc{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:#e2e8f0;font:600 12px system-ui,sans-serif}
+
+@media (max-width:640px) and (orientation:portrait){.fbv.clean .ct{align-self:center}}
+@media (orientation:landscape) and (max-height:520px){.fbv.clean .stage{height:calc(100vh - 84px);height:calc(100dvh - 84px)}.fbv.clean.full .stage{height:auto}.fbv.clean{padding-right:56px}.fbv.clean .ct{position:absolute;top:50%;right:6px;transform:translateY(-50%);flex-direction:column;padding:4px}.fbv.clean .ct button{width:34px;height:34px}}
 .ct .pg{font-size:.8125rem;min-width:76px;text-align:center;font-weight:700;letter-spacing:-.01em;padding:0 4px}
 .th{display:flex;gap:10px;overflow-x:auto;width:100%;padding:10px 4px;z-index:10;scrollbar-width:thin}.th[hidden]{display:none!important}
 .th img{height:72px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .18s;box-shadow:0 4px 10px rgba(0,0,0,.15)}.th img:hover{border-color:#3b82f6;transform:scale(1.06)}
@@ -152,7 +192,7 @@ const APP_CSS = `
   --fb-primary: #2563eb;
   --fb-line: #e2e8f0;
 }
-#ed[hidden], #ex[hidden], #ask[hidden] {
+#upload-stage[hidden], #ed[hidden], #ex[hidden], #ask[hidden] {
   display: none !important;
 }
 #ed {
@@ -180,6 +220,14 @@ const APP_CSS = `
   border: 1px solid #e2e8f0;
   margin-bottom: 16px;
 }
+.dsp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.dpg{grid-column:1/-1;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-top:6px}
+.dpg:first-child{margin-top:0}
+.dpc{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px 7px;border:1.5px solid #e2e8f0;border-radius:12px;background:#fff;color:#475569;font-size:11px;font-weight:700;text-align:center;transition:border-color .15s,background .15s,color .15s}
+.dpc svg{width:36px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.dpc:hover{border-color:#93c5fd}
+.dpc:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.dpc.fon{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}
 @media (max-width: 640px) {
   .ftb {
     display: flex;
@@ -193,10 +241,11 @@ const APP_CSS = `
   border: 1px solid transparent;
   background: transparent;
   color: #64748b;
-  padding: 8px 4px;
+  padding: 8px 2px;
   border-radius: 12px;
   cursor: pointer;
-  font-size: .75rem;
+  font-size: .7rem;
+  white-space: nowrap;
   font-weight: 700;
   text-align: center;
   transition: all .15s ease;
@@ -419,6 +468,8 @@ const APP_CSS = `
   padding: 0;
   flex-shrink: 0;
 }
+.fpl button.on { box-shadow: 0 0 0 2.5px #2563eb; }
+.fpl button.pn { background: linear-gradient(45deg,#e2e8f0 25%,transparent 25%,transparent 75%,#e2e8f0 75%),linear-gradient(45deg,#e2e8f0 25%,#fff 25%,#fff 75%,#e2e8f0 75%); background-size: 10px 10px; background-position: 0 0, 5px 5px; }
 .fpl button:hover {
   transform: scale(1.15);
   box-shadow: 0 0 0 2px #2563eb;
@@ -560,6 +611,304 @@ const FAQ_ITEMS = [
   },
 ];
 
+// Browse display modes. Self-contained on purpose: its source is also embedded in the exported HTML.
+const ALT_MODES = ["glide", "deck", "arc", "single", "scroll", "wall", "fan"];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) => string): void {
+  if (root._off) root._off();
+  if (root._pf && typeof root._pf.destroy === "function") {
+    try { root._pf.destroy(); } catch (e) {}
+    root._pf = null;
+  }
+  var P: string[] = c.pages || [];
+  var N = P.length;
+  var mode: string = c.disp;
+  var ratio: number = c.ratio > 0 ? c.ratio : 0.714;
+  var img = c.bgType === "img" && c.bgImg;
+  var cur = 0, z = 1, au: any = 0, thOpen = false, lb = -1;
+  var timers: any[] = [];
+
+  function lumOf(h: string): number {
+    var m = /^#?([0-9a-f]{6})$/i.exec(h || "");
+    if (!m) return 0;
+    var n = parseInt(m[1], 16);
+    return (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
+  }
+
+  var dark = c.bgType !== "none" && (img || lumOf(c.bg1) < 0.5);
+  root.className = "fbv clean alt alt-" + mode + (c.full ? " full" : "") + ((c.logo || c.desc) ? " hh" : "") + (dark ? " dk" : "");
+  root.style.background = img
+    ? "url(" + c.bgImg + ") center/cover"
+    : c.bgType === "grad"
+    ? "linear-gradient(135deg," + c.bg1 + "," + c.bg2 + ")"
+    : c.bg1;
+  if (c.bgType === "none") root.style.background = "transparent";
+  root.style.color = dark ? "#fff" : "#0f172a";
+
+  var h = img ? '<div class="ov" style="background:rgba(0,0,0,' + (c.dim || 0) + ')"></div>' : "";
+  if (c.logo || c.desc) {
+    h += '<div class="fbh' + (c.logoRight ? " rv" : "") + '">' +
+      (c.logo ? '<img src="' + c.logo + '" alt="Logo">' : "<span></span>") +
+      "<p>" + esc(c.desc) + "</p></div>";
+  }
+  var browse = mode !== "wall";
+  h += '<div class="stage" id="stage"><div class="astg" id="astg"></div></div>';
+  h += '<div class="ct"><button data-a="z" title="Zoom" aria-label="Zoom">' + ic("z") + "</button>" +
+    (browse ? '<button data-a="t" title="Thumbnails" aria-label="Thumbnails">' + ic("t") + "</button>" : "") +
+    (browse ? '<button data-a="a" title="Autoplay" aria-label="Auto-play">' + ic("a0") + "</button>" : "") +
+    '<button data-a="f" title="Fullscreen" aria-label="Fullscreen">' + ic("f") + "</button></div>";
+  h += '<div class="nv"><button data-a="p" title="Previous page" aria-label="Previous page">' + ic("p2") + "</button>" +
+    '<input class="sl" type="range" min="1" max="' + Math.max(1, N) + '" value="1" aria-label="Go to page">' +
+    '<span class="pg">1 / ' + N + "</span>" +
+    '<button data-a="n" title="Next page" aria-label="Next page">' + ic("n2") + "</button></div>";
+  h += '<div class="th" hidden></div>';
+  if (c.credit) h += '<a class="cr" href="https://spellense.com/flipbook" target="_blank" rel="noopener">Made with Spellense</a>';
+  root.innerHTML = h;
+
+  var stage = root.querySelector("#stage") as HTMLElement;
+  var astg = root.querySelector("#astg") as HTMLElement;
+  var pgEl = root.querySelector(".pg") as HTMLElement;
+  var slEl = root.querySelector(".sl") as HTMLInputElement;
+  var thEl = root.querySelector(".th") as HTMLElement;
+
+  var box = astg;
+  var items: HTMLElement[] = [];
+  var wrapCls = mode === "glide" ? "gl" : mode === "scroll" ? "sc" : mode === "wall" ? "wl" : "";
+  if (wrapCls) {
+    astg.innerHTML = '<div class="' + wrapCls + '"></div>';
+    box = astg.firstChild as HTMLElement;
+  }
+  var html = "";
+  for (var i = 0; i < N; i++) {
+    html += '<div class="ai" data-i="' + i + '"><img src="' + P[i] + '" alt="Page ' + (i + 1) + '" draggable="false"></div>';
+  }
+  box.innerHTML = html;
+  var nodes = box.querySelectorAll(".ai");
+  for (var k = 0; k < nodes.length; k++) items.push(nodes[k] as HTMLElement);
+
+  var thHtml = "";
+  for (var t = 0; t < N; t++) thHtml += '<img src="' + P[t] + '" alt="Page ' + (t + 1) + '" data-i="' + t + '">';
+  thEl.innerHTML = thHtml;
+
+  function size() {
+    var W = stage.clientWidth, H = stage.clientHeight;
+    var iw: number, ih: number;
+    if (mode === "scroll") {
+      iw = Math.min(W * 0.92, 640) * z;
+      ih = iw / ratio;
+    } else if (mode === "wall") {
+      iw = 160; ih = iw / ratio;
+    } else {
+      ih = Math.max(140, H - 36);
+      iw = ih * ratio;
+      if (iw > W * 0.86) { iw = W * 0.86; ih = iw / ratio; }
+      iw *= z; ih *= z;
+    }
+    root.style.setProperty("--iw", Math.round(iw) + "px");
+    root.style.setProperty("--ih", Math.round(ih) + "px");
+    return iw;
+  }
+
+  function place(it: HTMLElement, d: number) {
+    var a = Math.abs(d), sg = d < 0 ? -1 : 1, tr = "", op = 1, zi = 10 - a, fl = "";
+    if (mode === "single") {
+      tr = "translateX(" + d * 26 + "%)";
+      op = a === 0 ? 1 : 0;
+    } else if (mode === "deck") {
+      if (d < 0) { tr = "translateX(-125%) rotate(-14deg)"; op = 0; zi = 0; }
+      else if (d <= 3) { tr = "translateY(" + d * 12 + "px) scale(" + (1 - d * 0.05) + ")"; op = 1 - d * 0.14; zi = 20 - d; }
+      else { tr = "translateY(40px) scale(.8)"; op = 0; zi = 0; }
+    } else if (mode === "arc") {
+      if (a > 3) { tr = "translateX(" + sg * 190 + "%) translateZ(-420px) rotateY(" + -sg * 50 + "deg)"; op = 0; zi = 0; }
+      else {
+        tr = "translateX(" + d * 56 + "%) translateZ(" + -a * 150 + "px) rotateY(" + (a ? -sg * 48 : 0) + "deg) scale(" + (a ? 0.9 : 1) + ")";
+        fl = a ? "brightness(" + (1 - a * 0.1) + ")" : "";
+      }
+    } else if (mode === "fan") {
+      if (a > 4) { tr = "translateX(" + sg * 150 + "%) rotate(" + sg * 30 + "deg)"; op = 0; zi = 0; }
+      else {
+        tr = "translateX(" + d * 24 + "%) rotate(" + d * 7 + "deg) translateY(" + (a ? a * 5 : -5) + "%)" + (a ? "" : " scale(1.04)");
+        zi = a ? 10 - a : 20;
+      }
+    }
+    it.style.transform = tr;
+    it.style.opacity = String(op);
+    it.style.zIndex = String(zi);
+    it.style.filter = fl;
+    it.style.pointerEvents = op === 0 ? "none" : "auto";
+  }
+
+  var freeMode = mode === "glide" || mode === "scroll" || mode === "wall";
+  var scrolling = 0;
+
+  function ui() {
+    pgEl.textContent = (cur + 1) + " / " + N;
+    slEl.value = String(cur + 1);
+    var ims = thEl.querySelectorAll("img");
+    for (var q = 0; q < ims.length; q++) (ims[q] as HTMLElement).classList.toggle("on", q === cur);
+  }
+
+  function step() {
+    var W = size();
+    if (mode === "glide") {
+      var gap = 18;
+      (box as HTMLElement).style.paddingLeft = (astg.clientWidth - W) / 2 + "px";
+      (box as HTMLElement).style.paddingRight = (astg.clientWidth - W) / 2 + "px";
+      return;
+    }
+    if (!freeMode) for (var j = 0; j < items.length; j++) place(items[j], j - cur);
+  }
+
+  function scrollTo(i: number, smooth: boolean) {
+    var it = items[i];
+    if (!it) return;
+    scrolling = Date.now();
+    if (mode === "glide") {
+      box.scrollTo({ left: it.offsetLeft - (box.clientWidth - it.offsetWidth) / 2, behavior: smooth ? "smooth" : "auto" });
+    } else if (mode === "scroll") {
+      box.scrollTo({ top: Math.max(0, it.offsetTop - 12), behavior: smooth ? "smooth" : "auto" });
+    }
+  }
+
+  function go(i: number, fromScroll?: boolean) {
+    if (!N) return;
+    i = Math.max(0, Math.min(N - 1, i));
+    cur = i;
+    if (freeMode) { if (!fromScroll) scrollTo(i, true); }
+    else step();
+    ui();
+  }
+
+  function next() { go(cur + 1); }
+  function prev() { go(cur - 1); }
+
+  function nearest(): number {
+    var best = 0, bd = 1e9, mid: number;
+    for (var m = 0; m < items.length; m++) {
+      var it = items[m];
+      if (mode === "glide") mid = it.offsetLeft + it.offsetWidth / 2 - (box.scrollLeft + box.clientWidth / 2);
+      else mid = it.offsetTop + it.offsetHeight / 2 - (box.scrollTop + box.clientHeight / 2);
+      mid = Math.abs(mid);
+      if (mid < bd) { bd = mid; best = m; }
+    }
+    return best;
+  }
+
+  if (mode === "glide" || mode === "scroll") {
+    box.addEventListener("scroll", function () {
+      var n = nearest();
+      if (n !== cur) { cur = n; ui(); }
+    }, { passive: true });
+  }
+
+  // Wall lightbox
+  function openLb(i: number) {
+    lb = Math.max(0, Math.min(N - 1, i));
+    var d = root.querySelector(".lb") as HTMLElement | null;
+    if (!d) {
+      d = document.createElement("div");
+      d.className = "lb";
+      root.appendChild(d);
+    }
+    d.innerHTML = '<button class="lbx" data-l="x" aria-label="Close">&times;</button>' +
+      '<button class="lbn l" data-l="p" aria-label="Previous page">' + ic("p2") + "</button>" +
+      '<img src="' + P[lb] + '" alt="Page ' + (lb + 1) + '">' +
+      '<button class="lbn r" data-l="n" aria-label="Next page">' + ic("n2") + "</button>" +
+      '<span class="lbc">' + (lb + 1) + " / " + N + "</span>";
+    cur = lb;
+    ui();
+  }
+  function closeLb() {
+    var d = root.querySelector(".lb");
+    if (d && d.parentNode) d.parentNode.removeChild(d);
+    lb = -1;
+  }
+
+  box.addEventListener("click", function (e: any) {
+    var it = e.target.closest ? e.target.closest(".ai") : null;
+    if (!it) return;
+    var i = Number(it.getAttribute("data-i"));
+    if (mode === "wall") { openLb(i); return; }
+    if (mode === "deck") { if (i === cur) next(); return; }
+    if (i !== cur) go(i);
+  });
+  root.addEventListener("click", function (e: any) {
+    var b = e.target.closest ? e.target.closest("[data-l]") : null;
+    if (!b || lb < 0) return;
+    var a = b.getAttribute("data-l");
+    if (a === "x") closeLb();
+    else if (a === "p") openLb(lb - 1);
+    else if (a === "n") openLb(lb + 1);
+  });
+
+  // Swipe (single / deck / arc / fan)
+  var sx = 0, sy = 0, sd = false;
+  if (!freeMode) {
+    stage.addEventListener("pointerdown", function (e: any) { sx = e.clientX; sy = e.clientY; sd = true; });
+    stage.addEventListener("pointerup", function (e: any) {
+      if (!sd) return;
+      sd = false;
+      var dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)) { if (dx < 0) next(); else prev(); }
+    });
+  }
+
+  function setAuto(on: boolean, btn?: HTMLElement | null) {
+    if (au) { clearInterval(au); au = 0; }
+    if (on) au = setInterval(function () { go(cur >= N - 1 ? 0 : cur + 1); }, 2600);
+    if (btn) btn.innerHTML = ic(on ? "a1" : "a0");
+  }
+
+  function onCtl(e: any) {
+    var b = e.target.closest ? e.target.closest("button") : null;
+    if (!b) return;
+    var a = b.getAttribute("data-a");
+    if (a === "p") prev();
+    else if (a === "n") next();
+    else if (a === "z") { z = z >= 1.5 ? 1 : z + 0.25; step(); if (freeMode) scrollTo(cur, false); }
+    else if (a === "t") { thOpen = !thOpen; thEl.hidden = !thOpen; }
+    else if (a === "a") setAuto(!au, b);
+    else if (a === "f") {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (root.requestFullscreen) root.requestFullscreen();
+    }
+  }
+  (root.querySelector(".ct") as HTMLElement).onclick = onCtl;
+  (root.querySelector(".nv") as HTMLElement).onclick = onCtl;
+  slEl.oninput = function () { go(Number(slEl.value) - 1); };
+  thEl.onclick = function (e: any) {
+    var im = e.target.closest ? e.target.closest("img") : null;
+    if (im) go(Number(im.getAttribute("data-i")));
+  };
+
+  function key(e: KeyboardEvent) {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown" && !freeMode) { if (lb >= 0) openLb(lb + 1); else next(); }
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp" && !freeMode) { if (lb >= 0) openLb(lb - 1); else prev(); }
+    else if (e.key === "Escape" && lb >= 0) closeLb();
+  }
+  var rt: any = 0;
+  function onResize() {
+    clearTimeout(rt);
+    rt = setTimeout(function () { step(); if (freeMode && mode !== "wall") scrollTo(cur, false); }, 120);
+  }
+  addEventListener("keydown", key);
+  window.addEventListener("resize", onResize);
+  document.addEventListener("fullscreenchange", onResize);
+
+  root._off = function () {
+    if (au) clearInterval(au);
+    clearTimeout(rt);
+    removeEventListener("keydown", key);
+    window.removeEventListener("resize", onResize);
+    document.removeEventListener("fullscreenchange", onResize);
+    for (var x = 0; x < timers.length; x++) clearTimeout(timers[x]);
+  };
+
+  step();
+  if (freeMode && mode !== "wall") setTimeout(function () { scrollTo(0, false); ui(); }, 30);
+  ui();
+}
+
 export default function FlipbookClient() {
   const initDone = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -580,20 +929,21 @@ export default function FlipbookClient() {
       <Navbar />
 
       <main className="flex-1">
-        {/* HERO SECTION */}
-        <section className="relative overflow-hidden px-4 pt-16 pb-10 sm:px-6 sm:pt-20 sm:pb-12 lg:pt-24 lg:pb-14">
-          <div className="mx-auto max-w-5xl text-center px-2">
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.16] sm:leading-[1.18] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-4xl mx-auto">
-              Make your clients actually want to flip through.
-            </h1>
-          </div>
-        </section>
+        {/* UPLOAD STAGE: HERO + DROPZONE + CARDS (HIDDEN AFTER UPLOAD) */}
+        <div id="upload-stage">
+          {/* HERO SECTION — Same size & breathing space as Design Check / other pages */}
+          <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
+            <div className="mx-auto max-w-7xl text-center">
+              <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
+                Make your clients actually want to flip through.
+              </h1>
+            </div>
+          </section>
 
-        {/* WORKSPACE CONTAINER */}
-        <div id="fbapp" className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-          {/* DROPZONE */}
-          <div
-            id="drop"
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {/* DROPZONE */}
+            <div
+              id="drop"
             tabIndex={0}
             role="button"
             aria-label="Upload PDF or images"
@@ -676,7 +1026,7 @@ export default function FlipbookClient() {
                   <path d="M6 6h10" />
                   <path d="M6 10h10" />
                 </svg>
-                <span>📖 Try Demo Catalog</span>
+                <span>Try demo catalog</span>
               </button>
             </div>
 
@@ -685,8 +1035,8 @@ export default function FlipbookClient() {
 
           {/* 4 Trust Feature Cards */}
           <div className="mt-8 max-w-[920px] mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+              <div className="flex items-center gap-2.5 sm:gap-3.5 p-2.5 sm:p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-[#0055fe]">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
@@ -696,15 +1046,15 @@ export default function FlipbookClient() {
                 </div>
                 <div>
                   <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                    12 Book Styles
+                    11 Display Styles
                   </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                    Leather, velvet, walnut &amp; custom
+                  <div className="hidden sm:block text-[11px] text-slate-500 mt-0.5 leading-tight">
+                    Page-turn, slider, cards, 3D arc &amp; more
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+              <div className="flex items-center gap-2.5 sm:gap-3.5 p-2.5 sm:p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100/70 text-purple-600">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -714,13 +1064,13 @@ export default function FlipbookClient() {
                   <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
                     3D Realistic Board
                   </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                  <div className="hidden sm:block text-[11px] text-slate-500 mt-0.5 leading-tight">
                     Page stack &amp; ribbon bookmark
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+              <div className="flex items-center gap-2.5 sm:gap-3.5 p-2.5 sm:p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100/70 text-emerald-600">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -732,13 +1082,13 @@ export default function FlipbookClient() {
                   <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
                     Offline HTML Export
                   </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                  <div className="hidden sm:block text-[11px] text-slate-500 mt-0.5 leading-tight">
                     Standalone file • No signup
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
+              <div className="flex items-center gap-2.5 sm:gap-3.5 p-2.5 sm:p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100/70 text-amber-600">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -749,13 +1099,18 @@ export default function FlipbookClient() {
                   <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
                     Zero Server Upload
                   </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
+                  <div className="hidden sm:block text-[11px] text-slate-500 mt-0.5 leading-tight">
                     Rendered entirely in browser
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+        {/* WORKSPACE CONTAINER */}
+        <div id="fbapp" className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
           <input type="file" id="fi" accept="application/pdf,image/*" multiple hidden />
 
           {/* WIDE-PAGE SPREAD DIALOG */}
@@ -784,7 +1139,7 @@ export default function FlipbookClient() {
                   <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800">Customizer</span>
                 </div>
-                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">12 Realistic Styles</span>
+                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">11 Display Styles</span>
               </div>
 
               {/* 5-COL COMPACT SEGMENTED TABS */}
@@ -799,13 +1154,20 @@ export default function FlipbookClient() {
 
               {/* 1. Style panel */}
               <div className="ftp" id="p-st">
+                {/* Display style picker */}
+                <div>
+                  <span className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Display style</span>
+                  <div id="dsp" className="dsp"></div>
+                </div>
+
                 {/* Active Style Description Box */}
                 <div id="note" className="rounded-xl border border-blue-100 bg-blue-50/80 p-3 text-xs text-blue-900 leading-relaxed font-medium"></div>
 
                 {/* Optional inside-cover image (available for every style) */}
                 <div id="ic-box" className="rounded-2xl border border-slate-200/90 bg-slate-50/90 p-3 shadow-2xs">
-                  <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
-                    <input type="checkbox" id="icOn" /> Add an inside-cover image
+                  <label style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 8, textAlign: "left" }} className="text-xs font-bold text-slate-700 cursor-pointer">
+                    <input type="checkbox" id="icOn" style={{ width: 16, height: 16, margin: 0, flex: "none" }} />
+                    <span>Add an inside-cover image</span>
                   </label>
                   <div id="icPanel" hidden>
                     <div className="flex items-center gap-2 pt-2.5">
@@ -1115,18 +1477,6 @@ export default function FlipbookClient() {
                   </label>
                 </label>
 
-                {/* Flat pages */}
-                <label htmlFor="fl" className="f-toggle-card">
-                  <div className="flex flex-col pr-3">
-                    <span className="text-xs font-bold text-slate-800">Flat pages (no cover board)</span>
-                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Plain flat pages like a PDF viewer. Turns off the book cover and inside-cover image.</span>
-                  </div>
-                  <label className="f-toggle-switch">
-                    <input type="checkbox" id="fl" />
-                    <span className="f-toggle-slider"></span>
-                  </label>
-                </label>
-
                 {/* Sound Effects */}
                 <label htmlFor="sn" className="f-toggle-card">
                   <div className="flex flex-col pr-3">
@@ -1160,8 +1510,8 @@ export default function FlipbookClient() {
 
           {/* EXPORT ACTION ROW */}
           <div id="ex" className="mt-8 rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-lg shadow-slate-900/5 backdrop-blur-xl" hidden>
-            <div className="flex flex-wrap items-center gap-3 w-full">
-              <button className="fcta" id="dl">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3 w-full">
+              <button className="fcta col-span-2 justify-center" id="dl">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="7 10 12 15 17 10" />
@@ -1169,8 +1519,8 @@ export default function FlipbookClient() {
                 </svg>
                 Download Offline HTML
               </button>
-              <button className="fbtn" id="pvw">Preview in New Tab</button>
-              <button className="fbtn ml-auto text-slate-500 hover:text-red-600" id="nw">Start Over</button>
+              <button className="fbtn justify-center" id="pvw">Preview in New Tab</button>
+              <button className="fbtn sm:ml-auto justify-center text-slate-500 hover:text-red-600" id="nw">Start Over</button>
             </div>
 
             {/* EMBED SNIPPET COLLAPSIBLE */}
@@ -1230,9 +1580,9 @@ export default function FlipbookClient() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-black">
                   2
                 </div>
-                <h3 className="mt-3 text-sm font-bold text-slate-900">Pick a Style or Custom Cover</h3>
+                <h3 className="mt-3 text-sm font-bold text-slate-900">Pick a Display Style</h3>
                 <p className="mt-1 text-xs text-slate-500 leading-relaxed font-normal">
-                  Choose from 7 classic books, 4 luxury gold editions, or wrap your own cover with hard board, ribbon &amp; gilded edges.
+                  Choose page-turn, slider, cards, arc and more, or a hardback cover with ribbon &amp; gilded edges.
                 </p>
               </div>
 
@@ -1735,11 +2085,15 @@ function initFlipbookApp() {
       try { root._pf.destroy(); } catch (_) {}
       root._pf = null;
     }
+    if (ALT_MODES.indexOf(c.disp as string) >= 0) {
+      altViewer(root, c, ic, esc);
+      return;
+    }
 
     const cur = typeof c.theme === "number" ? Math.max(0, Math.min(BOOK_STYLES.length - 1, c.theme)) : 0;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseStyle: any = BOOK_STYLES[cur] || BOOK_STYLES[0];
-    const s: any = c.flat
+    const s: any = (c.flat || c.disp === "spread" || c.disp === "folio")
       ? Object.assign({}, baseStyle, { nocov: true, flat: true, nb: true, endp: "", custom: false, hard: 0, rib: "", rings: false, band: false, lux: false, gilt: false, O: 0 })
       : baseStyle;
     const P = (c.pages as string[]) || [];
@@ -1752,13 +2106,18 @@ function initFlipbookApp() {
     let T = 0, port = false, vm = (c.view as string) || "auto", hinted = false;
     let w = 0, h = 0, pw = 0;
 
-    root.className = "fbv" + (c.full ? " full" : "") + (c.clean !== false ? " clean" : "") + (c.flat ? " flat" : "") + ((c.logo || c.desc) ? " hh" : "");
+    root.className = "fbv" + (c.full ? " full" : "") + (c.clean !== false ? " clean" : "") + ((c.flat || c.disp === "spread" || c.disp === "folio") ? " flat" : "") + ((c.logo || c.desc) ? " hh" : "");
     root.style.background = img
       ? "url(" + c.bgImg + ") center/cover"
       : c.bgType === "grad"
       ? "linear-gradient(135deg," + c.bg1 + "," + c.bg2 + ")"
       : (c.bg1 as string);
-    root.style.color = img || lum(c.bg1 as string) < 0.5 ? "#fff" : "#0f172a";
+    if (c.bgType === "none") root.style.background = "transparent";
+    var folio = c.disp === "folio";
+    if (folio) root.style.background = "linear-gradient(135deg,#1f2937,#0b1220)";
+    var dark = folio || (c.bgType !== "none" && (img || lum(c.bg1 as string) < 0.5));
+    root.style.color = dark ? "#fff" : "#0f172a";
+    root.classList.toggle("dk", !!dark);
 
     // Inject style root variables
     root.style.setProperty("--O", s.O + "px");
@@ -1885,6 +2244,7 @@ function initFlipbookApp() {
 
       Object.assign(ringsEl.style, {
         display: s.rings ? "block" : "none",
+        opacity: (i === 0 || i >= T - 1) ? "0" : "1",
         left: (L + Rr) / 2 - wr.left - 15 + "px",
         top: Tp - wr.top + 4 + "px",
         height: B - Tp - 8 + "px"
@@ -1934,6 +2294,7 @@ function initFlipbookApp() {
 
     const build = async () => {
       const keepIdx = flip ? Math.max(0, flip.getCurrentPageIndex()) : 0;
+      if (!c.full) stageEl.style.height = "";
       const clientW = stageEl.clientWidth || stageEl.parentElement?.clientWidth || (typeof window !== "undefined" ? window.innerWidth - 440 : 800);
       const isFull = !!c.full || (typeof document !== "undefined" && !!document.fullscreenElement);
       const clientH = stageEl.clientHeight || (typeof window !== "undefined" ? (isFull ? window.innerHeight - 100 : Math.min(window.innerHeight * 0.52, 520)) : 460);
@@ -1956,7 +2317,8 @@ function initFlipbookApp() {
 
       wrapEl.style.width = Math.round(w) + "px";
       wrapEl.style.height = Math.round(h) + "px";
-      const pw = Math.round(port ? w : w / 2);
+      pw = Math.round(port ? w : w / 2);
+      if (!isFull) stageEl.style.height = Math.max(260, Math.min(clientH, Math.round(h) + 48)) + "px";
 
       if (flip) {
         try { flip.destroy(); } catch (_) {}
@@ -2201,7 +2563,7 @@ function initFlipbookApp() {
       logoRight: false,
       credit: false,
       clean: true,
-      flat: false,
+      disp: "spread",
       bgType: "grad",
       bg1: "#f8fafc",
       bg2: "#e2e8f0",
@@ -2275,7 +2637,7 @@ function initFlipbookApp() {
             standardFontDataUrl: "/standard_fonts/",
           });
           const pdf = await loadingTask.promise;
-          if (setTitle) S.title = f.name.replace(/\.[^.]+$/, "").slice(0, 36);
+          if (setTitle) S.title = f.name.replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 36);
           for (let i = 1; i <= pdf.numPages; i++) {
             status(`Converting page ${i} of ${pdf.numPages}…`);
             try {
@@ -2296,7 +2658,7 @@ function initFlipbookApp() {
             }
           }
         } else if (f.type.startsWith("image/")) {
-          if (setTitle) S.title = f.name.replace(/\.[^.]+$/, "").slice(0, 36);
+          if (setTitle) S.title = f.name.replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 36);
           out.push(await f2u(f, 1600, "image/jpeg", 0.88));
         }
       }
@@ -2309,11 +2671,13 @@ function initFlipbookApp() {
     try {
       await extractPages(Array.from(files), RAW, true);
       if (!RAW.length) throw new Error("Could not extract pages from file");
+      const upStage = document.getElementById("upload-stage");
+      if (upStage) upStage.hidden = true;
       getEl("ed").hidden = false;
       getEl("ex").hidden = false;
       if (await derive()) {
-        status("Ready. " + pages.length + " pages loaded.");
-        getEl("ed").scrollIntoView({ behavior: "smooth" });
+        status("Ready. " + pages.length + (pages.length === 1 ? " page" : " pages") + " loaded.");
+        window.scrollTo({ top: 0, behavior: "smooth" });
         show();
       }
     } catch (err) {
@@ -2364,11 +2728,13 @@ function initFlipbookApp() {
 
     S.title = "Demo Catalog";
     S.desc = "Spellense Editorial 2026\nDesigned with 3D Flipbook Studio";
+    const upStage = document.getElementById("upload-stage");
+    if (upStage) upStage.hidden = true;
     getEl("ed").hidden = false;
     getEl("ex").hidden = false;
     if (await derive()) {
       status("Demo catalog loaded. Click styles below to customize!");
-      getEl("ed").scrollIntoView({ behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
       show();
     }
   }
@@ -2575,12 +2941,26 @@ function initFlipbookApp() {
     (getEl("md") as HTMLSelectElement).value = S.mode;
     (getEl("sn") as HTMLInputElement).checked = S.sound;
     (getEl("cl") as HTMLInputElement).checked = S.clean !== false;
-    (getEl("fl") as HTMLInputElement).checked = !!S.flat;
 
     // Update style buttons state
     document.querySelectorAll(".ftc").forEach((b) => {
       const idx = +(b as HTMLElement).dataset.t!;
       b.classList.toggle("fon", idx === S.theme);
+    });
+
+    // Display style picker state; hardback-only controls
+    if (S.disp === "notepad") S.disp = "classic";
+    const hb = S.disp === "hardback";
+    document.querySelectorAll("#pal button").forEach((b) => {
+      const el = b as HTMLElement;
+      const pi = el.dataset.i;
+      const on = pi === "none" ? S.bgType === "none" : S.bgType === "grad" && !!PAL[+(pi as string)] && PAL[+(pi as string)][1] === S.bg1 && PAL[+(pi as string)][2] === S.bg2;
+      el.classList.toggle("on", on);
+    });
+    document.querySelectorAll(".dpc").forEach((b) => (b as HTMLElement).classList.toggle("fon", (b as HTMLElement).dataset.d === S.disp));
+    ["tg", "note", "ic-box"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = hb ? "" : "none";
     });
 
     // Update Style Note
@@ -2599,7 +2979,7 @@ function initFlipbookApp() {
 
     // Custom cover panel visibility
     const cpanel = document.getElementById("cpanel");
-    if (cpanel) cpanel.hidden = !curStyle.custom;
+    if (cpanel) cpanel.hidden = !(curStyle.custom && S.disp === "hardback");
 
     // Custom cover thumbnails
     const thF = document.getElementById("thF");
@@ -2691,9 +3071,46 @@ function initFlipbookApp() {
   }
   renderStyleCards();
 
+  // ── Display style picker ───────────────────────────────────────────────────
+  const DISPLAYS: { id: string; n: string; g: string; svg: string }[] = [
+    { id: "spread", n: "Spread", g: "Page-turn", svg: '<rect x="3" y="4" width="13" height="18" rx="1.5"/><rect x="18" y="4" width="13" height="18" rx="1.5"/>' },
+    { id: "folio", n: "Folio", g: "Page-turn", svg: '<rect x="3" y="4" width="13" height="18" rx="1.5" fill="currentColor" fill-opacity=".22"/><rect x="18" y="4" width="13" height="18" rx="1.5" fill="currentColor" fill-opacity=".22"/>' },
+    { id: "hardback", n: "Hardback", g: "Page-turn", svg: '<rect x="2" y="3" width="30" height="20" rx="2.5"/><path d="M17 3v20"/><path d="M21 3v9l2-1.6 2 1.6V3"/>' },
+    { id: "classic", n: "Classic", g: "Page-turn", svg: '<rect x="7" y="3" width="21" height="20" rx="2"/><path d="M12 3v20"/><path d="M17 9h7M17 13h7"/>' },
+    { id: "glide", n: "Glide", g: "Browse", svg: '<rect x="1" y="7" width="8" height="12" rx="1.5"/><rect x="11" y="4" width="12" height="18" rx="1.5"/><rect x="25" y="7" width="8" height="12" rx="1.5"/>' },
+    { id: "deck", n: "Deck", g: "Browse", svg: '<rect x="10" y="3" width="14" height="15" rx="1.5" opacity=".4"/><rect x="8" y="6" width="18" height="15" rx="1.5" opacity=".7"/><rect x="6" y="9" width="22" height="15" rx="1.5"/>' },
+    { id: "arc", n: "Arc", g: "Browse", svg: '<path d="M2 7l8 2.5v7L2 19z"/><path d="M32 7l-8 2.5v7L32 19z"/><rect x="11" y="4" width="12" height="18" rx="1.5"/>' },
+    { id: "single", n: "Single", g: "Browse", svg: '<rect x="10" y="3" width="14" height="20" rx="1.5"/>' },
+    { id: "scroll", n: "Scroll", g: "More", svg: '<rect x="9" y="2" width="16" height="10" rx="1.5"/><rect x="9" y="14" width="16" height="10" rx="1.5"/>' },
+    { id: "wall", n: "Wall", g: "More", svg: '<rect x="3" y="3" width="8" height="9" rx="1"/><rect x="13" y="3" width="8" height="9" rx="1"/><rect x="23" y="3" width="8" height="9" rx="1"/><rect x="3" y="14" width="8" height="9" rx="1"/><rect x="13" y="14" width="8" height="9" rx="1"/><rect x="23" y="14" width="8" height="9" rx="1"/>' },
+    { id: "fan", n: "Fan", g: "More", svg: '<rect x="12" y="5" width="10" height="17" rx="1.5" transform="rotate(-26 17 24)"/><rect x="12" y="5" width="10" height="17" rx="1.5" transform="rotate(26 17 24)"/><rect x="12" y="3" width="10" height="17" rx="1.5" fill="currentColor" fill-opacity=".15"/>' }
+  ];
+  function renderDisplayGrid() {
+    const el = getEl("dsp");
+    if (!el) return;
+    let html = "", g = "";
+    DISPLAYS.forEach((d) => {
+      if (d.g !== g) { g = d.g; html += '<div class="dpg">' + g + "</div>"; }
+      html += '<button type="button" class="dpc" data-d="' + d.id + '"><svg viewBox="0 0 34 26" aria-hidden="true">' + d.svg + "</svg><span>" + d.n + "</span></button>";
+    });
+    el.innerHTML = html;
+  }
+  renderDisplayGrid();
+  getEl("dsp").onclick = (e: Event) => {
+    const b = (e.target as HTMLElement).closest(".dpc") as HTMLElement | null;
+    if (!b) return;
+    S.disp = b.dataset.d;
+    if (S.disp === "classic") {
+      const i = BOOK_STYLES.findIndex((x: any) => x.n === "Linen Cloth");
+      if (i >= 0) S.theme = i;
+    }
+    sync();
+    show();
+  };
+
   getEl("pal").innerHTML = PAL.map(
-    (p, i) => `<button data-i="${i}" title="${p[0]}" style="background:linear-gradient(135deg,${p[1]},${p[2]})"></button>`
-  ).join("");
+    (p, i) => `<button data-i="${i}" title="${p[0]}" aria-label="${p[0]}" style="background:linear-gradient(135deg,${p[1]},${p[2]})"></button>`
+  ).join("") + `<button data-i="none" class="pn" title="No background (transparent)" aria-label="No background (transparent)"></button>`;
 
   // ── Style Selection Listener ───────────────────────────────────────────────
   getEl("tg").onclick = (e: Event) => {
@@ -2715,6 +3132,12 @@ function initFlipbookApp() {
   getEl("pal").onclick = (e: Event) => {
     const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
     if (!b) return;
+    if (b.dataset.i === "none") {
+      Object.assign(S, { bgType: "none", bgImg: "" });
+      sync();
+      show();
+      return;
+    }
     const p = PAL[+b.dataset.i!];
     Object.assign(S, { bg1: p[1], bg2: p[2], bgType: "grad", bgImg: "" });
     sync();
@@ -2813,7 +3236,6 @@ function initFlipbookApp() {
   bind("cr", (e) => { S.credit = (e as HTMLInputElement).checked; }, "change");
   bind("sn", (e) => { S.sound = (e as HTMLInputElement).checked; }, "change");
   bind("cl", (e) => { S.clean = (e as HTMLInputElement).checked; }, "change");
-  bind("fl", (e) => { S.flat = (e as HTMLInputElement).checked; }, "change");
   bind("dm", (e) => { S.dim = +(e as HTMLInputElement).value; });
   bind("c1", (e) => {
     S.bg1 = (e as HTMLInputElement).value;
@@ -3189,14 +3611,17 @@ function initFlipbookApp() {
         } catch (_) {}
       }
 
-      var IC = {p2:"<path d=\"M9 5L4 10l5 5\"/><path d=\"M4 10h10a6 6 0 010 11h-3\"/>",n2:"<path d=\"M15 5l5 5-5 5\"/><path d=\"M20 10H10a6 6 0 000 11h3\"/>",p:"<path d=\"M15 5l-7 7 7 7\"/>",n:"<path d=\"M9 5l7 7-7 7\"/>",t:"<rect x=\"4\" y=\"4\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"13\" y=\"4\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"4\" y=\"13\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"13\" y=\"13\" width=\"7\" height=\"7\" rx=\"1\"/>",z:"<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"M20 20l-4.2-4.2M11 8v6M8 11h6\"/>",s1:"<path d=\"M4 9.5v5h4l5 4v-13l-5 4z\"/><path d=\"M16.5 9a4 4 0 010 6M19 6.5a8 8 0 010 11\"/>",s0:"<path d=\"M4 9.5v5h4l5 4v-13l-5 4z\"/><path d=\"M17 9.5l4.5 5M21.5 9.5l-4.5 5\"/>",a0:"<path d=\"M8 5.5v13l10.5-6.5z\" fill=\"currentColor\"/>",a1:"<rect x=\"6.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\"/><rect x=\"13.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\"/>",v:"<rect x=\"3\" y=\"5\" width=\"8\" height=\"14\" rx=\"1\"/><rect x=\"13\" y=\"5\" width=\"8\" height=\"14\" rx=\"1\"/>",f:"<path d=\"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5\"/>"};
-      function ic(k) { return "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + IC[k] + '</svg>'; }
+      var ALT = ${JSON.stringify(ALT_MODES)};
+      var altViewer = ${altViewer.toString()};
+      var IC = ${JSON.stringify(IC)};
+      function ic(k) { return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (IC[k] || "") + '</svg>'; }
 
       function Viewer(root, c) {
         if (root._off) root._off();
+        if (ALT.indexOf(c.disp) >= 0) { altViewer(root, c, ic, esc); return; }
         var cur = typeof c.theme === "number" ? Math.max(0, Math.min(BOOK_STYLES.length - 1, c.theme)) : 0;
         var baseStyle = BOOK_STYLES[cur] || BOOK_STYLES[0];
-        var s = c.flat
+        var s = (c.flat || c.disp === "spread" || c.disp === "folio")
           ? Object.assign({}, baseStyle, { nocov: true, flat: true, nb: true, endp: "", custom: false, hard: 0, rib: "", rings: false, band: false, lux: false, gilt: false, O: 0 })
           : baseStyle;
         var P = c.pages || [];
@@ -3205,9 +3630,14 @@ function initFlipbookApp() {
         var img = c.bgType === "img" && c.bgImg;
         var snd = !!c.sound, z = 1, au = 0, flip = null, T = 0, port = false, pw = 0, curH = 0, vm = c.view || "auto", hinted = false;
 
-        root.className = "fbv" + (c.full ? " full" : "") + (c.clean !== false ? " clean" : "") + (c.flat ? " flat" : "") + ((c.logo || c.desc) ? " hh" : "");
+        root.className = "fbv" + (c.full ? " full" : "") + (c.clean !== false ? " clean" : "") + ((c.flat || c.disp === "spread" || c.disp === "folio") ? " flat" : "") + ((c.logo || c.desc) ? " hh" : "");
         root.style.background = img ? "url(" + c.bgImg + ") center/cover" : c.bgType === "grad" ? "linear-gradient(135deg," + c.bg1 + "," + c.bg2 + ")" : c.bg1;
-        root.style.color = img || lum(c.bg1) < 0.5 ? "#fff" : "#0f172a";
+        if (c.bgType === "none") root.style.background = "transparent";
+    var folio = c.disp === "folio";
+    if (folio) root.style.background = "linear-gradient(135deg,#1f2937,#0b1220)";
+    var dark = folio || (c.bgType !== "none" && (img || lum(c.bg1) < 0.5));
+    root.style.color = dark ? "#fff" : "#0f172a";
+    root.classList.toggle("dk", !!dark);
 
         root.style.setProperty("--O", s.O + "px");
         root.style.setProperty("--e1", s.gilt ? GILT[0] : PAP[0]);
@@ -3279,6 +3709,7 @@ function initFlipbookApp() {
           ribEl.style.opacity = (i > 0 && i < T - 1 && !port && s.rib) ? "1" : "0";
           Object.assign(ringsEl.style, {
             display: s.rings ? "block" : "none",
+        opacity: (i === 0 || i >= T - 1) ? "0" : "1",
             left: (L + Rr) / 2 - wr.left - 15 + "px",
             top: Tp - wr.top + 4 + "px",
             height: B - Tp - 8 + "px"
@@ -3315,6 +3746,7 @@ function initFlipbookApp() {
 
         function build() {
           var keepIdx = flip ? Math.max(0, flip.getCurrentPageIndex()) : 0;
+          if (!c.full) stageEl.style.height = "";
           var clientW = stageEl.clientWidth || (typeof window !== "undefined" && window.innerWidth ? window.innerWidth : 800);
           var isFull = !!c.full || (typeof document !== "undefined" && !!document.fullscreenElement);
           var clientH = stageEl.clientHeight || (typeof window !== "undefined" ? (isFull ? window.innerHeight - 100 : Math.min(window.innerHeight * 0.78, 880)) : 650);
@@ -3328,6 +3760,7 @@ function initFlipbookApp() {
           wrapEl.style.width = Math.round(w) + "px";
           wrapEl.style.height = Math.round(h) + "px";
           pw = Math.round(port ? w : w / 2);
+          if (!isFull) stageEl.style.height = Math.max(260, Math.min(clientH, Math.round(h) + 48)) + "px";
 
           if (flip) { try { flip.destroy(); } catch (_) {} flip = null; }
           var oldBook = root.querySelector("#book");
@@ -3455,7 +3888,7 @@ function initFlipbookApp() {
     return (
       "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\"><title>" +
       esc(t) +
-      "</title><style>html,body{margin:0;background:#0d0b1a;font-family:Inter,system-ui,-apple-system,sans-serif}</style><style>" +
+      "</title><style>html,body{margin:0;background:" + (S.bgType === "none" ? "transparent" : "#0d0b1a") + ";font-family:Inter,system-ui,-apple-system,sans-serif}</style><style>" +
       VCSS +
       "</style></head><body><div id=\"r\"></div>" +
       "<script>" + (pfSourceCache || "/* page-flip library */") + closeScript +
@@ -3508,6 +3941,8 @@ function initFlipbookApp() {
       alert("Please upload a PDF or images first.");
       return;
     }
+    // Open the window synchronously to prevent popup blocker from intercepting
+    const previewWin = window.open("", "_blank");
     try {
       if (!pfSourceCache) {
         try {
@@ -3518,8 +3953,9 @@ function initFlipbookApp() {
       const html = buildHTML();
       const blob = new Blob([html], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
-      const win = window.open(url, "_blank");
-      if (!win) {
+      if (previewWin && !previewWin.closed) {
+        previewWin.location.href = url;
+      } else {
         const a = document.createElement("a");
         a.href = url;
         a.target = "_blank";
@@ -3530,12 +3966,10 @@ function initFlipbookApp() {
           if (document.body.contains(a)) document.body.removeChild(a);
         }, 1000);
       }
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 60000);
     } catch (err) {
       console.error("Preview error:", err);
-      alert("Could not open preview. Please allow popups for Spellense.");
+      alert("Could not open preview. Please try again.");
+      if (previewWin && !previewWin.closed) previewWin.close();
     }
   };
 
@@ -3543,6 +3977,8 @@ function initFlipbookApp() {
     RAW = [];
     pages = [];
     items = []; hist = []; hi = 0; edited = false; sel.clear(); renderPM();
+    const upStage = document.getElementById("upload-stage");
+    if (upStage) upStage.hidden = false;
     getEl("ed").hidden = true;
     getEl("ex").hidden = true;
     getEl("pv").innerHTML = "";
@@ -3580,7 +4016,7 @@ function initFlipbookApp() {
     if (await derive()) {
       getEl("ed").hidden = false;
       getEl("ex").hidden = false;
-      status("Ready. " + pages.length + " pages loaded.");
+      status("Ready. " + pages.length + (pages.length === 1 ? " page" : " pages") + " loaded.");
       getEl("ed").scrollIntoView({ behavior: "smooth" });
     }
   };
@@ -3606,7 +4042,7 @@ function initFlipbookApp() {
 
   function emb() {
     const defaultUrl = typeof window !== "undefined" ? window.location.origin + "/flipbook" : "https://spellense.com/flipbook";
-    const userUrl = (document.getElementById("eu") as HTMLInputElement)?.value.trim();
+    const userUrl = (document.getElementById("eu") as HTMLInputElement)?.value?.trim() || "";
     const u = (userUrl || defaultUrl) +
       ((document.getElementById("ea") as HTMLInputElement)?.checked ? "?autoplay=1" : "");
     const w = (document.getElementById("ew") as HTMLInputElement)?.value || "100%";
