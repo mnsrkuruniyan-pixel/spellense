@@ -1,0 +1,72 @@
+export interface WordPair {
+  us: string;
+  uk: string;
+  category: "Vocabulary" | "Spelling" | "Travel & Transport" | "Food & Dining" | "Clothing & Home";
+  note?: string;
+}
+
+export const POPULAR_WORD_PAIRS: WordPair[] = [
+  // Everyday Vocabulary
+  { us: "elevator", uk: "lift", category: "Vocabulary", note: "Common building vocabulary" },
+  { us: "apartment", uk: "flat", category: "Vocabulary", note: "Residential housing" },
+  { us: "sidewalk", uk: "pavement", category: "Vocabulary", note: "Pedestrian walkway" },
+  { us: "trash / garbage", uk: "rubbish", category: "Vocabulary", note: "Waste disposal" },
+  { us: "subway", uk: "underground / tube", category: "Travel & Transport", note: "Urban rapid transit" },
+  { us: "gas / gasoline", uk: "petrol", category: "Travel & Transport", note: "Vehicle fuel" },
+  { us: "truck", uk: "lorry", category: "Travel & Transport", note: "Heavy cargo vehicle" },
+  { us: "trunk (car)", uk: "boot", category: "Travel & Transport", note: "Rear vehicle storage" },
+  { us: "hood (car)", uk: "bonnet", category: "Travel & Transport", note: "Front engine cover" },
+  { us: "windshield", uk: "windscreen", category: "Travel & Transport", note: "Front glass screen" },
+  { us: "highway / freeway", uk: "motorway", category: "Travel & Transport", note: "Major high-speed road" },
+  { us: "cookie", uk: "biscuit", category: "Food & Dining", note: "Baked sweet treat" },
+  { us: "french fries", uk: "chips", category: "Food & Dining", note: "Fried potato batons" },
+  { us: "potato chips", uk: "crisps", category: "Food & Dining", note: "Thin sliced snack" },
+  { us: "candy", uk: "sweets", category: "Food & Dining", note: "Confectionery" },
+  { us: "takeout", uk: "takeaway", category: "Food & Dining", note: "Prepared food to go" },
+  { us: "flashlight", uk: "torch", category: "Clothing & Home", note: "Portable battery light" },
+  { us: "diaper", uk: "nappy", category: "Clothing & Home", note: "Infant hygiene" },
+  { us: "eraser", uk: "rubber", category: "Clothing & Home", note: "Stationery tool" },
+  { us: "stroller", uk: "pushchair / pram", category: "Clothing & Home", note: "Baby transport" },
+  { us: "pacifier", uk: "dummy", category: "Clothing & Home", note: "Infant soother" },
+  { us: "closet", uk: "wardrobe / cupboard", category: "Clothing & Home", note: "Clothes storage" },
+  { us: "fall (season)", uk: "autumn", category: "Vocabulary", note: "Season after summer" },
+  { us: "vacation", uk: "holiday", category: "Vocabulary", note: "Time off work/school" },
+  { us: "mail", uk: "post", category: "Vocabulary", note: "Letters & delivery" },
+  { us: "zip code", uk: "postcode", category: "Vocabulary", note: "Postal address code" },
+  { us: "first floor", uk: "ground floor", category: "Vocabulary", note: "Floor at street level" },
+  { us: "second floor", uk: "first floor", category: "Vocabulary", note: "One flight up" },
+  { us: "cell phone", uk: "mobile phone", category: "Vocabulary", note: "Handheld phone" },
+  { us: "line", uk: "queue", category: "Vocabulary", note: "Waiting in sequence" },
+
+  // Key Spelling Patterns
+  { us: "color", uk: "colour", category: "Spelling", note: "-or vs -our suffix" },
+  { us: "honor", uk: "honour", category: "Spelling", note: "-or vs -our suffix" },
+  { us: "flavor", uk: "flavour", category: "Spelling", note: "-or vs -our suffix" },
+  { us: "behavior", uk: "behaviour", category: "Spelling", note: "-or vs -our suffix" },
+  { us: "neighbor", uk: "neighbour", category: "Spelling", note: "-or vs -our suffix" },
+  { us: "favorite", uk: "favourite", category: "Spelling", note: "-or vs -our suffix" },
+  { us: "labor", uk: "labour", category: "Spelling", note: "-or vs -our suffix" },
+  { us: "harbor", uk: "harbour", category: "Spelling", note: "-or vs -our suffix" },
+  { us: "organize", uk: "organise", category: "Spelling", note: "-ize vs -ise verb" },
+  { us: "realize", uk: "realise", category: "Spelling", note: "-ize vs -ise verb" },
+  { us: "prioritize", uk: "prioritise", category: "Spelling", note: "-ize vs -ise verb" },
+  { us: "analyze", uk: "analyse", category: "Spelling", note: "-yze vs -yse verb" },
+  { us: "center", uk: "centre", category: "Spelling", note: "-er vs -re suffix" },
+  { us: "theater", uk: "theatre", category: "Spelling", note: "-er vs -re suffix" },
+  { us: "meter", uk: "metre", category: "Spelling", note: "-er vs -re suffix" },
+  { us: "fiber", uk: "fibre", category: "Spelling", note: "-er vs -re suffix" },
+  { us: "defense", uk: "defence", category: "Spelling", note: "-ense vs -ence noun" },
+  { us: "offense", uk: "offence", category: "Spelling", note: "-ense vs -ence noun" },
+  { us: "license", uk: "licence (noun)", category: "Spelling", note: "-ense vs -ence noun" },
+  { us: "practice (v/n)", uk: "practise (v) / practice (n)", category: "Spelling", note: "Verb vs noun distinction" },
+  { us: "traveled", uk: "travelled", category: "Spelling", note: "Double 'l' in inflected verbs" },
+  { us: "canceling", uk: "cancelling", category: "Spelling", note: "Double 'l' in inflected verbs" },
+  { us: "signaling", uk: "signalling", category: "Spelling", note: "Double 'l' in inflected verbs" },
+  { us: "check (bank)", uk: "cheque", category: "Spelling", note: "Banking document" },
+  { us: "gray", uk: "grey", category: "Spelling", note: "Color spelling" },
+  { us: "tire", uk: "tyre", category: "Travel & Transport", note: "Rubber wheel" },
+  { us: "curb", uk: "kerb", category: "Travel & Transport", note: "Edge of pavement" },
+  { us: "pajamas", uk: "pyjamas", category: "Clothing & Home", note: "Sleepwear" },
+  { us: "cozy", uk: "cosy", category: "Spelling", note: "Comfortable feel" },
+];
+

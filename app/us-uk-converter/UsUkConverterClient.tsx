@@ -1,18 +1,39 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { convertDialect } from "./dialectRules";
+import { POPULAR_WORD_PAIRS, WordPair } from "./lookupData";
 
-const US_SAMPLE = `The company decided to prioritize color harmony in the new theater design. Our team analyzed the customer feedback while traveling across three cities to finalize the modern center layout. We also noticed that the elevator in the apartment building needed an urgent check, and we stopped for coffee and a cookie on the sidewalk.`;
-
-const UK_SAMPLE = `The company decided to prioritise colour harmony in the new theatre design. Our team analysed the customer feedback while travelling across three cities to finalise the modern centre layout. We also noticed that the lift in the flat needed an urgent cheque, and we stopped for coffee and a biscuit on the pavement.`;
+const SAMPLES = {
+  general: {
+    label: "Everyday Life",
+    us: "The elevator in our apartment building broke down, so we took the stairs to the sidewalk. We stopped by the bakery for coffee and a cookie, then grabbed some french fries on our way to the subway.",
+    uk: "The lift in our flat building broke down, so we took the stairs to the pavement. We stopped by the bakery for coffee and a biscuit, then grabbed some chips on our way to the underground.",
+  },
+  academic: {
+    label: "Academic & Research",
+    us: "The laboratory analyzed the behavioral responses of participants under varying lighting conditions. The specialized research center prioritized color perception and measured cognitive response times across multiple meters of distance.",
+    uk: "The laboratory analysed the behavioural responses of participants under varying lighting conditions. The specialised research centre prioritised colour perception and measured cognitive response times across multiple metres of distance.",
+  },
+  business: {
+    label: "Business & Corporate",
+    us: "Our organization prioritized customer satisfaction while traveling across domestic harbors. Management honored the quarterly contract deadline and optimized the defense budget with favorable terms.",
+    uk: "Our organisation prioritised customer satisfaction while travelling across domestic harbours. Management honoured the quarterly contract deadline and optimised the defence budget with favourable terms.",
+  },
+};
 
 export default function UsUkConverterClient() {
   const [direction, setDirection] = useState<"us-to-uk" | "uk-to-us">("us-to-uk");
   const [input, setInput] = useState("");
+  const [outputViewMode, setOutputViewMode] = useState<"plain" | "diff">("plain");
   const [copied, setCopied] = useState(false);
+  const [lookupQuery, setLookupQuery] = useState("");
+  const [lookupCategory, setLookupCategory] = useState<string>("All");
+  const [copiedWordIdx, setCopiedWordIdx] = useState<number | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Conversion result
   const result = useMemo(() => {
@@ -20,15 +41,28 @@ export default function UsUkConverterClient() {
   }, [input, direction]);
 
   const toggleDirection = () => {
-    // If there is existing converted text, flip and use it as input
     if (result.text && result.changeCount > 0) {
       setInput(result.text);
     }
     setDirection((prev) => (prev === "us-to-uk" ? "uk-to-us" : "us-to-uk"));
   };
 
-  const loadSample = () => {
-    setInput(direction === "us-to-uk" ? US_SAMPLE : UK_SAMPLE);
+  const loadPreset = (key: keyof typeof SAMPLES) => {
+    setInput(direction === "us-to-uk" ? SAMPLES[key].us : SAMPLES[key].uk);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result;
+      if (typeof content === "string") {
+        setInput(content);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
   };
 
   const handleCopy = async () => {
@@ -55,7 +89,7 @@ export default function UsUkConverterClient() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = direction === "us-to-uk" ? "converted-uk-english.txt" : "converted-us-english.txt";
+    link.download = direction === "us-to-uk" ? "translated-uk-english.txt" : "translated-us-english.txt";
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -74,8 +108,88 @@ export default function UsUkConverterClient() {
     return list;
   }, [result.changes]);
 
+  // Lookup filtering
+  const filteredWords = useMemo(() => {
+    const q = lookupQuery.trim().toLowerCase();
+    return POPULAR_WORD_PAIRS.filter((item) => {
+      const matchesCategory = lookupCategory === "All" || item.category === lookupCategory;
+      if (!matchesCategory) return false;
+      if (!q) return true;
+      return (
+        item.us.toLowerCase().includes(q) ||
+        item.uk.toLowerCase().includes(q) ||
+        (item.note && item.note.toLowerCase().includes(q))
+      );
+    });
+  }, [lookupQuery, lookupCategory]);
+
+  const copyWordPair = async (item: WordPair, idx: number) => {
+    const textToCopy = direction === "us-to-uk" ? item.uk : item.us;
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopiedWordIdx(idx);
+      setTimeout(() => setCopiedWordIdx(null), 1500);
+    } catch {}
+  };
+
+  const insertWordToInput = (word: string) => {
+    setInput((prev) => (prev ? `${prev} ${word}` : word));
+  };
+
+  // Render Highlighted Diff view
+  const renderHighlightedDiff = () => {
+    if (!result.text) {
+      return (
+        <div className="flex h-full min-h-[220px] items-center justify-center text-xs text-slate-400">
+          Converted text with highlighted changes will appear here...
+        </div>
+      );
+    }
+    if (result.changes.length === 0) {
+      return (
+        <div className="min-h-[220px] whitespace-pre-wrap leading-relaxed text-[14px] text-slate-800">
+          {result.text}
+          <div className="mt-4 rounded-xl border border-slate-200/80 bg-white/80 p-3 text-xs text-slate-500">
+            ℹ️ No dialect-specific words or spelling variations were detected in your text.
+          </div>
+        </div>
+      );
+    }
+
+    const changesMap = new Map<string, string>();
+    for (const ch of result.changes) {
+      changesMap.set(ch.converted.toLowerCase(), ch.original);
+    }
+
+    const tokens = result.text.split(/(\b[\w'-]+\b)/);
+
+    return (
+      <div className="min-h-[220px] whitespace-pre-wrap leading-relaxed text-[14px] text-slate-800">
+        {tokens.map((token, i) => {
+          const lower = token.toLowerCase();
+          const orig = changesMap.get(lower);
+          if (orig) {
+            return (
+              <span
+                key={i}
+                className="group relative inline-flex items-center rounded-lg border border-emerald-300 bg-emerald-100/90 px-1.5 py-0.5 text-emerald-950 font-bold shadow-2xs mx-0.5 transition hover:bg-emerald-200 cursor-help"
+                title={`Original: "${orig}"`}
+              >
+                <span>{token}</span>
+                <span className="hidden sm:inline-block ml-1 text-[11px] font-normal text-emerald-700/85 line-through">
+                  ({orig})
+                </span>
+              </span>
+            );
+          }
+          return <span key={i}>{token}</span>;
+        })}
+      </div>
+    );
+  };
+
   return (
-    <main className="min-h-screen bg-[#f0f6fe] text-black">
+    <main className="min-h-screen bg-[#f0f6fe] text-black font-sans selection:bg-blue-500/10 selection:text-blue-600">
       {/* NAVBAR */}
       <Navbar />
 
@@ -89,9 +203,20 @@ export default function UsUkConverterClient() {
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           {/* HEADER */}
           <div className="text-center pt-2 pb-2 sm:pt-4 sm:pb-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/80 px-3.5 py-1.5 shadow-2xs backdrop-blur-md mb-4">
+              <span className="flex h-2 w-2 rounded-full bg-blue-600" />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+                Free American ↔ British English Translator
+              </span>
+            </div>
+
             <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
-              US ↔ UK English Converter
+              US to UK English Translator
             </h1>
+
+            <p className="mx-auto mt-4 max-w-2xl text-[15px] sm:text-base leading-relaxed text-slate-600">
+              Translate text instantly between American and British English. Compare spelling variations, view live highlighted diffs, and look up vocabulary differences.
+            </p>
           </div>
 
           {/* DIRECTION SELECTOR SWITCH */}
@@ -115,7 +240,7 @@ export default function UsUkConverterClient() {
                 type="button"
                 onClick={toggleDirection}
                 className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
-                title="Swap conversion direction"
+                title="Swap translation direction"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="17 1 21 5 17 9" />
@@ -141,26 +266,41 @@ export default function UsUkConverterClient() {
             </div>
           </div>
 
-          {/* TWO-PANE CONVERTER WORKSPACE */}
+          {/* TWO-PANE WORKSPACE */}
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             {/* INPUT PANE */}
             <div className="flex flex-col rounded-3xl border border-white/90 bg-white/85 p-5 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
               {/* Toolbar */}
-              <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
                     {direction === "us-to-uk" ? "🇺🇸 American English (Input)" : "🇬🇧 British English (Input)"}
                   </span>
-                  <button
-                    type="button"
-                    onClick={loadSample}
-                    className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-blue-600 cursor-pointer"
-                  >
-                    Sample
-                  </button>
                 </div>
 
                 <div className="flex items-center gap-1.5">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".txt,text/plain"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-blue-600 cursor-pointer"
+                    title="Upload .txt document"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span>Upload .txt</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={async () => {
@@ -177,6 +317,7 @@ export default function UsUkConverterClient() {
                     </svg>
                     Paste
                   </button>
+
                   <button
                     type="button"
                     onClick={() => setInput("")}
@@ -188,37 +329,82 @@ export default function UsUkConverterClient() {
                 </div>
               </div>
 
-              {/* Textarea */}
+              {/* Textarea Input */}
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 rows={11}
-                placeholder={`Type or paste ${direction === "us-to-uk" ? "American (US)" : "British (UK)"} text here...`}
+                placeholder={`Type or paste ${direction === "us-to-uk" ? "American (US)" : "British (UK)"} text here to translate...`}
                 className="w-full flex-1 rounded-2xl border border-slate-200/90 bg-white/70 p-4 text-[14px] leading-relaxed text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
               />
 
-              <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400">
-                <span>{input.trim() ? input.trim().split(/\s+/).length : 0} words</span>
-                <span>{input.length} characters</span>
+              {/* Sample Presets Bar */}
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                  <span className="font-semibold text-slate-400">Try Sample:</span>
+                  {(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => loadPreset(key)}
+                      className="rounded-lg bg-slate-100 px-2 py-0.5 font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 cursor-pointer"
+                    >
+                      {SAMPLES[key].label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="text-[11px] text-slate-400">
+                  <span>{input.trim() ? input.trim().split(/\s+/).length : 0} words • {input.length} chars</span>
+                </div>
               </div>
             </div>
 
             {/* OUTPUT PANE */}
             <div className="flex flex-col rounded-3xl border border-white/90 bg-white/85 p-5 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
               {/* Toolbar */}
-              <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
                     {direction === "us-to-uk" ? "🇬🇧 British English (Output)" : "🇺🇸 American English (Output)"}
                   </span>
                   {result.changeCount > 0 && (
                     <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                      {result.changeCount} {result.changeCount === 1 ? "word" : "words"} changed
+                      {result.changeCount} {result.changeCount === 1 ? "word" : "words"} translated
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-1.5">
+                  {/* View Mode Toggle: Plain vs Diff */}
+                  <div className="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setOutputViewMode("plain")}
+                      className={`rounded-md px-2 py-1 font-semibold transition cursor-pointer ${
+                        outputViewMode === "plain"
+                          ? "bg-white text-slate-900 shadow-2xs"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      Plain
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOutputViewMode("diff")}
+                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-semibold transition cursor-pointer ${
+                        outputViewMode === "diff"
+                          ? "bg-white text-emerald-800 shadow-2xs font-bold"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      <span>Highlight Diff</span>
+                      {result.changeCount > 0 && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      )}
+                    </button>
+                  </div>
+
                   <button
                     type="button"
                     onClick={handleCopy}
@@ -252,7 +438,7 @@ export default function UsUkConverterClient() {
                     onClick={handleDownload}
                     disabled={!result.text}
                     className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
-                    title="Download output file"
+                    title="Download output as .txt"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -264,18 +450,34 @@ export default function UsUkConverterClient() {
                 </div>
               </div>
 
-              {/* Textarea Output */}
-              <textarea
-                value={result.text}
-                readOnly
-                rows={11}
-                placeholder="Converted text will appear here in real-time..."
-                className="w-full flex-1 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 text-[14px] leading-relaxed text-slate-800 outline-none"
-              />
+              {/* Output Content: Textarea or Highlighted Diff */}
+              <div className="flex-1">
+                {outputViewMode === "plain" ? (
+                  <textarea
+                    value={result.text}
+                    readOnly
+                    rows={11}
+                    placeholder="Translated text will appear here in real-time..."
+                    className="w-full h-full min-h-[240px] rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 text-[14px] leading-relaxed text-slate-800 outline-none"
+                  />
+                ) : (
+                  <div className="w-full h-full min-h-[240px] max-h-[380px] overflow-y-auto rounded-2xl border border-emerald-200/80 bg-emerald-50/20 p-4">
+                    {renderHighlightedDiff()}
+                  </div>
+                )}
+              </div>
 
               <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400">
-                <span>{result.text.trim() ? result.text.trim().split(/\s+/).length : 0} words</span>
-                <span>{result.text.length} characters</span>
+                <span>{result.text.trim() ? result.text.trim().split(/\s+/).length : 0} words • {result.text.length} chars</span>
+                {result.changeCount > 0 && outputViewMode === "plain" && (
+                  <button
+                    type="button"
+                    onClick={() => setOutputViewMode("diff")}
+                    className="text-xs font-semibold text-emerald-700 hover:underline cursor-pointer"
+                  >
+                    Show highlighted diff →
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -285,7 +487,7 @@ export default function UsUkConverterClient() {
             <div className="mt-5 rounded-2xl border border-blue-200/80 bg-white/90 p-4 shadow-xs backdrop-blur-md">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Detected Transformations:
+                  Detected Translations:
                 </span>
                 <span className="text-xs text-slate-400">
                   ({uniqueChanges.length} unique terms)
@@ -305,6 +507,130 @@ export default function UsUkConverterClient() {
               </div>
             </div>
           )}
+
+          {/* NEW FEATURE: INSTANT US ↔ UK WORD LOOKUP CHEAT SHEET */}
+          <div className="mt-12 rounded-3xl border border-slate-200/90 bg-white/95 p-6 sm:p-8 shadow-sm backdrop-blur-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 uppercase tracking-wide">
+                  Instant Dictionary Lookup
+                </div>
+                <h3 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  UK &amp; US English Spelling &amp; Vocabulary Cheat Sheet
+                </h3>
+                <p className="mt-1 text-xs sm:text-sm text-slate-500">
+                  Type any word to look up its British or American counterpart instantly.
+                </p>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative min-w-[260px] sm:w-72">
+                <input
+                  type="text"
+                  value={lookupQuery}
+                  onChange={(e) => setLookupQuery(e.target.value)}
+                  placeholder="Search a word (e.g. elevator, color)..."
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-2 pl-9 text-xs text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10"
+                />
+                <svg
+                  className="absolute left-3 top-2.5 h-4 w-4 text-slate-400"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                {lookupQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setLookupQuery("")}
+                    className="absolute right-2.5 top-2 text-xs text-slate-400 hover:text-slate-600"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="mt-5 flex flex-wrap gap-1.5 border-b border-slate-100 pb-4">
+              {(["All", "Vocabulary", "Spelling", "Travel & Transport", "Food & Dining", "Clothing & Home"] as const).map(
+                (cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setLookupCategory(cat)}
+                    className={`rounded-xl px-3 py-1 text-xs font-semibold transition cursor-pointer ${
+                      lookupCategory === cat
+                        ? "bg-blue-600 text-white shadow-2xs"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                )
+              )}
+            </div>
+
+            {/* Word Pairs Grid */}
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 max-h-[380px] overflow-y-auto pr-1">
+              {filteredWords.length > 0 ? (
+                filteredWords.map((item, idx) => (
+                  <div
+                    key={`${item.us}-${idx}`}
+                    className="group rounded-2xl border border-slate-200/80 bg-slate-50/50 p-3.5 transition hover:border-blue-300 hover:bg-white hover:shadow-xs"
+                  >
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1.5">
+                      <span className="font-semibold uppercase tracking-wider text-blue-600">
+                        {item.category}
+                      </span>
+                      {item.note && <span className="truncate max-w-[140px]">{item.note}</span>}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 mt-1">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                          <span>🇺🇸</span>
+                          <span className="font-semibold">{item.us}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-900 mt-1">
+                          <span>🇬🇧</span>
+                          <span className="font-bold text-blue-700">{item.uk}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => copyWordPair(item, idx)}
+                          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 cursor-pointer"
+                          title="Copy word"
+                        >
+                          {copiedWordIdx === idx ? "Copied!" : "Copy"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertWordToInput(direction === "us-to-uk" ? item.us : item.uk)}
+                          className="rounded-lg bg-slate-200/70 px-2 py-0.5 text-[10px] font-medium text-slate-700 transition hover:bg-slate-300 cursor-pointer"
+                          title="Append to translator input"
+                        >
+                          + Use
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full py-8 text-center text-xs text-slate-400">
+                  No matching words found for &quot;{lookupQuery}&quot;. Try searching another common term!
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* CROSS-PROMO CTA */}
           <div className="mt-8 rounded-3xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-white p-6 sm:p-7 shadow-xs backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
@@ -413,6 +739,56 @@ export default function UsUkConverterClient() {
               </div>
             </div>
           </div>
+
+          {/* FAQ SECTION */}
+          <section className="mt-16 rounded-3xl border border-slate-200/90 bg-white/95 p-6 sm:p-8 shadow-xs">
+            <div className="text-center sm:text-left mb-6">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                Frequently Asked Questions
+              </span>
+              <h3 className="mt-1 text-2xl font-black text-slate-900 tracking-tight">
+                US to UK English Translation &amp; Spelling FAQ
+              </h3>
+            </div>
+
+            <div className="divide-y divide-slate-100">
+              <div className="py-4 first:pt-0">
+                <h4 className="text-sm sm:text-base font-bold text-slate-900">
+                  How do I translate American English into British English?
+                </h4>
+                <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Simply paste or type your American (US) text into the input pane. The translator automatically detects American spellings (such as <code className="text-blue-600 font-mono">color</code>, <code className="text-blue-600 font-mono">realize</code>, <code className="text-blue-600 font-mono">center</code>) and vocabulary (such as <code className="text-blue-600 font-mono">elevator</code>, <code className="text-blue-600 font-mono">sidewalk</code>) and translates them into standard British (UK) English in real-time.
+                </p>
+              </div>
+
+              <div className="py-4">
+                <h4 className="text-sm sm:text-base font-bold text-slate-900">
+                  What are the biggest differences in UK English spelling?
+                </h4>
+                <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  The primary differences include <code className="text-blue-600 font-mono">-our</code> endings (<code className="text-blue-600 font-mono">flavour</code>, <code className="text-blue-600 font-mono">honour</code>), <code className="text-blue-600 font-mono">-ise</code> verbs (<code className="text-blue-600 font-mono">organise</code>, <code className="text-blue-600 font-mono">prioritise</code>), <code className="text-blue-600 font-mono">-re</code> endings (<code className="text-blue-600 font-mono">theatre</code>, <code className="text-blue-600 font-mono">metre</code>), and doubled consonants in inflected verbs (<code className="text-blue-600 font-mono">travelled</code>, <code className="text-blue-600 font-mono">cancelling</code>).
+                </p>
+              </div>
+
+              <div className="py-4">
+                <h4 className="text-sm sm:text-base font-bold text-slate-900">
+                  Is -ize or -ise correct in British English?
+                </h4>
+                <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Both are technically acceptable in British English. The Oxford University Press (OUP) favors the <code className="text-blue-600 font-mono">-ize</code> spelling (known as Oxford spelling) because of its ancient Greek etymology. However, modern British usage, government publications, and UK news outlets (such as the BBC and The Guardian) predominantly use the <code className="text-blue-600 font-mono">-ise</code> form.
+                </p>
+              </div>
+
+              <div className="py-4 last:pb-0">
+                <h4 className="text-sm sm:text-base font-bold text-slate-900">
+                  Is this US to UK English translator free and private?
+                </h4>
+                <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Yes, 100% free with unlimited conversions. All translation and rule mapping occurs entirely in your local browser memory. Your text, articles, and assignments are never stored on any server.
+                </p>
+              </div>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -474,4 +850,3 @@ export default function UsUkConverterClient() {
     </main>
   );
 }
-
