@@ -3,10 +3,33 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Terms of Use | Spellense",
+  title: "Terms of Use",
   description:
     "Review the terms and conditions for using Spellense's online English spelling and visual document checking service.",
   alternates: { canonical: "/terms" },
+  openGraph: {
+    siteName: "Spellense",
+    title: "Terms of Use",
+    description:
+      "Review the terms and conditions for using Spellense's online English spelling and visual document checking service.",
+    url: "/terms",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Spellense Terms of Use",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Terms of Use",
+    description:
+      "Review the terms and conditions for using Spellense's online English spelling and visual document checking service.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function TermsPage() {

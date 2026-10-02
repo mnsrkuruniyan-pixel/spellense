@@ -25,11 +25,11 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://spellense.com"
   ),
   title: {
-    default: "Spellense — Free English Spell Checker",
+    default: "Spellense — Free English Spell Checker & Visual Proofreader",
     template: "%s | Spellense",
   },
   description:
-    "Check English spelling in images, PDFs, DOCX, PPTX and XLSX files online. Free OCR-powered spelling checker with no signup required.",
+    "Check English spelling in images, PDFs, DOCX, PPTX and XLSX files online. Free in-memory OCR proofreading with zero sign-up.",
   alternates: {
     canonical: "/",
   },
@@ -55,9 +55,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Spellense",
-    title: "Spellense — Free English Spell Checker",
+    title: "Spellense — Free English Spell Checker & Visual Proofreader",
     description:
-      "Find spelling mistakes in images and documents before your content goes live.",
+      "Check English spelling in images, PDFs, DOCX, PPTX and XLSX files online with in-memory OCR. 100% private and free.",
     url: "/",
     images: [
       {
@@ -70,9 +70,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Spellense — Free English Spell Checker",
+    title: "Spellense — Free English Spell Checker & Visual Proofreader",
     description:
-      "Check spelling in images, PDFs, DOCX, PPTX and XLSX files online.",
+      "Check English spelling in images, PDFs, DOCX, PPTX and XLSX files online with in-memory OCR.",
     images: ["/og-image.png"],
   },
 };
@@ -96,13 +96,6 @@ const jsonLd = {
     "@type": "Offer",
     price: "0",
     priceCurrency: "USD",
-  },
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.9",
-    ratingCount: "128",
-    bestRating: "5",
-    worstRating: "1",
   },
   description:
     "Free online English spell checker for images, PDFs, DOCX, PPTX, and XLSX files using in-memory OCR.",

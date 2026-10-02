@@ -3,15 +3,32 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy & Zero-Storage Commitment | Spellense",
+  title: "Privacy Policy & Zero-Storage Commitment",
   description:
     "Learn about Spellense's privacy-first architecture. We process images, PDFs, DOCX, PPTX, and XLSX files in memory with zero storage retention and no account required.",
   alternates: { canonical: "/privacy" },
   openGraph: {
-    title: "Privacy Policy | Spellense Visual Spell Checker",
+    siteName: "Spellense",
+    title: "Privacy Policy & Zero-Storage Commitment",
     description:
       "Our zero-storage commitment: uploaded images and documents are processed in memory and never stored or used to train AI models.",
     url: "/privacy",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Spellense Privacy Policy",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Privacy Policy & Zero-Storage Commitment",
+    description:
+      "Our zero-storage commitment: uploaded images and documents are processed in memory and never stored or used to train AI models.",
+    images: ["/og-image.png"],
   },
 };
 

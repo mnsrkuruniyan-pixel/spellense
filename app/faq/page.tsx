@@ -3,15 +3,32 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Frequently Asked Questions (FAQ) | Spellense Spell Checker",
+  title: "Frequently Asked Questions (FAQ)",
   description:
     "Find answers about checking spelling in images, PDFs, DOCX, PPTX, and XLSX files with Spellense. Learn how our OCR, privacy, and visual proofreader work.",
   alternates: { canonical: "/faq" },
   openGraph: {
-    title: "Frequently Asked Questions | Spellense",
+    siteName: "Spellense",
+    title: "Frequently Asked Questions (FAQ)",
     description:
       "Answers to common questions about visual OCR spell checking for images, documents, slides, and spreadsheets.",
     url: "/faq",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Spellense FAQ",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Frequently Asked Questions (FAQ)",
+    description:
+      "Answers to common questions about visual OCR spell checking for images, documents, slides, and spreadsheets.",
+    images: ["/og-image.png"],
   },
 };
 

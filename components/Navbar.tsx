@@ -382,8 +382,8 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 <span className="text-[20px] sm:text-[22px] font-extrabold tracking-[-0.8px] text-slate-900 leading-none">
                   Spel<span className="text-blue-600">lense</span>
                 </span>
-                <span className="hidden sm:inline-flex items-center rounded-md bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                  OCR
+                <span className="inline-flex items-center rounded-md bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                  Beta
                 </span>
               </div>
               <div className="text-[8px] sm:text-[8.5px] font-semibold tracking-[1.1px] sm:tracking-[1.3px] text-slate-400 uppercase mt-0.5 whitespace-nowrap">

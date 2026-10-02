@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import ImageCompressorClient from "./ImageCompressorClient";
 
 export const metadata: Metadata = {
-  title: "Free Image Compressor & Optimizer — Squoosh Style | Spellense",
+  title: "Free Image Compressor & Optimizer — Batch & PDF Support",
   description:
     "Compress JPG, PNG, WebP, AVIF and multi-page PDF images online with zero loss in visual quality. Interactive before/after split slider, batch compression, 100% private in-browser processing.",
   alternates: {
     canonical: "/image-compressor",
   },
   openGraph: {
-    title: "Free Image Compressor & Optimizer | Spellense",
+    siteName: "Spellense",
+    title: "Free Image Compressor & Optimizer",
     description:
       "Compress images & multi-page catalogs without losing quality or changing dimensions. Interactive Squoosh-style split comparison. 100% private & client-side.",
     url: "/image-compressor",
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free Image Compressor & Optimizer | Spellense",
+    title: "Free Image Compressor & Optimizer",
     description:
       "Batch compress images and multi-page catalogs without losing quality. Squoosh-style split comparison slider. 100% free & in-browser.",
     images: ["/og-image.png"],

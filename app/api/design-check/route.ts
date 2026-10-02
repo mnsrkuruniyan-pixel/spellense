@@ -55,6 +55,40 @@ const BRAND_AND_PROPER_NOUNS = new Set([
   "oled", "qled", "uhd", "hd", "4k", "8k", "usb", "btu", "inverter", "wifi", "ai", "iot", "eco",
   "pro", "max", "ultra", "plus", "mini", "lite", "super", "smart", "hybrid", "turbo",
 
+  // Appliance, Hardware & Product Specifications
+  "inox", "inoxydable", "stainless", "nofrost", "totalnofrost", "frostfree", "multiairflow", "biofresh",
+  "defrost", "gross", "net", "dimensions", "dimension", "capacity", "refrigerator", "refrigerators",
+  "fridge", "fridges", "freezer", "freezers", "compressor", "compressors", "balcony", "balconies",
+  "deodorizing", "deodorizer", "filter", "filters", "sensor", "sensors", "digital", "durable",
+  "durability", "crisper", "drawer", "drawers", "shelf", "shelves", "tempered", "loading", "packing",
+  "carton", "palette", "pallet", "spec", "specs", "specification", "specifications", "appliance",
+  "appliances", "cooling", "freezing", "chilling", "hinge", "hinges", "reversible", "dispenser",
+  "icemaker", "twist", "tray", "trays", "rack", "racks", "liters", "litres", "cuft", "cbf", "watt",
+  "watts", "kw", "kwh", "voltage", "hz", "dba", "decibel", "decibels", "airflow",
+
+  // Materials, Finishes & Commercial Colors
+  "matte", "matt", "gloss", "glossy", "chrome", "satin", "brushed", "titanium", "metallic",
+  "platinum", "ceramic", "enamel", "carbon", "aluminum", "aluminium", "graphite", "copper",
+  "bronze", "champagne", "obsidian", "rosegold", "gunmetal", "silver", "charcoal",
+
+  // Tech, Audio, Display & Electronics
+  "amoled", "fhd", "hdr", "hdr10", "dolby", "atmos", "vision", "bluetooth", "nfc", "hdmi", "aux",
+  "usbc", "typec", "wireless", "earbuds", "headphones", "headset", "bass", "anc", "surround",
+  "soundbar", "subwoofer", "touchscreen", "stylus", "gigabyte", "terabyte", "ram", "rom", "ssd",
+  "fps", "megapixels", "mpx", "mah", "fastcharge", "magsafe", "qi", "retina",
+
+  // Print, Publishing, Design & Typography
+  "bleed", "cmyk", "rgb", "pantone", "vector", "raster", "dpi", "ppi", "gsm", "kraft", "emboss",
+  "deboss", "foil", "spotuv", "diecut", "crease", "score", "accordion", "saddle", "stitch", "spiral",
+  "hardcover", "softcover", "preflight", "kerning", "leading", "tracking", "serif", "sans", "slab",
+
+  // E-commerce, Retail & Business Terms
+  "cashback", "emi", "rebate", "voucher", "vouchers", "promo", "promos", "promocode", "bogo",
+  "combo", "bundling", "bestseller", "unboxing", "storewide", "clearance", "sitewide", "freeshipping",
+  "express", "delivery", "restock", "preorder", "doorstep", "pickup", "checkout", "loyalty", "reward",
+  "rewards", "redeem", "disclaimer", "disclaimers", "guarantee", "warranty", "warranties", "barcode",
+  "sku", "upc", "ean", "qr", "qrcode", "iso", "ce", "rohs",
+
   // Standard British / Commonwealth English spellings
   "catalogue", "catalogues", "programme", "programmes", "colour", "colours", "centre", "centres",
   "theatre", "theatres", "favour", "favours", "flavour", "flavours", "defence", "licence",
@@ -123,6 +157,7 @@ export interface DesignCheckResponse {
   };
   issues: DesignIssue[];
   engine: "hybrid-gemini" | "local-deterministic";
+  analysisNotice?: string;
   error?: string;
 }
 
@@ -146,6 +181,30 @@ function calculateContrastRatio(lum1: number, lum2: number): number {
   return (l1 + 0.05) / (l2 + 0.05);
 }
 
+function isModelOrCodeNumber(token: string): boolean {
+  const clean = token.replace(/[(),:;*#"[\]]/g, "").trim();
+  if (clean.length < 2) return false;
+
+  // 1. Mixed alphanumeric codes (e.g. RT324N4ASU1, RT328N3ES, WW90T554DAN, SM-S928B, A4, 4K, 120Hz, 500GB)
+  const hasLetters = /[a-zA-Z]/.test(clean);
+  const hasDigits = /\d/.test(clean);
+  if (hasLetters && hasDigits) return true;
+
+  // 2. Technical dimension, ratio, or model separator formats (e.g., 595x650x1696, 595X650, 16:9, 4:3, WxDxH)
+  if (/^[a-zA-Z0-9]+[xX×/:\-][a-zA-Z0-9]+/.test(clean)) return true;
+
+  // 3. Numbers with attached measurement units (e.g. 400L, 326L, 73L, 220V, 50Hz, 45dB, 10kg, 25mm, 1500W, 1080p)
+  if (/^\d+(\.\d+)?(l|liters|litres|kg|g|lb|lbs|w|watt|kw|v|volt|hz|khz|mhz|ghz|a|mah|ah|btu|db|dba|rpm|mm|cm|m|in|inch|ft|sqft|cbf|cuft|k|gb|tb|mb|kb|fps|dpi|gsm|p)$/i.test(clean)) return true;
+
+  // 4. Standalone pure numbers, decimals, or currency (e.g. 326, 73, 595, $199, AED500)
+  if (/^[^\w]*\d+(\.\d+)?[^\w]*$/.test(clean)) return true;
+
+  // 5. Short all-caps acronyms (2-5 chars: HVAC, FIFA, LED, LCD, USB, AC, DC, ISO, CE)
+  if (/^[A-Z0-9]{2,5}$/.test(clean)) return true;
+
+  return false;
+}
+
 function isLikelyRealText(text: string): boolean {
   const trimmed = text.trim();
   if (trimmed.length < 2) return false;
@@ -158,11 +217,12 @@ function isLikelyRealText(text: string): boolean {
   // Words of 3+ letters must contain at least one vowel
   if (clean.length >= 3 && !/[aeiouy]/.test(clean)) return false;
 
-  // Common 2-letter English words whitelist
+  // Common 2-letter English words and tech abbreviations whitelist
   const validTwoLetterWords = new Set([
     "am", "an", "as", "at", "be", "by", "do", "go", "he", "hi", "if",
     "in", "is", "it", "me", "my", "no", "of", "on", "or", "so", "to",
-    "up", "us", "we"
+    "up", "us", "we", "tv", "hd", "ad", "id", "ac", "dc", "ai", "vr",
+    "ar", "kg", "mm", "cm", "lb", "oz", "qr", "uk", "eu", "us"
   ]);
   if (clean.length === 2 && !validTwoLetterWords.has(clean)) return false;
 
@@ -286,16 +346,19 @@ export async function POST(req: Request) {
     }
 
     // 4. Margins & Safe-Zone Engine
+    // True print bleed / cut risk occurs when text is placed dangerously close (< 1.2%) to the physical edge.
+    // Standard graphic design layouts commonly use tight intentional margins (2% to 3.5%).
+    // We only flag text that is genuinely within the danger zone (< 1.2% or > 98.8%).
     let marginIssuesCount = 0;
-    const SAFE_MARGIN = 0.035; // 3.5% from edges
+    const DANGER_MARGIN = 0.012; // 1.2% from edge (genuine trim / cut-off danger zone)
 
     for (const w of words) {
       if (w.pixelH < 12 || w.confidence < 70) continue;
 
-      const touchesLeft = w.left < SAFE_MARGIN;
-      const touchesRight = w.left + w.width > 1 - SAFE_MARGIN;
-      const touchesTop = w.top < SAFE_MARGIN;
-      const touchesBottom = w.top + w.height > 1 - SAFE_MARGIN;
+      const touchesLeft = w.left < DANGER_MARGIN;
+      const touchesRight = w.left + w.width > 1 - DANGER_MARGIN;
+      const touchesTop = w.top < DANGER_MARGIN;
+      const touchesBottom = w.top + w.height > 1 - DANGER_MARGIN;
 
       if (touchesLeft || touchesRight || touchesTop || touchesBottom) {
         marginIssuesCount++;
@@ -313,12 +376,12 @@ export async function POST(req: Request) {
             category: "margin",
             severity: "warning",
             title: "Safe-Zone Margin Bleed",
-            description: `Text "${w.text}" is placed right against the ${edge}.`,
-            impact: "Text placed this close to the border risks being clipped by commercial print guillotines or covered by social platform app interfaces.",
-            specDetail: `Within ${Math.round(SAFE_MARGIN * 100)}% bleed boundary (${edge}).`,
-            whyItMatters: "Guillotine drift in printing is typically 2–3mm; placing critical copy inside the bleed zone causes reprints.",
+            description: `Text "${w.text}" is placed dangerously close to the ${edge}.`,
+            impact: "Text placed right against the outer border risks being clipped by commercial print guillotines or screen bezels.",
+            specDetail: `Within ${Math.round(DANGER_MARGIN * 1000) / 10}% bleed danger boundary (${edge}).`,
+            whyItMatters: "Commercial print trimming drift is typically 2–3mm; placing copy inside the bleed zone causes cut-off text.",
             originalText: w.text,
-            suggestedFix: `Move text inward by at least 15–20px to preserve a safe breathing margin.`,
+            suggestedFix: `Move text inward slightly to preserve a safe breathing margin.`,
             bbox: {
               left: w.left,
               top: w.top,
@@ -330,77 +393,91 @@ export async function POST(req: Request) {
       }
     }
 
-    // 5. WCAG Text-to-Background Contrast Engine
+    // 5. WCAG Text-to-Background Contrast Engine (Page-Aware & Interline Sampling)
+    const cornerSamples = [
+      ctx.getImageData(10, 10, 1, 1).data,
+      ctx.getImageData(Math.max(0, width - 10), 10, 1, 1).data,
+      ctx.getImageData(10, Math.max(0, height - 10), 1, 1).data,
+      ctx.getImageData(Math.max(0, width - 10), Math.max(0, height - 10), 1, 1).data,
+      ctx.getImageData(Math.floor(width / 2), 15, 1, 1).data,
+    ];
+    const pageLums = cornerSamples.map((s) => calculateRelativeLuminance(s[0], s[1], s[2]));
+    pageLums.sort((a, b) => a - b);
+    const medianPageLum = pageLums[Math.floor(pageLums.length / 2)];
+    const isLightPage = medianPageLum >= 0.70;
+    const isDarkPage = medianPageLum <= 0.30;
+
     let contrastFailCount = 0;
     for (const w of words) {
-      if (w.pixelW < 18 || w.pixelH < 12 || w.confidence < 75) continue;
+      if (w.pixelW < 14 || w.pixelH < 10 || w.confidence < 70) continue;
+      if (w.text.length < 3 || isModelOrCodeNumber(w.text)) continue;
 
       try {
-        const centerX = Math.floor(w.pixelX + w.pixelW / 2);
-        const centerY = Math.floor(w.pixelY + w.pixelH / 2);
+        // Collect pixel luminances INSIDE the word bounding box
+        const stepX = Math.max(1, Math.floor(w.pixelW / 12));
+        const stepY = Math.max(1, Math.floor(w.pixelH / 6));
+        const innerLuminances: number[] = [];
 
-        // Sample background pixels just outside the bounding box
-        const bgSamples = [
-          ctx.getImageData(Math.max(0, w.pixelX - 6), Math.max(0, centerY), 1, 1).data,
-          ctx.getImageData(Math.min(width - 1, w.pixelX + w.pixelW + 6), Math.max(0, centerY), 1, 1).data,
-          ctx.getImageData(Math.max(0, centerX), Math.max(0, w.pixelY - 6), 1, 1).data,
-          ctx.getImageData(Math.max(0, centerX), Math.min(height - 1, w.pixelY + w.pixelH + 6), 1, 1).data,
-        ];
-
-        let avgBgR = 0;
-        let avgBgG = 0;
-        let avgBgB = 0;
-        for (const s of bgSamples) {
-          avgBgR += s[0];
-          avgBgG += s[1];
-          avgBgB += s[2];
-        }
-        avgBgR /= bgSamples.length;
-        avgBgG /= bgSamples.length;
-        avgBgB /= bgSamples.length;
-
-        const bgLum = calculateRelativeLuminance(avgBgR, avgBgG, avgBgB);
-
-        // Sample a grid of pixels inside the word bounding box
-        // To find the actual text glyph strokes rather than the background space between letters
-        const stepX = Math.max(1, Math.floor(w.pixelW / 10));
-        const stepY = Math.max(1, Math.floor(w.pixelH / 5));
-        const luminances: number[] = [];
-
-        for (let px = w.pixelX + 2; px < w.pixelX + w.pixelW - 2; px += stepX) {
-          for (let py = w.pixelY + 2; py < w.pixelY + w.pixelH - 2; py += stepY) {
+        for (let px = w.pixelX + 1; px < w.pixelX + w.pixelW - 1; px += stepX) {
+          for (let py = w.pixelY + 1; py < w.pixelY + w.pixelH - 1; py += stepY) {
             const p = ctx.getImageData(px, py, 1, 1).data;
-            luminances.push(calculateRelativeLuminance(p[0], p[1], p[2]));
+            innerLuminances.push(calculateRelativeLuminance(p[0], p[1], p[2]));
           }
         }
 
-        if (luminances.length === 0) continue;
-        luminances.sort((a, b) => a - b);
+        if (innerLuminances.length < 6) continue;
+        innerLuminances.sort((a, b) => a - b);
 
-        // If background is dark (bgLum < 0.5), text strokes are the BRIGHTEST pixels (90th percentile)
-        // If background is light (bgLum >= 0.5), text strokes are the DARKEST pixels (10th percentile)
-        const textStrokeLum =
-          bgLum < 0.5
-            ? luminances[Math.floor(luminances.length * 0.90)]
-            : luminances[Math.floor(luminances.length * 0.10)];
+        const p10 = innerLuminances[Math.floor(innerLuminances.length * 0.10)]; // Darkest (ink if text is dark)
+        const p50 = innerLuminances[Math.floor(innerLuminances.length * 0.50)]; // Median
+        const p90 = innerLuminances[Math.floor(innerLuminances.length * 0.90)]; // Brightest (ink if text is light)
 
-        const ratio = calculateContrastRatio(textStrokeLum, bgLum);
+        // 1. If standard light page (white/cream document) and text has dark ink (p10 < 0.35 & p90 > 0.60):
+        // It is standard dark text on white document -> 100% High Contrast Pass!
+        if (isLightPage && p10 < 0.35 && p90 > 0.60) {
+          continue;
+        }
 
-        // Only flag poor contrast (ratio < 3.5:1 — WCAG AA requires 4.5:1 for normal text)
-        if (ratio < 3.5 && w.text.length >= 3) {
+        // 2. If standard dark page (black/navy presentation) and text has light ink (p90 > 0.65 & p10 < 0.40):
+        // Standard light text on dark background -> 100% High Contrast Pass!
+        if (isDarkPage && p90 > 0.65 && p10 < 0.40) {
+          continue;
+        }
+
+        // 3. If there is a massive luminance spread inside the text box itself (clear contrast between glyph and box):
+        if (p90 - p10 >= 0.40) {
+          continue;
+        }
+
+        // 4. For text inside localized colored banners, buttons, or photo blocks:
+        // Sample background in the line-height space immediately above the word (never hits adjacent words in a sentence)
+        const topSpaceY = Math.max(0, w.pixelY - Math.max(4, Math.floor(w.pixelH * 0.4)));
+        const sampleX = Math.floor(w.pixelX + w.pixelW / 2);
+        const topBgPixel = ctx.getImageData(sampleX, topSpaceY, 1, 1).data;
+        const localBgLum = calculateRelativeLuminance(topBgPixel[0], topBgPixel[1], topBgPixel[2]);
+
+        let contrastRatio = 21;
+        if (localBgLum >= 0.5) {
+          contrastRatio = calculateContrastRatio(p10, localBgLum);
+        } else {
+          contrastRatio = calculateContrastRatio(p90, localBgLum);
+        }
+
+        // Only flag genuinely poor contrast (< 2.5:1 ratio)
+        if (contrastRatio < 2.5) {
           contrastFailCount++;
-          if (contrastFailCount <= 3) {
+          if (contrastFailCount <= 4) {
             issues.push({
               id: `contrast-${issueCounter++}`,
               category: "contrast",
               severity: "warning",
               title: "Low Contrast Readability",
-              description: `Text "${w.text}" blends into the background color.`,
-              impact: "Readers in bright daylight or with low phone brightness will struggle to read this copy, leading them to skip past it.",
-              specDetail: `Contrast ratio is approximately ${ratio.toFixed(1)}:1 (WCAG AA requires 4.5:1 for normal text, 3:1 for large text).`,
+              description: `Text "${w.text}" has low contrast against its background (${contrastRatio.toFixed(1)}:1 ratio).`,
+              impact: "Readers in bright ambient lighting or on mobile screens will struggle to read this copy.",
+              specDetail: `Contrast ratio is ${contrastRatio.toFixed(1)}:1 (WCAG AA requires 3:1 for bold/UI headers, 4.5:1 for fine body copy).`,
               whyItMatters: "Poor contrast reduces reading speed and viewer comprehension.",
               originalText: w.text,
-              suggestedFix: "Increase the brightness difference between the text color and background, or add a subtle soft shadow/underlay.",
+              suggestedFix: "Increase the brightness difference between the text color and background.",
               bbox: {
                 left: w.left,
                 top: w.top,
@@ -415,6 +492,7 @@ export async function POST(req: Request) {
 
     // 6. Gemini Multimodal Creative QA Auditor Inspection
     const geminiKey = process.env.GEMINI_API_KEY;
+    const geminiModel = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
     let engine: "hybrid-gemini" | "local-deterministic" = "local-deterministic";
     let aiVerdict: "ready" | "needs_review" | "critical_issues" | null = null;
     let aiVerdictTitle: string | null = null;
@@ -446,10 +524,10 @@ IMAGE METADATA (use this for context):
 - Format: ${formatHint}
 - File type: ${mimeType}
 
-OCR-EXTRACTED TEXT (these words were machine-read directly from the image — use this as ground truth for spelling, pricing, and copy checks):
+OCR-EXTRACTED TEXT (machine-read estimate; OCR can misread small, stylized, or non-English text. Do not treat it as ground truth for spelling, pricing, dates, or contact details):
 ${ocrWordList || "(no readable text detected by OCR — rely on visual read)"}
 
-IMPORTANT: Cross-reference the OCR text above with what you see visually. If there is a discrepancy, trust the OCR text for spelling issues, and trust your visual read for layout/contrast.
+IMPORTANT: Cross-check OCR text against the image. If the text is unclear or OCR and visual reading disagree, do not claim a definite error; report that a human should verify it.
 
 FOLLOW THESE 6 CORE HUMAN REVIEWER PRINCIPLES:
 
@@ -546,7 +624,7 @@ If the design is completely flawless with zero errors, return:
         for (let attempt = 1; attempt <= 3; attempt++) {
           try {
             response = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+              `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent?key=${geminiKey}`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -586,7 +664,12 @@ If the design is completely flawless with zero errors, return:
             } else {
               break;
             }
-          } catch (fetchErr) {
+          } catch (fetchErr: unknown) {
+            const isDnsError = fetchErr && typeof fetchErr === "object" && (("code" in fetchErr && fetchErr.code === "ENOTFOUND") || ("cause" in fetchErr && typeof fetchErr.cause === "object" && fetchErr.cause !== null && "code" in fetchErr.cause && fetchErr.cause.code === "ENOTFOUND"));
+            if (isDnsError) {
+              console.warn(`[DesignCheck] Gemini API domain offline or unreachable, proceeding immediately with local engine.`);
+              break;
+            }
             console.warn(`[DesignCheck] Gemini fetch error on attempt ${attempt}:`, fetchErr);
             if (attempt < 3) {
               await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
@@ -721,12 +804,17 @@ If the design is completely flawless with zero errors, return:
     // Fallback: ONLY run local nspell dictionary if Gemini did NOT run
     if (engine !== "hybrid-gemini") {
       for (const w of words) {
+        // Skip whole token if it is a model number, technical code, or dimension
+        if (isModelOrCodeNumber(w.text)) continue;
+
         const subTokens = w.text.split(/[\s—–-]+/);
         for (const sub of subTokens) {
+          if (isModelOrCodeNumber(sub)) continue;
+
           const cleaned = sub.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, "");
           if (cleaned.length < 3 || !isLikelyRealText(cleaned)) continue;
 
-          // 1. Accept valid US, UK/Commonwealth spelling, or known Brand/Acronym
+          // 1. Accept valid US, UK/Commonwealth spelling, or known Brand/Acronym/Product Spec
           if (
             spellUS.correct(cleaned) ||
             spellGB.correct(cleaned) ||
@@ -740,9 +828,16 @@ If the design is completely flawless with zero errors, return:
             continue;
           }
 
-          // 3. Check for TitleCase proper nouns / brand names (e.g. "Hisense")
-          const isCapitalized = /^[A-Z][a-z0-9]+$/.test(sub);
+          // 3. Skip Capitalized words (Proper Nouns, Brands, Names, Geographic Places)
+          // In advertising, catalogs, and commercial documents, words starting with a capital letter
+          // (e.g. "Qingdao", "Sanden", "Changzhou", "Sanhua", "Ronshen", "Kelon", "ASKO", "Thailand", "Vietnam")
+          // are proper nouns, company brands, or geography, NOT spelling errors!
+          const isCapitalized = /^[A-Z][a-zA-Z0-9]*$/.test(sub);
+          if (isCapitalized) {
+            continue;
+          }
 
+          // 4. Only flag genuine lowercase spelling mistakes
           const suggestions = spellUS.suggest(cleaned);
           const gbSuggestions = spellGB.suggest(cleaned);
           const topFix = suggestions[0] || gbSuggestions[0];
@@ -750,23 +845,17 @@ If the design is completely flawless with zero errors, return:
           issues.push({
             id: `spell-${issueCounter++}`,
             category: "copy",
-            severity: isCapitalized ? "suggestion" : "warning",
+            severity: "warning",
             qaRole: "Spelling & Typography QA",
-            title: isCapitalized ? "Unrecognized Name or Brand" : "Possible Spelling Mistake",
-            description: isCapitalized
-              ? `Word "${sub}" was not recognized in standard English dictionaries. If this is a brand name or proper noun, you can safely ignore this.`
-              : `Word "${sub}" appears to be misspelled.`,
-            impact: isCapitalized
-              ? "Verify proper nouns or sponsor names against official brand guidelines to preserve partnership relationships."
-              : "Spelling errors in prominent copy distract readers and lower perceived campaign authority.",
+            title: "Possible Spelling Mistake",
+            description: `Word "${sub}" appears to be misspelled.`,
+            impact: "Spelling errors in published copy distract readers and lower perceived brand credibility.",
             specDetail: topFix ? `Dictionary suggestion: "${topFix}"` : "Flagged by pre-flight dictionary check",
-            whyItMatters: isCapitalized
-              ? "Verify that brand names and proper nouns are spelled according to official brand guidelines."
-              : "Spelling mistakes in published creative assets diminish brand trust and perceived professionalism.",
+            whyItMatters: "Spelling mistakes in published creative assets diminish brand trust and perceived professionalism.",
             originalText: sub,
             suggestedFix: topFix
-              ? `If this is a typo, change to "${topFix}". Otherwise ignore if brand name.`
-              : "Verify spelling or ignore if brand name.",
+              ? `If this is a typo, change to "${topFix}".`
+              : "Verify spelling.",
             bbox: {
               left: w.left,
               top: w.top,
@@ -893,25 +982,8 @@ If the design is completely flawless with zero errors, return:
       )
     );
 
-    // Rule 5: Mention What's Working (Positive Highlights)
+    // Only the vision model can provide subjective positive observations.
     const positiveHighlights: string[] = [...aiPositiveHighlights];
-    if (positiveHighlights.length === 0) {
-      if (complianceIssues.length === 0) {
-        positiveHighlights.push("Legal & Asterisk Compliance: Clear disclaimer pairing and clean copyright alignment.");
-      }
-      if (marginIssuesCount === 0) {
-        positiveHighlights.push("Margin Safe-Zones: Clean border breathing room with no elements risking guillotine cut-off.");
-      }
-      if (contrastFailCount === 0) {
-        positiveHighlights.push("Readability & Contrast: Strong text-to-background contrast across key typography.");
-      }
-      if (dataIssues.length === 0) {
-        positiveHighlights.push("Data Integrity: Pricing math, discount offers, and contact formats verified.");
-      }
-      if (positiveHighlights.length === 0) {
-        positiveHighlights.push("Clear composition and well-defined visual focal points.");
-      }
-    }
 
     // Rule 1: Human Creative Director Verdict & Severity-Weighted Summary
     let verdict: "ready" | "needs_review" | "critical_issues" = "ready";
@@ -957,6 +1029,16 @@ If the design is completely flawless with zero errors, return:
       }
     }
 
+    const analysisNotice = engine === "local-deterministic"
+      ? "Limited automated checks only: OCR spelling, approximate text contrast, margins, and image dimensions. Prices, dates, contact details, legal requirements, and overall design quality were not verified. Review these manually before publishing."
+      : undefined;
+
+    if (analysisNotice) {
+      verdict = "needs_review";
+      verdictTitle = "Limited Checks Completed — Manual Review Needed";
+      verdictSummary = analysisNotice;
+    }
+
     const result: DesignCheckResponse = {
       success: true,
       score: overallScore,
@@ -982,6 +1064,7 @@ If the design is completely flawless with zero errors, return:
       },
       issues,
       engine,
+      analysisNotice,
     };
 
     return NextResponse.json(result);

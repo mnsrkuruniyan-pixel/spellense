@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import FlipbookClient from "./FlipbookClient";
 
 export const metadata: Metadata = {
-  // absolute: stops the root layout's title template from appending "| Spellense" a second time
-  title: { absolute: "Free 3D Flipbook Maker — Convert PDF & Images to Digital Flipbook | Spellense" },
+  title: "Free 3D Flipbook Maker — Convert PDF & Images",
   description:
     "Convert multi-page PDFs and images into interactive 3D digital flipbooks. Realistic page turn animations, offline HTML download, ZIP export, and embed code. 100% private in-browser processing.",
   alternates: {
     canonical: "/flipbook",
   },
   openGraph: {
-    title: "Free 3D Flipbook Maker — Turn PDFs into Interactive Flipbooks | Spellense",
+    siteName: "Spellense",
+    title: "Free 3D Flipbook Maker — Turn PDFs into Interactive Flipbooks",
     description:
       "Transform PDFs, magazines, portfolios, and brochures into realistic 3D page-turning digital books. Download as standalone offline HTML or ZIP. 100% free & client-side.",
     url: "/flipbook",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free 3D Flipbook Maker | Spellense",
+    title: "Free 3D Flipbook Maker — Turn PDFs into Interactive Flipbooks",
     description:
       "Turn PDFs and images into interactive 3D page-turning flipbooks. Download offline HTML or embed anywhere.",
     images: ["/og-image.png"],

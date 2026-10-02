@@ -2,15 +2,32 @@ import type { Metadata } from "next";
 import ImageToTextClient from "./ImageToTextClient";
 
 export const metadata: Metadata = {
-  title: "Free Image to Text Converter — Extract Text from Photos & Screenshots | Spellense",
+  title: "Free Image to Text Converter — Extract Text from Photos & Screenshots",
   description:
     "Extract clean, copyable text from photos, screenshots, and scanned PDFs instantly with our free online OCR tool. No signup required, up to 25MB, 100% private.",
   alternates: { canonical: "/image-to-text" },
   openGraph: {
-    title: "Free Image to Text Converter — Extract Text from Photos & Screenshots | Spellense",
+    siteName: "Spellense",
+    title: "Free Image to Text Converter — Extract Text from Photos & Screenshots",
     description:
       "Extract clean, copyable text from photos, screenshots, and documents instantly with free online OCR. No registration, up to 25MB, 100% private.",
     url: "/image-to-text",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Spellense Image to Text Converter",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Free Image to Text Converter — Extract Text from Photos & Screenshots",
+    description:
+      "Extract clean, copyable text from photos, screenshots, and documents instantly with free online OCR.",
+    images: ["/og-image.png"],
   },
 };
 

@@ -7,3 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Response Language
+- Always reply to the user in natural, standard Malayalam script, regardless of the language they use.
+- Do not transliterate Malayalam or mix in other languages. Keep code, identifiers, commands, and file paths unchanged; retain only necessary technical terms in English.

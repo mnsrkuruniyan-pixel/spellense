@@ -3,15 +3,32 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "About Us | Spellense — Visual Spell Checker & Writing Tools",
+  title: "About Us — Visual Spell Checker & Proofreader",
   description:
     "Learn about Spellense, our privacy-first visual spell checking technology, and our mission to help creators and teams catch typos across images, PDFs, and presentations.",
   alternates: { canonical: "/about" },
   openGraph: {
-    title: "About Spellense — Visual Spell Checking & Text Tools",
+    siteName: "Spellense",
+    title: "About Us — Visual Spell Checker & Proofreader",
     description:
       "Why we built Spellense: a 100% in-memory, privacy-first proofreading engine for graphic designers, marketers, and professionals.",
     url: "/about",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Spellense About Page",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "About Us — Visual Spell Checker & Proofreader",
+    description:
+      "Why we built Spellense: a privacy-first proofreading engine for designers, marketers, and professionals.",
+    images: ["/og-image.png"],
   },
 };
 

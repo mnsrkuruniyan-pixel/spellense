@@ -21,7 +21,7 @@ export async function generateMetadata({
 
   if (!post) {
     return {
-      title: "Article Not Found | Spellense Blog",
+      title: "Article Not Found",
     };
   }
 
@@ -29,12 +29,13 @@ export async function generateMetadata({
   const url = `${baseUrl}/blog/${post.slug}`;
 
   return {
-    title: `${post.title} | Spellense Blog`,
+    title: `${post.title} — Blog`,
     description: post.description,
     alternates: {
       canonical: url,
     },
     openGraph: {
+      siteName: "Spellense",
       title: post.title,
       description: post.description,
       url,
@@ -100,7 +101,7 @@ export default async function BlogPostPage({
       url: baseUrl,
       logo: {
         "@type": "ImageObject",
-        url: `${baseUrl}/icon.png`,
+        url: `${baseUrl}/icon-192.png`,
       },
     },
     keywords: post.tags.join(", "),

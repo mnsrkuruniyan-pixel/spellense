@@ -64,15 +64,15 @@ interface DesignCheckResponse {
   };
   issues: DesignIssue[];
   engine: "hybrid-gemini" | "local-deterministic";
+  analysisNotice?: string;
   error?: string;
 }
 
 const ANALYSIS_STEPS = [
-  "Auditing prices, discount math, dates & contact details...",
-  "Verifying asterisk (*) pairing & mandatory legal disclaimers...",
-  "Scanning for stock watermarks & logo aspect distortions...",
-  "Calculating typography hierarchy & WCAG readability contrast...",
-  "Inspecting bleed, margin safe-zones & final QA release verdict...",
+  "Scanning text & spelling...",
+  "Checking contrast & colors...",
+  "Verifying margins & bleed...",
+  "Preparing design report...",
 ];
 
 export default function DesignCheckClient() {
@@ -512,7 +512,7 @@ export default function DesignCheckClient() {
   // Canvas Display Dimensions
   const displayDims = useMemo(() => {
     if (!naturalDims) return null;
-    const baseHeight = 440;
+    const baseHeight = 560;
     const aspectRatio = naturalDims.width / Math.max(naturalDims.height, 1);
     const width = baseHeight * aspectRatio * zoom;
     const height = baseHeight * zoom;
@@ -589,10 +589,27 @@ export default function DesignCheckClient() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result, pdfTotalPages]);
 
+  const [whitelistedTerms, setWhitelistedTerms] = useState<Set<string>>(new Set());
+
+  const handleAddToDictionary = (word: string) => {
+    const cleaned = word.trim().toLowerCase();
+    setWhitelistedTerms((prev) => new Set([...prev, cleaned]));
+    if (result) {
+      const matchingIds = result.issues
+        .filter((i) => (i.originalText || "").trim().toLowerCase() === cleaned)
+        .map((i) => i.id);
+      setDismissedIssueIds((prev) => new Set([...prev, ...matchingIds]));
+    }
+  };
+
   const activeIssues = useMemo(() => {
     if (!result) return [];
-    return result.issues.filter((i) => !dismissedIssueIds.has(i.id));
-  }, [result, dismissedIssueIds]);
+    return result.issues.filter((i) => {
+      if (dismissedIssueIds.has(i.id)) return false;
+      if (i.originalText && whitelistedTerms.has(i.originalText.trim().toLowerCase())) return false;
+      return true;
+    });
+  }, [result, dismissedIssueIds, whitelistedTerms]);
 
   const filteredIssues = useMemo(() => {
     if (activeFilter === "all") return activeIssues;
@@ -812,7 +829,7 @@ export default function DesignCheckClient() {
                   : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
               }`}
             >
-              {/* Cloud Upload Icon with Arrow */}
+              {/* Cloud Upload Icon matching Flipbook reference */}
               <div className="mx-auto flex justify-center items-center">
                 <svg
                   width="68"
@@ -835,7 +852,7 @@ export default function DesignCheckClient() {
                 Drop your design here
               </h2>
               <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
-                or click to choose a design file • Up to 25MB
+                or click to choose a design file
               </p>
 
               {/* Action Button */}
@@ -877,16 +894,8 @@ export default function DesignCheckClient() {
                       <polyline points="21 15 16 10 5 21" />
                     </svg>
                   )}
-                  <span>🖼️ Try a Sample Design</span>
+                  <span>Try a sample design</span>
                 </button>
-              </div>
-
-              {/* Supported types chips */}
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-500">
-                <span className="rounded-lg bg-slate-100/80 px-2.5 py-1">🖼️ Posters &amp; Flyers</span>
-                <span className="rounded-lg bg-slate-100/80 px-2.5 py-1">📱 Social Media Ads</span>
-                <span className="rounded-lg bg-slate-100/80 px-2.5 py-1">🏷️ Banners &amp; Signage</span>
-                <span className="rounded-lg bg-slate-100/80 px-2.5 py-1">📊 Slide Creatives</span>
               </div>
             </div>
 
@@ -991,8 +1000,11 @@ export default function DesignCheckClient() {
               <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
                 {/* Card 1: WCAG Contrast */}
                 <div className="group rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-2xl">
-                    👁️
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor" />
+                    </svg>
                   </div>
                   <h4 className="mt-4 text-base font-bold text-slate-900">
                     WCAG Contrast Math
@@ -1009,8 +1021,11 @@ export default function DesignCheckClient() {
 
                 {/* Card 2: Margins & Bleed */}
                 <div className="group rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-md">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-2xl">
-                    📐
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2v14a2 2 0 0 0 2 2h14" />
+                      <path d="M18 22V8a2 2 0 0 0-2-2H2" />
+                    </svg>
                   </div>
                   <h4 className="mt-4 text-base font-bold text-slate-900">
                     Margin &amp; Bleed Safe-Zones
@@ -1027,8 +1042,12 @@ export default function DesignCheckClient() {
 
                 {/* Card 3: AI Copy & Grammar */}
                 <div className="group rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-2xl">
-                    ✍️
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m3 16 4.5-9 4.5 9" />
+                      <path d="M5 12h5" />
+                      <path d="m15 11 3 3 5-5" />
+                    </svg>
                   </div>
                   <h4 className="mt-4 text-base font-bold text-slate-900">
                     AI Copy &amp; Headline QA
@@ -1093,26 +1112,83 @@ export default function DesignCheckClient() {
 
         {/* LOADING PROGRESS STATE */}
         {loading && (
-          <div className="mx-auto mt-12 max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl sm:p-12">
-            <div className="relative mx-auto flex h-20 w-20 items-center justify-center">
-              <div className="absolute inset-0 rounded-full border-4 border-blue-100 animate-ping" />
-              <div className="h-16 w-16 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
-              <span className="absolute text-xl">🎨</span>
+          <div className="relative mx-auto mt-12 max-w-lg overflow-hidden rounded-3xl border border-slate-100 bg-white/95 p-8 text-center shadow-2xl shadow-blue-500/10 backdrop-blur-xl sm:p-10">
+            {/* Ambient background glows */}
+            <div className="pointer-events-none absolute -top-20 -left-20 h-44 w-44 rounded-full bg-blue-500/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -right-20 h-44 w-44 rounded-full bg-indigo-500/10 blur-3xl" />
+
+            {/* Glowing multi-ring scanner animation */}
+            <div className="relative mx-auto flex h-24 w-24 items-center justify-center">
+              {/* Soft ambient blur halo */}
+              <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-xl animate-pulse" />
+
+              {/* Outer gradient spinner ring */}
+              <div className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-blue-600 border-r-indigo-500 animate-spin" />
+
+              {/* Inner counter-rotating accent ring */}
+              <div className="absolute inset-2.5 rounded-full border-2 border-transparent border-b-violet-500 border-l-blue-400 animate-[spin_2s_linear_infinite_reverse]" />
+
+              {/* Central icon badge */}
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+                <svg
+                  className="h-6 w-6 animate-pulse"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6" />
+                  <circle cx="11.5" cy="14.5" r="2.5" />
+                  <path d="m13.5 16.5 2 2" />
+                </svg>
+              </div>
             </div>
 
-            <h2 className="mt-6 text-xl font-bold text-slate-900">
-              Running Creative QA Audit...
+            {/* Title & dynamic status */}
+            <h2 className="mt-5 text-xl font-extrabold tracking-tight text-slate-900">
+              Checking your design...
             </h2>
-            <p className="mt-2 text-sm font-medium text-blue-600 animate-pulse">
-              {ANALYSIS_STEPS[currentStepIndex]}
-            </p>
-
-            <div className="mt-6 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full bg-gradient-to-r from-blue-500 via-indigo-600 to-violet-600 transition-all duration-500" style={{ width: `${((currentStepIndex + 1) / ANALYSIS_STEPS.length) * 100}%` }} />
+            <div className="mt-2 flex items-center justify-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
+              <p className="text-sm font-semibold text-blue-600 transition-all duration-300">
+                {ANALYSIS_STEPS[currentStepIndex]}
+              </p>
             </div>
-            <p className="mt-3 text-xs text-slate-400">
-              Auditing pricing math, asterisk pairing, watermarks, WCAG contrast &amp; print bleed
-            </p>
+
+            {/* Progress bar & percentage */}
+            <div className="mt-6">
+              <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 mb-2">
+                <span>ANALYSIS IN PROGRESS</span>
+                <span className="text-blue-600 font-extrabold">
+                  {Math.round(((currentStepIndex + 1) / ANALYSIS_STEPS.length) * 100)}%
+                </span>
+              </div>
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 transition-all duration-500 ease-out shadow-xs"
+                  style={{ width: `${((currentStepIndex + 1) / ANALYSIS_STEPS.length) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Clean category pills */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 pt-3 border-t border-slate-100">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                Typos &amp; Text
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                Contrast
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+                Margins &amp; Bleed
+              </span>
+            </div>
           </div>
         )}
 
@@ -1167,8 +1243,8 @@ export default function DesignCheckClient() {
 
             {/* TOP SUMMARY BAR: QA PRE-FLIGHT VERDICT */}
             {(() => {
-              const isCritical = result.verdict === "critical_issues" || result.score < 65;
-              const isReady = result.verdict === "ready" || result.score >= 90;
+              const isCritical = result.verdict === "critical_issues";
+              const isReady = result.verdict === "ready";
               const defaultTitle = isReady
                 ? "Artwork Ready for Release"
                 : isCritical
@@ -1209,7 +1285,7 @@ export default function DesignCheckClient() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                             isReady
                               ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                               : isCritical
@@ -1217,39 +1293,39 @@ export default function DesignCheckClient() {
                               : "bg-amber-100 text-amber-900 border border-amber-200"
                           }`}
                         >
-                          {isReady ? "✅ PASSED" : isCritical ? "🚨 ACTION REQUIRED" : "⚠️ NEEDS REVIEW"}
+                          {isReady ? "Passed" : isCritical ? "Action Required" : "Needs Review"}
                         </span>
                         <h2 className="text-base font-extrabold text-slate-900">
                           {verdictTitle}
                         </h2>
                         <span className="rounded-full bg-white/90 border border-slate-200/80 px-2 py-0.5 text-[10px] font-bold text-slate-600 uppercase">
-                          {result.engine === "hybrid-gemini" ? "AI Creative QA" : "Deterministic"}
+                          {result.engine === "hybrid-gemini" ? "AI + Automated Checks" : "Limited Automated Checks"}
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-slate-600 max-w-2xl leading-relaxed">
                         {verdictSummary}
                       </p>
-                      {/* Severity-Weighted Summary Counts (Rule 1) */}
+                      {/* Severity-Weighted Summary Counts */}
                       {result.verdictCounts && (
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
                           {result.verdictCounts.critical > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 text-rose-800 px-2.5 py-0.5 border border-rose-200">
-                              🚨 {result.verdictCounts.critical} Critical Deal-Breaker{result.verdictCounts.critical > 1 ? "s" : ""}
+                            <span className="inline-flex items-center rounded-full bg-rose-50 text-rose-700 px-2.5 py-0.5 border border-rose-200/80">
+                              {result.verdictCounts.critical} Critical Blockers
                             </span>
                           )}
                           {result.verdictCounts.warning > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 border border-amber-200">
-                              ⚠️ {result.verdictCounts.warning} Warning{result.verdictCounts.warning > 1 ? "s" : ""} to Verify
+                            <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-800 px-2.5 py-0.5 border border-amber-200/80">
+                              {result.verdictCounts.warning} Warnings to Verify
                             </span>
                           )}
                           {result.verdictCounts.suggestion > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 px-2.5 py-0.5 border border-blue-200">
-                              💡 {result.verdictCounts.suggestion} Polish Suggestion{result.verdictCounts.suggestion > 1 ? "s" : ""}
+                            <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5 border border-slate-200/80">
+                              {result.verdictCounts.suggestion} Polish Suggestions
                             </span>
                           )}
                           {result.verdictCounts.total === 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 border border-emerald-200">
-                              ✨ 0 Critical or Warning Issues
+                            <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-800 px-2.5 py-0.5 border border-emerald-200/80">
+                              0 Issues Detected
                             </span>
                           )}
                         </div>
@@ -1281,6 +1357,13 @@ export default function DesignCheckClient() {
               );
             })()}
 
+            {result.analysisNotice && (
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950" role="status">
+                <p className="font-bold">Manual review required</p>
+                <p className="mt-1 leading-relaxed">{result.analysisNotice}</p>
+              </div>
+            )}
+
             {/* POSITIVE HIGHLIGHTS: WHAT'S WORKING WELL (RULE 5) */}
             {result.positiveHighlights && result.positiveHighlights.length > 0 && (
               <div className="rounded-2xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-white p-4 sm:p-5 shadow-xs">
@@ -1304,7 +1387,7 @@ export default function DesignCheckClient() {
                       key={idx}
                       className="flex items-start gap-2.5 rounded-xl border border-emerald-100/90 bg-white/95 p-3 shadow-2xs transition hover:border-emerald-200"
                     >
-                      <span className="mt-0.5 text-sm text-emerald-600">🌟</span>
+                      <span className="mt-0.5 text-xs text-emerald-600 font-bold">✓</span>
                       <p className="text-xs font-medium leading-relaxed text-slate-700">{highlight}</p>
                     </div>
                   ))}
@@ -1418,59 +1501,36 @@ export default function DesignCheckClient() {
                         draggable={false}
                       />
 
-                      {/* VISUAL MARKERS OVERLAY */}
+                      {/* VISUAL MARKERS OVERLAY — Prominent Error Underline Markings */}
                       {activeIssues.map((issue) => {
                         const isSelected = selectedIssueId === issue.id;
                         const isCritical =
                           issue.severity === "critical" ||
                           (issue.severity as string) === "error";
+                        const isWarning = issue.severity === "warning";
+                        const isFilteredOut =
+                          activeFilter !== "all" &&
+                          !filteredIssues.some((f) => f.id === issue.id);
 
-                        // Color coding based on severity & category
-                        let borderColor = "border-blue-500";
-                        let bgColor = "bg-blue-500/20";
-                        let badgeBg = "bg-blue-600";
-                        let pinIcon = "💡";
+                        if (isFilteredOut) return null;
 
-                        if (isCritical) {
-                          borderColor = "border-rose-600";
-                          bgColor = "bg-rose-500/25";
-                          badgeBg = "bg-rose-600";
-                          pinIcon = "🚨";
-                        } else if (issue.category === "data_integrity") {
-                          borderColor = "border-amber-600";
-                          bgColor = "bg-amber-500/20";
-                          badgeBg = "bg-amber-600";
-                          pinIcon = "🔢";
-                        } else if (issue.category === "compliance") {
-                          borderColor = "border-purple-600";
-                          bgColor = "bg-purple-500/20";
-                          badgeBg = "bg-purple-600";
-                          pinIcon = "⚖️";
-                        } else if (issue.category === "copy") {
-                          borderColor = "border-rose-500";
-                          bgColor = "bg-rose-500/20";
-                          badgeBg = "bg-rose-500";
-                          pinIcon = "✍️";
-                        } else if (issue.category === "contrast") {
-                          borderColor = "border-amber-500";
-                          bgColor = "bg-amber-500/20";
-                          badgeBg = "bg-amber-500";
-                          pinIcon = "👁️";
-                        } else if (issue.category === "typography") {
-                          borderColor = "border-indigo-500";
-                          bgColor = "bg-indigo-500/20";
-                          badgeBg = "bg-indigo-600";
-                          pinIcon = "🔤";
-                        } else if (issue.category === "artifacts") {
-                          borderColor = "border-red-600";
-                          bgColor = "bg-red-500/20";
-                          badgeBg = "bg-red-600";
-                          pinIcon = "🚫";
+                        // Color theme per category
+                        let color = "#0055fe"; // blue
+                        let bgTint = "rgba(0, 85, 254, 0.12)";
+                        let borderTint = "rgba(0, 85, 254, 0.4)";
+
+                        if (isCritical || issue.category === "copy") {
+                          color = "#e11d48"; // rose-600 / red
+                          bgTint = "rgba(225, 29, 72, 0.14)";
+                          borderTint = "rgba(225, 29, 72, 0.45)";
+                        } else if (issue.category === "contrast" || isWarning) {
+                          color = "#d97706"; // amber-600
+                          bgTint = "rgba(217, 119, 6, 0.14)";
+                          borderTint = "rgba(217, 119, 6, 0.45)";
                         } else if (issue.category === "margin" || issue.category === "layout") {
-                          borderColor = "border-blue-500";
-                          bgColor = "bg-blue-500/20";
-                          badgeBg = "bg-blue-600";
-                          pinIcon = "📐";
+                          color = "#7c3aed"; // violet-600
+                          bgTint = "rgba(124, 58, 237, 0.14)";
+                          borderTint = "rgba(124, 58, 237, 0.45)";
                         }
 
                         return (
@@ -1485,25 +1545,59 @@ export default function DesignCheckClient() {
                                 block: "nearest",
                               });
                             }}
-                            className={`absolute cursor-pointer rounded border-2 transition-all ${borderColor} ${bgColor} ${
-                              isSelected ? "ring-4 ring-blue-500/50 scale-[1.02] z-20" : "hover:ring-2 hover:ring-slate-400/50 z-10"
+                            className={`group absolute cursor-pointer transition-all duration-150 rounded-[2px] ${
+                              isSelected
+                                ? "ring-2 ring-blue-500 shadow-md z-30"
+                                : "hover:z-20 z-10"
                             }`}
                             style={{
                               left: `${issue.bbox.left * 100}%`,
                               top: `${issue.bbox.top * 100}%`,
-                              width: `${issue.bbox.width * 100}%`,
-                              height: `${issue.bbox.height * 100}%`,
+                              width: `${Math.max(issue.bbox.width * 100, 1.2)}%`,
+                              height: `${Math.max(issue.bbox.height * 100, 1.2)}%`,
+                              backgroundColor: isSelected ? bgTint.replace("0.14", "0.28") : bgTint,
+                              border: `1px solid ${borderTint}`,
                             }}
                             title={`${issue.title}: ${issue.description}`}
                           >
-                            {/* Pin Badge */}
+                            {/* Solid Underline Bar */}
                             <span
-                              className={`absolute -top-3 -left-3 flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-md transition-transform ${badgeBg} ${
-                                isSelected ? "scale-125 ring-2 ring-white" : ""
-                              }`}
+                              className="absolute -bottom-[3px] left-0 right-0 h-[3px] rounded-full pointer-events-none"
+                              style={{
+                                backgroundColor: color,
+                                boxShadow: `0 1px 3px ${color}66`,
+                              }}
+                            />
+
+                            {/* Wavy Squiggly Underline SVG for authentic proofreading mark */}
+                            <svg
+                              className="absolute -bottom-[6px] left-0 w-full h-[6px] pointer-events-none overflow-visible"
+                              style={{ color }}
+                              preserveAspectRatio="none"
+                              viewBox="0 0 100 6"
                             >
-                              {pinIcon}
-                            </span>
+                              <path
+                                d="M0,3 Q2.5,0 5,3 T10,3 T15,3 T20,3 T25,3 T30,3 T35,3 T40,3 T45,3 T50,3 T55,3 T60,3 T65,3 T70,3 T75,3 T80,3 T85,3 T90,3 T95,3 T100,3"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+
+                            {/* Floating hover/selected label badge */}
+                            <div
+                              className={`pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-0.5 text-[10px] font-bold text-white shadow-md transition-opacity duration-150 ${
+                                isSelected ? "opacity-100 scale-100" : "opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100"
+                              }`}
+                              style={{ backgroundColor: color }}
+                            >
+                              {issue.originalText || issue.title}
+                              <div
+                                className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent"
+                                style={{ borderTopColor: color }}
+                              />
+                            </div>
                           </div>
                         );
                       })}
@@ -1684,7 +1778,7 @@ export default function DesignCheckClient() {
                       <button
                         type="button"
                         onClick={() => setActiveFilter("all")}
-                        className={`rounded-lg px-2.5 py-1 transition ${
+                        className={`rounded-lg px-3 py-1.5 transition ${
                           activeFilter === "all" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                       >
@@ -1694,49 +1788,49 @@ export default function DesignCheckClient() {
                         <button
                           type="button"
                           onClick={() => setActiveFilter("critical")}
-                          className={`rounded-lg px-2.5 py-1 transition ${
+                          className={`rounded-lg px-3 py-1.5 transition ${
                             activeFilter === "critical" ? "bg-rose-600 text-white" : "bg-rose-50 text-rose-700 hover:bg-rose-100"
                           }`}
                         >
-                          🚨 Critical ({criticalCount})
+                          Critical ({criticalCount})
                         </button>
                       )}
                       <button
                         type="button"
                         onClick={() => setActiveFilter("data")}
-                        className={`rounded-lg px-2.5 py-1 transition ${
-                          activeFilter === "data" ? "bg-amber-600 text-white" : "bg-amber-50 text-amber-800 hover:bg-amber-100"
+                        className={`rounded-lg px-3 py-1.5 transition ${
+                          activeFilter === "data" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                         }`}
                       >
-                        📋 Data &amp; Legal ({dataCount})
+                        Data &amp; Legal ({dataCount})
                       </button>
                       <button
                         type="button"
                         onClick={() => setActiveFilter("layout")}
-                        className={`rounded-lg px-2.5 py-1 transition ${
-                          activeFilter === "layout" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                        className={`rounded-lg px-3 py-1.5 transition ${
+                          activeFilter === "layout" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                         }`}
                       >
-                        📐 Layout &amp; Bleed ({layoutCount})
+                        Layout &amp; Bleed ({layoutCount})
                       </button>
                       <button
                         type="button"
                         onClick={() => setActiveFilter("contrast")}
-                        className={`rounded-lg px-2.5 py-1 transition ${
-                          activeFilter === "contrast" ? "bg-purple-600 text-white" : "bg-purple-50 text-purple-700 hover:bg-purple-100"
+                        className={`rounded-lg px-3 py-1.5 transition ${
+                          activeFilter === "contrast" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                         }`}
                       >
-                        👁️ Contrast ({contrastCount})
+                        Contrast ({contrastCount})
                       </button>
                       {typographyCount > 0 && (
                         <button
                           type="button"
                           onClick={() => setActiveFilter("typography")}
-                          className={`rounded-lg px-2.5 py-1 transition ${
-                            activeFilter === "typography" ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                          className={`rounded-lg px-3 py-1.5 transition ${
+                            activeFilter === "typography" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                           }`}
                         >
-                          🔤 Typography ({typographyCount})
+                          Typography ({typographyCount})
                         </button>
                       )}
                     </div>
@@ -1747,9 +1841,8 @@ export default function DesignCheckClient() {
                 <div className="mt-4 flex-1 space-y-3 overflow-y-auto max-h-[520px] pr-1">
                   {filteredIssues.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
-                      <span className="text-3xl">🎉</span>
-                      <p className="mt-2 text-sm font-semibold text-slate-600">No issues in this category</p>
-                      <p className="text-xs">Your design passed all audit checks in this area cleanly.</p>
+                      <p className="text-sm font-semibold text-slate-700">No issues in this category</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Your design passed all audit checks in this area cleanly.</p>
                     </div>
                   ) : (
                     filteredIssues.map((issue) => {
@@ -1760,28 +1853,30 @@ export default function DesignCheckClient() {
                       const isWarning = issue.severity === "warning";
 
                       const borderClass = isSelected
-                        ? "border-blue-500 ring-2 ring-blue-500/20 shadow-md"
+                        ? "border-blue-500 ring-2 ring-blue-500/20 shadow-xs"
                         : isCritical
-                        ? "border-rose-200 hover:border-rose-300 bg-rose-50/20"
-                        : "border-slate-200 hover:border-slate-300";
+                        ? "border-rose-200/90 hover:border-rose-300 bg-rose-50/15"
+                        : "border-slate-200/80 hover:border-slate-300 bg-white";
 
                       const sevBadgeClass = isCritical
-                        ? "bg-rose-100 text-rose-800 border-rose-300"
+                        ? "bg-rose-50 text-rose-700 border border-rose-200/80"
                         : isWarning
-                        ? "bg-amber-100 text-amber-800 border-amber-300"
-                        : "bg-blue-50 text-blue-700 border-blue-200";
+                        ? "bg-amber-50 text-amber-800 border border-amber-200/80"
+                        : "bg-slate-100 text-slate-700 border border-slate-200/80";
+
+                      const sevLabel = isCritical ? "Critical" : isWarning ? "Warning" : "Suggestion";
 
                       const catLabel = (() => {
                         switch (issue.category) {
-                          case "data_integrity": return "🔢 DATA & MATH";
-                          case "compliance": return "⚖️ COMPLIANCE";
-                          case "copy": return "✍️ COPY & TYPO";
-                          case "contrast": return "👁️ CONTRAST";
-                          case "typography": return "🔤 TYPOGRAPHY";
-                          case "artifacts": return "🚫 WATERMARK / LOGO";
+                          case "data_integrity": return "Data & Math";
+                          case "compliance": return "Compliance";
+                          case "copy": return "Copy & Spelling";
+                          case "contrast": return "Contrast";
+                          case "typography": return "Typography";
+                          case "artifacts": return "Watermark / Logo";
                           case "margin":
-                          case "layout": return "📐 LAYOUT & BLEED";
-                          default: return "💡 QUALITY";
+                          case "layout": return "Layout & Bleed";
+                          default: return "Quality";
                         }
                       })();
 
@@ -1790,96 +1885,83 @@ export default function DesignCheckClient() {
                           key={issue.id}
                           id={`issue-card-${issue.id}`}
                           onClick={() => setSelectedIssueId(issue.id)}
-                          className={`rounded-2xl border bg-white p-4 transition-all ${borderClass}`}
+                          className={`rounded-xl border p-3.5 sm:p-4 transition-all cursor-pointer ${borderClass}`}
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${sevBadgeClass}`}>
-                                {isCritical ? "🚨 CRITICAL" : isWarning ? "⚠️ WARNING" : "💡 SUGGESTION"}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold ${sevBadgeClass}`}>
+                                {sevLabel}
                               </span>
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                              <span className="text-[11px] font-semibold text-slate-500">
                                 {catLabel}
                               </span>
-                              {issue.qaRole && (
-                                <span className="rounded-full bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-[9px] font-medium text-indigo-700">
-                                  {issue.qaRole}
-                                </span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                              {issue.category === "copy" && issue.originalText && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAddToDictionary(issue.originalText || "");
+                                  }}
+                                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition cursor-pointer"
+                                  title="Add word to dictionary whitelist"
+                                >
+                                  + Whitelist
+                                </button>
                               )}
-                              {issue.isHedged && (
-                                <span className="rounded-full bg-slate-100 border border-slate-200/80 px-2 py-0.5 text-[9px] font-medium text-slate-600">
-                                  👀 Visual Observation
-                                </span>
-                              )}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDismiss(issue.id);
-                              }}
-                              className="text-[11px] font-medium text-slate-400 hover:text-slate-600 transition"
-                              title="Ignore this notice"
-                            >
-                              Dismiss
-                            </button>
-                          </div>
-
-                          <h3 className="mt-2.5 text-sm font-bold text-slate-900">{issue.title}</h3>
-                          <p className="mt-1 text-xs leading-relaxed text-slate-600">{issue.description}</p>
-
-                          {/* REAL-WORLD IMPACT (RULE 2: EXPLAIN IMPACT, NOT SPEC) */}
-                          {(issue.impact || issue.whyItMatters) && (
-                            <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-amber-200/90 bg-amber-50/70 p-2.5 text-xs text-amber-950 leading-relaxed">
-                              <span className="shrink-0 text-amber-700 font-bold text-sm">⚠️</span>
-                              <div>
-                                <span className="font-bold text-amber-900">Real-World Consequence: </span>
-                                <span>{issue.impact || issue.whyItMatters}</span>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* SECONDARY TECHNICAL SPEC (RULE 2) */}
-                          {issue.specDetail && (
-                            <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-slate-100/90 border border-slate-200/70 px-2.5 py-1.5 text-[11px] text-slate-600">
-                              <span className="font-semibold text-slate-500 uppercase tracking-wider text-[10px]">📐 Technical Spec:</span>
-                              <span className="font-mono text-[11px] text-slate-800">{issue.specDetail}</span>
-                            </div>
-                          )}
-
-                          {/* SUGGESTION / ACTION */}
-                          {issue.suggestedFix && (
-                            <div className="mt-2.5 rounded-xl border border-slate-100 bg-slate-50 p-2.5">
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                QA Recommended Action
-                              </p>
-                              <p className="mt-0.5 text-xs font-medium text-slate-800">{issue.suggestedFix}</p>
-
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleCopyFix(issue.id, issue.suggestedFix || "");
+                                  handleDismiss(issue.id);
                                 }}
-                                className="mt-2 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-xs transition hover:bg-slate-100 active:scale-95"
+                                className="text-[11px] font-medium text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                                title="Dismiss notice"
                               >
-                                {copiedId === issue.id ? (
-                                  <>
-                                    <svg className="h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    <span className="text-emerald-700">Copied!</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <svg className="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg>
-                                    <span>Copy Recommendation</span>
-                                  </>
-                                )}
+                                Dismiss
                               </button>
                             </div>
-                          )}
+                          </div>
+
+                          <h3 className="mt-1.5 text-sm font-bold text-slate-900 leading-snug">
+                            {issue.originalText
+                              ? issue.category === "copy"
+                                ? `Misspelled: "${issue.originalText}"`
+                                : issue.category === "contrast"
+                                ? `Low Contrast: "${issue.originalText}"`
+                                : `${issue.title}: "${issue.originalText}"`
+                              : issue.title}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
+                            {issue.description}
+                          </p>
+
+                          {/* Concise Fix Action */}
+                          {issue.suggestedFix && (() => {
+                            const typoMatch = issue.suggestedFix.match(/change to "([^"]+)"/i);
+                            const cleanFix = typoMatch ? `Change to "${typoMatch[1]}"` : issue.suggestedFix;
+                            const copyValue = typoMatch ? typoMatch[1] : issue.suggestedFix;
+
+                            return (
+                              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                                <p className="text-xs text-slate-800 truncate">
+                                  <span className="font-bold text-slate-900">Fix: </span>
+                                  <span>{cleanFix}</span>
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCopyFix(issue.id, copyValue);
+                                  }}
+                                  className="shrink-0 text-[11px] font-bold text-blue-600 hover:text-blue-800 transition cursor-pointer"
+                                >
+                                  {copiedId === issue.id ? "Copied" : "Copy"}
+                                </button>
+                              </div>
+                            );
+                          })()}
                         </div>
                       );
                     })

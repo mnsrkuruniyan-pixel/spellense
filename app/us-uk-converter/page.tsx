@@ -2,15 +2,32 @@ import type { Metadata } from "next";
 import UsUkConverterClient from "./UsUkConverterClient";
 
 export const metadata: Metadata = {
-  title: "US to UK English Converter | American to British Spelling | Spellense",
+  title: "US ↔ UK English Dialect Converter — American & British Spelling",
   description:
     "Convert text instantly between American (US) and British (UK) English. Automatically adapts -or/-our, -ize/-ise, -er/-re, vocabulary, and double 'l' spellings while preserving letter casing.",
   alternates: { canonical: "/us-uk-converter" },
   openGraph: {
-    title: "US ↔ UK English Dialect Converter | Spellense",
+    siteName: "Spellense",
+    title: "US ↔ UK English Dialect Converter",
     description:
       "Transform American English text to British English or vice-versa with live diff highlighting, spelling rule breakdowns, and zero data storage.",
     url: "/us-uk-converter",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Spellense US UK Converter",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "US ↔ UK English Dialect Converter",
+    description:
+      "Transform American English text to British English or vice-versa with live diff highlighting, spelling rule breakdowns.",
+    images: ["/og-image.png"],
   },
 };
 

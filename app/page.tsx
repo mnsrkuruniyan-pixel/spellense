@@ -54,7 +54,9 @@ type ImageMark = {
 
 function renderMarkedText(
   text: string,
-  errors: SpellError[]
+  errors: SpellError[],
+  selectedErrorIndex?: number | null,
+  onSelectError?: (index: number) => void
 ): ReactNode[] {
   const parts: ReactNode[] = [];
   let cursor = 0;
@@ -74,13 +76,39 @@ function renderMarkedText(
       parts.push(text.slice(cursor, start));
     }
 
+    const isSelected = selectedErrorIndex === index;
+
     parts.push(
       <mark
         key={`${error.word}-${index}`}
-        className="rounded border border-red-500 bg-transparent px-1 text-red-600 underline decoration-red-500 decoration-2 underline-offset-4"
+        id={`text-token-error-${index}`}
+        onClick={() => {
+          onSelectError?.(index);
+          document.getElementById(`home-error-card-${index}`)?.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        }}
+        className={`group/mark relative inline-block cursor-pointer rounded px-1 transition-all ${
+          isSelected
+            ? "bg-red-500/25 ring-2 ring-red-500 text-red-700 font-bold z-20 shadow-xs"
+            : "bg-red-500/10 text-red-600 hover:bg-red-500/20 z-10"
+        }`}
         title={error.suggestion ? `Suggestion: ${error.suggestion}` : "Possible spelling mistake"}
       >
         {text.slice(start, end)}
+        {/* Red underline bar */}
+        <span className="absolute -bottom-[2px] left-0 right-0 h-[2.5px] rounded-full pointer-events-none bg-rose-600 shadow-xs" />
+        {/* Floating badge */}
+        <span
+          className={`pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-bold text-white shadow-md transition-all bg-rose-600 z-30 ${
+            isSelected
+              ? "opacity-100 scale-100 ring-2 ring-white"
+              : "opacity-0 group-hover/mark:opacity-100 scale-95 group-hover/mark:scale-100"
+          }`}
+        >
+          {error.word}
+        </span>
       </mark>
     );
 
@@ -101,6 +129,8 @@ function PdfMarkedPreview({
   onPageChange,
   markErrors,
   pdfMarks,
+  selectedErrorIndex,
+  onSelectError,
 }: {
   file: File;
   errors: SpellError[];
@@ -108,6 +138,8 @@ function PdfMarkedPreview({
   onPageChange: (page: number) => void;
   markErrors: boolean;
   pdfMarks: PdfMark[];
+  selectedErrorIndex?: number | null;
+  onSelectError?: (index: number) => void;
 }) {
   const [pageCount, setPageCount] = useState(0);
   const [zoom, setZoom] = useState(1);
@@ -279,12 +311,15 @@ function PdfMarkedPreview({
             const normalizedToken = token
               .toLowerCase()
               .replace(/^[^a-z]+|[^a-z]+$/g, "");
-            const matchingError = markErrors
-              ? errors.find((error) =>
-                  (error.page === undefined || error.page === selectedPage) &&
-                  normalizedToken === error.word.toLowerCase()
+            const matchingErrorIndex = markErrors
+              ? errors.findIndex(
+                  (error) =>
+                    (error.page === undefined || error.page === selectedPage) &&
+                    normalizedToken === error.word.toLowerCase()
                 )
-              : undefined;
+              : -1;
+            const matchingError =
+              matchingErrorIndex >= 0 ? errors[matchingErrorIndex] : undefined;
             const tokenSpan = document.createElement("span");
 
             if (matchingError) {
@@ -295,17 +330,66 @@ function PdfMarkedPreview({
                 ? ctx.measureText(token).width * scaleRatio
                 : (token.length / item.str.length) * itemWidth;
 
+              const isSelected =
+                selectedErrorIndex !== null &&
+                selectedErrorIndex !== undefined &&
+                selectedErrorIndex === matchingErrorIndex;
+
               tokenSpan.style.position = "absolute";
               tokenSpan.style.left = `${leftPx}px`;
               tokenSpan.style.top = "0px";
               tokenSpan.style.width = `${Math.max(widthPx, 4)}px`;
               tokenSpan.style.height = `${fontSize * 1.2}px`;
-              tokenSpan.className =
-                "rounded border-2 border-red-500 bg-red-500/15 shadow-xs ring-1 ring-red-500/40 pointer-events-auto";
+              tokenSpan.className = `group/pdfmark cursor-pointer transition-all duration-150 rounded-[2px] pointer-events-auto ${
+                isSelected
+                  ? "ring-2 ring-red-500 bg-red-500/25 z-30 shadow-md"
+                  : "border border-red-500/50 bg-red-500/15 hover:bg-red-500/25 hover:z-20 z-10"
+              }`;
+              tokenSpan.id = `pdf-token-error-${matchingErrorIndex}`;
               tokenSpan.title = matchingError.suggestion
                 ? `Suggestion: ${matchingError.suggestion}`
-                : "Possible spelling mistake";
+                : `Possible spelling mistake: ${matchingError.word}`;
+
+              tokenSpan.onclick = (e) => {
+                e.stopPropagation();
+                onSelectError?.(matchingErrorIndex);
+                document.getElementById(`home-error-card-${matchingErrorIndex}`)?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "nearest",
+                });
+              };
+
+              // Underline bar
+              const bar = document.createElement("span");
+              bar.className =
+                "absolute -bottom-[2px] left-0 right-0 h-[2.5px] rounded-full pointer-events-none bg-rose-600 shadow-xs";
+              tokenSpan.appendChild(bar);
+
+              // Floating badge
+              const badge = document.createElement("div");
+              badge.className = `pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-0.5 text-[10px] font-bold text-white shadow-md transition-all duration-150 bg-rose-600 z-40 ${
+                isSelected
+                  ? "opacity-100 scale-100 ring-2 ring-white"
+                  : "opacity-0 group-hover/pdfmark:opacity-100 scale-95 group-hover/pdfmark:scale-100"
+              }`;
+              badge.textContent = matchingError.word;
+              const arrow = document.createElement("div");
+              arrow.className =
+                "absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-rose-600";
+              badge.appendChild(arrow);
+              tokenSpan.appendChild(badge);
+
               span.appendChild(tokenSpan);
+
+              if (isSelected) {
+                setTimeout(() => {
+                  tokenSpan.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                    inline: "center",
+                  });
+                }, 60);
+              }
             }
 
             tokenOffset += token.length;
@@ -318,16 +402,71 @@ function PdfMarkedPreview({
           for (const mark of pdfMarks.filter(
             (item) => item.page === selectedPage
           )) {
+            const markErrorIdx = errors.findIndex(
+              (item) =>
+                (item.page === undefined || item.page === selectedPage) &&
+                item.word.toLowerCase() === mark.word.toLowerCase()
+            );
+            const isSelected =
+              selectedErrorIndex !== null &&
+              selectedErrorIndex !== undefined &&
+              markErrorIdx !== -1 &&
+              selectedErrorIndex === markErrorIdx;
+
             const outline = document.createElement("span");
             outline.style.position = "absolute";
             outline.style.left = `${mark.left * viewport.width}px`;
             outline.style.top = `${mark.top * viewport.height}px`;
             outline.style.width = `${mark.width * viewport.width}px`;
             outline.style.height = `${mark.height * viewport.height}px`;
-            outline.className =
-              "rounded border-2 border-red-500 bg-red-500/15 shadow-xs ring-1 ring-red-500/40 pointer-events-auto";
+            outline.className = `group/pdfmark cursor-pointer transition-all duration-150 rounded-[2px] pointer-events-auto ${
+              isSelected
+                ? "ring-2 ring-red-500 bg-red-500/25 z-30 shadow-md"
+                : "border border-red-500/50 bg-red-500/15 hover:bg-red-500/25 hover:z-20 z-10"
+            }`;
             outline.title = `Possible spelling mistake: ${mark.word}`;
+
+            if (markErrorIdx !== -1) {
+              outline.id = `pdf-mark-error-${markErrorIdx}`;
+              outline.onclick = (e) => {
+                e.stopPropagation();
+                onSelectError?.(markErrorIdx);
+                document.getElementById(`home-error-card-${markErrorIdx}`)?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "nearest",
+                });
+              };
+            }
+
+            const bar = document.createElement("span");
+            bar.className =
+              "absolute -bottom-[2px] left-0 right-0 h-[2.5px] rounded-full pointer-events-none bg-rose-600 shadow-xs";
+            outline.appendChild(bar);
+
+            const badge = document.createElement("div");
+            badge.className = `pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-0.5 text-[10px] font-bold text-white shadow-md transition-all duration-150 bg-rose-600 z-40 ${
+              isSelected
+                ? "opacity-100 scale-100 ring-2 ring-white"
+                : "opacity-0 group-hover/pdfmark:opacity-100 scale-95 group-hover/pdfmark:scale-100"
+            }`;
+            badge.textContent = mark.word;
+            const arrow = document.createElement("div");
+            arrow.className =
+              "absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-rose-600";
+            badge.appendChild(arrow);
+            outline.appendChild(badge);
+
             layer.appendChild(outline);
+
+            if (isSelected) {
+              setTimeout(() => {
+                outline.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                  inline: "center",
+                });
+              }, 60);
+            }
           }
         }
 
@@ -342,7 +481,7 @@ function PdfMarkedPreview({
     return () => {
       cancelled = true;
     };
-  }, [errors, markErrors, pageCount, pdfMarks, selectedPage, zoom]);
+  }, [errors, markErrors, pageCount, pdfMarks, selectedPage, zoom, selectedErrorIndex]);
 
   if (!pageCount) {
     return (
@@ -1341,10 +1480,14 @@ function ImagePreview({
   file,
   errors,
   marks,
+  selectedErrorIndex,
+  onSelectError,
 }: {
   file: File;
   errors: SpellError[];
   marks: ImageMark[];
+  selectedErrorIndex?: number | null;
+  onSelectError?: (index: number) => void;
 }) {
   const [zoom, setZoom] = useState(1);
   const [panning, setPanning] = useState(false);
@@ -1365,6 +1508,36 @@ function ImagePreview({
     const height = baseHeight * zoom;
     return { width, height };
   }, [naturalDims, zoom]);
+
+  // Center on selected error mark when selection changes
+  useEffect(() => {
+    if (
+      selectedErrorIndex === null ||
+      selectedErrorIndex === undefined ||
+      !displayDims ||
+      !viewportRef.current
+    )
+      return;
+    const selectedError = errors[selectedErrorIndex];
+    if (!selectedError) return;
+    const mark = marks.find(
+      (m) => m.word.toLowerCase() === selectedError.word.toLowerCase()
+    );
+    if (!mark) return;
+    const targetX =
+      mark.left * displayDims.width -
+      viewportRef.current.clientWidth / 2 +
+      (mark.width * displayDims.width) / 2;
+    const targetY =
+      mark.top * displayDims.height -
+      viewportRef.current.clientHeight / 2 +
+      (mark.height * displayDims.height) / 2;
+    viewportRef.current.scrollTo({
+      left: Math.max(0, targetX),
+      top: Math.max(0, targetY),
+      behavior: "smooth",
+    });
+  }, [selectedErrorIndex, displayDims, errors, marks]);
 
   const pan = (dx: number, dy: number) => {
     if (!viewportRef.current) return;
@@ -1484,19 +1657,75 @@ function ImagePreview({
           />
           {marks
             .filter((mark) => markedWords.has(mark.word.toLowerCase()))
-            .map((mark, index) => (
-              <span
-                key={`${mark.word}-${index}`}
-                className="pointer-events-none absolute rounded border-2 border-red-500 bg-red-500/15 shadow-xs ring-1 ring-red-500/40 select-none"
-                style={{
-                  left: `${mark.left * 100}%`,
-                  top: `${mark.top * 100}%`,
-                  width: `${mark.width * 100}%`,
-                  height: `${mark.height * 100}%`,
-                }}
-                title="Possible spelling mistake"
-              />
-            ))}
+            .map((mark, index) => {
+              const errorIdx = errors.findIndex(
+                (e) => e.word.toLowerCase() === mark.word.toLowerCase()
+              );
+              const isSelected =
+                selectedErrorIndex !== null &&
+                selectedErrorIndex !== undefined &&
+                errorIdx !== -1 &&
+                selectedErrorIndex === errorIdx;
+
+              return (
+                <div
+                  key={`${mark.word}-${index}`}
+                  id={`image-mark-${index}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (errorIdx !== -1) {
+                      onSelectError?.(errorIdx);
+                      document.getElementById(`home-error-card-${errorIdx}`)?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "nearest",
+                      });
+                    }
+                  }}
+                  className={`group absolute cursor-pointer transition-all duration-150 rounded-[2px] ${
+                    isSelected
+                      ? "ring-2 ring-red-500 bg-red-500/25 shadow-md z-30"
+                      : "border border-red-500/50 bg-red-500/15 hover:bg-red-500/25 hover:z-20 z-10"
+                  }`}
+                  style={{
+                    left: `${mark.left * 100}%`,
+                    top: `${mark.top * 100}%`,
+                    width: `${Math.max(mark.width * 100, 1.2)}%`,
+                    height: `${Math.max(mark.height * 100, 1.2)}%`,
+                  }}
+                  title={`Spelling error: ${mark.word}`}
+                >
+                  {/* Solid Red Underline Bar */}
+                  <span className="absolute -bottom-[3px] left-0 right-0 h-[3px] rounded-full pointer-events-none bg-rose-600 shadow-xs" />
+
+                  {/* Wavy Squiggly Underline SVG */}
+                  <svg
+                    className="absolute -bottom-[6px] left-0 w-full h-[6px] pointer-events-none overflow-visible text-rose-600"
+                    preserveAspectRatio="none"
+                    viewBox="0 0 100 6"
+                  >
+                    <path
+                      d="M0,3 Q2.5,0 5,3 T10,3 T15,3 T20,3 T25,3 T30,3 T35,3 T40,3 T45,3 T50,3 T55,3 T60,3 T65,3 T70,3 T75,3 T80,3 T85,3 T90,3 T95,3 T100,3"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+
+                  {/* Floating tooltip badge */}
+                  <div
+                    className={`pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-0.5 text-[10px] font-bold text-white shadow-md transition-all duration-150 bg-rose-600 z-40 ${
+                      isSelected
+                        ? "opacity-100 scale-100 ring-2 ring-white"
+                        : "opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100"
+                    }`}
+                  >
+                    {mark.word}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-rose-600" />
+                  </div>
+                </div>
+              );
+            })}
         </div>
       </div>
 
@@ -1880,6 +2109,9 @@ export default function Home() {
   const [pdfSelectedPage, setPdfSelectedPage] =
     useState(1);
 
+  const [selectedErrorIndex, setSelectedErrorIndex] =
+    useState<number | null>(null);
+
   const [copiedWord, setCopiedWord] =
     useState<string | null>(null);
 
@@ -1959,6 +2191,7 @@ export default function Home() {
         : null
     );
     setPdfSelectedPage(1);
+    setSelectedErrorIndex(null);
     setFiles([file]);
     setResult(null);
   };
@@ -1978,6 +2211,7 @@ export default function Home() {
     setUploadError(null);
     setPdfPreviewUrl(null);
     setPdfSelectedPage(1);
+    setSelectedErrorIndex(null);
     setResult(null);
 
     if (fileInput.current) {
@@ -2007,6 +2241,7 @@ export default function Home() {
   };
 
   const ignoreError = (errorToIgnore: SpellError) => {
+    setSelectedErrorIndex(null);
     setResult((currentResult) => {
       if (!currentResult || !currentResult.errors) {
         return currentResult;
@@ -2029,6 +2264,7 @@ export default function Home() {
   };
 
   const ignoreAllInstances = (wordToIgnore: string) => {
+    setSelectedErrorIndex(null);
     setResult((currentResult) => {
       if (!currentResult || !currentResult.errors) {
         return currentResult;
@@ -2103,6 +2339,7 @@ export default function Home() {
     );
 
     setResult(null);
+    setSelectedErrorIndex(null);
 
     try {
       const file = files[0];
@@ -2277,6 +2514,7 @@ export default function Home() {
     setChecking(true);
     setCheckingMessage("Checking your text...");
     setResult(null);
+    setSelectedErrorIndex(null);
     setUploadError(null);
 
     try {
@@ -2723,7 +2961,7 @@ export default function Home() {
                   {files[0] ? (
                     isTextResult ? (
                       <div className="bg-slate-50 p-6 overflow-auto overscroll-contain h-[360px] sm:h-[480px] lg:h-[588px] text-slate-800 leading-relaxed font-sans text-base whitespace-pre-wrap select-text">
-                        {renderMarkedText(result.text ?? "", result.errors ?? [])}
+                        {renderMarkedText(result.text ?? "", result.errors ?? [], selectedErrorIndex, setSelectedErrorIndex)}
                       </div>
                     ) : isPdfResult ? (
                       <PdfMarkedPreview
@@ -2734,6 +2972,8 @@ export default function Home() {
                         onPageChange={setPdfSelectedPage}
                         markErrors={result.pdfHasTextLayer ?? false}
                         pdfMarks={result.pdfMarks ?? []}
+                        selectedErrorIndex={selectedErrorIndex}
+                        onSelectError={setSelectedErrorIndex}
                       />
                     ) : isDocxResult ? (
                       <DocxPreview
@@ -2759,6 +2999,8 @@ export default function Home() {
                         file={files[0]}
                         errors={result.errors ?? []}
                         marks={result.imageMarks ?? []}
+                        selectedErrorIndex={selectedErrorIndex}
+                        onSelectError={setSelectedErrorIndex}
                       />
                     )
                   ) : (
@@ -2787,24 +3029,34 @@ export default function Home() {
                     </div>
 
                     <div className="divide-y divide-slate-100 max-h-[588px] overflow-y-auto">
-                      {result.errors.map((error, index) => (
-                        <div
-                          key={`${error.word}-${index}`}
-                          className={`group flex items-center justify-between gap-3 px-5 py-3.5 transition-all hover:bg-blue-50/40 sm:px-6 ${
-                            error.page ? "cursor-pointer" : ""
-                          }`}
-                          onClick={() => {
-                            if (error.page) {
-                              setPdfSelectedPage(error.page);
-                            }
-                          }}
-                        >
-                          <div className="flex min-w-0 items-center gap-3">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-xs font-black text-rose-500 ring-1 ring-rose-100">
-                              {error.page
-                                ? `P${error.page}`
-                                : String(index + 1).padStart(2, "0")}
-                            </span>
+                      {result.errors.map((error, index) => {
+                        const isSelected = selectedErrorIndex === index;
+                        return (
+                          <div
+                            key={`${error.word}-${index}`}
+                            id={`home-error-card-${index}`}
+                            className={`group flex items-center justify-between gap-3 px-5 py-3.5 transition-all cursor-pointer sm:px-6 ${
+                              isSelected
+                                ? "bg-red-50/80 border-l-4 border-l-red-500 shadow-xs"
+                                : "hover:bg-blue-50/40 border-l-4 border-l-transparent"
+                            }`}
+                            onClick={() => {
+                              setSelectedErrorIndex(index);
+                              if (error.page) {
+                                setPdfSelectedPage(error.page);
+                              }
+                            }}
+                          >
+                            <div className="flex min-w-0 items-center gap-3">
+                              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black transition-colors ${
+                                isSelected
+                                  ? "bg-red-500 text-white shadow-xs"
+                                  : "bg-rose-50 text-rose-500 ring-1 ring-rose-100"
+                              }`}>
+                                {error.page
+                                  ? `P${error.page}`
+                                  : String(index + 1).padStart(2, "0")}
+                              </span>
 
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
@@ -2894,7 +3146,8 @@ export default function Home() {
                             })()}
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
                     </div>
                   </div>
                 ) : (
@@ -4360,7 +4613,7 @@ export default function Home() {
                 Ready to catch mistakes before your clients do?
               </h3>
               <p className="mt-3 max-w-xl mx-auto text-xs sm:text-sm text-blue-100 leading-relaxed font-normal">
-                Join thousands of creators, art directors, and marketers who use Spellense for flaw-free designs, pitch decks, and documents.
+                Built for creators, art directors, and marketers who need flaw-free designs, pitch decks, and documents.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
