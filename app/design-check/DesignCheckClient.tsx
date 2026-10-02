@@ -897,6 +897,14 @@ export default function DesignCheckClient() {
                   <span>Try a sample design</span>
                 </button>
               </div>
+
+              {/* Workflow Compatibility */}
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-400">
+                <span>Optimized for exports from</span>
+                <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-600">Canva</span>
+                <span className="rounded-md bg-purple-50 px-2 py-0.5 text-[11px] font-bold text-purple-600">Figma</span>
+                <span className="rounded-md bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-600">Adobe PDF</span>
+              </div>
             </div>
 
             {/* 4 Trust Feature Cards */}

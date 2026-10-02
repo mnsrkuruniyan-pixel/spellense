@@ -133,6 +133,23 @@ export default async function BlogPostPage({
     ],
   };
 
+  // FAQPage JSON-LD Schema
+  const faqSchema =
+    post.faqs && post.faqs.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: post.faqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: faq.answer,
+            },
+          })),
+        }
+      : null;
+
   return (
     <div className="min-h-screen bg-[#f0f6fe] text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative overflow-x-hidden">
       <script
@@ -143,6 +160,12 @@ export default async function BlogPostPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
 
       {/* Ambient background glows */}
       <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80" />
@@ -268,6 +291,33 @@ export default async function BlogPostPage({
                 prose-li:my-1.5"
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
+
+              {/* FAQ SECTION */}
+              {post.faqs && post.faqs.length > 0 && (
+                <section id="faq" className="mt-12 rounded-3xl border border-slate-200/90 bg-white/95 p-6 sm:p-8 shadow-xs backdrop-blur-md">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="flex h-2.5 w-2.5 rounded-full bg-blue-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                      Got Questions?
+                    </span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    Frequently Asked Questions
+                  </h3>
+                  <div className="mt-6 divide-y divide-slate-100">
+                    {post.faqs.map((faq, idx) => (
+                      <div key={idx} className="py-4.5 first:pt-2 last:pb-2">
+                        <h4 className="text-base font-bold text-slate-900">
+                          {faq.question}
+                        </h4>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                          {faq.answer}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {/* IN-ARTICLE CTA BOX */}
               <div className="mt-12 rounded-3xl border border-blue-200 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-8 text-white shadow-xl shadow-blue-500/20">

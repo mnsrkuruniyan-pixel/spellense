@@ -4,7 +4,7 @@ import DesignCheckClient from "./DesignCheckClient";
 export const metadata: Metadata = {
   title: "AI Design Check — Pre-Flight Graphic & PDF Quality Audit",
   description:
-    "Free AI Design Pre-Flight Quality Checker. Detect spelling, grammar, low WCAG contrast, and bleed margin cutoffs in posters, social ads, flyers, banners, and PDF pages before publishing or printing.",
+    "Free AI Design Pre-Flight Quality Checker. Detect spelling typos, low WCAG contrast, and bleed margin cutoffs in Canva designs, Figma exports, flyers, and PDF documents before publishing or printing.",
   alternates: {
     canonical: "/design-check",
   },
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     siteName: "Spellense",
     title: "AI Design Check — Pre-Flight Graphic & PDF Quality Audit",
     description:
-      "Automated visual pre-flight quality checker for graphic designs, ads, posters, and flyers. Catch typos, contrast issues, and margin cutoffs.",
+      "Automated visual pre-flight quality checker for Canva designs, graphics, ads, posters, flyers, and PDF pages.",
     url: "/design-check",
     type: "website",
     images: [

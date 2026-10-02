@@ -3830,6 +3830,14 @@ export default function Home() {
                       </span>
                     </div>
 
+                    {/* WORKFLOW COMPATIBILITY */}
+                    <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-400">
+                      <span>Optimized for designs from</span>
+                      <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-600">Canva</span>
+                      <span className="rounded-md bg-purple-50 px-2 py-0.5 text-[11px] font-bold text-purple-600">Figma</span>
+                      <span className="rounded-md bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-600">Adobe PDF</span>
+                    </div>
+
                   </div>
 
                 )}

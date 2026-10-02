@@ -28,6 +28,10 @@ export interface BlogPost {
     buttonText: string;
     href: string;
   };
+  faqs?: {
+    question: string;
+    answer: string;
+  }[];
 }
 
 export const BLOG_POSTS: BlogPost[] = [
@@ -185,29 +189,32 @@ To ensure the highest accuracy when scanning physical documents for proofreading
   },
   {
     slug: "how-to-check-spelling-in-canva-before-publishing",
-    title: "How to Check Spelling in a Canva Design Before You Publish or Print",
-    subtitle: "Avoid costly reprints and embarrassing social media typos. A foolproof pre-flight proofreading checklist for Canva posters, flyers, and banners.",
-    description: "Learn how to thoroughly check spelling, grammar, and typography in your Canva designs before sending to print or publishing on social media.",
+    title: "How to Check Spelling in Canva (Does Canva Have Spell Check?)",
+    subtitle: "Where to find Canva's spell check option, how to enable it, why typos still slip through in designs, and how to proofread Canva PDFs and graphics before publishing.",
+    description: "Looking for spell check in Canva? Learn where Canva's spell check option is located, how to turn it on, and how to thoroughly check Canva PDFs and posters for typos before printing.",
     publishedAt: "2026-09-24",
-    updatedAt: "2026-09-24",
+    updatedAt: "2026-10-02",
     author: {
       name: "Spellense Editorial Team",
       role: "Creative QA & Design Specialists",
     },
-    readingTime: "5 min read",
+    readingTime: "6 min read",
     category: "Design Pre-Flight",
     cluster: "Cluster A — OCR Spell Checking",
-    tags: ["Canva", "Graphic Design", "Print Pre-Flight", "Flyer Design", "Social Media"],
+    tags: ["Canva Spell Check", "Where is Spell Check in Canva", "Canva PDF Proofreading", "Graphic Design QA", "Canva"],
     tableOfContents: [
-      { id: "canva-typo-trap", title: "The Canva Typo Trap: Why In-App Checks Fall Short" },
+      { id: "does-canva-have-spell-check", title: "Does Canva Have a Spell Check Option?" },
+      { id: "where-is-spell-check-in-canva", title: "Where is Spell Check in Canva? (How to Turn It On)" },
+      { id: "why-canva-misses-typos", title: "Why Canva's Built-In Spell Check Misses Critical Typos" },
       { id: "flattened-exports", title: "What Happens When Canva Exports to PNG or PDF" },
       { id: "pre-flight-checklist", title: "The 5-Step Canva Pre-Flight Proofreading Routine" },
       { id: "discount-math-dates", title: "Checking Pricing Math and Event Dates" },
-      { id: "automated-design-audit", title: "Running an Automated Design QA Audit" },
+      { id: "automated-design-audit", title: "How to Spell Check Exported Canva PDFs with Spellense" },
+      { id: "faq", title: "Frequently Asked Questions (FAQ)" },
     ],
     ctaTool: {
-      title: "Exported Your Canva Poster or Ad?",
-      description: "Upload your Canva PNG or JPG directly to Spellense Design Check. Detect typos, price math mismatches, and safe-zone bleeds right on your artwork.",
+      title: "Exported Your Canva Poster or PDF?",
+      description: "Upload your Canva PDF, PNG, or JPG directly to Spellense. Detect typos, price math mismatches, and safe-zone bleeds right on your artwork in seconds.",
       buttonText: "Audit Your Canva Design Free",
       href: "/design-check",
     },
@@ -215,56 +222,134 @@ To ensure the highest accuracy when scanning physical documents for proofreading
       "how-to-find-spelling-mistakes-in-scanned-pdf",
       "why-normal-spell-checkers-miss-typos-in-images",
     ],
+    faqs: [
+      {
+        question: "Does Canva have a spell check option?",
+        answer: "Yes, Canva features a built-in spell checker in its desktop web editor and desktop app. When turned on, it highlights unrecognised words with red squiggly underlines. However, it only inspects editable digital text boxes and does not check curved text, all-caps headlines, or downloaded PDF/image files.",
+      },
+      {
+        question: "Where is spell check in Canva?",
+        answer: "To access spell check in Canva, open your design project, click 'File' in the top-left menu bar, select 'View settings' (or 'Settings'), and toggle 'Check spelling' on. Once enabled, misspelled words will display red squiggly underlines that you can right-click to correct.",
+      },
+      {
+        question: "Why is Canva spell check not catching errors in my design?",
+        answer: "Canva spell check frequently misses mistakes because it ignores all-caps text (treating it as acronyms), text along curved or rotated paths, fragmented text spread across multiple separate boxes, and placeholder copy. Crucially, once you export your design to PNG, JPG, or PDF, Canva's live spell check no longer exists.",
+      },
+      {
+        question: "How do I spell check a Canva PDF before printing?",
+        answer: "Download your Canva design as a 'PDF Print' or 'PDF Standard' via Share > Download. Then upload the file to Spellense. Spellense scans the entire visual layout using Optical Character Recognition (OCR), highlighting spelling mistakes directly on the document canvas in red.",
+      },
+      {
+        question: "Can you spell check on the Canva mobile app?",
+        answer: "The Canva mobile app for iOS and Android does not have the desktop 'File > View settings > Check spelling' menu switch. Instead, it relies on your smartphone keyboard's native autocorrect and spell check dictionaries while typing.",
+      },
+    ],
     content: `
 <p class="lead text-lg text-slate-700 leading-relaxed font-medium">
-Canva has revolutionized graphic design for small businesses, marketing teams, and content creators. With thousands of templates, anyone can assemble a vibrant flyer, promotional poster, or social media ad in minutes. But there is a silent danger lurking in almost every Canva design: <strong>the undetected typo</strong>.
+Canva has revolutionized graphic design for small businesses, marketing teams, educators, and content creators. With millions of ready-to-use templates, anyone can assemble a vibrant flyer, brochure, promotional poster, or social media ad in minutes. But there is a silent danger lurking in almost every visual design: <strong>the undetected typo</strong>.
 </p>
 
 <p>
-Unlike dedicated word processors, graphic design suites prioritize visual aesthetics over rigorous copyediting. A single misspelled word on a 5,000-copy print run or a major brand campaign can cost thousands of dollars in reprints and damage your client's credibility.
+Unlike dedicated word processors like Microsoft Word or Google Docs, graphic design suites prioritize visual aesthetics over rigorous copyediting. A single misspelled word on a 5,000-copy print run or a high-budget social media ad campaign can cost thousands of dollars in reprints and damage your brand's credibility.
 </p>
 
 <p>
-Here is how to ensure your Canva designs are 100% error-free before hitting "Order Prints" or publishing online.
+If you are wondering whether Canva has an automated spell checker, where to find it, or how to catch errors that Canva's editor ignores, this complete guide covers everything you need to know.
 </p>
 
 <hr class="my-8 border-slate-200" />
 
-<h2 id="canva-typo-trap" class="text-2xl font-bold text-slate-900 mt-10 mb-4">The Canva Typo Trap: Why In-App Checks Fall Short</h2>
+<h2 id="does-canva-have-spell-check" class="text-2xl font-bold text-slate-900 mt-10 mb-4">Does Canva Have a Spell Check Option?</h2>
 
 <p>
-While Canva has introduced basic spellcheck features in recent updates, several design realities cause mistakes to slip through unnoticed:
+<strong>Yes, Canva does have a built-in spell check tool.</strong> It is available in both the Canva web editor (Chrome, Safari, Firefox, Edge) and the official Canva desktop applications for Mac and Windows.
+</p>
+
+<p>
+When enabled, Canva scans the text in your active text boxes and underlines potential spelling mistakes with red wavy lines. You can right-click on any underlined word to view suggested replacements or add brand-specific terminology to your custom Canva dictionary.
+</p>
+
+<div class="my-6 rounded-2xl border border-blue-200/80 bg-blue-50/70 p-5 text-blue-950">
+  <div class="flex items-start gap-3">
+    <span class="text-xl">💡</span>
+    <div class="text-sm leading-relaxed">
+      <strong>Important Limitation:</strong> Canva's spell checker only operates on <em>active, editable text boxes</em> inside the design canvas. It will not check text converted to curves, headlines typed in ALL-CAPS, text nested inside SVG illustrations, or finished designs downloaded as PDF, PNG, or JPG files.
+    </div>
+  </div>
+</div>
+
+<h2 id="where-is-spell-check-in-canva" class="text-2xl font-bold text-slate-900 mt-10 mb-4">Where is Spell Check in Canva? (How to Turn It On)</h2>
+
+<p>
+If you are typing in Canva and do not see red underlines under misspelled words, Canva's spell check is likely turned off. Here is how to find and enable spell check in Canva step-by-step:
+</p>
+
+<ol class="list-decimal pl-6 space-y-3 my-4 text-slate-700">
+  <li>
+    <strong>Open your project:</strong> Launch Canva and open any design (poster, presentation, flyer, or doc).
+  </li>
+  <li>
+    <strong>Click "File":</strong> In the top-left navigation bar (next to the Home button), click the <strong>File</strong> menu.
+  </li>
+  <li>
+    <strong>Go to "View settings":</strong> In the dropdown menu, hover over or click on <strong>View settings</strong> (or <strong>Settings</strong> in newer Canva layouts).
+  </li>
+  <li>
+    <strong>Check "Check spelling":</strong> Look for the <strong>Check spelling</strong> option and click it so that a checkmark (✓) appears beside it.
+  </li>
+</ol>
+
+<div class="my-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+  <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Canva Spell Check Menu Path</div>
+  <code class="text-sm font-semibold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 inline-block">
+    File &rarr; View settings &rarr; Check spelling (✓)
+  </code>
+</div>
+
+<p>
+Once enabled, select any text box containing an intentional typo. You should see a wavy red underline beneath the word. Right-clicking the word displays Canva's spelling suggestions.
+</p>
+
+<h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Where is Spell Check in the Canva Mobile App?</h3>
+<p>
+The Canva mobile app for iOS (iPhone/iPad) and Android does not have the desktop "View settings &gt; Check spelling" toggle. Instead, the mobile app relies entirely on your smartphone operating system's built-in keyboard autocorrect and dictionary.
+</p>
+
+<h2 id="why-canva-misses-typos" class="text-2xl font-bold text-slate-900 mt-10 mb-4">Why Canva's Built-In Spell Check Misses Critical Typos</h2>
+
+<p>
+While Canva's native spell checker is helpful for basic body paragraphs, graphic design realities cause dozens of errors to slip through unnoticed:
 </p>
 
 <ul class="list-disc pl-6 space-y-3 my-4 text-slate-700">
   <li>
-    <strong>Curved & Rotated Text:</strong> Text that is bent, curved along a badge, or rotated 90 degrees frequently bypasses browser spellcheck dictionaries.
+    <strong>All-Caps Display Fonts:</strong> Most advertising headlines are styled in uppercase (e.g., <code>BEAUTIFULL DISCOUNTS</code>). Standard spellcheck algorithms often interpret all-caps strings as acronyms or product codes (like NASA or COVID) and skip them entirely.
   </li>
   <li>
-    <strong>All-Caps Display Fonts:</strong> Many advertising headlines are styled in uppercase (e.g., <code>BEAUTIFULL</code>). Standard spellcheckers often treat all-caps strings as acronyms (like NASA or UNESCO) and intentionally skip them.
+    <strong>Curved, Tilted, and Rotated Text:</strong> Text that is bent along a badge circle, arched over a header, or rotated 90 degrees frequently bypasses canvas spell check dictionaries.
   </li>
   <li>
-    <strong>Split Text Boxes:</strong> When designers break headlines across multiple text boxes to achieve custom spacing or contrasting font colors, the software cannot evaluate sentence grammar or word pairs.
+    <strong>Split & Layered Text Boxes:</strong> To achieve staggered typography or two-tone color effects, designers often split phrases across multiple text boxes. This breaks grammatical context and prevents compound word validation.
   </li>
   <li>
-    <strong>Template Placeholder Blindness:</strong> Placeholders like <em>"Headline Goes Here"</em> or <em>"Lorem Ipsum"</em> are easily missed when designers focus heavily on background imagery and color grading.
+    <strong>Template Placeholders:</strong> Dummy copy like <em>"Company Name Here"</em> or <em>"Lorem Ipsum"</em> is grammatically valid in isolation and won't trigger spell check warnings.
   </li>
 </ul>
 
 <h2 id="flattened-exports" class="text-2xl font-bold text-slate-900 mt-10 mb-4">What Happens When Canva Exports to PNG or PDF</h2>
 
 <p>
-When you download your finished design as a <strong>PNG, JPG, or Print PDF</strong>, Canva renders the layout into a flattened visual file. The individual editable text boxes cease to exist as live text; they become pixels in an image.
+When you download your finished design as a <strong>PNG, JPG, or Print PDF</strong>, Canva renders the layout into a flattened visual file. The individual editable text boxes cease to exist as live text; they become pixels in an image or vector paths in a print stream.
 </p>
 
 <p>
-Once exported, your proofreading browser extensions (like Grammarly) can no longer read or flag the text. If you post that image to Instagram, LinkedIn, or send it to a local print shop, any errors in that graphic are completely locked in.
+Once exported, your proofreading browser extensions (like Grammarly) can no longer read or flag the text. If you send that file to a commercial print shop or publish it to Instagram, Facebook, or LinkedIn, any typos in that graphic are completely permanent.
 </p>
 
 <h2 id="pre-flight-checklist" class="text-2xl font-bold text-slate-900 mt-10 mb-4">The 5-Step Canva Pre-Flight Proofreading Routine</h2>
 
 <p>
-Before you finalize any client creative or print batch, follow this 5-minute pre-flight audit:
+Before you finalize any client creative, promotional campaign, or print batch, follow this 5-minute pre-flight audit:
 </p>
 
 <ol class="list-decimal pl-6 space-y-3 my-4 text-slate-700">
@@ -272,7 +357,7 @@ Before you finalize any client creative or print batch, follow this 5-minute pre
   <li><strong>Verify Contact Details:</strong> Dial the phone number on your keypad, click test the website URL, and double-check email addresses for transposed letters (like <code>@gnail.com</code>).</li>
   <li><strong>Check Year & Day Coherence:</strong> If your poster says <em>"Friday, November 14th"</em>, open your calendar and confirm that the 14th is genuinely a Friday. Date mismatches are among the most common flyer mistakes.</li>
   <li><strong>Asterisk (*) Matching:</strong> If you placed an asterisk in your headline (e.g. <em>"50% Off Everything*"</em>), ensure there is an explanatory footnote disclaimer at the bottom explaining the terms.</li>
-  <li><strong>Export and Run Automated QA:</strong> Download your finished Canva layout as a high-res PNG and run it through an automated visual QA scanner.</li>
+  <li><strong>Export and Run Automated QA:</strong> Download your finished Canva layout as a high-res PNG or PDF and run it through an automated visual QA scanner.</li>
 </ol>
 
 <h2 id="discount-math-dates" class="text-2xl font-bold text-slate-900 mt-10 mb-4">Checking Pricing Math and Event Dates</h2>
@@ -285,21 +370,21 @@ Before you finalize any client creative or print batch, follow this 5-minute pre
   </p>
 </div>
 
-<h2 id="automated-design-audit" class="text-2xl font-bold text-slate-900 mt-10 mb-4">Running an Automated Design QA Audit</h2>
+<h2 id="automated-design-audit" class="text-2xl font-bold text-slate-900 mt-10 mb-4">How to Spell Check Exported Canva PDFs with Spellense</h2>
 
 <p>
-Instead of relying solely on tired eyes after hours of designing, use <a href="/design-check" class="text-blue-600 font-semibold underline underline-offset-2 hover:text-blue-800">Spellense Design Check</a>.
+Instead of relying solely on tired eyes after hours of designing, use <a href="/design-check" class="text-blue-600 font-semibold underline underline-offset-2 hover:text-blue-800">Spellense Design Check</a> or the <a href="/" class="text-blue-600 font-semibold underline underline-offset-2 hover:text-blue-800">Spellense Document Checker</a>.
 </p>
 
 <p>
-Spellense operates as an <strong>AI Creative QA Auditor</strong>:
+Spellense operates as an <strong>Automated Visual Creative QA Auditor</strong> designed specifically for designers:
 </p>
 
 <ul class="list-disc pl-6 space-y-2 my-4 text-slate-700">
-  <li>It extracts typography using in-memory OCR and scans for typos in both US and British English.</li>
-  <li>It audits discount math, calendar date coherence, and missing asterisk footnote pairings.</li>
-  <li>It inspects WCAG contrast ratios to verify your text is readable against photo backgrounds.</li>
-  <li>It flags safe-zone bleed margins so critical phone numbers don't get trimmed off by the commercial guillotine cutter.</li>
+  <li><strong>Optical Text Extraction:</strong> It extracts typography from flattened PNGs, JPGs, and multi-page Canva PDFs using in-memory OCR.</li>
+  <li><strong>Interactive Canvas Highlighting:</strong> Instead of retyping text, red bounding boxes and underlines pinpoint typos directly over your Canva artwork.</li>
+  <li><strong>Pre-Flight Checks:</strong> It audits discount arithmetic, date mismatches, safe-zone bleed margins, and WCAG contrast ratios.</li>
+  <li><strong>Strict Zero-Storage Privacy:</strong> Your proprietary client graphics and unpublished marketing materials are never stored or logged.</li>
 </ul>
 `,
   },
