@@ -4076,6 +4076,81 @@ export default function Home() {
               </div>
             </div>
 
+            {/* DUAL CREATIVE EXPERIENCE & PRE-FLIGHT SHOWCASE */}
+            <div className="mx-auto mt-12 max-w-5xl grid gap-5 sm:grid-cols-2">
+              {/* CARD 1: 3D FLIPBOOK */}
+              <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-blue-200/90 bg-gradient-to-br from-white via-blue-50/40 to-indigo-50/50 p-7 sm:p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10">
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white shadow-xs">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                        <path d="M6 6h10" />
+                        <path d="M6 10h10" />
+                      </svg>
+                      3D Flipbook
+                    </span>
+                    <span className="text-xs font-semibold text-blue-600">Free PDF Experience</span>
+                  </div>
+
+                  <h3 className="mt-5 text-2xl sm:text-[26px] font-black leading-tight tracking-tight text-slate-900">
+                    Don’t just send a PDF.<br />
+                    <span className="text-blue-600">Send an experience.</span>
+                  </h3>
+
+                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                    Turn plain PDF documents, proposals, lookbooks, and brochures into interactive, page-flipping 3D digital books with sound and custom branding.
+                  </p>
+                </div>
+
+                <div className="mt-7 flex items-center justify-between border-t border-blue-100/80 pt-4">
+                  <span className="text-xs font-medium text-slate-400">Zero install • Shareable link</span>
+                  <Link
+                    href="/flipbook"
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/20 active:scale-95"
+                  >
+                    <span>Create Flipbook</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* CARD 2: DESIGN CHECK */}
+              <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-indigo-200/90 bg-gradient-to-br from-white via-indigo-50/40 to-violet-50/50 p-7 sm:p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/10">
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white shadow-xs">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      AI Pre-Flight Audit
+                    </span>
+                    <span className="text-xs font-semibold text-indigo-600">Creative QA</span>
+                  </div>
+
+                  <h3 className="mt-5 text-2xl sm:text-[26px] font-black leading-tight tracking-tight text-slate-900">
+                    The pre-flight check<br />
+                    <span className="text-indigo-600">your creative work deserves.</span>
+                  </h3>
+
+                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                    Catch hidden spelling typos, low contrast ratios, and bleed margin cut-offs in Canva, Figma, and print-ready designs before your client spots them.
+                  </p>
+                </div>
+
+                <div className="mt-7 flex items-center justify-between border-t border-indigo-100/80 pt-4">
+                  <span className="text-xs font-medium text-slate-400">Canva, Figma, PDF support</span>
+                  <Link
+                    href="/design-check"
+                    className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-indigo-700 hover:shadow-md hover:shadow-indigo-600/20 active:scale-95"
+                  >
+                    <span>Audit Design</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <section className="mx-auto mt-20 max-w-6xl border-t border-slate-200/80 pt-20">

@@ -40,7 +40,7 @@ const NAV_ITEMS = [
     label: "Design Check",
     shortLabel: "Design QA",
     href: "/design-check",
-    description: "Pre-flight QA for posters, ads, contrast & bleed",
+    description: "The pre-flight check your creative work deserves",
     tag: "New",
     icon: (
       <svg
@@ -63,7 +63,7 @@ const NAV_ITEMS = [
     label: "3D Flipbook",
     shortLabel: "Flipbook",
     href: "/flipbook",
-    description: "Convert PDFs & catalogs into interactive 3D flipbooks",
+    description: "Don’t just send a PDF. Send an experience.",
     tag: "New",
     icon: (
       <svg
