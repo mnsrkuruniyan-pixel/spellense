@@ -32,6 +32,7 @@ type CheckResult = {
   pdfMarks?: PdfMark[];
   imageMarks?: ImageMark[];
   pageStarts?: number[];
+  ocrEngine?: string;
   message?: string;
   error?: string;
 };
@@ -2846,15 +2847,17 @@ export default function Home() {
                 <div className={`mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-xl text-[11px] font-black tracking-wider ring-1 ${
                   result.engine === "gemini-ai"
                     ? "bg-purple-50 text-purple-600 ring-purple-100"
+                    : result.ocrEngine
+                    ? "bg-amber-50 text-amber-700 ring-amber-200"
                     : "bg-slate-100 text-slate-600 ring-slate-200"
                 }`}>
-                  {result.engine === "gemini-ai" ? "AI" : isTextResult ? "TXT" : isPdfResult ? "PDF" : isDocxResult ? "DOCX" : isPptxResult ? "PPTX" : isXlsxResult ? "XLSX" : "IMG"}
+                  {result.engine === "gemini-ai" ? "AI" : result.ocrEngine ? "OCR" : isTextResult ? "TXT" : isPdfResult ? "PDF" : isDocxResult ? "DOCX" : isPptxResult ? "PPTX" : isXlsxResult ? "XLSX" : "IMG"}
                 </div>
-                <p className="truncate text-sm font-bold tracking-tight text-slate-800 px-1" title={fileName}>
-                  {result.engine === "gemini-ai" ? "Gemini AI" : files[0]?.size ? (files[0].size / 1024 / 1024).toFixed(2) + " MB" : "Verified"}
+                <p className="truncate text-sm font-bold tracking-tight text-slate-800 px-1" title={result.ocrEngine || fileName}>
+                  {result.ocrEngine ? result.ocrEngine : result.engine === "gemini-ai" ? "Gemini AI" : files[0]?.size ? (files[0].size / 1024 / 1024).toFixed(2) + " MB" : "Verified"}
                 </p>
                 <p className="mt-0.5 text-xs font-semibold text-slate-400">
-                  {result.engine === "gemini-ai" ? "Deep Engine" : "In-Memory OCR"}
+                  {result.ocrEngine ? "Vision AI Engine" : result.engine === "gemini-ai" ? "Deep Engine" : "In-Memory OCR"}
                 </p>
               </div>
 
