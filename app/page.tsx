@@ -4314,6 +4314,34 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* CARD 7: 3D DIGITAL FLIPBOOK */}
+              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                    <path d="M6 6h10" />
+                    <path d="M6 10h10" />
+                  </svg>
+                </div>
+
+                <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                  Interactive Media
+                </div>
+                <h3 className="mt-1 text-xl font-black text-slate-900">
+                  3D Digital Flipbook Maker
+                </h3>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+                  Convert PDFs and images into realistic, page-turning 3D digital flipbooks with sound effects, customizable hardcover styles, and zero install.
+                </p>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">PDF, PNG, JPG · 3D Reader</span>
+                  <Link href="/flipbook" className="text-xs font-bold text-blue-600 hover:underline">
+                    Use tool →
+                  </Link>
+                </div>
+              </div>
+
             </div>
 
             {/* THE VISUAL PROOFREADING PROBLEM COMPARISON */}
