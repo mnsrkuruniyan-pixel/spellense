@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import JSZip from "jszip";
 import {
   trackFileUpload,
@@ -2005,57 +2006,8 @@ export default function ImageCompressorClient() {
         </section>
       </main>
 
-      {/* FOOTER — Exact Design matching Image to Text page */}
-      <footer className="border-t border-slate-200/70 bg-white px-5 py-8 sm:px-6">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
-            <div>
-              <div className="text-lg font-bold">
-                Spel<span className="text-blue-600">lense</span>
-              </div>
-              <p className="mt-1 text-xs text-gray-400 font-normal">
-                Simple English spell checking and text tools.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-xs text-gray-400 font-normal">
-              <Link href="/" className="transition hover:text-gray-700">
-                Home
-              </Link>
-              <Link href="/about" className="transition hover:text-gray-700">
-                About
-              </Link>
-              <Link href="/blog" className="transition hover:text-gray-700">
-                Blog
-              </Link>
-              <Link href="/design-check" className="transition hover:text-gray-700">
-                Design Check
-              </Link>
-              <Link href="/case-converter" className="transition hover:text-gray-700">
-                Case Converter
-              </Link>
-              <Link href="/us-uk-converter" className="transition hover:text-gray-700">
-                US ↔ UK Dialect
-              </Link>
-              <Link href="/image-to-text" className="transition hover:text-gray-700">
-                Image to Text
-              </Link>
-              <Link href="/image-compressor" className="font-semibold text-blue-600">
-                Image Compressor
-              </Link>
-              <Link href="/faq" className="transition hover:text-gray-700">
-                FAQ
-              </Link>
-              <Link href="/privacy" className="transition hover:text-gray-700">
-                Privacy
-              </Link>
-              <Link href="/terms" className="transition hover:text-gray-700">
-                Terms
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* FOOTER */}
+      <Footer currentPath="/image-compressor" />
     </div>
   );
 }

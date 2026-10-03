@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import Link from "next/link";
 
 // ── SVG Noise & Texture Filters for Realistic Book Covers ────────────────────
@@ -1668,40 +1669,7 @@ export default function FlipbookClient() {
       </main>
 
       {/* FOOTER */}
-      <footer className="border-t border-slate-200/70 bg-white px-5 py-8 sm:px-6">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
-            <div>
-              <div className="text-lg font-bold">
-                Spel<span className="text-blue-600">lense</span>
-              </div>
-              <p className="mt-1 text-xs text-gray-400 font-normal">
-                Simple English spell checking and text tools.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-xs text-gray-400 font-normal">
-              <Link href="/" className="transition hover:text-gray-700">Home</Link>
-              <Link href="/about" className="transition hover:text-gray-700">About</Link>
-              <Link href="/blog" className="transition hover:text-gray-700">Blog</Link>
-              <Link href="/design-check" className="transition hover:text-gray-700">Design Check</Link>
-              <Link href="/case-converter" className="transition hover:text-gray-700">Case Converter</Link>
-              <Link href="/us-uk-converter" className="transition hover:text-gray-700">US ↔ UK Dialect</Link>
-              <Link href="/image-to-text" className="transition hover:text-gray-700">Image to Text</Link>
-              <Link href="/image-compressor" className="transition hover:text-gray-700">Image Compressor</Link>
-              <Link href="/flipbook" className="font-semibold text-blue-600">Flipbook</Link>
-              <Link href="/faq" className="transition hover:text-gray-700">FAQ</Link>
-              <Link href="/privacy" className="transition hover:text-gray-700">Privacy</Link>
-              <Link href="/terms" className="transition hover:text-gray-700">Terms</Link>
-              <a href="mailto:hello@spellense.com" className="transition hover:text-gray-700">Contact</a>
-            </div>
-          </div>
-
-          <div className="mt-6 border-t border-gray-100 pt-5 text-center text-[11px] text-gray-300 font-normal">
-            © 2026 Spellense. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      <Footer currentPath="/flipbook" />
     </div>
   );
 }
