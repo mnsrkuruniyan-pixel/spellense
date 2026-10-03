@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import DesignCheckClient from "./DesignCheckClient";
 
 export const metadata: Metadata = {
-  title: "AI Design Check — Pre-Flight Graphic & PDF Quality Audit",
+  title: "AI Design Check — Pre-Flight Graphic & PDF Audit",
   description:
     "Free AI Design Pre-Flight Quality Checker. Detect spelling typos, low WCAG contrast, and bleed margin cutoffs in Canva designs, Figma exports, flyers, and PDF documents before publishing or printing.",
   alternates: {

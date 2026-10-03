@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ImageToTextClient from "./ImageToTextClient";
 
 export const metadata: Metadata = {
-  title: "Free Image to Text Converter — Extract Text from Photos & Screenshots",
+  title: "Free Image to Text Converter — Extract Text Online",
   description:
     "Extract clean, copyable text from photos, screenshots, and scanned PDFs instantly with our free online OCR tool. No signup required, up to 25MB, 100% private.",
   alternates: { canonical: "/image-to-text" },

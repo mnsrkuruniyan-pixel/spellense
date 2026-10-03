@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import UsUkConverterClient from "./UsUkConverterClient";
 
 export const metadata: Metadata = {
-  title: "US to UK English Translator & Converter — American ↔ British Spelling",
+  title: "US to UK English Converter — American & British Spelling",
   description:
     "Free American to British (US to UK) English translator and dialect converter. Instantly translate text, spelling rules (-or/-our, -ize/-ise, -er/-re), and vocabulary with live diff highlighting and instant word lookup.",
   alternates: { canonical: "/us-uk-converter" },

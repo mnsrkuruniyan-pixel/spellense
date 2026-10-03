@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ImageCompressorClient from "./ImageCompressorClient";
 
 export const metadata: Metadata = {
-  title: "Free Image Compressor & Optimizer — Batch & PDF Support",
+  title: "Free Image Compressor — Optimize Images & PDFs Online",
   description:
     "Compress JPG, PNG, WebP, AVIF and multi-page PDF images online with zero loss in visual quality. Interactive before/after split slider, batch compression, 100% private in-browser processing.",
   alternates: {

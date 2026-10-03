@@ -6,6 +6,7 @@ export interface TableOfContentsItem {
 export interface BlogPost {
   slug: string;
   title: string;
+  metaTitle?: string;
   subtitle: string;
   description: string;
   publishedAt: string;
@@ -38,6 +39,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "how-to-find-spelling-mistakes-in-scanned-pdf",
     title: "How to Find Spelling Mistakes in a Scanned PDF (Without Retyping)",
+    metaTitle: "Find Spelling Mistakes in Scanned PDFs",
     subtitle: "A practical guide to extracting text, spotting hidden typos, and proofreading non-selectable PDF documents using browser-based OCR.",
     description: "Learn how to find and fix spelling mistakes in scanned PDFs where text cannot be highlighted. Free optical character recognition (OCR) proofreading guide.",
     publishedAt: "2026-09-24",
@@ -190,6 +192,7 @@ To ensure the highest accuracy when scanning physical documents for proofreading
   {
     slug: "how-to-check-spelling-in-canva-before-publishing",
     title: "How to Check Spelling in Canva (Does Canva Have Spell Check?)",
+    metaTitle: "How to Check Spelling in Canva",
     subtitle: "Where to find Canva's spell check option, how to enable it, why typos still slip through in designs, and how to proofread Canva PDFs and graphics before publishing.",
     description: "Looking for spell check in Canva? Learn where Canva's spell check option is located, how to turn it on, and how to thoroughly check Canva PDFs and posters for typos before printing.",
     publishedAt: "2026-09-24",
@@ -391,6 +394,7 @@ Spellense operates as an <strong>Automated Visual Creative QA Auditor</strong> d
   {
     slug: "why-normal-spell-checkers-miss-typos-in-images",
     title: "Why Normal Spell Checkers Miss Typos in Images (And How OCR Fixes It)",
+    metaTitle: "Why Spell Checkers Miss Typos in Images",
     subtitle: "A deep dive into browser DOM text limitations, pixel grids, and the computer vision technology that catches mistakes in visual content.",
     description: "Understand the technical reasons why Grammarly, Word, and browser spell checkers cannot inspect text in images, and how in-memory OCR bridges the gap.",
     publishedAt: "2026-09-24",
