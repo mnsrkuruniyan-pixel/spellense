@@ -508,8 +508,8 @@ function PdfMarkedPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={previewRef}
-        className={`flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
-          panning ? "cursor-grabbing touch-none" : "cursor-grab"
+        className={`flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none touch-pan-x touch-pan-y overscroll-contain ${
+          panning ? "cursor-grabbing" : "cursor-grab"
         }`}
         onWheel={(event) => {
           if (event.ctrlKey || event.metaKey) {
@@ -521,7 +521,7 @@ function PdfMarkedPreview({
           }
         }}
         onPointerDown={(event) => {
-          if (event.button !== 0 && event.pointerType === "mouse") return;
+          if (event.pointerType !== "mouse" || event.button !== 0) return;
           if (!previewRef.current) return;
 
           panStartRef.current = {
@@ -536,6 +536,7 @@ function PdfMarkedPreview({
           } catch {}
         }}
         onPointerMove={(event) => {
+          if (event.pointerType !== "mouse") return;
           const start = panStartRef.current;
           if (!start || !previewRef.current) return;
 
@@ -545,6 +546,7 @@ function PdfMarkedPreview({
             start.top - (event.clientY - start.y);
         }}
         onPointerUp={(event) => {
+          if (event.pointerType !== "mouse") return;
           panStartRef.current = null;
           setPanning(false);
           try {
@@ -818,11 +820,11 @@ function DocxPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={previewRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
-          panning ? "cursor-grabbing touch-none" : "cursor-grab"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none touch-pan-x touch-pan-y overscroll-contain ${
+          panning ? "cursor-grabbing" : "cursor-grab"
         }`}
         onPointerDown={(event) => {
-          if (event.button !== 0 && event.pointerType === "mouse") return;
+          if (event.pointerType !== "mouse" || event.button !== 0) return;
           if (!previewRef.current) return;
           panStartRef.current = {
             x: event.clientX,
@@ -836,12 +838,14 @@ function DocxPreview({
           } catch {}
         }}
         onPointerMove={(event) => {
+          if (event.pointerType !== "mouse") return;
           const start = panStartRef.current;
           if (!start || !previewRef.current) return;
           previewRef.current.scrollLeft = start.left - (event.clientX - start.x);
           previewRef.current.scrollTop = start.top - (event.clientY - start.y);
         }}
         onPointerUp={(event) => {
+          if (event.pointerType !== "mouse") return;
           panStartRef.current = null;
           setPanning(false);
           try {
@@ -1092,11 +1096,11 @@ function PptxPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
-          panning ? "cursor-grabbing touch-none" : "cursor-grab"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none touch-pan-x touch-pan-y overscroll-contain ${
+          panning ? "cursor-grabbing" : "cursor-grab"
         }`}
         onPointerDown={(event) => {
-          if (event.button !== 0 && event.pointerType === "mouse") return;
+          if (event.pointerType !== "mouse" || event.button !== 0) return;
           if (!viewportRef.current) return;
           panStartRef.current = {
             x: event.clientX,
@@ -1110,12 +1114,14 @@ function PptxPreview({
           } catch {}
         }}
         onPointerMove={(event) => {
+          if (event.pointerType !== "mouse") return;
           const start = panStartRef.current;
           if (!start || !viewportRef.current) return;
           viewportRef.current.scrollLeft = start.left - (event.clientX - start.x);
           viewportRef.current.scrollTop = start.top - (event.clientY - start.y);
         }}
         onPointerUp={(event) => {
+          if (event.pointerType !== "mouse") return;
           panStartRef.current = null;
           setPanning(false);
           try {
@@ -1295,11 +1301,11 @@ function XlsxPreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
-          panning ? "cursor-grabbing touch-none" : "cursor-grab"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none touch-pan-x touch-pan-y overscroll-contain ${
+          panning ? "cursor-grabbing" : "cursor-grab"
         }`}
         onPointerDown={(event) => {
-          if (event.button !== 0 && event.pointerType === "mouse") return;
+          if (event.pointerType !== "mouse" || event.button !== 0) return;
           if (!viewportRef.current) return;
           panStartRef.current = {
             x: event.clientX,
@@ -1313,12 +1319,14 @@ function XlsxPreview({
           } catch {}
         }}
         onPointerMove={(event) => {
+          if (event.pointerType !== "mouse") return;
           const start = panStartRef.current;
           if (!start || !viewportRef.current) return;
           viewportRef.current.scrollLeft = start.left - (event.clientX - start.x);
           viewportRef.current.scrollTop = start.top - (event.clientY - start.y);
         }}
         onPointerUp={(event) => {
+          if (event.pointerType !== "mouse") return;
           panStartRef.current = null;
           setPanning(false);
           try {
@@ -1571,8 +1579,8 @@ function ImagePreview({
     <div className="bg-slate-200 p-4">
       <div
         ref={viewportRef}
-        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
-          panning ? "cursor-grabbing touch-none" : "cursor-grab"
+        className={`relative flex h-[360px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none touch-pan-x touch-pan-y overscroll-contain ${
+          panning ? "cursor-grabbing" : "cursor-grab"
         }`}
         onWheel={(event) => {
           if (event.ctrlKey || event.metaKey) {
@@ -1584,7 +1592,7 @@ function ImagePreview({
           }
         }}
         onPointerDown={(event) => {
-          if (event.button !== 0 && event.pointerType === "mouse") return;
+          if (event.pointerType !== "mouse" || event.button !== 0) return;
           if (!viewportRef.current) return;
           panStartRef.current = {
             x: event.clientX,
@@ -1598,12 +1606,14 @@ function ImagePreview({
           } catch {}
         }}
         onPointerMove={(event) => {
+          if (event.pointerType !== "mouse") return;
           const start = panStartRef.current;
           if (!start || !viewportRef.current) return;
           viewportRef.current.scrollLeft = start.left - (event.clientX - start.x);
           viewportRef.current.scrollTop = start.top - (event.clientY - start.y);
         }}
         onPointerUp={(event) => {
+          if (event.pointerType !== "mouse") return;
           panStartRef.current = null;
           setPanning(false);
           try {

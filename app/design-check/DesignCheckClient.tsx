@@ -1425,8 +1425,8 @@ export default function DesignCheckClient() {
                 <div className="bg-slate-200 p-4">
                   <div
                     ref={viewportRef}
-                    className={`relative flex h-[380px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none ${
-                      panning ? "cursor-grabbing touch-none" : "cursor-grab"
+                    className={`relative flex h-[380px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none touch-pan-x touch-pan-y overscroll-contain ${
+                      panning ? "cursor-grabbing" : "cursor-grab"
                     }`}
                     onWheel={(event) => {
                       if (event.ctrlKey || event.metaKey) {
@@ -1438,7 +1438,7 @@ export default function DesignCheckClient() {
                       }
                     }}
                     onPointerDown={(event) => {
-                      if (event.button !== 0 && event.pointerType === "mouse") return;
+                      if (event.pointerType !== "mouse" || event.button !== 0) return;
                       if (!viewportRef.current) return;
                       panStartRef.current = {
                         x: event.clientX,
@@ -1452,12 +1452,14 @@ export default function DesignCheckClient() {
                       } catch {}
                     }}
                     onPointerMove={(event) => {
+                      if (event.pointerType !== "mouse") return;
                       const start = panStartRef.current;
                       if (!start || !viewportRef.current) return;
                       viewportRef.current.scrollLeft = start.left - (event.clientX - start.x);
                       viewportRef.current.scrollTop = start.top - (event.clientY - start.y);
                     }}
                     onPointerUp={(event) => {
+                      if (event.pointerType !== "mouse") return;
                       panStartRef.current = null;
                       setPanning(false);
                       try {
