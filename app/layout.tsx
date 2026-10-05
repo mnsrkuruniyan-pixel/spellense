@@ -141,7 +141,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </Script>
         <Script
           id="yandex-metrika"
-          strategy="afterInteractive"
+          strategy="beforeInteractive"
         >
           {`
             (function(m,e,t,r,i,k,a){
