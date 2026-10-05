@@ -2004,6 +2004,45 @@ export default function ImageCompressorClient() {
             })}
           </div>
         </section>
+
+        {/* RELATED CREATIVE TOOLS SECTION */}
+        <section className="border-t border-slate-200/80 bg-white/60 py-14 px-4 sm:px-6">
+          <div className="mx-auto max-w-6xl">
+            <div className="text-center mb-8">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Cross-Tool Workflows</span>
+              <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">Explore More Free Creative Tools</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Link
+                href="/qr-code-generator"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Print Scannability QA</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">QR Code Generator</div>
+                <p className="mt-1 text-xs text-slate-500">Create custom QR codes and verify camera scannability before printing.</p>
+              </Link>
+
+              <Link
+                href="/design-check"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Pre-flight Proofreader</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Design Check</div>
+                <p className="mt-1 text-xs text-slate-500">Find typos, low contrast &amp; print errors in graphics and documents.</p>
+              </Link>
+
+              <Link
+                href="/flipbook"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">3D Publishing</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">3D Digital Flipbook</div>
+                <p className="mt-1 text-xs text-slate-500">Turn compressed PDFs and catalogs into interactive 3D books.</p>
+              </Link>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* FOOTER */}

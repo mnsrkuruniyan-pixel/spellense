@@ -10,6 +10,7 @@ import { mkdtemp, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { US_TO_UK_MAP, UK_TO_US_MAP } from "@/app/us-uk-converter/dialectRules";
+import { runPaddleOcr } from "@/app/api/design-check/paddleOcr";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -264,6 +265,30 @@ const KNOWN_VALID_WORDS = new Set([
   "mansoor",
   "hisense",
   "kelon",
+  "ronshen",
+  "gorenje",
+  "changelight",
+  "asko",
+  "qingdao",
+  "chongqing",
+  "tianjin",
+  "beijing",
+  "shanghai",
+  "changsha",
+  "guiyang",
+  "huzhou",
+  "nanchang",
+  "shijiazhuang",
+  "sichuan",
+  "zhejiang",
+  "guangdong",
+  "worldwide",
+  "inox",
+  "nofrost",
+  "totalnofrost",
+  "frostfree",
+  "multiairflow",
+  "biofresh",
   "macos",
   "tcs",
   "ai",
@@ -2249,8 +2274,8 @@ async function extractPdfText(
 
 async function extractPdfOcrText(
   buffer: Buffer,
-  worker: SpellWorker
-): Promise<PdfTextResult> {
+  workerFactory: () => Promise<SpellWorker>
+): Promise<PdfTextResult & { ocrEngine?: string }> {
   const { getDocument } = await import(
     "pdfjs-dist/legacy/build/pdf.mjs"
   );
@@ -2265,6 +2290,8 @@ async function extractPdfOcrText(
   const ocrWords: PdfOcrWord[] = [];
   const allBlocks: NonNullable<OcrBlock> = [];
   let textLength = 0;
+  let ocrEngine = "PaddleOCR (PP-OCRv6)";
+  let worker: SpellWorker | null = null;
 
   // Cap scanned PDF OCR to 15 pages to stay safely within serverless timeout
   const maxOcrPages = Math.min(pdf.numPages, 15);
@@ -2284,40 +2311,107 @@ async function extractPdfOcrText(
       viewport,
     }).promise;
 
-    const result = await worker.recognize(
-      canvas.toBuffer("image/png"),
-      {},
-      { blocks: true }
-    );
-    const pageText = result.data.text.trim();
+    const pageBuffer = canvas.toBuffer("image/png");
+    let paddlePageSuccess = false;
 
-    const pageBlocks = (result.data.blocks || []) as NonNullable<OcrBlock>;
-    allBlocks.push(...pageBlocks);
+    try {
+      const paddleRes = await runPaddleOcr(pageBuffer, canvas.width, canvas.height);
+      if (paddleRes.lines.length > 0 || paddleRes.words.length > 0) {
+        paddlePageSuccess = true;
+        const pageText = paddleRes.lines.map((l) => l.text).join("\n").trim();
 
-    const words = pageBlocks.flatMap((block) =>
-      block.paragraphs.flatMap((paragraph) =>
-        paragraph.lines.flatMap((line) => line.words)
-      )
-    );
+        allBlocks.push({
+          paragraphs: [
+            {
+              lines: paddleRes.lines.map((l) => ({
+                words: paddleRes.words
+                  .filter(
+                    (w) =>
+                      w.top >= l.top - 0.01 &&
+                      w.top + w.height <= l.top + l.height + 0.01
+                  )
+                  .map((w) => ({
+                    text: w.text,
+                    confidence: w.confidence,
+                    bbox: {
+                      x0: w.pixelX,
+                      y0: w.pixelY,
+                      x1: w.pixelX + w.pixelW,
+                      y1: w.pixelY + w.pixelH,
+                    },
+                  })),
+              })),
+            },
+          ],
+        });
 
-    for (const word of words) {
-      if (!word.text.trim() || !word.bbox) continue;
+        for (const w of paddleRes.words) {
+          if (!w.text.trim()) continue;
+          ocrWords.push({
+            text: w.text,
+            page: pageNumber,
+            left: w.left,
+            top: w.top,
+            width: w.width,
+            height: w.height,
+          });
+        }
 
-      ocrWords.push({
-        text: word.text,
-        page: pageNumber,
-        left: word.bbox.x0 / viewport.width,
-        top: word.bbox.y0 / viewport.height,
-        width: (word.bbox.x1 - word.bbox.x0) / viewport.width,
-        height: (word.bbox.y1 - word.bbox.y0) / viewport.height,
-      });
+        pageStarts.push(textLength);
+        pages.push(pageText);
+        textLength += pageText.length + 2;
+      }
+    } catch (e) {
+      console.warn("[Spellense] PaddleOCR page extraction failed, falling back to Tesseract:", e);
     }
 
-    pageStarts.push(textLength);
-    pages.push(pageText);
-    textLength += pageText.length + 2;
+    if (!paddlePageSuccess) {
+      ocrEngine = "Tesseract.js (Fallback)";
+      if (!worker) {
+        worker = await workerFactory();
+      }
+
+      const result = await worker.recognize(
+        pageBuffer,
+        {},
+        { blocks: true }
+      );
+      const pageText = result.data.text.trim();
+
+      const pageBlocks = (result.data.blocks || []) as NonNullable<OcrBlock>;
+      allBlocks.push(...pageBlocks);
+
+      const words = pageBlocks.flatMap((block) =>
+        block.paragraphs.flatMap((paragraph) =>
+          paragraph.lines.flatMap((line) => line.words)
+        )
+      );
+
+      for (const word of words) {
+        if (!word.text.trim() || !word.bbox) continue;
+
+        ocrWords.push({
+          text: word.text,
+          page: pageNumber,
+          left: word.bbox.x0 / viewport.width,
+          top: word.bbox.y0 / viewport.height,
+          width: (word.bbox.x1 - word.bbox.x0) / viewport.width,
+          height: (word.bbox.y1 - word.bbox.y0) / viewport.height,
+        });
+      }
+
+      pageStarts.push(textLength);
+      pages.push(pageText);
+      textLength += pageText.length + 2;
+    }
 
     page.cleanup();
+  }
+
+  if (worker) {
+    try {
+      await worker.terminate();
+    } catch {}
   }
 
   await pdf.cleanup();
@@ -2329,6 +2423,7 @@ async function extractPdfOcrText(
     hasTextLayer: false,
     ocrWords,
     blocks: allBlocks,
+    ocrEngine,
   };
 }
 
@@ -2650,6 +2745,7 @@ export async function POST(
     let fileName = "";
     let isPdf = false;
     let isImage = false;
+    let ocrEngine: string | undefined = undefined;
 
     if (typeof preExtractedText === "string" && preExtractedText.trim()) {
       text = preExtractedText;
@@ -2768,9 +2864,12 @@ export async function POST(
         let pdfText = await extractPdfText(buffer);
 
         if (!pdfText.text.trim()) {
-          worker = await getOcrWorker();
-          pdfText = await extractPdfOcrText(buffer, worker);
+          const ocrPdfRes = await extractPdfOcrText(buffer, getOcrWorker);
+          pdfText = ocrPdfRes;
           blocks = pdfText.blocks ?? [];
+          if (ocrPdfRes.ocrEngine) {
+            ocrEngine = ocrPdfRes.ocrEngine;
+          }
         }
 
         text = pdfText.text;
@@ -2778,35 +2877,89 @@ export async function POST(
         pdfHasTextLayer = pdfText.hasTextLayer;
         pdfOcrWords = pdfText.ocrWords ?? [];
       } else {
-        worker = await getOcrWorker();
-
-        const result = await worker.recognize(
-          buffer,
-          {},
-          { blocks: true }
-        );
-
-        const rawBlocks = result.data.blocks as OcrBlock;
-        const filtered = filterOcrBlocks(rawBlocks, dialect);
-
-        text = filtered.cleanText;
-        blocks = filtered.filteredBlocks;
-
         const image = await loadImage(buffer);
-        const ocrWords = (filtered.filteredBlocks ?? []).flatMap((block) =>
-          block.paragraphs.flatMap((paragraph) =>
-            paragraph.lines.flatMap((line) => line.words)
-          )
-        );
-        imageMarks = ocrWords
-          .filter((word) => word.bbox)
-          .map((word) => ({
-            word: word.text,
-            left: word.bbox!.x0 / image.width,
-            top: word.bbox!.y0 / image.height,
-            width: (word.bbox!.x1 - word.bbox!.x0) / image.width,
-            height: (word.bbox!.y1 - word.bbox!.y0) / image.height,
-          }));
+        let paddleSuccess = false;
+
+        try {
+          const paddleRes = await runPaddleOcr(buffer, image.width, image.height);
+          if (paddleRes.lines.length > 0 || paddleRes.words.length > 0) {
+            ocrEngine = paddleRes.engine;
+            paddleSuccess = true;
+
+            const paddleText = paddleRes.lines.map((l) => l.text).join("\n");
+            text = paddleText;
+
+            // Form synthetic blocks for compatibility with downstream spell checks
+            blocks = [
+              {
+                paragraphs: [
+                  {
+                    lines: paddleRes.lines.map((l) => ({
+                      words: paddleRes.words
+                        .filter(
+                          (w) =>
+                            w.top >= l.top - 0.01 &&
+                            w.top + w.height <= l.top + l.height + 0.01
+                        )
+                        .map((w) => ({
+                          text: w.text,
+                          confidence: w.confidence,
+                          bbox: {
+                            x0: w.pixelX,
+                            y0: w.pixelY,
+                            x1: w.pixelX + w.pixelW,
+                            y1: w.pixelY + w.pixelH,
+                          },
+                        })),
+                    })),
+                  },
+                ],
+              },
+            ];
+
+            imageMarks = paddleRes.words.map((w) => ({
+              word: w.text,
+              left: w.left,
+              top: w.top,
+              width: w.width,
+              height: w.height,
+            }));
+          }
+        } catch (paddleErr) {
+          console.warn("[Spellense] PaddleOCR failed, falling back to Tesseract.js:", paddleErr);
+        }
+
+        if (!paddleSuccess) {
+          ocrEngine = "Tesseract.js (Fallback)";
+          worker = await getOcrWorker();
+
+          const result = await worker.recognize(
+            buffer,
+            {},
+            { blocks: true }
+          );
+
+          const rawBlocks = result.data.blocks as OcrBlock;
+          const filtered = filterOcrBlocks(rawBlocks, dialect);
+
+          text = filtered.cleanText;
+          blocks = filtered.filteredBlocks;
+
+          const ocrWords = (filtered.filteredBlocks ?? []).flatMap((block) =>
+            block.paragraphs.flatMap((paragraph) =>
+              paragraph.lines.flatMap((line) => line.words)
+            )
+          );
+          imageMarks = ocrWords
+            .filter((word) => word.bbox)
+            .map((word) => ({
+              word: word.text,
+              left: word.bbox!.x0 / image.width,
+              top: word.bbox!.y0 / image.height,
+              width: (word.bbox!.x1 - word.bbox!.x0) / image.width,
+              height: (word.bbox!.y1 - word.bbox!.y0) / image.height,
+            }));
+        }
       }
     }
 
@@ -2987,6 +3140,7 @@ export async function POST(
           })
         : undefined,
       pageStarts: isPdf && pdfPageStarts.length > 0 ? pdfPageStarts : undefined,
+      ocrEngine: (isImage || (isPdf && !pdfHasTextLayer)) ? ocrEngine : undefined,
     });
   } catch (error) {
     console.error(

@@ -37,29 +37,6 @@ const NAV_ITEMS = [
     ),
   },
   {
-    label: "Design Check",
-    shortLabel: "Design QA",
-    href: "/design-check",
-    description: "The pre-flight check your creative work deserves",
-    tag: "New",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-        <circle cx="8.5" cy="8.5" r="1.5" />
-        <polyline points="21 15 16 10 5 21" />
-      </svg>
-    ),
-  },
-  {
     label: "3D Flipbook",
     shortLabel: "Flipbook",
     href: "/flipbook",
@@ -105,6 +82,28 @@ const NAV_ITEMS = [
     ),
   },
   {
+    label: "QR Code Generator",
+    shortLabel: "QR Code",
+    href: "/qr-code-generator",
+    description: "Create custom QR codes with real scannability check",
+    tag: "New",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M7 7h.01M7 12h.01M7 17h.01M12 7h.01M12 12h.01M12 17h.01M17 7h.01M17 12h.01M17 17h.01" />
+      </svg>
+    ),
+  },
+  {
     label: "Image to Text",
     shortLabel: "Image to Text",
     href: "/image-to-text",
@@ -126,6 +125,29 @@ const NAV_ITEMS = [
         <polyline points="21 15 16 10 5 21" />
         <line x1="8" y1="13" x2="16" y2="13" />
         <line x1="8" y1="17" x2="13" y2="17" />
+      </svg>
+    ),
+  },
+  {
+    label: "Design Check",
+    shortLabel: "Design QA",
+    href: "/design-check",
+    description: "The pre-flight check your creative work deserves",
+    tag: "New",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
       </svg>
     ),
   },
@@ -248,6 +270,28 @@ const NAV_ITEMS = [
 
 const UTILITY_TOOLS = [
   {
+    label: "Design Check",
+    href: "/design-check",
+    description: "The pre-flight check your creative work deserves",
+    badge: "New",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+      </svg>
+    ),
+  },
+  {
     label: "Case Converter",
     href: "/case-converter",
     description: "CamelCase, Title, Snake, Kebab & 12 styles",
@@ -340,6 +384,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
   };
 
   const isToolsActive =
+    pathname.startsWith("/design-check") ||
     pathname.startsWith("/case-converter") ||
     pathname.startsWith("/us-uk-converter");
 
@@ -446,7 +491,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
             </div>
           ) : (
             <nav className="hidden lg:flex items-center gap-1.5 xl:gap-2.5 text-white text-[13px] xl:text-[13.5px] font-semibold tracking-wide">
-              {/* Home */}
+              {/* 1. Home */}
               <Link
                 href="/"
                 className={`py-1.5 px-3 rounded-full transition font-bold ${
@@ -458,22 +503,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 <span>Home</span>
               </Link>
 
-              {/* Design Check */}
-              <Link
-                href="/design-check"
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-full transition font-bold ${
-                  isActive("/design-check")
-                    ? "bg-white/20 text-white shadow-xs"
-                    : "text-white/90 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <span>Design Check</span>
-                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-white/20 text-white">
-                  New
-                </span>
-              </Link>
-
-              {/* 3D Flipbook */}
+              {/* 2. 3D Flipbook */}
               <Link
                 href="/flipbook"
                 className={`flex items-center gap-1.5 py-1.5 px-3 rounded-full transition font-bold ${
@@ -488,7 +518,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 </span>
               </Link>
 
-              {/* Image Compressor */}
+              {/* 3. Image Compressor */}
               <Link
                 href="/image-compressor"
                 className={`py-1.5 px-3 rounded-full transition font-bold ${
@@ -500,7 +530,22 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 <span>Image Compressor</span>
               </Link>
 
-              {/* Image to Text */}
+              {/* 4. QR Code Generator (4th) */}
+              <Link
+                href="/qr-code-generator"
+                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-full transition font-bold ${
+                  isActive("/qr-code-generator")
+                    ? "bg-white/20 text-white shadow-xs"
+                    : "text-white/90 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <span>QR Code</span>
+                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-white/20 text-white">
+                  New
+                </span>
+              </Link>
+
+              {/* 5. Image to Text */}
               <Link
                 href="/image-to-text"
                 className={`py-1.5 px-3 rounded-full transition font-bold ${
@@ -512,7 +557,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 <span>Image to Text</span>
               </Link>
 
-              {/* Tools Dropdown */}
+              {/* Tools Dropdown (Includes Design Check) */}
               <div
                 ref={toolsRef}
                 className="relative"
@@ -549,9 +594,9 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
 
                 {toolsDropdownOpen && (
                   <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50">
-                    <div className="w-72 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 text-slate-800">
+                    <div className="w-80 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 text-slate-800">
                       <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        Text Utilities
+                        Design &amp; Text Tools
                       </div>
                       {UTILITY_TOOLS.map((tool) => (
                         <Link
@@ -570,8 +615,15 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                             {tool.icon}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-bold leading-tight">
-                              {tool.label}
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold leading-tight">
+                                {tool.label}
+                              </span>
+                              {"badge" in tool && tool.badge && (
+                                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-blue-700">
+                                  {tool.badge}
+                                </span>
+                              )}
                             </div>
                             <div className="mt-0.5 text-[11px] text-slate-500 leading-normal line-clamp-1">
                               {tool.description}

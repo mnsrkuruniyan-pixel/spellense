@@ -65,6 +65,7 @@ interface DesignCheckResponse {
   };
   issues: DesignIssue[];
   engine: "hybrid-gemini" | "local-deterministic";
+  ocrEngine?: string;
   analysisNotice?: string;
   error?: string;
 }
@@ -187,9 +188,9 @@ export default function DesignCheckClient() {
       const safePage = Math.min(Math.max(pageNum, 1), total);
       const page = await pdf.getPage(safePage);
 
-      // Target about 2000px on the longest side: sharp enough for OCR/vision, small enough to upload.
+      // Target 2600px on the longest side: crisp resolution for OCR so small text is never garbled
       const base = page.getViewport({ scale: 1 });
-      const scale = Math.min(6, 2000 / Math.max(base.width, base.height, 1));
+      const scale = Math.min(6, 2600 / Math.max(base.width, base.height, 1));
       const viewport = page.getViewport({ scale });
 
       const canvas = document.createElement("canvas");
@@ -204,8 +205,9 @@ export default function DesignCheckClient() {
 
       await page.render({ canvasContext: ctx, viewport, canvas }).promise;
 
+      // Use PNG to prevent lossy JPEG ringing artifacts from corrupting small typography
       const blob: Blob | null = await new Promise((resolve) =>
-        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9)
+        canvas.toBlob((b) => resolve(b), "image/png")
       );
       if (!blob) throw new Error("Could not convert this PDF page to an image.");
 
@@ -237,13 +239,13 @@ export default function DesignCheckClient() {
         const originalHeight = img.naturalHeight || img.height;
 
         // If file is already under 3MB and dimensions are reasonable, upload directly
-        if (sourceFile.size <= 3 * 1024 * 1024 && originalWidth <= 2200 && originalHeight <= 2200) {
+        if (sourceFile.size <= 3 * 1024 * 1024 && originalWidth <= 2600 && originalHeight <= 2600) {
           resolve({ file: sourceFile, originalWidth, originalHeight });
           return;
         }
 
-        // Proportional scale to fit within 2200px max dimension (bypasses 4.5MB server limit)
-        const maxDim = 2200;
+        // Proportional scale to fit within 2600px max dimension (small text needs the extra pixels for OCR) (bypasses 4.5MB server limit)
+        const maxDim = 2600;
         let targetWidth = originalWidth;
         let targetHeight = originalHeight;
 
@@ -1310,6 +1312,12 @@ export default function DesignCheckClient() {
                         <span className="rounded-full bg-white/90 border border-slate-200/80 px-2 py-0.5 text-[10px] font-bold text-slate-600 uppercase">
                           {result.engine === "hybrid-gemini" ? "AI + Automated Checks" : "Limited Automated Checks"}
                         </span>
+                        {result.ocrEngine && (
+                          <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase flex items-center gap-1 shadow-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            {result.ocrEngine}
+                          </span>
+                        )}
                       </div>
                       <p className="mt-1 text-xs text-slate-600 max-w-2xl leading-relaxed">
                         {verdictSummary}
@@ -1992,6 +2000,42 @@ export default function DesignCheckClient() {
             )}
           </div>
         )}
+        {/* RELATED CREATIVE TOOLS SECTION */}
+        <section className="mt-20 border-t border-slate-200/80 pt-14">
+          <div className="text-center mb-8">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Cross-Tool Workflows</span>
+            <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">Explore More Free Creative Tools</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Link
+              href="/qr-code-generator"
+              className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
+            >
+              <div className="text-xs font-bold text-blue-600 uppercase mb-1">Print Scannability QA</div>
+              <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">QR Code Generator</div>
+              <p className="mt-1 text-xs text-slate-500">Create custom QR codes and verify camera scannability before printing.</p>
+            </Link>
+
+            <Link
+              href="/image-compressor"
+              className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
+            >
+              <div className="text-xs font-bold text-blue-600 uppercase mb-1">Optimizer</div>
+              <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Image Compressor</div>
+              <p className="mt-1 text-xs text-slate-500">Compress JPG, PNG &amp; PDFs with live split comparison.</p>
+            </Link>
+
+            <Link
+              href="/flipbook"
+              className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
+            >
+              <div className="text-xs font-bold text-blue-600 uppercase mb-1">3D Publishing</div>
+              <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">3D Digital Flipbook</div>
+              <p className="mt-1 text-xs text-slate-500">Turn PDFs into interactive 3D books with page-turn effects.</p>
+            </Link>
+          </div>
+        </section>
       </main>
 
       {/* FOOTER */}

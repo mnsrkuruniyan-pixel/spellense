@@ -1,0 +1,839 @@
+[
+  {
+    "name": "media_1789653233283.png",
+    "type": "UI / Light Flyer",
+    "ok": true,
+    "durationMs": 2679,
+    "issueCount": 8,
+    "issues": [
+      {
+        "id": "spell-8",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "parsers"
+      },
+      {
+        "id": "contrast-2",
+        "category": "contrast",
+        "severity": "warning",
+        "title": "Low Contrast Readability",
+        "isHedged": false,
+        "originalText": "publishing"
+      },
+      {
+        "id": "contrast-3",
+        "category": "contrast",
+        "severity": "warning",
+        "title": "Low Contrast Readability",
+        "isHedged": false,
+        "originalText": "possible"
+      },
+      {
+        "id": "contrast-4",
+        "category": "contrast",
+        "severity": "warning",
+        "title": "Low Contrast Readability",
+        "isHedged": false,
+        "originalText": "original"
+      },
+      {
+        "id": "contrast-5",
+        "category": "contrast",
+        "severity": "warning",
+        "title": "Low Contrast Readability",
+        "isHedged": false,
+        "originalText": "original"
+      },
+      {
+        "id": "layout-7",
+        "category": "typography",
+        "severity": "suggestion",
+        "title": "Very small text may be hard to read",
+        "isHedged": true,
+        "originalText": "HOW IT WORKS"
+      },
+      {
+        "id": "margin-1",
+        "category": "margin",
+        "severity": "suggestion",
+        "title": "Text sits inside the recommended safe margin",
+        "isHedged": true,
+        "originalText": "designed"
+      },
+      {
+        "id": "contrast-6",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "More low-contrast text",
+        "isHedged": true,
+        "originalText": null
+      }
+    ]
+  },
+  {
+    "name": "media_1789711086611.png",
+    "type": "Dark Background Header",
+    "ok": true,
+    "durationMs": 1543,
+    "issueCount": 5,
+    "issues": [
+      {
+        "id": "spell-5",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "frame(s)"
+      },
+      {
+        "id": "quality-1",
+        "category": "resolution",
+        "severity": "warning",
+        "title": "Low Resolution Artwork",
+        "isHedged": false,
+        "originalText": null
+      },
+      {
+        "id": "contrast-2",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "(unknown)"
+      },
+      {
+        "id": "contrast-3",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "Turbopack"
+      },
+      {
+        "id": "contrast-4",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "Show"
+      }
+    ]
+  },
+  {
+    "name": "media_1789711948978.png",
+    "type": "Document / Poster Layout",
+    "ok": true,
+    "durationMs": 2325,
+    "issueCount": 15,
+    "issues": [
+      {
+        "id": "spell-7",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "fle."
+      },
+      {
+        "id": "spell-8",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "designd"
+      },
+      {
+        "id": "spell-9",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "intenional"
+      },
+      {
+        "id": "spell-10",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "erors"
+      },
+      {
+        "id": "spell-11",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "automaticaly"
+      },
+      {
+        "id": "spell-12",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "companey"
+      },
+      {
+        "id": "spell-13",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "servise"
+      },
+      {
+        "id": "spell-14",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "proccess"
+      },
+      {
+        "id": "layout-6",
+        "category": "typography",
+        "severity": "suggestion",
+        "title": "Very small text may be hard to read",
+        "isHedged": true,
+        "originalText": "Important text. Privacy is importent, and files should not be permanantly stored"
+      },
+      {
+        "id": "spell-15",
+        "category": "copy",
+        "severity": "suggestion",
+        "title": "More possible spelling issues",
+        "isHedged": true,
+        "originalText": null
+      },
+      {
+        "id": "contrast-1",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "Should"
+      },
+      {
+        "id": "contrast-2",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "such"
+      },
+      {
+        "id": "contrast-3",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "fle."
+      },
+      {
+        "id": "contrast-4",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "servise"
+      },
+      {
+        "id": "contrast-5",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "More low-contrast text",
+        "isHedged": true,
+        "originalText": null
+      }
+    ]
+  },
+  {
+    "name": "media_1789716905198.png",
+    "type": "Dark Multi-element Card",
+    "ok": true,
+    "durationMs": 2970,
+    "issueCount": 2,
+    "issues": [
+      {
+        "id": "spell-1",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "nore"
+      },
+      {
+        "id": "spell-2",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": ".gitignore"
+      }
+    ]
+  },
+  {
+    "name": "media_1789726623892.png",
+    "type": "Light Banner / Typography",
+    "ok": true,
+    "durationMs": 2118,
+    "issueCount": 9,
+    "issues": [
+      {
+        "id": "spell-7",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "mnsrkuruniyan@gmail.com"
+      },
+      {
+        "id": "spell-8",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "spellense.com"
+      },
+      {
+        "id": "spell-9",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "byte.dns"
+      },
+      {
+        "id": "typo-6",
+        "category": "typography",
+        "severity": "suggestion",
+        "title": "Text over a busy background",
+        "isHedged": true,
+        "originalText": "build,"
+      },
+      {
+        "id": "contrast-1",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "byte.dns-parking.com"
+      },
+      {
+        "id": "contrast-2",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "anywhere."
+      },
+      {
+        "id": "contrast-3",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "ready"
+      },
+      {
+        "id": "contrast-4",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "truly"
+      },
+      {
+        "id": "contrast-5",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "More low-contrast text",
+        "isHedged": true,
+        "originalText": null
+      }
+    ]
+  },
+  {
+    "name": "media_1789726812149.png",
+    "type": "Dark Theme Promo",
+    "ok": true,
+    "durationMs": 1307,
+    "issueCount": 0,
+    "issues": []
+  },
+  {
+    "name": "media_1789727438096.png",
+    "type": "Portrait Poster (Dark)",
+    "ok": true,
+    "durationMs": 2557,
+    "issueCount": 3,
+    "issues": [
+      {
+        "id": "spell-3",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "spellense."
+      },
+      {
+        "id": "layout-2",
+        "category": "typography",
+        "severity": "suggestion",
+        "title": "Very small text may be hard to read",
+        "isHedged": true,
+        "originalText": "t t y Xf t ply f t t"
+      },
+      {
+        "id": "margin-1",
+        "category": "margin",
+        "severity": "suggestion",
+        "title": "Text sits inside the recommended safe margin",
+        "isHedged": true,
+        "originalText": "Congratulations!"
+      }
+    ]
+  },
+  {
+    "name": "media_1789727686423.png",
+    "type": "Dark Card Grid",
+    "ok": true,
+    "durationMs": 2040,
+    "issueCount": 2,
+    "issues": [
+      {
+        "id": "spell-1",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "spellense.vercel.app"
+      },
+      {
+        "id": "spell-2",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "spellense.com."
+      }
+    ]
+  },
+  {
+    "name": "media_1789727974824.png",
+    "type": "Marketing Creative (Photo)",
+    "ok": true,
+    "durationMs": 1843,
+    "issueCount": 12,
+    "issues": [
+      {
+        "id": "spell-11",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "byte.dns"
+      },
+      {
+        "id": "spell-13",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "moe"
+      },
+      {
+        "id": "margin-1",
+        "category": "margin",
+        "severity": "warning",
+        "title": "Safe-Zone Margin Bleed",
+        "isHedged": false,
+        "originalText": "Redirects"
+      },
+      {
+        "id": "margin-2",
+        "category": "margin",
+        "severity": "warning",
+        "title": "Safe-Zone Margin Bleed",
+        "isHedged": false,
+        "originalText": "DNSSEC"
+      },
+      {
+        "id": "margin-3",
+        "category": "margin",
+        "severity": "warning",
+        "title": "Safe-Zone Margin Bleed",
+        "isHedged": false,
+        "originalText": "Subdomains"
+      },
+      {
+        "id": "contrast-5",
+        "category": "contrast",
+        "severity": "warning",
+        "title": "Low Contrast Readability",
+        "isHedged": false,
+        "originalText": "Change"
+      },
+      {
+        "id": "typo-10",
+        "category": "typography",
+        "severity": "suggestion",
+        "title": "Text over a busy background",
+        "isHedged": true,
+        "originalText": "Child"
+      },
+      {
+        "id": "margin-4",
+        "category": "margin",
+        "severity": "suggestion",
+        "title": "Text sits inside the recommended safe margin",
+        "isHedged": true,
+        "originalText": "history"
+      },
+      {
+        "id": "contrast-6",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "hosting"
+      },
+      {
+        "id": "contrast-7",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "Hostinger"
+      },
+      {
+        "id": "contrast-8",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "services,"
+      },
+      {
+        "id": "contrast-9",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "More low-contrast text",
+        "isHedged": true,
+        "originalText": null
+      }
+    ]
+  },
+  {
+    "name": "media_1789728062667.png",
+    "type": "Flyer / Complex Layout",
+    "ok": true,
+    "durationMs": 2339,
+    "issueCount": 1,
+    "issues": [
+      {
+        "id": "typo-1",
+        "category": "typography",
+        "severity": "suggestion",
+        "title": "Text over a busy background",
+        "isHedged": true,
+        "originalText": "add"
+      }
+    ]
+  },
+  {
+    "name": "media_1789732027718.png",
+    "type": "Portrait Document",
+    "ok": true,
+    "durationMs": 2672,
+    "issueCount": 7,
+    "issues": [
+      {
+        "id": "spell-7",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "https://spellense.com/"
+      },
+      {
+        "id": "typo-6",
+        "category": "typography",
+        "severity": "suggestion",
+        "title": "Text over a busy background",
+        "isHedged": true,
+        "originalText": "REMOVE"
+      },
+      {
+        "id": "contrast-1",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "Full"
+      },
+      {
+        "id": "contrast-2",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "details"
+      },
+      {
+        "id": "contrast-3",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "stay"
+      },
+      {
+        "id": "contrast-4",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "Tag"
+      },
+      {
+        "id": "contrast-5",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "More low-contrast text",
+        "isHedged": true,
+        "originalText": null
+      }
+    ]
+  },
+  {
+    "name": "media_1789993033579.png",
+    "type": "Social Media Post",
+    "ok": true,
+    "durationMs": 2158,
+    "issueCount": 7,
+    "issues": [
+      {
+        "id": "spell-7",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "usgd"
+      },
+      {
+        "id": "contrast-1",
+        "category": "contrast",
+        "severity": "warning",
+        "title": "Low Contrast Readability",
+        "isHedged": false,
+        "originalText": "Client"
+      },
+      {
+        "id": "contrast-2",
+        "category": "contrast",
+        "severity": "warning",
+        "title": "Low Contrast Readability",
+        "isHedged": false,
+        "originalText": "Service"
+      },
+      {
+        "id": "contrast-3",
+        "category": "contrast",
+        "severity": "warning",
+        "title": "Low Contrast Readability",
+        "isHedged": false,
+        "originalText": "provider"
+      },
+      {
+        "id": "contrast-4",
+        "category": "contrast",
+        "severity": "warning",
+        "title": "Low Contrast Readability",
+        "isHedged": false,
+        "originalText": "Name"
+      },
+      {
+        "id": "layout-6",
+        "category": "layout",
+        "severity": "warning",
+        "title": "Text elements appear to overlap",
+        "isHedged": true,
+        "originalText": null
+      },
+      {
+        "id": "contrast-5",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "More low-contrast text",
+        "isHedged": true,
+        "originalText": null
+      }
+    ]
+  },
+  {
+    "name": "media_1789994393895.png",
+    "type": "Detailed Graphic Post",
+    "ok": true,
+    "durationMs": 2001,
+    "issueCount": 6,
+    "issues": [
+      {
+        "id": "margin-1",
+        "category": "margin",
+        "severity": "suggestion",
+        "title": "Text sits inside the recommended safe margin",
+        "isHedged": true,
+        "originalText": "Document"
+      },
+      {
+        "id": "contrast-2",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "Previous"
+      },
+      {
+        "id": "contrast-3",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "ERRORS"
+      },
+      {
+        "id": "contrast-4",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "MARKED"
+      },
+      {
+        "id": "contrast-5",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "Low Contrast Readability",
+        "isHedged": true,
+        "originalText": "America"
+      },
+      {
+        "id": "contrast-6",
+        "category": "contrast",
+        "severity": "suggestion",
+        "title": "More low-contrast text",
+        "isHedged": true,
+        "originalText": null
+      }
+    ]
+  },
+  {
+    "name": "sample-document.png",
+    "type": "Sample Scanned Doc",
+    "ok": true,
+    "durationMs": 1810,
+    "issueCount": 11,
+    "issues": [
+      {
+        "id": "spell-6",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "documnet"
+      },
+      {
+        "id": "spell-7",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "demonstrat"
+      },
+      {
+        "id": "spell-8",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "definately"
+      },
+      {
+        "id": "spell-9",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "recieve"
+      },
+      {
+        "id": "spell-10",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "chek"
+      },
+      {
+        "id": "spell-11",
+        "category": "copy",
+        "severity": "warning",
+        "title": "Possible Spelling Mistake",
+        "isHedged": false,
+        "originalText": "assistence"
+      },
+      {
+        "id": "typo-4",
+        "category": "typography",
+        "severity": "suggestion",
+        "title": "Text over a busy background",
+        "isHedged": true,
+        "originalText": "DOCUMENT"
+      },
+      {
+        "id": "spell-5",
+        "category": "copy",
+        "severity": "suggestion",
+        "title": "Possible Spelling Mistake",
+        "isHedged": true,
+        "originalText": "Welcom"
+      },
+      {
+        "id": "margin-1",
+        "category": "margin",
+        "severity": "suggestion",
+        "title": "Artwork element close to the edge",
+        "isHedged": true,
+        "originalText": null
+      },
+      {
+        "id": "margin-2",
+        "category": "margin",
+        "severity": "suggestion",
+        "title": "Artwork element close to the edge",
+        "isHedged": true,
+        "originalText": null
+      },
+      {
+        "id": "margin-3",
+        "category": "margin",
+        "severity": "suggestion",
+        "title": "Artwork element close to the edge",
+        "isHedged": true,
+        "originalText": null
+      }
+    ]
+  },
+  {
+    "name": "spellense-launch-banner.jpg",
+    "type": "Launch Banner (Photo/Complex)",
+    "ok": true,
+    "durationMs": 2888,
+    "issueCount": 0,
+    "issues": []
+  }
+]

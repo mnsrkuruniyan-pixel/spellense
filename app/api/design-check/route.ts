@@ -1,15 +1,33 @@
 import { NextResponse } from "next/server";
-import { createWorker } from "tesseract.js";
+import { createWorker, type Worker } from "tesseract.js";
 import { createCanvas, loadImage } from "@napi-rs/canvas";
 import nspell from "nspell";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import {
+  GEMINI_RESPONSE_SCHEMA, analyzeTextLayout, analyzeTextMargins, box2dToNorm, classifyContrast,
+  crossValidate, detectEdgeContent, evaluateSpelling, extractGeminiText, findOcrBox, makeLumAccessor,
+  marginConfig, measureTextContrast, median, mergeOcrWords, parseJsonLoose, verifyDateClaims,
+  verifyPriceClaims,
+  type ContrastMeasure, type DateClaim, type Locator, type NormBox, type OcrWord, type PriceClaim,
+  type QaCategory, type QaIssueDraft, type QaSeverity,
+} from "./analysis";
+import { buildGeminiPrompt } from "./prompt";
+import { runPaddleOcr } from "./paddleOcr";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 function loadDictionary(subFolder: string, packageName: string) {
+  let resolvedDir: string | null = null;
+  try {
+    const { createRequire } = require("node:module");
+    const req = createRequire(import.meta.url);
+    resolvedDir = dirname(req.resolve(packageName));
+  } catch {}
+
   const candidates = [
+    ...(resolvedDir ? [resolvedDir] : []),
     join(process.cwd(), "dictionaries", subFolder),
     join(process.cwd(), "node_modules", packageName),
     join(__dirname, "..", "..", "..", "dictionaries", subFolder),
@@ -24,6 +42,10 @@ function loadDictionary(subFolder: string, packageName: string) {
       return nspell({ aff, dic });
     } catch {}
   }
+
+  console.warn(
+    `[DesignCheck] Dictionary fallback used for ${packageName} (${subFolder}) — dictionary files not found. Spell checking will be disabled!`
+  );
 
   return {
     correct: () => true,
@@ -46,6 +68,7 @@ const BRAND_AND_PROPER_NOUNS = new Set([
   "nissan", "tesla", "volvo", "volkswagen", "porsche", "ferrari", "lamborghini", "google",
   "microsoft", "amazon", "meta", "facebook", "instagram", "tiktok", "youtube", "linkedin",
   "whatsapp", "netflix", "spotify", "adobe", "figma", "canva", "uber", "careem", "deliveroo", "talabat",
+  "ronshen", "kelon", "gorenje", "sanden", "changelight", "asko", "tcl", "haier",
 
   // Acronyms, Geography & Events
   "hvac", "fifa", "uae", "usa", "uk", "eu", "dubai", "abu", "dhabi", "sharjah", "ajman", "rak",
@@ -53,7 +76,8 @@ const BRAND_AND_PROPER_NOUNS = new Set([
   "bahrain", "manama", "cairo", "egypt", "beirut", "amman", "delhi", "mumbai", "london", "paris",
   "tokyo", "singapore", "sydney", "expo", "olympics", "worldcup", "fifa26", "ac", "led", "lcd",
   "oled", "qled", "uhd", "hd", "4k", "8k", "usb", "btu", "inverter", "wifi", "ai", "iot", "eco",
-  "pro", "max", "ultra", "plus", "mini", "lite", "super", "smart", "hybrid", "turbo",
+  "qingdao", "shunde", "guangzhou", "shenzhen", "beijing", "shanghai", "tianjin", "chongqing", "jersey", "worldwide",
+  "changsha", "guiyang", "huzhou", "nanchang", "shijiazhuang", "sichuan", "zhejiang", "guangdong",
 
   // Appliance, Hardware & Product Specifications
   "inox", "inoxydable", "stainless", "nofrost", "totalnofrost", "frostfree", "multiairflow", "biofresh",
@@ -157,28 +181,9 @@ export interface DesignCheckResponse {
   };
   issues: DesignIssue[];
   engine: "hybrid-gemini" | "local-deterministic";
+  ocrEngine?: string;
   analysisNotice?: string;
   error?: string;
-}
-
-// Convert sRGB to linear luminance
-function getLinearLuminance(val: number): number {
-  const s = val / 255;
-  return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-}
-
-function calculateRelativeLuminance(r: number, g: number, b: number): number {
-  return (
-    0.2126 * getLinearLuminance(r) +
-    0.7152 * getLinearLuminance(g) +
-    0.0722 * getLinearLuminance(b)
-  );
-}
-
-function calculateContrastRatio(lum1: number, lum2: number): number {
-  const l1 = Math.max(lum1, lum2);
-  const l2 = Math.min(lum1, lum2);
-  return (l1 + 0.05) / (l2 + 0.05);
 }
 
 function isModelOrCodeNumber(token: string): boolean {
@@ -229,24 +234,278 @@ function isLikelyRealText(text: string): boolean {
   return true;
 }
 
+// ───────────────────────── Request guards ─────────────────────────
+const MAX_FILE_BYTES = (Number(process.env.MAX_FILE_MB) || 10) * 1024 * 1024;
+const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX) || 30;
+const RATE_WINDOW_MS = 15 * 60 * 1000;
+const rateBuckets = new Map<string, { count: number; reset: number }>();
+
+// Best-effort per-instance limiter (on serverless each warm instance counts separately;
+// put a real limiter / WAF rule in front of this route if Gemini cost matters).
+function isRateLimited(ip: string): boolean {
+  if (process.env.NODE_ENV === "development" && (ip === "127.0.0.1" || ip === "::1" || ip === "unknown")) {
+    return false;
+  }
+  const now = Date.now();
+  if (rateBuckets.size > 5000) {
+    for (const [k, v] of rateBuckets) if (v.reset < now) rateBuckets.delete(k);
+  }
+  const b = rateBuckets.get(ip);
+  if (!b || b.reset < now) {
+    rateBuckets.set(ip, { count: 1, reset: now + RATE_WINDOW_MS });
+    return false;
+  }
+  b.count++;
+  return b.count > RATE_LIMIT_MAX;
+}
+
+/** Trust the bytes, not the client-supplied Content-Type. */
+function sniffImageMime(b: Buffer): string | null {
+  if (b.length < 12) return null;
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WEBP") return "image/webp";
+  return null;
+}
+
+// ───────────────────────── OCR (shared worker + preprocessing) ─────────────────────────
+type LoadedImage = Awaited<ReturnType<typeof loadImage>>;
+type OcrResultLike = Awaited<ReturnType<Worker["recognize"]>>;
+
+let ocrWorkerPromise: Promise<Worker> | null = null;
+let ocrChain: Promise<unknown> = Promise.resolve();
+
+function getOcrWorker(): Promise<Worker> {
+  if (!ocrWorkerPromise) {
+    ocrWorkerPromise = createWorker("eng").catch((e) => {
+      ocrWorkerPromise = null;
+      throw e;
+    });
+  }
+  return ocrWorkerPromise;
+}
+
+// One shared worker, jobs run strictly one after another.
+function runOcr(buf: Buffer): Promise<OcrResultLike> {
+  const job = ocrChain.then(async () => {
+    const worker = await getOcrWorker();
+    return worker.recognize(buf, {}, { blocks: true });
+  });
+  ocrChain = job.catch(() => {
+    // A failed job may leave the worker in a bad state: recycle it.
+    const dead = ocrWorkerPromise;
+    ocrWorkerPromise = null;
+    dead?.then((w) => w.terminate()).catch(() => undefined);
+  });
+  return job;
+}
+
+/** Grayscale + percentile contrast stretch (+ upscale small images, optional inversion for light-on-dark text). */
+function buildOcrImage(img: LoadedImage, width: number, height: number, inverted: boolean) {
+  const longest = Math.max(width, height);
+  let scale = longest < 1400 ? 2 : longest < 2000 ? 1.5 : 1;
+  scale = Math.min(scale, 3200 / longest);
+  const cw = Math.max(1, Math.round(width * scale));
+  const ch = Math.max(1, Math.round(height * scale));
+  const c = createCanvas(cw, ch);
+  const cx = c.getContext("2d");
+  cx.fillStyle = "#ffffff";
+  cx.fillRect(0, 0, cw, ch);
+  cx.drawImage(img, 0, 0, cw, ch);
+
+  const id = cx.getImageData(0, 0, cw, ch);
+  const d = id.data;
+  const hist = new Uint32Array(256);
+  for (let i = 0; i < d.length; i += 4) {
+    const g = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) | 0;
+    d[i] = g;
+    hist[g]++;
+  }
+  const total = cw * ch;
+  let acc = 0, lo = 0, hi = 255;
+  for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= total * 0.01) { lo = v; break; } }
+  acc = 0;
+  for (let v = 255; v >= 0; v--) { acc += hist[v]; if (acc >= total * 0.01) { hi = v; break; } }
+  if (hi - lo < 25) { lo = 0; hi = 255; } // nearly flat image: don't amplify noise
+  const span = Math.max(1, hi - lo);
+  for (let i = 0; i < d.length; i += 4) {
+    let g = ((d[i] - lo) * 255) / span;
+    g = g < 0 ? 0 : g > 255 ? 255 : g;
+    if (inverted) g = 255 - g;
+    d[i] = d[i + 1] = d[i + 2] = g;
+    d[i + 3] = 255;
+  }
+  cx.putImageData(id, 0, 0);
+  return { buffer: c.toBuffer("image/png"), scale };
+}
+
+function extractOcr(result: OcrResultLike, scale: number, width: number, height: number) {
+  const words: OcrWord[] = [];
+  const lines: OcrWord[] = [];
+  const mk = (text: string, confidence: number, x0: number, y0: number, x1: number, y1: number): OcrWord => {
+    const px = Math.max(0, x0 / scale), py = Math.max(0, y0 / scale);
+    const pw = Math.max(0, (x1 - x0) / scale), ph = Math.max(0, (y1 - y0) / scale);
+    return {
+      text, confidence,
+      left: Math.min(1, px / width), top: Math.min(1, py / height),
+      width: Math.min(1, pw / width), height: Math.min(1, ph / height),
+      pixelX: px, pixelY: py, pixelW: pw, pixelH: ph,
+    };
+  };
+  for (const block of result.data?.blocks || []) {
+    for (const paragraph of block.paragraphs || []) {
+      for (const line of paragraph.lines || []) {
+        if (line.bbox) {
+          const lt = (line.text || "").trim();
+          const lc = typeof line.confidence === "number" ? line.confidence : 80;
+          if (lt && lc >= 60) lines.push(mk(lt, lc, line.bbox.x0, line.bbox.y0, line.bbox.x1, line.bbox.y1));
+        }
+        for (const w of line.words || []) {
+          const text = (w.text || "").trim();
+          const conf = typeof w.confidence === "number" ? w.confidence : 80;
+          if (conf < 60 || !w.bbox || !isLikelyRealText(text)) continue;
+          const ow = mk(text, conf, w.bbox.x0, w.bbox.y0, w.bbox.x1, w.bbox.y1);
+          if (ow.pixelW < 10 || ow.pixelH < 8) continue; // sub-pixel specks
+          words.push(ow);
+        }
+      }
+    }
+  }
+  return { words, lines };
+}
+
+// ───────────────────────── Gemini ─────────────────────────
+async function callGemini(opts: {
+  key: string; model: string; prompt: string; base64: string; mime: string;
+}): Promise<Record<string, unknown> | null> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(opts.model)}:generateContent`;
+  let useSchema = true;
+  let useThinking = true;
+
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        // Key goes in a header, not the URL (URLs end up in logs).
+        headers: { "Content-Type": "application/json", "x-goog-api-key": opts.key },
+        signal: AbortSignal.timeout(15000),
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: opts.prompt }, { inlineData: { mimeType: opts.mime, data: opts.base64 } }] }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 8192,
+            responseMimeType: "application/json",
+            ...(useSchema ? { responseSchema: GEMINI_RESPONSE_SCHEMA } : {}),
+            // thinkingConfig belongs INSIDE generationConfig (it was ignored at top level)
+            ...(useThinking ? { thinkingConfig: { thinkingBudget: 1024 } } : {}),
+          },
+        }),
+      });
+      if (res.ok) return parseJsonLoose(extractGeminiText(await res.json()));
+      if (res.status === 400) {
+        // Model doesn't support the schema / thinking option: degrade step by step.
+        if (useSchema) { useSchema = false; continue; }
+        if (useThinking) { useThinking = false; continue; }
+        break;
+      }
+      if (res.status === 503 || res.status === 429) {
+        console.warn(`[DesignCheck] Gemini ${res.status}, retry ${attempt}`);
+        await new Promise((r) => setTimeout(r, 800 * attempt));
+        continue;
+      }
+      break;
+    } catch (err: unknown) {
+      console.warn(`[DesignCheck] Gemini fetch error (attempt ${attempt}):`, err);
+      const isDnsError = err && typeof err === "object" && ("code" in err && (err as { code?: string }).code === "ENOTFOUND" || "cause" in err && (err as { cause?: { code?: string } }).cause?.code === "ENOTFOUND");
+      if (isDnsError || attempt >= 2) {
+        break; // Fast fail on network unreachability to stay within route time budget
+      }
+      await new Promise((r) => setTimeout(r, 800 * attempt));
+    }
+  }
+  return null;
+}
+
+interface GeminiItem {
+  category?: string; severity?: string; qaRole?: string; title?: string; description?: string;
+  impact?: string; specDetail?: string; whyItMatters?: string; suggestedFix?: string;
+  originalText?: string; isHedged?: boolean; box_2d?: number[];
+}
+
+const ROLE_BY_CATEGORY: Record<string, string> = {
+  data_integrity: "Data Integrity QA",
+  compliance: "Asterisk & Legal Compliance",
+  typography: "Typography & Hierarchy",
+  contrast: "Contrast & Readability",
+  layout: "Layout & Alignment",
+  artifacts: "Pre-Flight Artifacts",
+};
+const VALID_CATEGORIES = ["copy", "contrast", "margin", "typography", "compliance", "data_integrity", "layout", "artifacts"];
+
+function geminiItemsToIssues(parsed: Record<string, unknown>, words: OcrWord[]): QaIssueDraft[] {
+  const items = Array.isArray(parsed.issues) ? (parsed.issues as GeminiItem[]) : [];
+  return items.map((item) => {
+    // Prefer the exact OCR box when the quoted text was found; fall back to the model's box.
+    const b: NormBox =
+      findOcrBox(words, item.originalText) ??
+      box2dToNorm(item.box_2d) ?? { left: 0.1, top: 0.1, width: 0.2, height: 0.08 };
+    const category = (VALID_CATEGORIES.includes(item.category ?? "") ? item.category : "copy") as QaCategory;
+    const severity = (["critical", "warning", "suggestion"].includes(item.severity ?? "") ? item.severity : "warning") as QaSeverity;
+    const left = Math.max(0, Math.min(0.95, b.left));
+    const top = Math.max(0, Math.min(0.95, b.top));
+    return {
+      category, severity,
+      qaRole: item.qaRole || ROLE_BY_CATEGORY[category] || "Creative Director QA",
+      title: item.title || "QA Issue Flagged",
+      description: item.description || item.title || "Potential issue flagged by the visual review.",
+      impact: item.impact || item.whyItMatters || undefined,
+      specDetail: item.specDetail || undefined,
+      whyItMatters: item.whyItMatters || item.impact || undefined,
+      originalText: item.originalText,
+      suggestedFix: item.suggestedFix,
+      isHedged: Boolean(item.isHedged),
+      bbox: { left, top, width: Math.min(1 - left, b.width), height: Math.min(1 - top, b.height) },
+    };
+  });
+}
+
+const arr = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+
+// ───────────────────────── Route ─────────────────────────
 export async function POST(req: Request) {
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-
-    if (!file) {
+    const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
+    if (isRateLimited(ip)) {
       return NextResponse.json(
-        { success: false, error: "No image or document file uploaded" },
-        { status: 400 }
+        { success: false, error: "Too many design checks in a short time. Please wait a few minutes and try again." },
+        { status: 429 }
       );
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const mimeType = file.type || "image/png";
+    const formData = await req.formData();
+    const file = formData.get("file") as File | null;
+    if (!file) {
+      return NextResponse.json({ success: false, error: "No image or document file uploaded" }, { status: 400 });
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      return NextResponse.json(
+        { success: false, error: `File is too large (max ${Math.round(MAX_FILE_BYTES / 1024 / 1024)}MB).` },
+        { status: 413 }
+      );
+    }
 
-    // 1. Load image onto canvas to get exact pixel dimensions
-    let img;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const mimeType = sniffImageMime(buffer);
+    if (!mimeType) {
+      return NextResponse.json(
+        { success: false, error: "Unsupported or corrupted file. Please upload a valid PNG, JPG, or WebP image." },
+        { status: 400 }
+      );
+    }
+    const mode = formData.get("mode") === "print" ? "print" : "digital";
+
+    // 1. Decode and paint onto a WHITE canvas (transparent PNGs would otherwise read as black).
+    let img: LoadedImage;
     try {
       img = await loadImage(buffer);
     } catch {
@@ -255,7 +514,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
     const width = img.width;
     const height = img.height;
     const origWidth = Number(formData.get("originalWidth")) || width;
@@ -264,17 +522,22 @@ export async function POST(req: Request) {
 
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
     ctx.drawImage(img, 0, 0);
+    // One bulk read; every pixel lookup below indexes this array (per-pixel getImageData is very slow).
+    const lumAt = makeLumAccessor(ctx.getImageData(0, 0, width, height).data, width, height);
 
     const issues: DesignIssue[] = [];
     let issueCounter = 1;
+    const addDrafts = (drafts: QaIssueDraft[], prefix: string) => {
+      for (const d of drafts) issues.push({ id: `${prefix}-${issueCounter++}`, ...d });
+    };
 
-    // 2. Check Resolution & Quality
+    // 2. Resolution
     if (origWidth < 600 || origHeight < 400) {
-      issues.push({
-        id: `quality-${issueCounter++}`,
-        category: "resolution",
-        severity: "warning",
+      addDrafts([{
+        category: "resolution", severity: "warning",
         title: "Low Resolution Artwork",
         description: `Artwork dimensions (${origWidth}×${origHeight}px) fall below recommended digital and print resolution thresholds.`,
         impact: "This creative will look noticeably blurry or pixelated when viewed on modern high-DPI screens or in print.",
@@ -282,215 +545,162 @@ export async function POST(req: Request) {
         whyItMatters: "Low-resolution visuals degrade perceived brand quality and credibility.",
         suggestedFix: "Export at a minimum of 1080×1080px (for social) or 300 DPI (for print).",
         bbox: { left: 0.02, top: 0.02, width: 0.96, height: 0.08 },
-      });
+      }], "quality");
     }
 
-    // 3. OCR and spatial mapping via Tesseract
-    const ocrWorker = await createWorker("eng");
-    const ocrResult = await ocrWorker.recognize(buffer, {}, { blocks: true });
-    await ocrWorker.terminate();
+    // 3. OCR: High-Precision PaddleOCR (PP-OCRv6) Engine with Tesseract fallback
+    let words: OcrWord[] = [];
+    let lines: OcrWord[] = [];
+    let ocrEngine = "PaddleOCR (PP-OCRv6)";
 
-    type BboxWord = {
-      text: string;
-      confidence: number;
-      left: number;
-      top: number;
-      width: number;
-      height: number;
-      pixelX: number;
-      pixelY: number;
-      pixelW: number;
-      pixelH: number;
-    };
+    try {
+      const pRes = await runPaddleOcr(buffer, width, height);
+      words = pRes.words;
+      lines = pRes.lines;
+    } catch (paddleErr) {
+      console.warn("[DesignCheck] PaddleOCR execution fallback to Tesseract:", paddleErr);
+      ocrEngine = "Tesseract.js (Fallback)";
+      const pass1 = buildOcrImage(img, width, height, false);
+      const r1 = await runOcr(pass1.buffer);
+      const e1 = extractOcr(r1, pass1.scale, width, height);
+      words = e1.words;
+      lines = e1.lines;
+    }
 
-    const words: BboxWord[] = [];
-
-    // Extract blocks and words with strict noise filtering
-    const rawBlocks = ocrResult.data?.blocks || [];
-    for (const block of rawBlocks) {
-      for (const paragraph of block.paragraphs || []) {
-        for (const line of paragraph.lines || []) {
-          for (const w of line.words || []) {
-            const text = (w.text || "").trim();
-            const conf = typeof w.confidence === "number" ? w.confidence : 80;
-
-            // Strict filtering: discard low-confidence noise & non-text graphics
-            if (conf < 65) continue;
-            if (!isLikelyRealText(text) || !w.bbox) continue;
-
-            const x0 = w.bbox.x0;
-            const y0 = w.bbox.y0;
-            const x1 = w.bbox.x1;
-            const y1 = w.bbox.y1;
-            const pw = x1 - x0;
-            const ph = y1 - y0;
-
-            // Discard tiny sub-pixel specks
-            if (pw < 10 || ph < 8) continue;
-
-            words.push({
-              text,
-              confidence: conf,
-              left: Math.max(0, x0 / width),
-              top: Math.max(0, y0 / height),
-              width: Math.min(1, pw / width),
-              height: Math.min(1, ph / height),
-              pixelX: x0,
-              pixelY: y0,
-              pixelW: pw,
-              pixelH: ph,
-            });
-          }
-        }
+    const pageLum = median([
+      lumAt(10, 10), lumAt(width - 10, 10), lumAt(10, height - 10),
+      lumAt(width - 10, height - 10), lumAt(width / 2, 15),
+    ]);
+    if (words.length < 5 || pageLum < 0.25) {
+      try {
+        const pass2 = buildOcrImage(img, width, height, true);
+        const pRes2 = await runPaddleOcr(pass2.buffer, width, height).catch(async () => {
+          const r2 = await runOcr(pass2.buffer);
+          return extractOcr(r2, pass2.scale, width, height);
+        });
+        words = mergeOcrWords(words, pRes2.words);
+        lines = mergeOcrWords(lines, pRes2.lines);
+      } catch (e) {
+        console.warn("[DesignCheck] Secondary inverted OCR pass skipped:", e);
       }
     }
 
-    // 4. Margins & Safe-Zone Engine
-    // True print bleed / cut risk occurs when text is placed dangerously close (< 1.2%) to the physical edge.
-    // Standard graphic design layouts commonly use tight intentional margins (2% to 3.5%).
-    // We only flag text that is genuinely within the danger zone (< 1.2% or > 98.8%).
-    let marginIssuesCount = 0;
-    const DANGER_MARGIN = 0.012; // 1.2% from edge (genuine trim / cut-off danger zone)
+    // 4. Margins (text + non-text artwork), thresholds depend on digital/print mode
+    const cfg = marginConfig(mode);
+    const margins = analyzeTextMargins(words, cfg);
+    addDrafts(margins.issues, "margin");
+    addDrafts(detectEdgeContent(lumAt, width, height, cfg.danger, margins.edgesHit), "margin");
 
-    for (const w of words) {
-      if (w.pixelH < 12 || w.confidence < 70) continue;
-
-      const touchesLeft = w.left < DANGER_MARGIN;
-      const touchesRight = w.left + w.width > 1 - DANGER_MARGIN;
-      const touchesTop = w.top < DANGER_MARGIN;
-      const touchesBottom = w.top + w.height > 1 - DANGER_MARGIN;
-
-      if (touchesLeft || touchesRight || touchesTop || touchesBottom) {
-        marginIssuesCount++;
-        const edge = touchesLeft
-          ? "left edge"
-          : touchesRight
-          ? "right edge"
-          : touchesTop
-          ? "top edge"
-          : "bottom edge";
-
-        if (marginIssuesCount <= 3) {
-          issues.push({
-            id: `margin-${issueCounter++}`,
-            category: "margin",
-            severity: "warning",
-            title: "Safe-Zone Margin Bleed",
-            description: `Text "${w.text}" is placed dangerously close to the ${edge}.`,
-            impact: "Text placed right against the outer border risks being clipped by commercial print guillotines or screen bezels.",
-            specDetail: `Within ${Math.round(DANGER_MARGIN * 1000) / 10}% bleed danger boundary (${edge}).`,
-            whyItMatters: "Commercial print trimming drift is typically 2–3mm; placing copy inside the bleed zone causes cut-off text.",
-            originalText: w.text,
-            suggestedFix: `Move text inward slightly to preserve a safe breathing margin.`,
-            bbox: {
-              left: w.left,
-              top: w.top,
-              width: w.width,
-              height: w.height,
-            },
-          });
-        }
-      }
-    }
-
-    // 5. WCAG Text-to-Background Contrast Engine (Page-Aware & Interline Sampling)
-    const cornerSamples = [
-      ctx.getImageData(10, 10, 1, 1).data,
-      ctx.getImageData(Math.max(0, width - 10), 10, 1, 1).data,
-      ctx.getImageData(10, Math.max(0, height - 10), 1, 1).data,
-      ctx.getImageData(Math.max(0, width - 10), Math.max(0, height - 10), 1, 1).data,
-      ctx.getImageData(Math.floor(width / 2), 15, 1, 1).data,
-    ];
-    const pageLums = cornerSamples.map((s) => calculateRelativeLuminance(s[0], s[1], s[2]));
-    pageLums.sort((a, b) => a - b);
-    const medianPageLum = pageLums[Math.floor(pageLums.length / 2)];
-    const isLightPage = medianPageLum >= 0.70;
-    const isDarkPage = medianPageLum <= 0.30;
-
-    let contrastFailCount = 0;
+    // 5. Contrast: real ratio per word (no luminance-difference shortcuts)
+    type Cls = NonNullable<ReturnType<typeof classifyContrast>>;
+    const fails: { w: OcrWord; m: ContrastMeasure; cls: Cls }[] = [];
+    const busy: { w: OcrWord; m: ContrastMeasure }[] = [];
     for (const w of words) {
       if (w.pixelW < 14 || w.pixelH < 10 || w.confidence < 70) continue;
       if (w.text.length < 3 || isModelOrCodeNumber(w.text)) continue;
 
-      try {
-        // Collect pixel luminances INSIDE the word bounding box
-        const stepX = Math.max(1, Math.floor(w.pixelW / 12));
-        const stepY = Math.max(1, Math.floor(w.pixelH / 6));
-        const innerLuminances: number[] = [];
+      const cleanWord = w.text.toLowerCase().replace(/[^a-z0-9]/g, "");
+      // WCAG 2.1 Criterion 1.4.3: Logotypes (brand names & partner logos) are explicitly exempt from contrast rules
+      if (BRAND_AND_PROPER_NOUNS.has(cleanWord) || BRAND_AND_PROPER_NOUNS.has(w.text.toLowerCase())) continue;
 
-        for (let px = w.pixelX + 1; px < w.pixelX + w.pixelW - 1; px += stepX) {
-          for (let py = w.pixelY + 1; py < w.pixelY + w.pixelH - 1; py += stepY) {
-            const p = ctx.getImageData(px, py, 1, 1).data;
-            innerLuminances.push(calculateRelativeLuminance(p[0], p[1], p[2]));
-          }
-        }
+      // Secondary technical units / parenthetical metadata (e.g. "(inch)", "(kg)", "120W", "60Hz")
+      const isSpecUnit = /^\(?[a-z0-9]+(\/?[a-z0-9]+)*\)?$/i.test(w.text) &&
+        (w.text.startsWith("(") || w.text.endsWith(")") || /^[0-9]+(w|hz|k|v|m|cm|mm|kg|dba|inch|nit)$/i.test(w.text));
 
-        if (innerLuminances.length < 6) continue;
-        innerLuminances.sort((a, b) => a - b);
+      // Uppercase labels, table column headers, or bold text have higher visual mass
+      const isUpperOrBold = (/^[A-Z0-9\s.,/()+-]+$/.test(w.text) && w.text.length >= 2) || isSpecUnit;
 
-        const p10 = innerLuminances[Math.floor(innerLuminances.length * 0.10)]; // Darkest (ink if text is dark)
-        const p50 = innerLuminances[Math.floor(innerLuminances.length * 0.50)]; // Median
-        const p90 = innerLuminances[Math.floor(innerLuminances.length * 0.90)]; // Brightest (ink if text is light)
-
-        // 1. If standard light page (white/cream document) and text has dark ink (p10 < 0.35 & p90 > 0.60):
-        // It is standard dark text on white document -> 100% High Contrast Pass!
-        if (isLightPage && p10 < 0.35 && p90 > 0.60) {
-          continue;
-        }
-
-        // 2. If standard dark page (black/navy presentation) and text has light ink (p90 > 0.65 & p10 < 0.40):
-        // Standard light text on dark background -> 100% High Contrast Pass!
-        if (isDarkPage && p90 > 0.65 && p10 < 0.40) {
-          continue;
-        }
-
-        // 3. If there is a massive luminance spread inside the text box itself (clear contrast between glyph and box):
-        if (p90 - p10 >= 0.40) {
-          continue;
-        }
-
-        // 4. For text inside localized colored banners, buttons, or photo blocks:
-        // Sample background in the line-height space immediately above the word (never hits adjacent words in a sentence)
-        const topSpaceY = Math.max(0, w.pixelY - Math.max(4, Math.floor(w.pixelH * 0.4)));
-        const sampleX = Math.floor(w.pixelX + w.pixelW / 2);
-        const topBgPixel = ctx.getImageData(sampleX, topSpaceY, 1, 1).data;
-        const localBgLum = calculateRelativeLuminance(topBgPixel[0], topBgPixel[1], topBgPixel[2]);
-
-        let contrastRatio = 21;
-        if (localBgLum >= 0.5) {
-          contrastRatio = calculateContrastRatio(p10, localBgLum);
-        } else {
-          contrastRatio = calculateContrastRatio(p90, localBgLum);
-        }
-
-        // Only flag genuinely poor contrast (< 2.5:1 ratio)
-        if (contrastRatio < 2.5) {
-          contrastFailCount++;
-          if (contrastFailCount <= 4) {
-            issues.push({
-              id: `contrast-${issueCounter++}`,
-              category: "contrast",
-              severity: "warning",
-              title: "Low Contrast Readability",
-              description: `Text "${w.text}" has low contrast against its background (${contrastRatio.toFixed(1)}:1 ratio).`,
-              impact: "Readers in bright ambient lighting or on mobile screens will struggle to read this copy.",
-              specDetail: `Contrast ratio is ${contrastRatio.toFixed(1)}:1 (WCAG AA requires 3:1 for bold/UI headers, 4.5:1 for fine body copy).`,
-              whyItMatters: "Poor contrast reduces reading speed and viewer comprehension.",
-              originalText: w.text,
-              suggestedFix: "Increase the brightness difference between the text color and background.",
-              bbox: {
-                left: w.left,
-                top: w.top,
-                width: w.width,
-                height: w.height,
-              },
-            });
-          }
-        }
-      } catch {}
+      const m = measureTextContrast(lumAt, {
+        x: Math.round(w.pixelX), y: Math.round(w.pixelY), w: Math.round(w.pixelW), h: Math.round(w.pixelH),
+      });
+      if (!m) continue;
+      const cls = classifyContrast(m.ratio, w.pixelH, height, m.busy, isUpperOrBold);
+      if (cls) fails.push({ w, m, cls });
+      else if (m.busy > 0.16 && m.ratio < 7) busy.push({ w, m });
+    }
+    fails.sort((a, b) => a.m.ratio - b.m.ratio);
+    fails.slice(0, 4).forEach(({ w, m, cls }) => {
+      addDrafts([{
+        category: "contrast", severity: cls.severity, isHedged: cls.hedged,
+        title: "Low Contrast Readability",
+        description: `Text "${w.text}" has low contrast against its background (${m.ratio.toFixed(1)}:1 ratio).`,
+        impact: "Readers in bright ambient lighting or on mobile screens will struggle to read this copy.",
+        specDetail: `Contrast ratio is ${m.ratio.toFixed(1)}:1 (WCAG AA requires ${cls.required}:1 for this text size).`,
+        whyItMatters: "Poor contrast reduces reading speed and viewer comprehension.",
+        originalText: w.text,
+        suggestedFix: "Increase the brightness difference between the text color and background.",
+        bbox: { left: w.left, top: w.top, width: w.width, height: w.height },
+      }], "contrast");
+    });
+    if (fails.length > 4) {
+      const w = fails[4].w;
+      addDrafts([{
+        category: "contrast", severity: "suggestion", isHedged: true,
+        title: "More low-contrast text",
+        description: `${fails.length - 4} more word${fails.length - 4 > 1 ? "s" : ""} also fall below the recommended contrast ratio.`,
+        specDetail: "WCAG AA: 4.5:1 for normal text, 3:1 for large text.",
+        suggestedFix: "Review the colours of all small or light text against its background.",
+        bbox: { left: w.left, top: w.top, width: w.width, height: w.height },
+      }], "contrast");
+    }
+    if (busy.length >= 2) {
+      const { w, m } = [...busy].sort((a, b) => b.m.busy - a.m.busy)[0];
+      addDrafts([{
+        category: "typography", severity: "suggestion", isHedged: true,
+        title: "Text over a busy background",
+        description: `${busy.length} words sit on a textured or photographic background, which can make them harder to read (e.g. "${w.text}").`,
+        impact: "Text over busy imagery gets lost, especially on small screens.",
+        specDetail: `Background luminance varies by ~${(m.busy * 100).toFixed(0)}% inside the text area.`,
+        suggestedFix: "Add a solid panel, gradient overlay, or shadow behind the text.",
+        originalText: w.text,
+        bbox: { left: w.left, top: w.top, width: w.width, height: w.height },
+      }], "typo");
     }
 
-    // 6. Gemini Multimodal Creative QA Auditor Inspection
+    // 5b. Text layout: tiny text, overlaps, alignment and line-spacing consistency
+    addDrafts(analyzeTextLayout(lines, width, height), "layout");
+
+    // 5c. Spelling: ALWAYS run the dictionary check. Vision models silently auto-correct typos while reading,
+    //     so the deterministic check is the one that actually catches them.
+    let spellCount = 0, spellExtra = 0, lastExtra: OcrWord | null = null;
+    for (const w of words) {
+      if (w.confidence < 72 || isModelOrCodeNumber(w.text)) continue;
+      for (const sub of w.text.split(/[\s—–-]+/)) {
+        if (!sub || isModelOrCodeNumber(sub)) continue;
+        // Strip leading & trailing punctuation so "Qingdao," becomes "Qingdao"
+        const token = sub.replace(/^[^a-zA-Z]+|[^a-zA-Z]+$/g, "");
+        if (token.length < 3 || !isLikelyRealText(token)) continue;
+        const cleaned = token.toLowerCase();
+        if (cleaned.length < 3) continue;
+        const v = evaluateSpelling(token, spellUS, spellGB, BRAND_AND_PROPER_NOUNS);
+        if (!v) continue;
+        if (spellCount >= 8) { spellExtra++; lastExtra = w; continue; }
+        spellCount++;
+        addDrafts([{
+          category: "copy", severity: v.severity, isHedged: v.hedged,
+          qaRole: "Spelling & Typography QA",
+          title: "Possible Spelling Mistake",
+          description: `Word "${token}" appears to be misspelled.`,
+          impact: "Spelling errors in published copy distract readers and lower perceived brand credibility.",
+          specDetail: v.suggestion ? `Dictionary suggestion: "${v.suggestion}"` : "Flagged by pre-flight dictionary check",
+          whyItMatters: "Spelling mistakes in published creative assets diminish brand trust and perceived professionalism.",
+          originalText: token,
+          suggestedFix: v.suggestion ? `If this is a typo, change to "${v.suggestion}".` : "Verify spelling.",
+          bbox: { left: w.left, top: w.top, width: w.width, height: w.height },
+        }], "spell");
+      }
+    }
+    if (spellExtra && lastExtra) {
+      addDrafts([{
+        category: "copy", severity: "suggestion", isHedged: true,
+        title: "More possible spelling issues",
+        description: `${spellExtra} more word${spellExtra > 1 ? "s" : ""} were flagged by the dictionary check.`,
+        suggestedFix: "Proofread the remaining copy.",
+        bbox: { left: lastExtra.left, top: lastExtra.top, width: lastExtra.width, height: lastExtra.height },
+      }], "spell");
+    }
+
+    // 6. Gemini multimodal QA (optionally twice for self-consistency)
     const geminiKey = process.env.GEMINI_API_KEY;
     const geminiModel = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
     let engine: "hybrid-gemini" | "local-deterministic" = "local-deterministic";
@@ -501,371 +711,71 @@ export async function POST(req: Request) {
 
     if (geminiKey) {
       try {
-        const base64Data = buffer.toString("base64");
-
-        // Build OCR context string for Gemini — exact words extracted from the image
         const ocrWordList = words
           .map((w) => `"${w.text}" (conf:${Math.round(w.confidence)}%, pos: top=${(w.top * 100).toFixed(1)}% left=${(w.left * 100).toFixed(1)}%)`)
           .join(", ");
-
-        const imageDimContext = `${origWidth}×${origHeight}px (aspect ratio ${aspectRatio})`;
-        const formatHint = origWidth > origHeight
-          ? "landscape / horizontal banner"
-          : origWidth < origHeight
-          ? "portrait / vertical banner or flyer"
+        const formatHint =
+          origWidth > origHeight ? "landscape / horizontal banner"
+          : origWidth < origHeight ? "portrait / vertical banner or flyer"
           : "square format";
+        const prompt = buildGeminiPrompt({
+          imageDimContext: `${origWidth}×${origHeight}px (aspect ratio ${aspectRatio})`,
+          formatHint, mimeType, ocrWordList,
+        });
+        const base64 = buffer.toString("base64");
+        const doublePass = ["1", "true", "yes"].includes((process.env.GEMINI_DOUBLE_PASS || "").toLowerCase());
+        const runs = await Promise.all(
+          Array.from({ length: doublePass ? 2 : 1 }, () =>
+            callGemini({ key: geminiKey, model: geminiModel, prompt, base64, mime: mimeType })
+          )
+        );
+        const primary = runs[0];
 
-        const prompt = `You are an experienced Creative Director and Senior Pre-Flight QA Auditor at a premier advertising and publishing agency.
-Your role is to review this graphic design asset and provide an insightful, constructive, human pre-flight review.
-You must sound like an experienced human creative director — NEVER like a robotic automated checklist.
+        if (primary && typeof primary === "object") {
+          engine = "hybrid-gemini";
+          const pv = primary.verdict;
+          if (pv === "ready" || pv === "needs_review" || pv === "critical_issues") aiVerdict = pv;
+          if (typeof primary.verdictTitle === "string" && primary.verdictTitle) aiVerdictTitle = primary.verdictTitle;
+          if (typeof primary.verdictSummary === "string" && primary.verdictSummary) aiVerdictSummary = primary.verdictSummary;
+          aiPositiveHighlights = arr<unknown>(primary.positiveHighlights)
+            .filter((h): h is string => typeof h === "string" && h.trim().length > 0)
+            .map((h) => h.trim());
 
-IMAGE METADATA (use this for context):
-- Dimensions: ${imageDimContext}
-- Format: ${formatHint}
-- File type: ${mimeType}
-
-OCR-EXTRACTED TEXT (machine-read estimate; OCR can misread small, stylized, or non-English text. Do not treat it as ground truth for spelling, pricing, dates, or contact details):
-${ocrWordList || "(no readable text detected by OCR — rely on visual read)"}
-
-IMPORTANT: Cross-check OCR text against the image. If the text is unclear or OCR and visual reading disagree, do not claim a definite error; report that a human should verify it.
-
-FOLLOW THESE 6 CORE HUMAN REVIEWER PRINCIPLES:
-
-1. HUMAN OVERALL VERDICT & SEVERITY SUMMARY:
-- Lead with an overarching, natural assessment of the asset's publication readiness.
-- Provide a severity-weighted summary (e.g., "1 critical data issue needs fixing before release, with 2 minor layout suggestions", NOT a raw robotic count like "3 issues found").
-- If the creative is clean, give a confident verdict like "Looks print-ready — strong contrast and clean hierarchy throughout."
-
-2. EXPLAIN IMPACT, NOT SPEC:
-- Frame findings around real-world human reader consequences and business risks.
-- In "impact": Explain what readers, customers, or printers will actually experience in plain language (e.g., "This text will be hard to read in bright sunlight or on a dim phone screen", or "Customers will notice conflicting prices at checkout, creating friction and complaints").
-- In "specDetail": Put the technical measurements or math comparisons (e.g., "Contrast ratio: 3.2:1 (WCAG AA requires 4.5:1 for 14pt body text)", or "Was $100, Now $60 is a 40% discount, but banner claims 50%").
-- Never lead an issue with dry spec numbers; always lead with what it actually means for people reading the design.
-
-3. REAL-WORLD SEVERITY ORDERING:
-- Prioritize issues by tangible financial and reprint risk:
-  1. Financial / Reprint Disasters (Price & discount math errors, wrong dates, broken contact info, missing mandatory disclaimers).
-  2. Compliance & Legal Risks (Missing asterisks/disclaimers, outdated copyright).
-  3. Pre-Flight Artifacts & Brand (Squished/stretched logos, leftover stock watermarks).
-  4. Typography & Readability (Unreadable script fonts, poor contrast on important copy).
-  5. Cosmetic Polish (Minor margin spacing, subtle secondary contrast).
-
-4. HEDGE AI-VISION & SUBJECTIVE FINDINGS:
-- Deterministic checks (pricing math, date sanity, exact typos, missing phone digits) are definite and should be stated with confidence.
-- Subjective or visual checks (e.g. logo proportions, visual clutter, font pairing disharmony, crowded layout) must be hedged gently:
-  - "This looks like it might be a stretched logo — worth a second look."
-  - "The headline feels slightly crowded against the image subject; consider adding a little breathing room."
-  - "The contrast here may be difficult to read in bright outdoor conditions."
-- Set "isHedged": true for visual/subjective observations, and "isHedged": false for definite errors.
-
-5. MENTION WHAT'S WORKING WELL (POSITIVE HIGHLIGHTS):
-- Every great creative director builds trust by pointing out what works before critiquing flaws.
-- Provide 1 to 3 "positiveHighlights" noting what the design does effectively (e.g., "High-contrast, eye-catching Call-to-Action button", "Strong visual hierarchy guiding the eye from headline to offer", "Clean safe margins with zero border cut-off risks").
-
-6. GROUP RELATED ISSUES:
-- If a promotional offer has an asterisk (*) and the footnote disclaimer is missing, group them into a SINGLE cohesive finding (e.g. 'Promotional headline contains an asterisk (*), but the corresponding footnote terms are missing'). Do not split them into two disjointed errors.
-- If multiple small text elements on a background share the same contrast or safe-zone issue, group them into one unified, actionable note.
-
-AUDIT SCOPE:
-- Price & Discount Math: Use the OCR text to verify stated savings match the numbers (e.g. "50% off! Was AED 100 Now AED 60" is wrong: 100 to 60 is 40%). Perform the arithmetic yourself and flag if wrong.
-- Day & Date Sanity: Verify day/date combinations in the OCR text make calendar sense (e.g. "Monday 30 September" — verify the day matches).
-- Contact Details: Incomplete phone numbers (too few digits), malformed emails (e.g. @gmial.com), broken or obviously fake URLs.
-- Placeholder Artifacts: Leftover dummy text ("Lorem Ipsum", "[Insert Date]", "CLIENT NAME", "SAMPLE", "TBC").
-- Genuine typos in headlines, offers, and body copy using OCR text. IMPORTANT: Accept BOTH American and British/Commonwealth English spellings. Do NOT flag brand names, standard tech acronyms, or proper nouns.
-- Asterisk Pairing: Headline claims with (*) or (T&C) must have a matching footnote disclaimer visible on the design.
-- Watermarks & Logo Distortion: Leftover stock watermarks (Shutterstock, Getty, iStock), or logos that appear visually stretched or squished.
-- Typography & Hierarchy: More than 3 distinct fonts in use, unreadable decorative/script fonts on busy backgrounds, illegible font sizes on key copy.
-- WCAG Contrast: Flag text that appears to have low contrast against its background, especially body copy and small print.
-
-COORDINATES:
-For each issue, return a normalized bounding box [ymin, xmin, ymax, xmax] as integers between 0 and 1000 indicating where the issue occurs on the image.
-
-Return ONLY a pure JSON object matching this schema:
-{
-  "verdict": "ready" | "needs_review" | "critical_issues",
-  "verdictTitle": "Human-friendly executive title (e.g., '1 Critical Issue Needs Attention Before Print' or 'Looks Print-Ready')",
-  "verdictSummary": "1-2 sentence warm, professional creative director assessment explaining the overall readiness and severity-weighted status.",
-  "positiveHighlights": [
-    "1-3 concise observations of what is working well in this design (layout, color balance, hierarchy, typography, etc.)"
-  ],
-  "issues": [
-    {
-      "category": "data_integrity" | "compliance" | "copy" | "typography" | "layout" | "contrast" | "artifacts",
-      "severity": "critical" | "warning" | "suggestion",
-      "qaRole": "Role title (e.g. Creative Director / Data Integrity QA / Legal Compliance / Pre-Flight)",
-      "title": "Natural, clear issue title (e.g., 'Discount calculation doesn\\'t match prices')",
-      "description": "Clear explanation of what was observed",
-      "impact": "Real-world consequence for readers, customers, or brand reputation",
-      "specDetail": "Technical or mathematical details if applicable",
-      "whyItMatters": "Concise summary of business or print risk",
-      "suggestedFix": "Actionable, designer-friendly fix in plain language",
-      "originalText": "exact text if applicable",
-      "isHedged": true | false,
-      "box_2d": [ymin, xmin, ymax, xmax]
-    }
-  ]
-}
-If the design is completely flawless with zero errors, return:
-{
-  "verdict": "ready",
-  "verdictTitle": "Looks Print-Ready",
-  "verdictSummary": "This asset passes pre-flight review cleanly with solid typography hierarchy, clear contrast, and zero data integrity risks.",
-  "positiveHighlights": [
-    "Strong visual balance and clear call to action",
-    "Clean margin safe-zones with no text crowding borders",
-    "High contrast ensuring readability across screen and print"
-  ],
-  "issues": []
-}`;
-
-
-
-        let response: Response | null = null;
-        for (let attempt = 1; attempt <= 3; attempt++) {
-          try {
-            response = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent?key=${geminiKey}`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  contents: [
-                    {
-                      parts: [
-                        { text: prompt },
-                        {
-                          inlineData: {
-                            mimeType: mimeType.startsWith("image/") ? mimeType : "image/png",
-                            data: base64Data,
-                          },
-                        },
-                      ],
-                    },
-                  ],
-                  generationConfig: {
-                    temperature: 0.1,
-                    maxOutputTokens: 8192,
-                    responseMimeType: "application/json",
-                  },
-                  thinkingConfig: {
-                    thinkingBudget: 1024,
-                  },
-                }),
-              }
-            );
-
-            if (response.ok) break;
-
-            if (response.status === 503 || response.status === 429) {
-              console.warn(`[DesignCheck] Gemini returned ${response.status}, retrying attempt ${attempt}...`);
-              if (attempt < 3) {
-                await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
-              }
-            } else {
-              break;
-            }
-          } catch (fetchErr: unknown) {
-            const isDnsError = fetchErr && typeof fetchErr === "object" && (("code" in fetchErr && fetchErr.code === "ENOTFOUND") || ("cause" in fetchErr && typeof fetchErr.cause === "object" && fetchErr.cause !== null && "code" in fetchErr.cause && fetchErr.cause.code === "ENOTFOUND"));
-            if (isDnsError) {
-              console.warn(`[DesignCheck] Gemini API domain offline or unreachable, proceeding immediately with local engine.`);
-              break;
-            }
-            console.warn(`[DesignCheck] Gemini fetch error on attempt ${attempt}:`, fetchErr);
-            if (attempt < 3) {
-              await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
-            }
+          let drafts = geminiItemsToIssues(primary, words);
+          if (runs[1]) {
+            // Only findings reproduced by BOTH runs stay "definite"; the rest are shown hedged.
+            const { confirmed, unconfirmed } = crossValidate(drafts, geminiItemsToIssues(runs[1], words));
+            drafts = [
+              ...confirmed,
+              ...unconfirmed.map((d) => ({
+                ...d, isHedged: true, severity: (d.severity === "critical" ? "warning" : d.severity) as QaSeverity,
+              })),
+            ];
           }
-        }
+          addDrafts(drafts, "qa");
 
-        if (response && response.ok) {
-          const geminiData = await response.json();
-          const textResponse =
-            geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (textResponse) {
-            const cleanJson = textResponse
-              .replace(/^[^{[]*/, "")
-              .replace(/[^}\]]*$/, "")
-              .trim();
-            const parsed = JSON.parse(cleanJson);
-
-            if (parsed && typeof parsed === "object") {
-              engine = "hybrid-gemini";
-              if (parsed.verdict) aiVerdict = parsed.verdict;
-              if (parsed.verdictTitle) aiVerdictTitle = parsed.verdictTitle;
-              if (parsed.verdictSummary) aiVerdictSummary = parsed.verdictSummary;
-              if (Array.isArray(parsed.positiveHighlights)) {
-                aiPositiveHighlights = parsed.positiveHighlights
-                  .filter((h: unknown): h is string => typeof h === "string" && h.trim().length > 0)
-                  .map((h: string) => h.trim());
-              }
-
-              if (Array.isArray(parsed.issues)) {
-                for (const item of parsed.issues) {
-                  let left = 0.1;
-                  let top = 0.1;
-                  let boxW = 0.2;
-                  let boxH = 0.08;
-
-                  if (
-                    Array.isArray(item.box_2d) &&
-                    item.box_2d.length === 4 &&
-                    typeof item.box_2d[0] === "number"
-                  ) {
-                    const ymin = Math.max(0, Math.min(1000, item.box_2d[0]));
-                    const xmin = Math.max(0, Math.min(1000, item.box_2d[1]));
-                    const ymax = Math.max(ymin, Math.min(1000, item.box_2d[2]));
-                    const xmax = Math.max(xmin, Math.min(1000, item.box_2d[3]));
-
-                    top = ymin / 1000;
-                    left = xmin / 1000;
-                    boxW = Math.max(0.04, (xmax - xmin) / 1000);
-                    boxH = Math.max(0.025, (ymax - ymin) / 1000);
-                  } else if (item.originalText) {
-                    const orig = item.originalText.toLowerCase().trim();
-                    const matchedWord = words.find(
-                      (w) =>
-                        w.text.toLowerCase().trim() === orig ||
-                        w.text.toLowerCase().includes(orig) ||
-                        orig.includes(w.text.toLowerCase().trim())
-                    );
-                    if (matchedWord) {
-                      left = matchedWord.left;
-                      top = matchedWord.top;
-                      boxW = Math.max(matchedWord.width, 0.05);
-                      boxH = Math.max(matchedWord.height, 0.03);
-                    }
-                  }
-
-                  const validCategory = [
-                    "copy",
-                    "contrast",
-                    "margin",
-                    "typography",
-                    "compliance",
-                    "data_integrity",
-                    "layout",
-                    "artifacts",
-                  ].includes(item.category)
-                    ? item.category
-                    : "copy";
-
-                  const validSeverity = [
-                    "critical",
-                    "warning",
-                    "suggestion",
-                  ].includes(item.severity)
-                    ? item.severity
-                    : "warning";
-
-                  issues.push({
-                    id: `qa-${issueCounter++}`,
-                    category: validCategory,
-                    severity: validSeverity,
-                    qaRole:
-                      item.qaRole ||
-                      (validCategory === "data_integrity"
-                        ? "Data Integrity QA"
-                        : validCategory === "compliance"
-                        ? "Asterisk & Legal Compliance"
-                        : validCategory === "typography"
-                        ? "Typography & Hierarchy"
-                        : validCategory === "contrast"
-                        ? "Contrast & Readability"
-                        : validCategory === "layout"
-                        ? "Layout & Alignment"
-                        : validCategory === "artifacts"
-                        ? "Pre-Flight Artifacts"
-                        : "Creative Director QA"),
-                    title: item.title || "QA Issue Flagged",
-                    description: item.description,
-                    impact: item.impact || item.whyItMatters || undefined,
-                    specDetail: item.specDetail || undefined,
-                    whyItMatters: item.whyItMatters || item.impact || undefined,
-                    originalText: item.originalText,
-                    suggestedFix: item.suggestedFix,
-                    isHedged: Boolean(item.isHedged),
-                    bbox: {
-                      left: Math.max(0, Math.min(0.95, left)),
-                      top: Math.max(0, Math.min(0.95, top)),
-                      width: Math.min(1 - left, boxW),
-                      height: Math.min(1 - top, boxH),
-                    },
-                  });
-                }
-              }
-            }
-          }
+          // Price / date math is done in code, never by the LLM.
+          const locate: Locator = (text, box2d) =>
+            findOcrBox(words, text) ?? box2dToNorm(box2d) ?? { left: 0.1, top: 0.1, width: 0.2, height: 0.08 };
+          addDrafts(verifyPriceClaims(arr<PriceClaim>(primary.priceClaims), locate), "fact");
+          addDrafts(verifyDateClaims(arr<DateClaim>(primary.dateClaims), locate), "fact");
         }
       } catch (geminiErr) {
         console.warn("Gemini QA analysis failed, falling back to local inspection:", geminiErr);
       }
     }
 
-    // Fallback: ONLY run local nspell dictionary if Gemini did NOT run
-    if (engine !== "hybrid-gemini") {
-      for (const w of words) {
-        // Skip whole token if it is a model number, technical code, or dimension
-        if (isModelOrCodeNumber(w.text)) continue;
-
-        const subTokens = w.text.split(/[\s—–-]+/);
-        for (const sub of subTokens) {
-          if (isModelOrCodeNumber(sub)) continue;
-
-          const cleaned = sub.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, "");
-          if (cleaned.length < 3 || !isLikelyRealText(cleaned)) continue;
-
-          // 1. Accept valid US, UK/Commonwealth spelling, or known Brand/Acronym/Product Spec
-          if (
-            spellUS.correct(cleaned) ||
-            spellGB.correct(cleaned) ||
-            BRAND_AND_PROPER_NOUNS.has(cleaned)
-          ) {
-            continue;
-          }
-
-          // 2. Ignore 2-5 letter uppercase acronyms (HVAC, UAE, FIFA, LED, VIP, USB, AI, CEO, etc.)
-          if (sub === sub.toUpperCase() && cleaned.length <= 5) {
-            continue;
-          }
-
-          // 3. Skip Capitalized words (Proper Nouns, Brands, Names, Geographic Places)
-          // In advertising, catalogs, and commercial documents, words starting with a capital letter
-          // (e.g. "Qingdao", "Sanden", "Changzhou", "Sanhua", "Ronshen", "Kelon", "ASKO", "Thailand", "Vietnam")
-          // are proper nouns, company brands, or geography, NOT spelling errors!
-          const isCapitalized = /^[A-Z][a-zA-Z0-9]*$/.test(sub);
-          if (isCapitalized) {
-            continue;
-          }
-
-          // 4. Only flag genuine lowercase spelling mistakes
-          const suggestions = spellUS.suggest(cleaned);
-          const gbSuggestions = spellGB.suggest(cleaned);
-          const topFix = suggestions[0] || gbSuggestions[0];
-
-          issues.push({
-            id: `spell-${issueCounter++}`,
-            category: "copy",
-            severity: "warning",
-            qaRole: "Spelling & Typography QA",
-            title: "Possible Spelling Mistake",
-            description: `Word "${sub}" appears to be misspelled.`,
-            impact: "Spelling errors in published copy distract readers and lower perceived brand credibility.",
-            specDetail: topFix ? `Dictionary suggestion: "${topFix}"` : "Flagged by pre-flight dictionary check",
-            whyItMatters: "Spelling mistakes in published creative assets diminish brand trust and perceived professionalism.",
-            originalText: sub,
-            suggestedFix: topFix
-              ? `If this is a typo, change to "${topFix}".`
-              : "Verify spelling.",
-            bbox: {
-              left: w.left,
-              top: w.top,
-              width: w.width,
-              height: w.height,
-            },
-          });
-        }
-      }
-    }
+    // Drop copy issues reported twice for the same word (local dictionary + Gemini)
+    const seenCopy = new Set<string>();
+    const uniqueIssues = issues.filter((i) => {
+      if (i.category !== "copy" || !i.originalText) return true;
+      const key = i.originalText.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!key || seenCopy.has(key)) return !key;
+      seenCopy.add(key);
+      return true;
+    });
+    issues.length = 0;
+    issues.push(...uniqueIssues);
 
     // 7. Sort issues by Real-World Severity (Rule 3: Financial & Reprint Risks First)
     function getRealWorldSeverityScore(issue: DesignIssue): number {
@@ -939,34 +849,38 @@ If the design is completely flawless with zero errors, return:
     const dataScore = Math.max(
       15,
       100 -
-        dataIssues.reduce(
-          (acc, curr) => acc + (curr.severity === "critical" || curr.severity === "error" ? 22 : 10),
-          0
-        )
+        dataIssues.reduce((acc, curr) => {
+          if (curr.severity === "critical" || curr.severity === "error") return acc + 22;
+          if (curr.severity === "warning") return acc + (curr.isHedged ? 6 : 10);
+          return acc + (curr.isHedged ? 1 : 3);
+        }, 0)
     );
     const complianceScore = Math.max(
       20,
       100 -
-        complianceIssues.reduce(
-          (acc, curr) => acc + (curr.severity === "critical" || curr.severity === "error" ? 20 : 10),
-          0
-        )
+        complianceIssues.reduce((acc, curr) => {
+          if (curr.severity === "critical" || curr.severity === "error") return acc + 20;
+          if (curr.severity === "warning") return acc + (curr.isHedged ? 6 : 10);
+          return acc + (curr.isHedged ? 1 : 2);
+        }, 0)
     );
     const layoutScore = Math.max(
       25,
       100 -
-        layoutIssues.reduce(
-          (acc, curr) => acc + (curr.severity === "critical" || curr.severity === "error" ? 18 : 8),
-          0
-        )
+        layoutIssues.reduce((acc, curr) => {
+          if (curr.severity === "critical" || curr.severity === "error") return acc + 18;
+          if (curr.severity === "warning") return acc + (curr.isHedged ? 5 : 8);
+          return acc + (curr.isHedged ? 1 : 2);
+        }, 0)
     );
     const visualScore = Math.max(
       20,
       100 -
-        visualIssues.reduce(
-          (acc, curr) => acc + (curr.severity === "critical" || curr.severity === "error" ? 15 : 7),
-          0
-        )
+        visualIssues.reduce((acc, curr) => {
+          if (curr.severity === "critical" || curr.severity === "error") return acc + 15;
+          if (curr.severity === "warning") return acc + (curr.isHedged ? 5 : 7);
+          return acc + (curr.isHedged ? 1 : 2);
+        }, 0)
     );
 
     const overallScore = Math.min(
@@ -1064,6 +978,7 @@ If the design is completely flawless with zero errors, return:
       },
       issues,
       engine,
+      ocrEngine,
       analysisNotice,
     };
 
