@@ -643,16 +643,20 @@ export default function QrCodeGeneratorClient() {
     }
   };
 
-  // Social share triggers (User's QR content and image, never Spellense)
+  // Social share triggers (User's QR Card: image + title + description)
   const handleSocialShare = async (platform: "whatsapp" | "facebook" | "instagram" | "linkedin" | "twitter" | "more") => {
     const payload = buildPayload();
-    const isUrl = payload.startsWith("http://") || payload.startsWith("https://");
-    const text = shareTitle && shareTitle.trim() ? `${shareTitle}\n${payload}` : payload;
+    const origin = typeof window !== "undefined" && window.location.origin
+      ? window.location.origin.replace("localhost:3000", "spellense.com").replace("127.0.0.1:3000", "spellense.com")
+      : "https://spellense.com";
+    const shareUrl = `${origin}/qr/card?data=${encodeURIComponent(payload)}&title=${encodeURIComponent(shareTitle || "My QR Code")}${shareDescription ? `&desc=${encodeURIComponent(shareDescription)}` : ""}`;
+    const text = `${shareTitle || "My QR Code"}${shareDescription ? ` — ${shareDescription}` : ""}\n${shareUrl}`;
 
     if (platform === "whatsapp") {
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+      const waText = `${shareTitle || "My QR Code"}${shareDescription ? `\n${shareDescription}` : ""}\n\n${shareUrl}`;
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`, "_blank");
     } else if (platform === "facebook") {
-      // Copy the QR Code Image to clipboard first so the user can paste it straight into Facebook post!
+      // Copy the QR Code Image to clipboard first so user can also paste the image directly if creating a photo post!
       try {
         const blob = await getQrBlob(1000);
         if (blob && typeof navigator !== "undefined" && navigator.clipboard && window.ClipboardItem) {
@@ -662,17 +666,12 @@ export default function QrCodeGeneratorClient() {
         }
       } catch {}
 
-      if (isUrl) {
-        // If it's a URL, share the user's destination URL (never Spellense)
-        window.open(
-          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(payload)}`,
-          "_blank",
-          "width=600,height=500,menubar=no,toolbar=no,resizable=yes"
-        );
-      } else {
-        // Otherwise open Facebook feed so they can paste the copied QR image
-        window.open("https://www.facebook.com/", "_blank");
-      }
+      // Open Facebook share dialog pointing to the QR Card URL (which displays QR code image, title, and description)
+      window.open(
+        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+        "_blank",
+        "width=600,height=500,menubar=no,toolbar=no,resizable=yes"
+      );
     } else if (platform === "instagram") {
       try {
         const blob = await getQrBlob(1000);
@@ -684,15 +683,11 @@ export default function QrCodeGeneratorClient() {
       setTimeout(() => setShareSuccessMsg(null), 3000);
       window.open("https://www.instagram.com/", "_blank");
     } else if (platform === "linkedin") {
-      if (isUrl) {
-        window.open(
-          `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(payload)}`,
-          "_blank",
-          "width=600,height=600,menubar=no,toolbar=no,resizable=yes"
-        );
-      } else {
-        window.open("https://www.linkedin.com/feed/", "_blank");
-      }
+      window.open(
+        `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+        "_blank",
+        "width=600,height=600,menubar=no,toolbar=no,resizable=yes"
+      );
     } else if (platform === "twitter") {
       window.open(
         `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
@@ -1717,25 +1712,33 @@ export default function QrCodeGeneratorClient() {
             {/* Modal Body */}
             <div className="space-y-4 pt-3.5">
               {/* QR Image Preview Card & Action Buttons */}
-              <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row items-center gap-3.5">
-                {/* Visual Thumbnail */}
-                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-white border border-slate-200 p-2 shadow-xs shrink-0 flex items-center justify-center overflow-hidden">
+              {/* QR Image Preview Card & Action Buttons */}
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex flex-row items-center gap-3">
+                {/* Visual Thumbnail - strictly constrained to 84x84px */}
+                <div
+                  className="rounded-xl bg-white border border-slate-200 p-1.5 shadow-2xs shrink-0 flex items-center justify-center overflow-hidden"
+                  style={{ width: "84px", height: "84px", minWidth: "84px", minHeight: "84px", maxWidth: "84px", maxHeight: "84px" }}
+                >
                   {sharePreviewUrl ? (
-                    <img src={sharePreviewUrl} alt="Your QR Code" className="w-full h-full object-contain" />
+                    <img
+                      src={sharePreviewUrl}
+                      alt="Your QR Code"
+                      style={{ width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block" }}
+                    />
                   ) : (
-                    <div className="text-slate-400 text-xs font-bold text-center">Loading QR...</div>
+                    <div className="text-[11px] font-bold text-slate-400 text-center">Loading...</div>
                   )}
                 </div>
 
                 {/* Direct Image Share/Copy Buttons */}
-                <div className="flex-1 w-full flex flex-col gap-2">
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
                   <button
                     type="button"
                     onClick={handleShareQrImageFile}
                     disabled={isSharingImage}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+                    className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="18" cy="5" r="3" />
                       <circle cx="6" cy="12" r="3" />
                       <circle cx="18" cy="19" r="3" />
@@ -1748,7 +1751,7 @@ export default function QrCodeGeneratorClient() {
                   <button
                     type="button"
                     onClick={handleCopyQrImage}
-                    className={`w-full py-2.5 px-3.5 rounded-xl border text-xs transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-2xs ${
+                    className={`w-full py-2 px-3 rounded-xl border text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs ${
                       isImageCopied
                         ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-black"
                         : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-100/70 text-slate-700 font-bold"
@@ -1756,14 +1759,14 @@ export default function QrCodeGeneratorClient() {
                   >
                     {isImageCopied ? (
                       <>
-                        <svg className="w-4 h-4 text-emerald-600 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                         <span>QR Image Copied!</span>
                       </>
                     ) : (
                       <>
-                        <svg className="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                           <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
                           <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
                         </svg>
@@ -1777,13 +1780,27 @@ export default function QrCodeGeneratorClient() {
               {/* Title input */}
               <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
-                  QR Title (Optional)
+                  QR Title
                 </label>
                 <input
                   type="text"
                   value={shareTitle}
                   onChange={(e) => setShareTitle(e.target.value)}
-                  placeholder="e.g. My Website QR"
+                  placeholder="e.g. My QR Code"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                />
+              </div>
+
+              {/* Description input (Optional) */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
+                  Description (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={shareDescription}
+                  onChange={(e) => setShareDescription(e.target.value)}
+                  placeholder="e.g. Scan to view our menu or website"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                 />
               </div>
