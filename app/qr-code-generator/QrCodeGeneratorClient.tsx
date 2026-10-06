@@ -592,18 +592,6 @@ export default function QrCodeGeneratorClient() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Generate Button */}
-                  <button
-                    type="button"
-                    onClick={handleGenerateDigital}
-                    className="w-full mt-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-emerald-600/20 hover:shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0"
-                  >
-                    <svg className="w-5 h-5 text-white stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                    </svg>
-                    <span>Generate Digital QR Code</span>
-                  </button>
                 </div>
               )}
 
