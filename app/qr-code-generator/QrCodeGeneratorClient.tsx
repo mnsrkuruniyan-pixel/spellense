@@ -12,94 +12,51 @@ declare global {
   }
 }
 
-const CONFIG = {
-  MIN_CONTRAST_RATIO: 4.5,
-  MAX_LOGO_RATIO: {
-    L: 0.08,
-    M: 0.12,
-    Q: 0.18,
-    H: 0.24,
-  } as Record<string, number>,
-  DISTANCE_TO_SIZE_RATIO: 10,
-  QR_RENDER_SIZE: 300,
-};
-
-type ContentType = "url" | "text" | "wifi" | "phone" | "email";
+type Mode = "digital" | "print";
+type ContentType = "url" | "text" | "wifi" | "phone" | "email" | "vcard";
+type DotStyle = "square" | "dots" | "rounded" | "classy" | "extra-rounded";
+type CornerStyle = "square" | "dot" | "extra-rounded";
 type EcLevel = "L" | "M" | "Q" | "H";
+type Material = "matte" | "glossy" | "fabric";
+type PrintUseCase = "business-card" | "flyer" | "poster" | "billboard";
 
-interface ScoreCheck {
-  status: "pass" | "warn" | "fail";
-  text: string;
+interface StressTestResultItem {
+  key: string;
+  label: string;
+  passed: boolean;
 }
-
-const COLOR_PRESETS = [
-  { label: "Classic Black", hex: "#000000" },
-  { label: "Spellense Blue", hex: "#0055fe" },
-  { label: "Emerald Green", hex: "#047857" },
-  { label: "Royal Indigo", hex: "#4f46e5" },
-  { label: "Deep Slate", hex: "#0f172a" },
-  { label: "Crimson Red", hex: "#b91c1c" },
-];
-
-const BG_PRESETS = [
-  { label: "Pure White", hex: "#ffffff" },
-  { label: "Snow Slate", hex: "#f8fafc" },
-  { label: "Mint Tint", hex: "#f0fdf4" },
-  { label: "Sky Tint", hex: "#eff6ff" },
-];
 
 const FAQ_ITEMS = [
   {
-    q: "Why won't my QR code scan after printing?",
-    a: "The most common reasons are low contrast between the QR code and its background, a logo placed in the middle that is too large for the error-correction level used, or the code being printed smaller than its minimum readable size. Spellense checks all three before you download.",
+    q: "What is the difference between Digital and Print mode?",
+    a: "Digital mode is for QR codes shown on a screen, such as social media or a WhatsApp status, where scanning conditions are predictable, so it skips straight to download or share. Print mode is for anything that will be printed, where mistakes cannot be undone after the fact, so it includes a full stress test before the download unlocks.",
   },
   {
-    q: "What is a QR code scannability test?",
-    a: "It is a check that simulates how a phone camera reads a QR code. Spellense decodes the QR code it just generated, the same way a scanner app would, and reports whether it was read successfully along with specific issues like contrast or logo size.",
+    q: "What does the stress test check?",
+    a: "It re-decodes the generated QR code under four simulated real-world conditions: dim lighting, slight blur, a small print size, and an angled scan, the same way a phone camera might encounter it in practice.",
   },
   {
-    q: "Can I add a logo to my QR code without breaking it?",
-    a: "Yes, as long as the logo stays small relative to the code and a higher error-correction level (Q or H) is used, which allows part of the QR code to be covered and still scan correctly. Spellense warns you if your logo is too large for the selected error-correction level.",
+    q: "Can I add a contact card (vCard) QR code?",
+    a: "Yes. Selecting the contact card option encodes a name, phone number, email, company and job title into a standard vCard format that saves directly to a phone's contacts when scanned.",
   },
   {
-    q: "What is the minimum size to print a QR code?",
-    a: "A common rule of thumb is that a QR code should be printed at roughly one tenth of its expected scanning distance. Spellense gives a size estimate based on how much data is encoded and the selected use case, such as a business card versus a poster.",
+    q: "Why can't I download before running the stress test in Print mode?",
+    a: "Print QR codes can't be edited once printed, so Spellense requires a passed stress test first to catch contrast, logo-size or size issues while they are still easy to fix.",
   },
   {
-    q: "Is this QR code generator really free?",
-    a: "Yes. There is no signup, no watermark and no limit on how many QR codes you can create and download as PNG or SVG.",
+    q: "What resolution can I download the QR code at?",
+    a: "PNG downloads are available at 1000px, 2000px or 3000px depending on how large the final print will be. SVG is also available and stays sharp at any size since it is vector-based.",
   },
 ];
 
-function hexToRgb(hex: string) {
-  const clean = hex.replace("#", "");
-  const bigint = parseInt(clean, 16);
-  return {
-    r: (bigint >> 16) & 255,
-    g: (bigint >> 8) & 255,
-    b: bigint & 255,
-  };
-}
-
-function relativeLuminance({ r, g, b }: { r: number; g: number; b: number }) {
-  const [rs, gs, bs] = [r, g, b].map((v) => {
-    const c = v / 255;
-    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  });
-  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-}
-
-function contrastRatio(hex1: string, hex2: string) {
-  const l1 = relativeLuminance(hexToRgb(hex1));
-  const l2 = relativeLuminance(hexToRgb(hex2));
-  const lighter = Math.max(l1, l2);
-  const darker = Math.min(l1, l2);
-  return (lighter + 0.05) / (darker + 0.05);
-}
-
 export default function QrCodeGeneratorClient() {
-  // Form State
+  // Mode: digital vs print
+  const [mode, setMode] = useState<Mode>("digital");
+
+  // Content type
   const [contentType, setContentType] = useState<ContentType>("url");
+
+  // Form Fields
   const [urlVal, setUrlVal] = useState("https://spellense.com");
   const [textVal, setTextVal] = useState("");
   const [wifiSsid, setWifiSsid] = useState("");
@@ -108,42 +65,120 @@ export default function QrCodeGeneratorClient() {
   const [phoneVal, setPhoneVal] = useState("");
   const [emailVal, setEmailVal] = useState("");
 
-  const [fgColor, setFgColor] = useState("#000000");
-  const [bgColor, setBgColor] = useState("#ffffff");
-  const [ecLevel, setEcLevel] = useState<EcLevel>("M");
-  const [useCase, setUseCase] = useState("flyer");
-  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  // vCard fields
+  const [vcName, setVcName] = useState("");
+  const [vcPhone, setVcPhone] = useState("");
+  const [vcEmail, setVcEmail] = useState("");
+  const [vcCompany, setVcCompany] = useState("");
+  const [vcTitle, setVcTitle] = useState("");
 
-  // Preview & Test State
-  const [qrInstance, setQrInstance] = useState<any>(null);
-  const [score, setScore] = useState<number | null>(null);
-  const [checks, setChecks] = useState<ScoreCheck[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [exportResolution, setExportResolution] = useState<number>(2000);
+  // Styling
+  const [fgColor, setFgColor] = useState("#047857");
+  const [bgColor, setBgColor] = useState("#ffffff");
+  const [dotStyle, setDotStyle] = useState<DotStyle>("square");
+  const [cornerStyle, setCornerStyle] = useState<CornerStyle>("square");
+
+  // Logo
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [logoSize, setLogoSize] = useState<number>(22);
+
+  // Print settings
+  const [ecLevel, setEcLevel] = useState<EcLevel>("M");
+  const [material, setMaterial] = useState<Material>("matte");
+  const [printUseCase, setPrintUseCase] = useState<PrintUseCase>("flyer");
+
+  // Accordion state (Print mode)
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    content: true,
+    design: false,
+    logo: false,
+    settings: false,
+  });
+
+  // Export resolution (Print mode)
+  const [exportResolution, setExportResolution] = useState<number>(3000);
+
+  // Instances & testing
+  const [digitalQr, setDigitalQr] = useState<any>(null);
+  const [printQr, setPrintQr] = useState<any>(null);
+
+  const [isStressTesting, setIsStressTesting] = useState(false);
+  const [stressTested, setStressTested] = useState(false);
+  const [stressResults, setStressResults] = useState<StressTestResultItem[]>([]);
+  const [stressPassCount, setStressPassCount] = useState<number>(0);
+  const [gateNotice, setGateNotice] = useState<string>("Run the stress test to unlock download");
+  const [gateNoticeType, setGateNoticeType] = useState<"normal" | "warn" | "ok">("normal");
+
+  // Share & download status states
   const [isDownloadingPng, setIsDownloadingPng] = useState(false);
   const [isDownloadingSvg, setIsDownloadingSvg] = useState(false);
+  const [shareSuccessMsg, setShareSuccessMsg] = useState<string | null>(null);
+
+  // Custom Share Modal State
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareTitle, setShareTitle] = useState("My QR Code — Spellense");
+  const [shareDescription, setShareDescription] = useState("Create, test and download verified QR codes online with Spellense.");
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
+
+  // FAQ accordion
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
-  const qrContainerRef = useRef<HTMLDivElement | null>(null);
+  // Refs
+  const digitalPreviewRef = useRef<HTMLDivElement | null>(null);
+  const printPreviewRef = useRef<HTMLDivElement | null>(null);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Load external scripts if not present
-  const loadScript = (src: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      if (document.querySelector(`script[src="${src}"]`)) {
-        resolve();
-        return;
-      }
-      const s = document.createElement("script");
-      s.src = src;
-      s.onload = () => resolve();
-      s.onerror = (err) => reject(err);
-      document.body.appendChild(s);
-    });
+  // Toggle Accordion section
+  const toggleSection = (key: string) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
   };
 
-  const ensureLibraries = useCallback(async () => {
+  // Build Payload
+  const buildPayload = useCallback(() => {
+    if (contentType === "url") return urlVal.trim() || "https://spellense.com";
+    if (contentType === "text") return textVal.trim() || " ";
+    if (contentType === "wifi") {
+      return `WIFI:T:${wifiEnc};S:${wifiSsid.trim()};P:${wifiPass.trim()};;`;
+    }
+    if (contentType === "phone") return `tel:${phoneVal.trim()}`;
+    if (contentType === "email") return `mailto:${emailVal.trim()}`;
+    if (contentType === "vcard") {
+      return [
+        "BEGIN:VCARD",
+        "VERSION:3.0",
+        `FN:${vcName.trim()}`,
+        vcCompany.trim() ? `ORG:${vcCompany.trim()}` : "",
+        vcTitle.trim() ? `TITLE:${vcTitle.trim()}` : "",
+        vcPhone.trim() ? `TEL:${vcPhone.trim()}` : "",
+        vcEmail.trim() ? `EMAIL:${vcEmail.trim()}` : "",
+        "END:VCARD",
+      ]
+        .filter(Boolean)
+        .join("\n");
+    }
+    return "https://spellense.com";
+  }, [contentType, urlVal, textVal, wifiEnc, wifiSsid, wifiPass, phoneVal, emailVal, vcName, vcCompany, vcTitle, vcPhone, vcEmail]);
+
+  // Load external scripts if missing
+  const ensureLibraries = useCallback(async (): Promise<boolean> => {
     if (typeof window === "undefined") return false;
+    const loadScript = (src: string) => {
+      return new Promise<void>((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) {
+          resolve();
+          return;
+        }
+        const s = document.createElement("script");
+        s.src = src;
+        s.onload = () => resolve();
+        s.onerror = (err) => reject(err);
+        document.body.appendChild(s);
+      });
+    };
+
     try {
       if (!window.QRCodeStyling) {
         await loadScript("https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js");
@@ -151,300 +186,279 @@ export default function QrCodeGeneratorClient() {
       if (!window.jsQR) {
         await loadScript("https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js");
       }
-      return !!(window.QRCodeStyling && window.jsQR);
+      return true;
     } catch {
       return false;
     }
   }, []);
 
-  const buildPayload = useCallback(() => {
-    if (contentType === "url") {
-      return urlVal.trim() || "https://spellense.com";
-    }
-    if (contentType === "text") {
-      return textVal.trim() || " ";
-    }
-    if (contentType === "wifi") {
-      const s = wifiSsid.trim();
-      const p = wifiPass.trim();
-      return `WIFI:T:${wifiEnc};S:${s};P:${p};;`;
-    }
-    if (contentType === "phone") {
-      return `tel:${phoneVal.trim()}`;
-    }
-    if (contentType === "email") {
-      return `mailto:${emailVal.trim()}`;
-    }
-    return "https://spellense.com";
-  }, [contentType, urlVal, textVal, wifiSsid, wifiPass, wifiEnc, phoneVal, emailVal]);
+  // Generate Digital QR
+  const handleGenerateDigital = useCallback(async () => {
+    await ensureLibraries();
+    if (!window.QRCodeStyling || !digitalPreviewRef.current) return;
 
-  const decodeRenderedQr = useCallback((instance: any): Promise<boolean> => {
+    const payload = buildPayload();
+    const options: any = {
+      width: 280,
+      height: 280,
+      data: payload,
+      margin: 10,
+      qrOptions: { errorCorrectionLevel: "M" },
+      dotsOptions: { color: fgColor, type: "square" },
+      backgroundOptions: { color: bgColor },
+      cornersSquareOptions: { color: fgColor, type: "square" },
+    };
+
+    digitalPreviewRef.current.innerHTML = "";
+    const instance = new window.QRCodeStyling(options);
+    instance.append(digitalPreviewRef.current);
+    setDigitalQr(instance);
+  }, [buildPayload, fgColor, bgColor, ensureLibraries]);
+
+  // Generate Print QR
+  const handleGeneratePrint = useCallback(async () => {
+    await ensureLibraries();
+    if (!window.QRCodeStyling || !printPreviewRef.current) return;
+
+    const payload = buildPayload();
+    const options: any = {
+      width: 280,
+      height: 280,
+      data: payload,
+      margin: 10,
+      qrOptions: { errorCorrectionLevel: ecLevel },
+      dotsOptions: { color: fgColor, type: dotStyle },
+      backgroundOptions: { color: bgColor },
+      cornersSquareOptions: {
+        color: fgColor,
+        type: cornerStyle === "square" ? "square" : cornerStyle,
+      },
+    };
+
+    if (logoDataUrl) {
+      options.image = logoDataUrl;
+      options.imageOptions = {
+        crossOrigin: "anonymous",
+        imageSize: logoSize / 100,
+        margin: 4,
+      };
+    }
+
+    printPreviewRef.current.innerHTML = "";
+    const instance = new window.QRCodeStyling(options);
+    instance.append(printPreviewRef.current);
+    setPrintQr(instance);
+
+    // Reset stress test gate
+    setStressTested(false);
+    setStressResults([]);
+    setStressPassCount(0);
+    setGateNotice("Run the stress test to unlock download");
+    setGateNoticeType("normal");
+  }, [buildPayload, ecLevel, fgColor, dotStyle, bgColor, cornerStyle, logoDataUrl, logoSize, ensureLibraries]);
+
+  // Initial generation on mount
+  useEffect(() => {
+    handleGenerateDigital();
+    handleGeneratePrint();
+  }, [handleGenerateDigital, handleGeneratePrint]);
+
+  // Logo file upload handler
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setLogoDataUrl(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearLogo = () => {
+    setLogoDataUrl(null);
+    if (logoInputRef.current) logoInputRef.current.value = "";
+  };
+
+  // Decode helper for canvas filter stress testing
+  const decodeWithEffect = useCallback((qrInstance: any, effect: "dim" | "blur" | "small" | "angle"): Promise<boolean> => {
     return new Promise((resolve) => {
-      if (!instance || !window.jsQR) return resolve(false);
-      instance
+      if (!qrInstance || !window.jsQR) return resolve(false);
+
+      qrInstance
         .getRawData("png")
         .then((blob: Blob | null) => {
           if (!blob) return resolve(false);
-          const objUrl = URL.createObjectURL(blob);
+          const url = URL.createObjectURL(blob);
           const img = new Image();
           img.onload = () => {
-            try {
-              const canvas = document.createElement("canvas");
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext("2d");
-              if (!ctx) {
-                URL.revokeObjectURL(objUrl);
-                return resolve(false);
-              }
-              ctx.drawImage(img, 0, 0);
-              const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-              const code = window.jsQR?.(imgData.data, canvas.width, canvas.height);
-              URL.revokeObjectURL(objUrl);
-              resolve(!!code);
-            } catch {
-              URL.revokeObjectURL(objUrl);
-              resolve(false);
+            const pad = effect === "angle" ? 40 : 0;
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width + pad;
+            canvas.height = img.height + pad;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+              URL.revokeObjectURL(url);
+              return resolve(false);
             }
+
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (effect === "dim") ctx.filter = "brightness(0.55)";
+            if (effect === "blur") ctx.filter = "blur(2.5px)";
+
+            if (effect === "angle") {
+              ctx.setTransform(1, 0.12, -0.18, 0.95, pad / 2, pad / 4);
+              ctx.drawImage(img, 0, 0);
+              ctx.setTransform(1, 0, 0, 1, 0, 0);
+            } else if (effect === "small") {
+              const scale = 0.35;
+              const w = img.width * scale;
+              const h = img.height * scale;
+              ctx.drawImage(img, 0, 0, w, h);
+              ctx.drawImage(canvas, 0, 0, w, h, 0, 0, canvas.width, canvas.height);
+            } else {
+              ctx.drawImage(img, pad / 2, pad / 2);
+            }
+
+            ctx.filter = "none";
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const decoded = window.jsQR!(imgData.data, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            resolve(!!decoded);
           };
           img.onerror = () => {
-            URL.revokeObjectURL(objUrl);
+            URL.revokeObjectURL(url);
             resolve(false);
           };
-          img.src = objUrl;
+          img.src = url;
         })
         .catch(() => resolve(false));
     });
   }, []);
 
-  const runScannabilityTest = useCallback(
-    async (instance: any) => {
-      const results: ScoreCheck[] = [];
-      let passCount = 0;
-      let totalChecks = 0;
+  // Run Print Stress Test
+  const runStressTest = async () => {
+    if (!printQr || isStressTesting) return;
+    setIsStressTesting(true);
 
-      // 1. Contrast check
-      totalChecks++;
-      const ratio = contrastRatio(fgColor, bgColor);
-      if (ratio >= CONFIG.MIN_CONTRAST_RATIO) {
-        passCount++;
-        results.push({
-          status: "pass",
-          text: `Contrast is good (${ratio.toFixed(1)}:1)`,
-        });
-      } else {
-        results.push({
-          status: "fail",
-          text: `Contrast is too low (${ratio.toFixed(1)}:1) — use a darker QR color or lighter background`,
-        });
-      }
+    const testDefs: { key: "dim" | "blur" | "small" | "angle"; label: string }[] = [
+      { key: "dim", label: "Dim lighting" },
+      { key: "blur", label: "Blur" },
+      { key: "small", label: "Small print size" },
+      { key: "angle", label: "Angled scan" },
+    ];
 
-      // 2. Logo size vs error-correction level
-      if (logoDataUrl) {
-        totalChecks++;
-        const maxRatio = CONFIG.MAX_LOGO_RATIO[ecLevel] ?? 0.12;
-        const usedRatio = 0.35;
-        if (usedRatio <= maxRatio) {
-          passCount++;
-          results.push({
-            status: "pass",
-            text: `Logo size is safe for error-correction level ${ecLevel}`,
-          });
-        } else {
-          results.push({
-            status: "warn",
-            text: `Logo may be too large for error-correction level ${ecLevel} — switch to Q or H, or shrink the logo`,
-          });
-        }
-      }
+    const results: StressTestResultItem[] = [];
+    for (const def of testDefs) {
+      const passed = await decodeWithEffect(printQr, def.key);
+      results.push({ key: def.key, label: def.label, passed });
+    }
 
-      // 3. Minimum print size recommendation
-      totalChecks++;
-      const distMap: Record<string, number> = {
-        "business-card": 15,
-        flyer: 40,
-        poster: 150,
-        billboard: 500,
-      };
-      const distanceCm = distMap[useCase] || 40;
-      const minSizeCm = Math.max(1.5, distanceCm / CONFIG.DISTANCE_TO_SIZE_RATIO).toFixed(1);
-      passCount++;
-      results.push({
-        status: "pass",
-        text: `Print at least ${minSizeCm}cm × ${minSizeCm}cm for this use case`,
-      });
+    const passCount = results.filter((r) => r.passed).length;
+    setStressResults(results);
+    setStressPassCount(passCount);
 
-      // 4. Real decode test using jsQR (simulates a real phone camera)
-      totalChecks++;
-      try {
-        const decodable = await decodeRenderedQr(instance);
-        if (decodable) {
-          passCount++;
-          results.push({
-            status: "pass",
-            text: "Verified: this QR code decodes successfully",
-          });
-        } else {
-          results.push({
-            status: "fail",
-            text: "This QR code could not be decoded — try increasing contrast or reducing logo size",
-          });
-        }
-      } catch {
-        results.push({
-          status: "warn",
-          text: "Could not run the decode test in this browser",
-        });
-      }
+    const allPassed = passCount === testDefs.length;
+    setStressTested(allPassed);
 
-      const calculatedScore = Math.round((passCount / totalChecks) * 100);
-      setScore(calculatedScore);
-      setChecks(results);
-    },
-    [fgColor, bgColor, ecLevel, logoDataUrl, useCase, decodeRenderedQr]
-  );
+    if (allPassed) {
+      setGateNotice("Verified — ready to download");
+      setGateNoticeType("ok");
+    } else {
+      setGateNotice(`${passCount}/${testDefs.length} passed — fix the issues above, then re-run the test`);
+      setGateNoticeType("warn");
+    }
 
-  const generateQr = useCallback(async () => {
-    setIsGenerating(true);
-    await ensureLibraries();
+    setIsStressTesting(false);
+  };
 
-    if (!window.QRCodeStyling || !qrContainerRef.current) {
-      setIsGenerating(false);
+  // High-res Download helper
+  const handleDownload = async (format: "png" | "svg") => {
+    const isDigital = mode === "digital";
+    const currentInstance = isDigital ? digitalQr : printQr;
+
+    if (!currentInstance) return;
+
+    if (!isDigital && !stressTested) {
+      setGateNotice('Scan it first — tap "Stress test this QR code" above');
+      setGateNoticeType("warn");
       return;
     }
 
-    const data = buildPayload();
-    qrContainerRef.current.innerHTML = "";
-
-    const options: any = {
-      width: CONFIG.QR_RENDER_SIZE,
-      height: CONFIG.QR_RENDER_SIZE,
-      data,
-      margin: 12,
-      qrOptions: { errorCorrectionLevel: ecLevel },
-      dotsOptions: { color: fgColor, type: "square" },
-      backgroundOptions: { color: bgColor },
-      cornersSquareOptions: { color: fgColor },
-    };
-
-    if (logoDataUrl) {
-      options.image = logoDataUrl;
-      options.imageOptions = { crossOrigin: "anonymous", imageSize: 0.35, margin: 4 };
-    }
-
-    const instance = new window.QRCodeStyling(options);
-    instance.append(qrContainerRef.current);
-    setQrInstance(instance);
-
-    setTimeout(() => {
-      runScannabilityTest(instance);
-      setIsGenerating(false);
-    }, 250);
-  }, [buildPayload, ecLevel, fgColor, bgColor, logoDataUrl, ensureLibraries, runScannabilityTest]);
-
-  // Handle logo file upload
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (typeof event.target?.result === "string") {
-        setLogoDataUrl(event.target.result);
+    if (format === "png") {
+      setIsDownloadingPng(true);
+      try {
+        const size = isDigital ? 1200 : exportResolution;
+        await currentInstance.download({
+          name: "spellense-qr-code",
+          extension: "png",
+          width: size,
+          height: size,
+        });
+      } finally {
+        setIsDownloadingPng(false);
       }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const removeLogo = () => {
-    setLogoDataUrl(null);
-    if (logoInputRef.current) {
-      logoInputRef.current.value = "";
+    } else {
+      setIsDownloadingSvg(true);
+      try {
+        await currentInstance.download({
+          name: "spellense-qr-code",
+          extension: "svg",
+        });
+      } finally {
+        setIsDownloadingSvg(false);
+      }
     }
   };
 
-  const handleDownloadPng = async () => {
-    if (typeof window === "undefined" || !window.QRCodeStyling) return;
-    setIsDownloadingPng(true);
+  // Open Custom Share Modal
+  const handleOpenShareModal = () => {
+    setIsLinkCopied(false);
+    setIsShareModalOpen(true);
+  };
+
+  // Copy shareable link to clipboard
+  const handleCopyShareLink = async () => {
+    const shareUrl = typeof window !== "undefined" ? window.location.href : "https://spellense.com/qr-code-generator";
     try {
-      const size = exportResolution;
-      const margin = Math.round(size * 0.05);
-      const options: any = {
-        width: size,
-        height: size,
-        data: buildPayload(),
-        margin: margin,
-        qrOptions: { errorCorrectionLevel: ecLevel },
-        dotsOptions: { color: fgColor, type: "square" },
-        backgroundOptions: { color: bgColor },
-        cornersSquareOptions: { color: fgColor },
-      };
-      if (logoDataUrl) {
-        options.image = logoDataUrl;
-        options.imageOptions = {
-          crossOrigin: "anonymous",
-          imageSize: 0.35,
-          margin: Math.round(margin * 0.3),
-        };
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+        setIsLinkCopied(true);
+        setTimeout(() => setIsLinkCopied(false), 3000);
       }
-      const exporter = new window.QRCodeStyling(options);
-      await exporter.download({
-        name: `spellense-qr-${size}x${size}`,
-        extension: "png",
-      });
-    } catch (err) {
-      console.error("High-res PNG export failed:", err);
-      if (qrInstance) {
-        qrInstance.download({ name: "spellense-qr-code", extension: "png" });
-      }
-    } finally {
-      setIsDownloadingPng(false);
+    } catch {
+      // ignore
     }
   };
 
-  const handleDownloadSvg = async () => {
-    if (typeof window === "undefined" || !window.QRCodeStyling) return;
-    setIsDownloadingSvg(true);
-    try {
-      const options: any = {
-        width: 2000,
-        height: 2000,
-        data: buildPayload(),
-        margin: 100,
-        qrOptions: { errorCorrectionLevel: ecLevel },
-        dotsOptions: { color: fgColor, type: "square" },
-        backgroundOptions: { color: bgColor },
-        cornersSquareOptions: { color: fgColor },
-      };
-      if (logoDataUrl) {
-        options.image = logoDataUrl;
-        options.imageOptions = {
-          crossOrigin: "anonymous",
-          imageSize: 0.35,
-          margin: 30,
-        };
+  // Social share triggers
+  const handleSocialShare = (platform: "whatsapp" | "facebook" | "twitter" | "telegram" | "email" | "more") => {
+    const shareUrl = typeof window !== "undefined" ? window.location.href : "https://spellense.com/qr-code-generator";
+    const text = `${shareTitle} - ${shareDescription}`;
+
+    if (platform === "whatsapp") {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`${text}\n${shareUrl}`)}`, "_blank");
+    } else if (platform === "facebook") {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank");
+    } else if (platform === "twitter") {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`, "_blank");
+    } else if (platform === "telegram") {
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`, "_blank");
+    } else if (platform === "email") {
+      window.location.href = `mailto:?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(`${shareDescription}\n\n${shareUrl}`)}`;
+    } else if (platform === "more") {
+      if (navigator.share) {
+        navigator.share({
+          title: shareTitle,
+          text: shareDescription,
+          url: shareUrl,
+        }).catch(() => {});
+      } else {
+        handleCopyShareLink();
       }
-      const exporter = new window.QRCodeStyling(options);
-      await exporter.download({
-        name: "spellense-qr-vector",
-        extension: "svg",
-      });
-    } catch (err) {
-      console.error("SVG export failed:", err);
-      if (qrInstance) {
-        qrInstance.download({ name: "spellense-qr-code", extension: "svg" });
-      }
-    } finally {
-      setIsDownloadingSvg(false);
     }
   };
-
-  // Initial generation on component mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      generateQr();
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [generateQr]);
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f0f6fe] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
@@ -452,781 +466,915 @@ export default function QrCodeGeneratorClient() {
       <Navbar />
 
       <main id="main-content" className="flex-1">
-        {/* HERO SECTION — Title color only black, strictly 1 single line, generous spacing */}
-        <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
-          <div className="mx-auto max-w-7xl text-center">
+        {/* HERO SECTION — Matching exact standard tool style */}
+        <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16 text-center">
+          <div className="mx-auto max-w-7xl">
             <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
               QR codes that are built to actually scan.
             </h1>
           </div>
         </section>
 
-        {/* WORKSPACE TOOL CONTAINER */}
+        {/* WORKSPACE CONTAINER */}
         <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            {/* LEFT COLUMN: CONTROL STUDIO (7 COLS) */}
-            <div className="lg:col-span-7 bg-white rounded-[28px] border border-slate-200/90 p-6 sm:p-8 shadow-[0_20px_60px_-15px_rgba(0,85,254,0.06)] backdrop-blur-sm transition-all">
-              
-              {/* Content Type Selector Header */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-500">
-                    1. Select Content Type
-                  </span>
-                  <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
-                    {contentType.toUpperCase()}
-                  </span>
-                </div>
-
-                {/* Content Type Tabs with Pure SVG Icons */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                  {[
-                    {
-                      id: "url",
-                      label: "Website",
-                      icon: (
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10" />
-                          <line x1="2" y1="12" x2="22" y2="12" />
-                          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                        </svg>
-                      ),
-                    },
-                    {
-                      id: "text",
-                      label: "Plain Text",
-                      icon: (
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                          <polyline points="14 2 14 8 20 8" />
-                          <line x1="16" y1="13" x2="8" y2="13" />
-                          <line x1="16" y1="17" x2="8" y2="17" />
-                        </svg>
-                      ),
-                    },
-                    {
-                      id: "wifi",
-                      label: "WiFi Network",
-                      icon: (
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                          <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                          <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                          <circle cx="12" cy="20" r="1" fill="currentColor" />
-                        </svg>
-                      ),
-                    },
-                    {
-                      id: "phone",
-                      label: "Phone",
-                      icon: (
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                        </svg>
-                      ),
-                    },
-                    {
-                      id: "email",
-                      label: "Email",
-                      icon: (
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect width="20" height="16" x="2" y="4" rx="2" />
-                          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                        </svg>
-                      ),
-                    },
-                  ].map((item) => {
-                    const isActive = contentType === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setContentType(item.id as ContentType)}
-                        className={`group relative flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-200 cursor-pointer ${
-                          isActive
-                            ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-600/30 ring-2 ring-blue-600/20 -translate-y-0.5"
-                            : "border-slate-200/90 bg-slate-50/70 text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900"
-                        }`}
-                      >
-                        <div className={`mb-1.5 transition-colors ${isActive ? "text-white" : "text-slate-500 group-hover:text-blue-600"}`}>
-                          {item.icon}
-                        </div>
-                        <span className="text-[11px] font-bold tracking-tight">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Dynamic Input Fields */}
-              <div className="mb-6 space-y-4">
-                {contentType === "url" && (
-                  <div>
-                    <label htmlFor="input-url" className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Destination Website Link
-                    </label>
-                    <div className="relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                        </svg>
-                      </div>
-                      <input
-                        id="input-url"
-                        type="url"
-                        value={urlVal}
-                        onChange={(e) => setUrlVal(e.target.value)}
-                        placeholder="https://yourbrand.com/landing-page"
-                        className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 pl-10 pr-4 py-3 text-sm text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {contentType === "text" && (
-                  <div>
-                    <label htmlFor="input-text" className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Text Message to Encode
-                    </label>
-                    <div className="relative">
-                      <textarea
-                        id="input-text"
-                        rows={3}
-                        value={textVal}
-                        onChange={(e) => setTextVal(e.target.value)}
-                        placeholder="Type any text, message, secret code, or raw instructions..."
-                        className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 px-4 py-3 text-sm text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition resize-y"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {contentType === "wifi" && (
-                  <div className="space-y-3.5">
-                    <div>
-                      <label htmlFor="input-wifi-ssid" className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Network Name (SSID)
-                      </label>
-                      <div className="relative">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                            <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                            <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                            <circle cx="12" cy="20" r="1" fill="currentColor" />
-                          </svg>
-                        </div>
-                        <input
-                          id="input-wifi-ssid"
-                          type="text"
-                          value={wifiSsid}
-                          onChange={(e) => setWifiSsid(e.target.value)}
-                          placeholder="e.g. Office_Guest_WiFi"
-                          className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 pl-10 pr-4 py-2.5 text-sm text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label htmlFor="input-wifi-pass" className="block text-xs font-bold text-slate-700 mb-1.5">
-                          WiFi Password
-                        </label>
-                        <div className="relative">
-                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
-                          </div>
-                          <input
-                            id="input-wifi-pass"
-                            type="text"
-                            value={wifiPass}
-                            onChange={(e) => setWifiPass(e.target.value)}
-                            placeholder="Password"
-                            className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 pl-10 pr-4 py-2.5 text-sm text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label htmlFor="input-wifi-enc" className="block text-xs font-bold text-slate-700 mb-1.5">
-                          Security Protocol
-                        </label>
-                        <div className="relative">
-                          <select
-                            id="input-wifi-enc"
-                            value={wifiEnc}
-                            onChange={(e) => setWifiEnc(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 px-3.5 py-2.5 text-sm text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition appearance-none cursor-pointer"
-                          >
-                            <option value="WPA">WPA / WPA2 (Standard)</option>
-                            <option value="WEP">WEP (Legacy)</option>
-                            <option value="nopass">None (Open Network)</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <polyline points="6 9 12 15 18 9" />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {contentType === "phone" && (
-                  <div>
-                    <label htmlFor="input-phone" className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Phone Number
-                    </label>
-                    <div className="relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                        </svg>
-                      </div>
-                      <input
-                        id="input-phone"
-                        type="tel"
-                        value={phoneVal}
-                        onChange={(e) => setPhoneVal(e.target.value)}
-                        placeholder="+1 555 123 4567"
-                        className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 pl-10 pr-4 py-3 text-sm text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {contentType === "email" && (
-                  <div>
-                    <label htmlFor="input-email" className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Recipient Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect width="20" height="16" x="2" y="4" rx="2" />
-                          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                        </svg>
-                      </div>
-                      <input
-                        id="input-email"
-                        type="email"
-                        value={emailVal}
-                        onChange={(e) => setEmailVal(e.target.value)}
-                        placeholder="contact@yourdomain.com"
-                        className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 pl-10 pr-4 py-3 text-sm text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="h-px bg-slate-100 my-6" />
-
-              {/* SECTION 2: COLOR CUSTOMIZATION */}
-              <div className="mb-6">
-                <span className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-3">
-                  2. Brand Colors &amp; Contrast
-                </span>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Pattern Color */}
-                  <div className="p-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/50">
-                    <div className="flex items-center justify-between mb-2">
-                      <label htmlFor="color-fg" className="text-xs font-bold text-slate-700">
-                        QR Pattern Color
-                      </label>
-                      <span className="text-[11px] font-mono text-slate-400">{fgColor.toUpperCase()}</span>
-                    </div>
-
-                    {/* Quick Swatches */}
-                    <div className="flex items-center gap-1.5 mb-3">
-                      {COLOR_PRESETS.map((p) => (
-                        <button
-                          key={p.hex}
-                          type="button"
-                          onClick={() => setFgColor(p.hex)}
-                          style={{ backgroundColor: p.hex }}
-                          title={p.label}
-                          className={`h-6 w-6 rounded-lg transition-transform cursor-pointer border flex items-center justify-center ${
-                            fgColor.toLowerCase() === p.hex.toLowerCase()
-                              ? "scale-110 border-blue-600 shadow-sm"
-                              : "border-black/10 hover:scale-105"
-                          }`}
-                        >
-                          {fgColor.toLowerCase() === p.hex.toLowerCase() && (
-                            <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="color-fg"
-                        type="color"
-                        value={fgColor}
-                        onChange={(e) => setFgColor(e.target.value)}
-                        className="h-8 w-10 cursor-pointer rounded-lg border border-slate-200 p-0.5 bg-white"
-                      />
-                      <input
-                        type="text"
-                        value={fgColor}
-                        onChange={(e) => setFgColor(e.target.value)}
-                        className="flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-mono uppercase text-slate-700 focus:outline-none focus:border-blue-600"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Background Color */}
-                  <div className="p-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/50">
-                    <div className="flex items-center justify-between mb-2">
-                      <label htmlFor="color-bg" className="text-xs font-bold text-slate-700">
-                        Background Color
-                      </label>
-                      <span className="text-[11px] font-mono text-slate-400">{bgColor.toUpperCase()}</span>
-                    </div>
-
-                    {/* Quick Swatches */}
-                    <div className="flex items-center gap-1.5 mb-3">
-                      {BG_PRESETS.map((p) => (
-                        <button
-                          key={p.hex}
-                          type="button"
-                          onClick={() => setBgColor(p.hex)}
-                          style={{ backgroundColor: p.hex }}
-                          title={p.label}
-                          className={`h-6 w-6 rounded-lg transition-transform cursor-pointer border flex items-center justify-center ${
-                            bgColor.toLowerCase() === p.hex.toLowerCase()
-                              ? "scale-110 border-blue-600 shadow-sm"
-                              : "border-slate-300 hover:scale-105"
-                          }`}
-                        >
-                          {bgColor.toLowerCase() === p.hex.toLowerCase() && (
-                            <svg className="w-3.5 h-3.5 text-slate-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="color-bg"
-                        type="color"
-                        value={bgColor}
-                        onChange={(e) => setBgColor(e.target.value)}
-                        className="h-8 w-10 cursor-pointer rounded-lg border border-slate-200 p-0.5 bg-white"
-                      />
-                      <input
-                        type="text"
-                        value={bgColor}
-                        onChange={(e) => setBgColor(e.target.value)}
-                        className="flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-mono uppercase text-slate-700 focus:outline-none focus:border-blue-600"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 3: ERROR CORRECTION & PRINT SIZE */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label htmlFor="ec-level" className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Error Correction Level
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="ec-level"
-                      value={ecLevel}
-                      onChange={(e) => setEcLevel(e.target.value as EcLevel)}
-                      className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition appearance-none cursor-pointer"
-                    >
-                      <option value="L">Low (L) — max data density (7%)</option>
-                      <option value="M">Medium (M) — balanced standard (15%)</option>
-                      <option value="Q">Quartile (Q) — logo-friendly (25%)</option>
-                      <option value="H">High (H) — most resilient with logo (30%)</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="use-case" className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Where will this be printed?
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="use-case"
-                      value={useCase}
-                      onChange={(e) => setUseCase(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition appearance-none cursor-pointer"
-                    >
-                      <option value="business-card">Business card (close-up — 15cm)</option>
-                      <option value="flyer">Flyer / Menu (arm&apos;s length — 40cm)</option>
-                      <option value="poster">Poster (across room — 150cm)</option>
-                      <option value="billboard">Billboard / Banner (far away — 500cm)</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 4: CENTER LOGO DROPZONE */}
-              <div className="mb-6 rounded-2xl border-2 border-dashed border-slate-200/90 bg-slate-50/40 p-4 transition-all hover:border-blue-300">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="17 8 12 3 7 8" />
-                        <line x1="12" y1="3" x2="12" y2="15" />
-                      </svg>
-                    </div>
-                    <div>
-                      <label htmlFor="logo-upload" className="block text-xs font-bold text-slate-800 cursor-pointer">
-                        Center Logo Branding (Optional)
-                      </label>
-                      <p className="text-[11px] text-slate-500">
-                        Transparent PNG or SVG recommended
-                      </p>
-                    </div>
-                  </div>
-
-                  {logoDataUrl && (
-                    <button
-                      type="button"
-                      onClick={removeLogo}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 cursor-pointer self-start sm:self-auto bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200/60"
-                    >
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                      <span>Remove</span>
-                    </button>
-                  )}
-                </div>
-
-                <div className="mt-3 flex items-center gap-3">
-                  <input
-                    ref={logoInputRef}
-                    id="logo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    className="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
-                  />
-                  {logoDataUrl && (
-                    <div className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-white p-1 flex items-center justify-center overflow-hidden shadow-2xs">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={logoDataUrl} alt="Logo preview" className="max-h-full max-w-full object-contain" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ACTION: GENERATE & TEST BUTTON */}
+          
+          {/* MODE SWITCHER TABS */}
+          <div className="mx-auto max-w-xs mb-8">
+            <div className="bg-slate-200/80 p-1 rounded-2xl flex items-center border border-slate-300/70 shadow-inner">
               <button
                 type="button"
-                id="generate-btn"
-                onClick={generateQr}
-                disabled={isGenerating}
-                className="w-full relative group overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 text-white font-bold py-4 px-6 shadow-xl shadow-blue-500/25 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2.5"
+                onClick={() => setMode("digital")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
+                  mode === "digital"
+                    ? "bg-white text-emerald-800 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
               >
-                {isGenerating ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                    </svg>
-                    <span className="text-sm sm:text-base">Simulating Scanner &amp; Testing...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 text-amber-300 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                    </svg>
-                    <span className="text-sm sm:text-base">Generate &amp; Test QR Code</span>
-                  </>
-                )}
+                {/* Digital / Screen SVG Icon */}
+                <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="20" height="14" x="2" y="3" rx="2" />
+                  <line x1="8" x2="16" y1="21" y2="21" />
+                  <line x1="12" x2="12" y1="17" y2="21" />
+                </svg>
+                <span>Digital</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMode("print")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
+                  mode === "print"
+                    ? "bg-white text-emerald-800 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {/* Print / Printer SVG Icon */}
+                <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <rect width="12" height="8" x="6" y="14" />
+                </svg>
+                <span>Print</span>
               </button>
             </div>
+          </div>
 
-            {/* RIGHT COLUMN: PREVIEW + SCANNABILITY SCORE (5 COLS) */}
-            <div className="lg:col-span-5 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* LEFT COLUMN: CONTROLS (7 COLS) */}
+            <div className="lg:col-span-7 bg-white rounded-[28px] border border-slate-200/90 p-6 sm:p-8 shadow-[0_20px_60px_-15px_rgba(0,85,254,0.06)]">
               
-              {/* LIVE PREVIEW CARD */}
-              <div className="bg-white rounded-[28px] border border-slate-200/90 p-6 sm:p-7 shadow-[0_20px_60px_-15px_rgba(0,85,254,0.06)] flex flex-col items-center text-center">
-                <div className="w-full flex items-center justify-between mb-5 pb-3.5 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-700">Live Preview</span>
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-                    <svg className="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Client-Side Verified
-                  </span>
-                </div>
-
-                {/* QR Canvas Presentation Box */}
-                <div
-                  id="qr-preview"
-                  className="w-full min-h-[320px] flex items-center justify-center p-6 rounded-2xl bg-gradient-to-b from-slate-50/80 to-slate-100/40 border border-slate-200/60 shadow-inner overflow-hidden"
-                >
-                  <div
-                    ref={qrContainerRef}
-                    className="flex items-center justify-center bg-white p-2 rounded-xl shadow-xs"
-                  />
-                </div>
-
-                {/* Export Quality / Resolution Selector */}
-                <div className="w-full mt-5 pt-4 border-t border-slate-100 text-left">
-                  <div className="flex items-center justify-between mb-2.5">
-                    <span className="text-xs font-bold text-slate-700">PNG Resolution</span>
-                    <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/70">
-                      {exportResolution} × {exportResolution} px
-                    </span>
-                  </div>
-
-                  {/* 3 Checkboxes strictly in 1 single horizontal line matching exact visual design */}
-                  <div className="flex items-center justify-between gap-3 sm:gap-6 py-2 px-1 mb-3">
-                    {[
-                      { size: 1000, label: "1000 px" },
-                      { size: 2000, label: "2000 px" },
-                      { size: 3000, label: "3000 px" },
-                    ].map((opt) => {
-                      const isSel = exportResolution === opt.size;
-                      return (
-                        <button
-                          key={opt.size}
-                          type="button"
-                          onClick={() => setExportResolution(opt.size)}
-                          className="group inline-flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none transition-all focus:outline-none"
-                        >
-                          {/* Checkbox box with soft rounded squircle shape */}
-                          <div
-                            style={{
-                              backgroundColor: isSel ? "#1d6ef5" : "#ffffff",
-                              borderColor: isSel ? "#1d6ef5" : "#cbd5e1",
-                            }}
-                            className={`h-5 w-5 sm:h-6 sm:w-6 shrink-0 rounded-[7px] border-2 flex items-center justify-center transition-all shadow-xs ${
-                              !isSel ? "group-hover:border-slate-400" : ""
-                            }`}
-                          >
-                            {isSel && (
-                              <svg
-                                className="w-3.5 h-3.5 text-white"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#ffffff"
-                                strokeWidth="3.8"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            )}
-                          </div>
-
-                          <span
-                            className="text-sm sm:text-[15px] font-black tracking-tight text-[#0f172a] select-none"
-                          >
-                            {opt.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Download Actions */}
-                <div className="w-full grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    id="download-png"
-                    onClick={handleDownloadPng}
-                    disabled={isDownloadingPng}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-500 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60"
-                  >
-                    {isDownloadingPng ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              {/* DIGITAL MODE: FLAT MINIMAL FORM */}
+              {mode === "digital" && (
+                <div className="space-y-6">
+                  {/* Content Type Selector */}
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                      Content Type
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={contentType}
+                        onChange={(e) => setContentType(e.target.value as ContentType)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+                      >
+                        <option value="url">Website link (URL)</option>
+                        <option value="text">Plain text</option>
+                        <option value="wifi">WiFi network</option>
+                        <option value="phone">Phone number</option>
+                        <option value="email">Email address</option>
+                        <option value="vcard">Contact card (vCard)</option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="6 9 12 15 18 9" />
                         </svg>
-                        <span>Exporting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="7 10 12 15 17 10" />
-                          <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        <span>Download PNG</span>
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    id="download-svg"
-                    onClick={handleDownloadSvg}
-                    disabled={isDownloadingSvg}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-indigo-500 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60"
-                  >
-                    {isDownloadingSvg ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4 text-indigo-600" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                        </svg>
-                        <span>Exporting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                          <polyline points="2 17 12 22 22 17" />
-                          <polyline points="2 12 12 17 22 12" />
-                        </svg>
-                        <span>Download SVG</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* SCANNABILITY SCORE CARD */}
-              {score !== null && (
-                <div
-                  id="score-card"
-                  className="bg-white rounded-[28px] border border-slate-200/90 p-6 sm:p-7 shadow-[0_20px_60px_-15px_rgba(0,85,254,0.06)] text-left"
-                >
-                  <div className="flex items-center justify-between mb-4 pb-3.5 border-b border-slate-100">
-                    <div>
-                      <div className="text-xs font-black uppercase tracking-wider text-slate-600">
-                        Scannability Score
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">Pre-flight camera simulation</div>
-                    </div>
-                    <div
-                      id="score-value"
-                      className={`text-2xl font-black px-3.5 py-1 rounded-xl border tracking-tight ${
-                        score >= 90
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 shadow-xs"
-                          : score >= 60
-                          ? "bg-amber-50 text-amber-700 border-amber-200/80 shadow-xs"
-                          : "bg-rose-50 text-rose-700 border-rose-200/80 shadow-xs"
-                      }`}
-                    >
-                      {score}/100
                     </div>
                   </div>
 
-                  {/* Diagnostic Checklist with SVG Icons */}
-                  <ul id="score-list" className="space-y-3">
-                    {checks.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-3 text-xs sm:text-[13px] leading-relaxed text-slate-700">
-                        <span className="shrink-0 mt-0.5">
-                          {item.status === "pass" && (
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            </div>
-                          )}
-                          {item.status === "warn" && (
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                                <line x1="12" y1="9" x2="12" y2="13" />
-                                <line x1="12" y1="17" x2="12.01" y2="17" />
-                              </svg>
-                            </div>
-                          )}
-                          {item.status === "fail" && (
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-100 text-rose-700">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18" />
-                                <line x1="6" y1="6" x2="18" y2="18" />
-                              </svg>
-                            </div>
-                          )}
+                  {/* Dynamic Fields */}
+                  {renderFieldsGroup()}
+
+                  {/* Colors Row */}
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div>
+                      <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                        QR Color
+                      </label>
+                      <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                        <input
+                          type="color"
+                          value={fgColor}
+                          onChange={(e) => setFgColor(e.target.value)}
+                          className="h-9 w-9 rounded-lg border-0 cursor-pointer p-0 bg-transparent"
+                        />
+                        <span className="text-xs font-mono font-bold text-slate-700 uppercase">
+                          {fgColor}
                         </span>
-                        <span className="pt-0.5">{item.text}</span>
-                      </li>
-                    ))}
-                  </ul>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                        Background
+                      </label>
+                      <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                        <input
+                          type="color"
+                          value={bgColor}
+                          onChange={(e) => setBgColor(e.target.value)}
+                          className="h-9 w-9 rounded-lg border-0 cursor-pointer p-0 bg-transparent"
+                        />
+                        <span className="text-xs font-mono font-bold text-slate-700 uppercase">
+                          {bgColor}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Generate Button */}
+                  <button
+                    type="button"
+                    onClick={handleGenerateDigital}
+                    className="w-full mt-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-emerald-600/20 hover:shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                    <svg className="w-5 h-5 text-white stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    <span>Generate Digital QR Code</span>
+                  </button>
                 </div>
               )}
 
+              {/* PRINT MODE: ACCORDION BASED FORM */}
+              {mode === "print" && (
+                <div className="space-y-4">
+                  
+                  {/* ACCORDION 1: CONTENT */}
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden transition-all">
+                    <button
+                      type="button"
+                      onClick={() => toggleSection("content")}
+                      className="w-full flex items-center justify-between p-4.5 bg-slate-50/80 hover:bg-slate-100/80 text-left font-black text-sm text-slate-800 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                          <line x1="16" x2="8" y1="13" y2="13" />
+                          <line x1="16" x2="8" y1="17" y2="17" />
+                        </svg>
+                        <span>1. Content Details</span>
+                      </div>
+                      <svg
+                        className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
+                          openSections.content ? "rotate-180" : ""
+                        }`}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+
+                    {openSections.content && (
+                      <div className="p-5 bg-white space-y-4 border-t border-slate-200">
+                        <div>
+                          <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                            Content Type
+                          </label>
+                          <div className="relative">
+                            <select
+                              value={contentType}
+                              onChange={(e) => setContentType(e.target.value as ContentType)}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+                            >
+                              <option value="url">Website link (URL)</option>
+                              <option value="text">Plain text</option>
+                              <option value="wifi">WiFi network</option>
+                              <option value="phone">Phone number</option>
+                              <option value="email">Email address</option>
+                              <option value="vcard">Contact card (vCard)</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+
+                        {renderFieldsGroup()}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ACCORDION 2: DESIGN & STYLES */}
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden transition-all">
+                    <button
+                      type="button"
+                      onClick={() => toggleSection("design")}
+                      className="w-full flex items-center justify-between p-4.5 bg-slate-50/80 hover:bg-slate-100/80 text-left font-black text-sm text-slate-800 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="m4.93 4.93 4.24 4.24" />
+                          <path d="m14.83 9.17 4.24-4.24" />
+                          <path d="m14.83 14.83 4.24 4.24" />
+                          <path d="m9.17 14.83-4.24 4.24" />
+                        </svg>
+                        <span>2. Design & Styling</span>
+                      </div>
+                      <svg
+                        className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
+                          openSections.design ? "rotate-180" : ""
+                        }`}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+
+                    {openSections.design && (
+                      <div className="p-5 bg-white space-y-5 border-t border-slate-200">
+                        {/* Dot Style — Compact Horizontal Icon Grid */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-xs font-black uppercase tracking-wider text-slate-500">
+                              Dot Style
+                            </label>
+                            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded capitalize">
+                              {dotStyle === "extra-rounded" ? "Extra Rounded" : dotStyle}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {[
+                              {
+                                id: "square",
+                                title: "Square",
+                                icon: (
+                                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                    <rect x="4" y="4" width="16" height="16" rx="1" />
+                                  </svg>
+                                ),
+                              },
+                              {
+                                id: "dots",
+                                title: "Dots",
+                                icon: (
+                                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="8" />
+                                  </svg>
+                                ),
+                              },
+                              {
+                                id: "rounded",
+                                title: "Rounded",
+                                icon: (
+                                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                    <rect x="4" y="4" width="16" height="16" rx="5" />
+                                  </svg>
+                                ),
+                              },
+                              {
+                                id: "classy",
+                                title: "Classy",
+                                icon: (
+                                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                    <path d="M12 3 L21 12 L12 21 L3 12 Z" />
+                                  </svg>
+                                ),
+                              },
+                              {
+                                id: "extra-rounded",
+                                title: "Extra Rounded",
+                                icon: (
+                                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                    <rect x="4" y="4" width="16" height="16" rx="8" />
+                                  </svg>
+                                ),
+                              },
+                            ].map((item) => {
+                              const isSel = dotStyle === item.id;
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  title={item.title}
+                                  aria-label={item.title}
+                                  onClick={() => setDotStyle(item.id as DotStyle)}
+                                  className={`w-11 h-11 shrink-0 rounded-xl border flex items-center justify-center transition-all cursor-pointer relative group ${
+                                    isSel
+                                      ? "bg-emerald-50 border-emerald-600 text-emerald-700 ring-2 ring-emerald-600/20 shadow-xs"
+                                      : "border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:border-slate-300 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  {item.icon}
+                                  {/* Tooltip */}
+                                  <span className="pointer-events-none absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900 text-white text-[10px] font-bold py-0.5 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm">
+                                    {item.title}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Corner Style — Compact Horizontal Icon Grid */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-xs font-black uppercase tracking-wider text-slate-500">
+                              Corner Style
+                            </label>
+                            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded capitalize">
+                              {cornerStyle === "extra-rounded" ? "Extra Rounded" : cornerStyle === "dot" ? "Circle Dot" : "Square"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {[
+                              {
+                                id: "square",
+                                title: "Square",
+                                icon: (
+                                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="1" />
+                                    <rect x="8" y="8" width="8" height="8" fill="currentColor" />
+                                  </svg>
+                                ),
+                              },
+                              {
+                                id: "dot",
+                                title: "Circle Dot",
+                                icon: (
+                                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <circle cx="12" cy="12" r="9" />
+                                    <circle cx="12" cy="12" r="4" fill="currentColor" />
+                                  </svg>
+                                ),
+                              },
+                              {
+                                id: "extra-rounded",
+                                title: "Extra Rounded",
+                                icon: (
+                                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="6" />
+                                    <rect x="8" y="8" width="8" height="8" rx="3" fill="currentColor" />
+                                  </svg>
+                                ),
+                              },
+                            ].map((item) => {
+                              const isSel = cornerStyle === item.id;
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  title={item.title}
+                                  aria-label={item.title}
+                                  onClick={() => setCornerStyle(item.id as CornerStyle)}
+                                  className={`w-11 h-11 shrink-0 rounded-xl border flex items-center justify-center transition-all cursor-pointer relative group ${
+                                    isSel
+                                      ? "bg-emerald-50 border-emerald-600 text-emerald-700 ring-2 ring-emerald-600/20 shadow-xs"
+                                      : "border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:border-slate-300 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  {item.icon}
+                                  {/* Tooltip */}
+                                  <span className="pointer-events-none absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900 text-white text-[10px] font-bold py-0.5 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm">
+                                    {item.title}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Colors */}
+                        <div className="grid grid-cols-2 gap-4 pt-2">
+                          <div>
+                            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                              QR Color
+                            </label>
+                            <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                              <input
+                                type="color"
+                                value={fgColor}
+                                onChange={(e) => setFgColor(e.target.value)}
+                                className="h-9 w-9 rounded-lg border-0 cursor-pointer p-0 bg-transparent"
+                              />
+                              <span className="text-xs font-mono font-bold text-slate-700 uppercase">
+                                {fgColor}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                              Background
+                            </label>
+                            <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                              <input
+                                type="color"
+                                value={bgColor}
+                                onChange={(e) => setBgColor(e.target.value)}
+                                className="h-9 w-9 rounded-lg border-0 cursor-pointer p-0 bg-transparent"
+                              />
+                              <span className="text-xs font-mono font-bold text-slate-700 uppercase">
+                                {bgColor}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ACCORDION 3: LOGO */}
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden transition-all">
+                    <button
+                      type="button"
+                      onClick={() => toggleSection("logo")}
+                      className="w-full flex items-center justify-between p-4.5 bg-slate-50/80 hover:bg-slate-100/80 text-left font-black text-sm text-slate-800 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                          <circle cx="9" cy="9" r="2" />
+                          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                        </svg>
+                        <span>3. Logo & Watermark</span>
+                      </div>
+                      <svg
+                        className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
+                          openSections.logo ? "rotate-180" : ""
+                        }`}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+
+                    {openSections.logo && (
+                      <div className="p-5 bg-white space-y-4 border-t border-slate-200">
+                        <div>
+                          <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                            Upload Logo (Optional)
+                          </label>
+                          <input
+                            ref={logoInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLogoUpload}
+                            className="block w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+                          />
+                          {logoDataUrl && (
+                            <button
+                              type="button"
+                              onClick={handleClearLogo}
+                              className="mt-2 text-xs font-bold text-red-600 hover:text-red-700 cursor-pointer"
+                            >
+                              ✕ Remove logo
+                            </button>
+                          )}
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center mb-1.5">
+                            <label className="text-xs font-black uppercase tracking-wider text-slate-500">
+                              Logo Scale
+                            </label>
+                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                              {logoSize}%
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="10"
+                            max="40"
+                            value={logoSize}
+                            onChange={(e) => setLogoSize(parseInt(e.target.value, 10))}
+                            className="w-full accent-emerald-600 cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ACCORDION 4: PRINT SETTINGS */}
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden transition-all">
+                    <button
+                      type="button"
+                      onClick={() => toggleSection("settings")}
+                      className="w-full flex items-center justify-between p-4.5 bg-slate-50/80 hover:bg-slate-100/80 text-left font-black text-sm text-slate-800 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                        </svg>
+                        <span>4. Print Settings & Capacity</span>
+                      </div>
+                      <svg
+                        className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
+                          openSections.settings ? "rotate-180" : ""
+                        }`}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+
+                    {openSections.settings && (
+                      <div className="p-5 bg-white space-y-4 border-t border-slate-200">
+                        <div>
+                          <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                            Error Correction Level
+                          </label>
+                          <select
+                            value={ecLevel}
+                            onChange={(e) => setEcLevel(e.target.value as EcLevel)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+                          >
+                            <option value="L">L - Low (7% recovery, high capacity)</option>
+                            <option value="M">M - Medium (15% recovery, standard)</option>
+                            <option value="Q">Q - Quartile (25% recovery, logo safe)</option>
+                            <option value="H">H - High (30% recovery, maximum safety)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                            Print Material
+                          </label>
+                          <select
+                            value={material}
+                            onChange={(e) => setMaterial(e.target.value as Material)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+                          >
+                            <option value="matte">Matte paper</option>
+                            <option value="glossy">Glossy coated</option>
+                            <option value="fabric">Fabric / Apparel</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                            Where will this be printed?
+                          </label>
+                          <select
+                            value={printUseCase}
+                            onChange={(e) => setPrintUseCase(e.target.value as PrintUseCase)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+                          >
+                            <option value="business-card">Business card (close-up ~15 cm)</option>
+                            <option value="flyer">Flyer / Menu (arm's length ~40 cm)</option>
+                            <option value="poster">Poster (across a room ~150 cm)</option>
+                            <option value="billboard">Billboard / Signage (far away ~500 cm)</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Generate Print QR Code Button */}
+                  <button
+                    type="button"
+                    onClick={handleGeneratePrint}
+                    className="w-full mt-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-emerald-600/20 hover:shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                    <svg className="w-5 h-5 text-white stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    <span>Generate Print QR Code</span>
+                  </button>
+                </div>
+              )}
             </div>
 
+            {/* RIGHT COLUMN: PREVIEW & ACTIONS (5 COLS) */}
+            <div className="lg:col-span-5 space-y-6">
+              
+              {/* QR Preview Card */}
+              <div className="bg-white rounded-[28px] border border-slate-200/90 p-6 sm:p-7 shadow-[0_20px_60px_-15px_rgba(0,85,254,0.06)] flex flex-col items-center justify-center text-center">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-500 mb-4">
+                  {mode === "digital" ? "Digital Preview" : "Print Ready Preview"}
+                </span>
+
+                {/* Preview Box */}
+                <div className="w-[280px] h-[280px] rounded-2xl bg-slate-50 border border-slate-200/90 flex items-center justify-center overflow-hidden shadow-inner relative">
+                  {mode === "digital" ? (
+                    <div ref={digitalPreviewRef} className="w-full h-full flex items-center justify-center" />
+                  ) : (
+                    <div ref={printPreviewRef} className="w-full h-full flex items-center justify-center" />
+                  )}
+                </div>
+
+                {/* PRINT MODE: STRESS TEST BUTTON & CARD */}
+                {mode === "print" && (
+                  <div className="w-full mt-6 space-y-4">
+                    <button
+                      type="button"
+                      onClick={runStressTest}
+                      disabled={isStressTesting}
+                      className={`w-full py-3 px-4 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${
+                        stressTested
+                          ? "bg-emerald-50 text-emerald-800 border border-emerald-300"
+                          : "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
+                      }`}
+                    >
+                      {isStressTesting ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                          <span>Testing Conditions…</span>
+                        </>
+                      ) : stressTested ? (
+                        <>
+                          <svg className="w-4 h-4 text-emerald-600 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          <span>✓ Verified — 4/4 Tests Passed</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4 text-white stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                          </svg>
+                          <span>Stress test this QR code</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Stress Test Results Box */}
+                    {stressResults.length > 0 && (
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-2.5">
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                          <span className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                            Stress Test Results
+                          </span>
+                          <span
+                            className={`text-xs font-black px-2 py-0.5 rounded-md ${
+                              stressPassCount === 4
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {stressPassCount}/4 Passed
+                          </span>
+                        </div>
+
+                        <ul className="space-y-1.5 text-xs font-bold">
+                          {stressResults.map((item) => (
+                            <li key={item.key} className="flex items-center justify-between">
+                              <span className="text-slate-600">{item.label}</span>
+                              <span
+                                className={`inline-flex items-center gap-1 font-black ${
+                                  item.passed ? "text-emerald-600" : "text-red-500"
+                                }`}
+                              >
+                                {item.passed ? (
+                                  <>
+                                    <svg className="w-3.5 h-3.5 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    <span>Scans fine</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-3.5 h-3.5 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                                      <line x1="18" y1="6" x2="6" y2="18" />
+                                      <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                    <span>Failed</span>
+                                  </>
+                                )}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Gate Message */}
+                    <div
+                      className={`p-2.5 rounded-xl text-xs font-bold text-center border ${
+                        gateNoticeType === "ok"
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          : gateNoticeType === "warn"
+                          ? "bg-amber-50 text-amber-800 border-amber-200"
+                          : "bg-slate-50 text-slate-600 border-slate-200"
+                      }`}
+                    >
+                      {gateNotice}
+                    </div>
+
+                    {/* Resolution selector (strictly 1 single horizontal row) */}
+                    <div className="pt-2 text-left">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-slate-700">PNG Resolution</span>
+                        <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                          {exportResolution} × {exportResolution} px
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3 py-2 px-1 mb-2">
+                        {[
+                          { size: 1000, label: "1000 px" },
+                          { size: 2000, label: "2000 px" },
+                          { size: 3000, label: "3000 px" },
+                        ].map((opt) => {
+                          const isSel = exportResolution === opt.size;
+                          return (
+                            <button
+                              key={opt.size}
+                              type="button"
+                              onClick={() => setExportResolution(opt.size)}
+                              className="group inline-flex items-center gap-2.5 cursor-pointer select-none transition-all focus:outline-none"
+                            >
+                              <div
+                                style={{
+                                  backgroundColor: isSel ? "#10b981" : "#ffffff",
+                                  borderColor: isSel ? "#10b981" : "#cbd5e1",
+                                }}
+                                className={`h-5 w-5 sm:h-5.5 sm:w-5.5 shrink-0 rounded-[7px] border-2 flex items-center justify-center transition-all ${
+                                  !isSel ? "group-hover:border-slate-400" : ""
+                                }`}
+                              >
+                                {isSel && (
+                                  <svg
+                                    className="w-3.5 h-3.5 text-white"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="#ffffff"
+                                    strokeWidth="3.8"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                )}
+                              </div>
+                              <span className="text-xs sm:text-[13px] font-black text-[#0f172a]">
+                                {opt.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ACTION BUTTONS: PNG, SVG, SHARE */}
+                <div className="w-full mt-6 space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {/* PNG Download */}
+                    <button
+                      type="button"
+                      onClick={() => handleDownload("png")}
+                      disabled={isDownloadingPng || (mode === "print" && !stressTested)}
+                      className={`inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {isDownloadingPng ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 text-emerald-600" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                          <span>Exporting…</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                          <span>Download PNG</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* SVG Download */}
+                    <button
+                      type="button"
+                      onClick={() => handleDownload("svg")}
+                      disabled={isDownloadingSvg || (mode === "print" && !stressTested)}
+                      className={`inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {isDownloadingSvg ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 text-emerald-600" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                          <span>Exporting…</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                            <polyline points="2 17 12 22 22 17" />
+                            <polyline points="2 12 12 17 22 12" />
+                          </svg>
+                          <span>Download SVG</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Share Button (PNG, SVG and Share requirement) */}
+                  <button
+                    type="button"
+                    onClick={handleOpenShareModal}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-slate-50 hover:bg-slate-100 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-xs transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                    <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                    </svg>
+                    <span>Share QR Code</span>
+                  </button>
+
+                  {/* Share feedback alert */}
+                  {shareSuccessMsg && (
+                    <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 text-center animate-fadeIn">
+                      {shareSuccessMsg}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* FAQ ACCORDION SECTION */}
-        <section className="mx-auto max-w-4xl px-4 pb-20 sm:px-6">
+        {/* FAQ SECTION */}
+        <section className="mx-auto max-w-4xl px-4 pb-24 sm:px-6">
           <div className="text-center mb-10">
-            <span className="text-xs font-black uppercase tracking-wider text-blue-600">Knowledge Base</span>
-            <h2 className="mt-1 text-2xl sm:text-3xl font-black text-slate-900">
-              Questions about QR code scannability
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Frequently Asked Questions
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Everything you need to know before putting your QR code into print production.
+            <p className="mt-2 text-sm sm:text-base text-slate-600">
+              Everything you need to know about QR scannability and print requirements.
             </p>
           </div>
 
           <div className="space-y-3.5">
-            {FAQ_ITEMS.map((faq, index) => {
-              const isOpen = openFaqIndex === index;
+            {FAQ_ITEMS.map((item, idx) => {
+              const isOpen = openFaqIndex === idx;
               return (
                 <div
-                  key={faq.q}
-                  className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs transition"
+                  key={idx}
+                  className="rounded-2xl border border-slate-200/90 bg-white transition-all overflow-hidden"
                 >
                   <button
                     type="button"
-                    onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                    className="flex w-full items-center justify-between p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
+                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                    className="flex w-full items-center justify-between p-5 text-left text-sm sm:text-base font-bold text-slate-900 hover:text-emerald-700 transition-colors cursor-pointer"
                   >
-                    <span className="text-sm sm:text-base font-bold text-slate-900">
-                      {faq.q}
-                    </span>
-                    <span
-                      className={`ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-transform duration-200 ${
-                        isOpen ? "rotate-180 bg-blue-50 text-blue-600" : ""
+                    <span>{item.q}</span>
+                    <svg
+                      className={`h-4 w-4 text-slate-400 transition-transform duration-200 shrink-0 ml-4 ${
+                        isOpen ? "rotate-180" : ""
                       }`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </span>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
                   </button>
-
                   {isOpen && (
-                    <div className="border-t border-slate-100 px-5 pt-3.5 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600">
-                      {faq.a}
+                    <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                      {item.a}
                     </div>
                   )}
                 </div>
@@ -1234,87 +1382,400 @@ export default function QrCodeGeneratorClient() {
             })}
           </div>
         </section>
-
-        {/* CROSS-LINKING RELATED TOOLS SECTION */}
-        <section className="border-t border-slate-200/80 bg-white/60 py-16 px-4 sm:px-6">
-          <div className="mx-auto max-w-6xl">
-            <div className="text-center mb-10">
-              <span className="text-xs font-black uppercase tracking-wider text-blue-600">Explore More</span>
-              <h2 className="mt-1 text-2xl font-black text-slate-900">Free Creative &amp; Production Tools</h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Link
-                href="/design-check"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-3">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                </div>
-                <div className="text-xs font-bold text-blue-600 uppercase mb-0.5">Pre-flight QA</div>
-                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Design Check</div>
-                <p className="mt-1 text-xs text-slate-500">Find typos, low contrast &amp; print errors before launching.</p>
-              </Link>
-
-              <Link
-                href="/image-compressor"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-3">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 14h6m0 0v6m0-6L3 21" />
-                    <path d="M20 10h-6m0 0V4m0 6 7-7" />
-                  </svg>
-                </div>
-                <div className="text-xs font-bold text-blue-600 uppercase mb-0.5">Optimizer</div>
-                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Image Compressor</div>
-                <p className="mt-1 text-xs text-slate-500">Compress JPG, PNG &amp; PDFs with live split comparison.</p>
-              </Link>
-
-              <Link
-                href="/image-to-text"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-3">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                    <line x1="8" y1="13" x2="16" y2="13" />
-                    <line x1="8" y1="17" x2="13" y2="17" />
-                  </svg>
-                </div>
-                <div className="text-xs font-bold text-blue-600 uppercase mb-0.5">OCR Tool</div>
-                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Image to Text</div>
-                <p className="mt-1 text-xs text-slate-500">Extract clean text from photos, screenshots &amp; scans.</p>
-              </Link>
-
-              <Link
-                href="/flipbook"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-3">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
-                    <path d="M6 6h10" />
-                    <path d="M6 10h10" />
-                  </svg>
-                </div>
-                <div className="text-xs font-bold text-blue-600 uppercase mb-0.5">Interactive 3D</div>
-                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">3D Flipbook</div>
-                <p className="mt-1 text-xs text-slate-500">Turn static PDFs into realistic 3D books with page flip sounds.</p>
-              </Link>
-            </div>
-          </div>
-        </section>
       </main>
 
+      {/* CUSTOM SHARE MODAL */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fadeIn">
+          <div className="relative w-full max-w-lg rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-7 shadow-2xl text-left">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                  <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">Share QR Code</h3>
+                  <p className="text-xs text-slate-500">Share or copy link to your generated QR code</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(false)}
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="space-y-4 pt-4">
+              {/* Title input */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
+                  Share Title
+                </label>
+                <input
+                  type="text"
+                  value={shareTitle}
+                  onChange={(e) => setShareTitle(e.target.value)}
+                  placeholder="Title..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                />
+              </div>
+
+              {/* Description input */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
+                  Share Description
+                </label>
+                <textarea
+                  rows={2}
+                  value={shareDescription}
+                  onChange={(e) => setShareDescription(e.target.value)}
+                  placeholder="Description..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3.5 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                />
+              </div>
+
+              {/* Copy link field */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
+                  Page Link
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={typeof window !== "undefined" ? window.location.href : "https://spellense.com/qr-code-generator"}
+                    className="flex-1 bg-slate-100 border border-slate-200 rounded-xl py-2 px-3 text-xs font-mono text-slate-700 select-all focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCopyShareLink}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
+                  >
+                    {isLinkCopied ? (
+                      <>
+                        <svg className="w-3.5 h-3.5 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                          <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                        </svg>
+                        <span>Copy Link</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Social Platform Icon Buttons */}
+              <div className="pt-2">
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                  Share directly to
+                </label>
+                <div className="grid grid-cols-6 gap-2">
+                  {/* WhatsApp */}
+                  <button
+                    type="button"
+                    title="Share on WhatsApp"
+                    onClick={() => handleSocialShare("whatsapp")}
+                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 transition-all cursor-pointer group"
+                  >
+                    <svg className="w-5 h-5 text-emerald-600 fill-current" viewBox="0 0 24 24">
+                      <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.44 0-2.85-.38-4.09-1.1l-.29-.17-3.05.8 1.05-2.97-.19-.31a8.17 8.17 0 0 1-1.25-4.49c0-4.54 3.7-8.25 8.24-8.25h-.46z" />
+                    </svg>
+                    <span className="text-[10px] font-bold text-slate-600 mt-1">WhatsApp</span>
+                  </button>
+
+                  {/* Facebook */}
+                  <button
+                    type="button"
+                    title="Share on Facebook"
+                    onClick={() => handleSocialShare("facebook")}
+                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 transition-all cursor-pointer group"
+                  >
+                    <svg className="w-5 h-5 text-blue-600 fill-current" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                    <span className="text-[10px] font-bold text-slate-600 mt-1">Facebook</span>
+                  </button>
+
+                  {/* X / Twitter */}
+                  <button
+                    type="button"
+                    title="Share on X"
+                    onClick={() => handleSocialShare("twitter")}
+                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-slate-800 hover:bg-slate-100 transition-all cursor-pointer group"
+                  >
+                    <svg className="w-5 h-5 text-slate-900 fill-current" viewBox="0 0 24 24">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    <span className="text-[10px] font-bold text-slate-600 mt-1">X</span>
+                  </button>
+
+                  {/* Telegram */}
+                  <button
+                    type="button"
+                    title="Share on Telegram"
+                    onClick={() => handleSocialShare("telegram")}
+                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-sky-500 hover:bg-sky-50/50 transition-all cursor-pointer group"
+                  >
+                    <svg className="w-5 h-5 text-sky-500 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z" />
+                    </svg>
+                    <span className="text-[10px] font-bold text-slate-600 mt-1">Telegram</span>
+                  </button>
+
+                  {/* Email */}
+                  <button
+                    type="button"
+                    title="Share via Email"
+                    onClick={() => handleSocialShare("email")}
+                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 transition-all cursor-pointer group"
+                  >
+                    <svg className="w-5 h-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect width="20" height="16" x="2" y="4" rx="2" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </svg>
+                    <span className="text-[10px] font-bold text-slate-600 mt-1">Email</span>
+                  </button>
+
+                  {/* More / Native */}
+                  <button
+                    type="button"
+                    title="More sharing options"
+                    onClick={() => handleSocialShare("more")}
+                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-purple-500 hover:bg-purple-50/50 transition-all cursor-pointer group"
+                  >
+                    <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="1" />
+                      <circle cx="19" cy="12" r="1" />
+                      <circle cx="5" cy="12" r="1" />
+                    </svg>
+                    <span className="text-[10px] font-bold text-slate-600 mt-1">More</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
-      <Footer currentPath="/qr-code-generator" />
+      <Footer />
     </div>
   );
+
+  // Helper renderer for dynamic content fields
+  function renderFieldsGroup() {
+    if (contentType === "url") {
+      return (
+        <div>
+          <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+            Target URL
+          </label>
+          <div className="relative">
+            <input
+              type="url"
+              value={urlVal}
+              onChange={(e) => setUrlVal(e.target.value)}
+              placeholder="https://example.com"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+            />
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (contentType === "text") {
+      return (
+        <div>
+          <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+            Text Content
+          </label>
+          <textarea
+            rows={3}
+            value={textVal}
+            onChange={(e) => setTextVal(e.target.value)}
+            placeholder="Type any message, note, or raw code..."
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+          />
+        </div>
+      );
+    }
+
+    if (contentType === "wifi") {
+      return (
+        <div className="space-y-3.5">
+          <div>
+            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
+              Network Name (SSID)
+            </label>
+            <input
+              type="text"
+              value={wifiSsid}
+              onChange={(e) => setWifiSsid(e.target.value)}
+              placeholder="e.g. Office_WiFi_5G"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
+              Password
+            </label>
+            <input
+              type="text"
+              value={wifiPass}
+              onChange={(e) => setWifiPass(e.target.value)}
+              placeholder="WiFi Password"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
+              Security Protocol
+            </label>
+            <select
+              value={wifiEnc}
+              onChange={(e) => setWifiEnc(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+            >
+              <option value="WPA">WPA / WPA2 / WPA3 (Recommended)</option>
+              <option value="WEP">WEP</option>
+              <option value="nopass">None (Open Network)</option>
+            </select>
+          </div>
+        </div>
+      );
+    }
+
+    if (contentType === "phone") {
+      return (
+        <div>
+          <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            value={phoneVal}
+            onChange={(e) => setPhoneVal(e.target.value)}
+            placeholder="+1 (555) 000-0000"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+          />
+        </div>
+      );
+    }
+
+    if (contentType === "email") {
+      return (
+        <div>
+          <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+            Email Address
+          </label>
+          <input
+            type="email"
+            value={emailVal}
+            onChange={(e) => setEmailVal(e.target.value)}
+            placeholder="hello@example.com"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+          />
+        </div>
+      );
+    }
+
+    if (contentType === "vcard") {
+      return (
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
+              Full Name
+            </label>
+            <input
+              type="text"
+              value={vcName}
+              onChange={(e) => setVcName(e.target.value)}
+              placeholder="e.g. Sarah Jenkins"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs sm:text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
+                Phone
+              </label>
+              <input
+                type="tel"
+                value={vcPhone}
+                onChange={(e) => setVcPhone(e.target.value)}
+                placeholder="+1 555 123 4567"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs sm:text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                value={vcEmail}
+                onChange={(e) => setVcEmail(e.target.value)}
+                placeholder="sarah@company.com"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs sm:text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
+                Company (Optional)
+              </label>
+              <input
+                type="text"
+                value={vcCompany}
+                onChange={(e) => setVcCompany(e.target.value)}
+                placeholder="Company Inc."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs sm:text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
+                Job Title (Optional)
+              </label>
+              <input
+                type="text"
+                value={vcTitle}
+                onChange={(e) => setVcTitle(e.target.value)}
+                placeholder="Product Lead"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs sm:text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  }
 }

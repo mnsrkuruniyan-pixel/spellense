@@ -5,7 +5,7 @@ import QrCodeGeneratorClient from "./QrCodeGeneratorClient";
 export const metadata: Metadata = {
   title: "Free QR Code Generator with Scannability Check",
   description:
-    "Create a custom QR code and instantly test if it will actually scan. Spellense checks contrast, logo size and print size before you download — free, no signup.",
+    "Create a custom QR code for digital or print use. Spellense stress-tests print codes under dim light, blur, small size and angled scan before you download — free, no signup.",
   alternates: {
     canonical: "/qr-code-generator",
   },
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     siteName: "Spellense",
     title: "Free QR Code Generator with Scannability Check | Spellense",
     description:
-      "Create a custom QR code and instantly test if it will actually scan. Spellense checks contrast, logo size and print size before you download — free, no signup.",
+      "Create a custom QR code for digital or print use. Spellense stress-tests print codes under dim light, blur, small size and angled scan before you download — free, no signup.",
     url: "/qr-code-generator",
     type: "website",
     images: [
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Free QR Code Generator with Scannability Check | Spellense",
     description:
-      "Create a custom QR code and instantly test if it will actually scan. Spellense checks contrast, logo size and print size before you download — free, no signup.",
+      "Create a custom QR code for digital or print use. Spellense stress-tests print codes under dim light, blur, small size and angled scan before you download — free, no signup.",
     images: ["/og-image.png"],
   },
 };
@@ -47,14 +47,15 @@ const softwareApplicationJsonLd = {
     priceCurrency: "USD",
   },
   description:
-    "A free online QR code generator that checks contrast, logo size and minimum print size before you download, so the QR code actually scans when printed.",
+    "A free online QR code generator with separate digital and print modes. Print-mode codes are stress-tested under dim light, blur, small size and an angled scan before download, so they actually work once printed.",
   featureList: [
-    "Custom QR code generation for URLs, text, WiFi, phone and email",
-    "Automatic scannability test using real decode simulation",
-    "Contrast ratio check between QR code and background",
-    "Logo overlay safety check against error-correction level",
-    "Minimum recommended print size estimate",
-    "PNG and SVG download",
+    "Separate Digital and Print modes",
+    "QR codes for URLs, text, WiFi, phone, email and vCard contact cards",
+    "Custom dot and corner styles (square, dots, rounded, classy, extra-rounded)",
+    "Logo overlay with safety checks against error-correction level",
+    "Four-condition stress test: dim lighting, blur, small print size, and angled scan",
+    "One-click direct sharing via Web Share API or Clipboard",
+    "High-resolution PNG export up to 3000px and crisp SVG export",
   ],
   publisher: {
     "@type": "Organization",
@@ -69,42 +70,42 @@ const faqJsonLd = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "Why won't my QR code scan after printing?",
+      name: "What is the difference between Digital and Print mode?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "The most common reasons are low contrast between the QR code and its background, a logo placed in the middle that is too large for the error-correction level used, or the code being printed smaller than its minimum readable size. Spellense checks all three before you download.",
+        text: "Digital mode is for QR codes shown on a screen, such as social media or a WhatsApp status, where scanning conditions are predictable, so it skips straight to download or share. Print mode is for anything that will be printed, where mistakes cannot be undone after the fact, so it includes a full stress test before the download unlocks.",
       },
     },
     {
       "@type": "Question",
-      name: "What is a QR code scannability test?",
+      name: "What does the stress test check?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "It is a check that simulates how a phone camera reads a QR code. Spellense decodes the QR code it just generated, the same way a scanner app would, and reports whether it was read successfully along with specific issues like contrast or logo size.",
+        text: "It re-decodes the generated QR code under four simulated real-world conditions: dim lighting, slight blur, a small print size, and an angled scan, the same way a phone camera might encounter it in practice.",
       },
     },
     {
       "@type": "Question",
-      name: "Can I add a logo to my QR code without breaking it?",
+      name: "Can I add a contact card (vCard) QR code?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes, as long as the logo stays small relative to the code and a higher error-correction level (Q or H) is used, which allows part of the QR code to be covered and still scan correctly. Spellense warns you if your logo is too large for the selected error-correction level.",
+        text: "Yes. Selecting the contact card option encodes a name, phone number, email, company and job title into a standard vCard format that saves directly to a phone's contacts when scanned.",
       },
     },
     {
       "@type": "Question",
-      name: "What is the minimum size to print a QR code?",
+      name: "Why can't I download before running the stress test in Print mode?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "A common rule of thumb is that a QR code should be printed at roughly one tenth of its expected scanning distance. Spellense gives a size estimate based on how much data is encoded and the selected use case, such as a business card versus a poster.",
+        text: "Print QR codes can't be edited once printed, so Spellense requires a passed stress test first to catch contrast, logo-size or size issues while they are still easy to fix.",
       },
     },
     {
       "@type": "Question",
-      name: "Is this QR code generator really free?",
+      name: "What resolution can I download the QR code at?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. There is no signup, no watermark and no limit on how many QR codes you can create and download as PNG or SVG.",
+        text: "PNG downloads are available at 1000px, 2000px or 3000px depending on how large the final print will be. SVG is also available and stays sharp at any size since it is vector-based.",
       },
     },
   ],
