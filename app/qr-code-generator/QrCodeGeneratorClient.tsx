@@ -139,17 +139,19 @@ export default function QrCodeGeneratorClient() {
   // Build Payload
   const buildPayload = useCallback(() => {
     if (contentType === "url") return urlVal.trim() || "https://spellense.com";
-    if (contentType === "text") return textVal.trim() || " ";
+    if (contentType === "text") return textVal.trim() || "Spellense QR Code";
     if (contentType === "wifi") {
-      return `WIFI:T:${wifiEnc};S:${wifiSsid.trim()};P:${wifiPass.trim()};;`;
+      const ssid = wifiSsid.trim() || "MyWiFiNetwork";
+      return `WIFI:T:${wifiEnc};S:${ssid};P:${wifiPass.trim()};;`;
     }
-    if (contentType === "phone") return `tel:${phoneVal.trim()}`;
-    if (contentType === "email") return `mailto:${emailVal.trim()}`;
+    if (contentType === "phone") return `tel:${phoneVal.trim() || "+1234567890"}`;
+    if (contentType === "email") return `mailto:${emailVal.trim() || "hello@spellense.com"}`;
     if (contentType === "vcard") {
+      const fn = vcName.trim() || "Spellense Contact";
       return [
         "BEGIN:VCARD",
         "VERSION:3.0",
-        `FN:${vcName.trim()}`,
+        `FN:${fn}`,
         vcCompany.trim() ? `ORG:${vcCompany.trim()}` : "",
         vcTitle.trim() ? `TITLE:${vcTitle.trim()}` : "",
         vcPhone.trim() ? `TEL:${vcPhone.trim()}` : "",
