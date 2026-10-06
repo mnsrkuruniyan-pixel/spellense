@@ -433,20 +433,41 @@ export default function QrCodeGeneratorClient() {
   };
 
   // Social share triggers
-  const handleSocialShare = (platform: "whatsapp" | "facebook" | "twitter" | "telegram" | "email" | "more") => {
-    const shareUrl = typeof window !== "undefined" ? window.location.href : "https://spellense.com/qr-code-generator";
-    const text = `${shareTitle} - ${shareDescription}`;
+  const handleSocialShare = (platform: "whatsapp" | "facebook" | "instagram" | "linkedin" | "twitter" | "more") => {
+    const rawUrl = typeof window !== "undefined" ? window.location.href : "https://spellense.com/qr-code-generator";
+    // For social sharing APIs, use public canonical URL if running on localhost to avoid API errors
+    const shareUrl = rawUrl.includes("localhost") || rawUrl.includes("127.0.0.1")
+      ? "https://spellense.com/qr-code-generator"
+      : rawUrl;
+    const text = `${shareTitle} — ${shareDescription}`;
 
     if (platform === "whatsapp") {
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`${text}\n${shareUrl}`)}`, "_blank");
     } else if (platform === "facebook") {
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank");
+      window.open(
+        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(text)}`,
+        "_blank",
+        "width=600,height=500,menubar=no,toolbar=no,resizable=yes"
+      );
+    } else if (platform === "instagram") {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        navigator.clipboard.writeText(`${text}\n${shareUrl}`).catch(() => {});
+      }
+      setShareSuccessMsg("Link copied! Opening Instagram...");
+      setTimeout(() => setShareSuccessMsg(null), 3000);
+      window.open("https://www.instagram.com/", "_blank");
+    } else if (platform === "linkedin") {
+      window.open(
+        `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+        "_blank",
+        "width=600,height=600,menubar=no,toolbar=no,resizable=yes"
+      );
     } else if (platform === "twitter") {
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`, "_blank");
-    } else if (platform === "telegram") {
-      window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`, "_blank");
-    } else if (platform === "email") {
-      window.location.href = `mailto:?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(`${shareDescription}\n\n${shareUrl}`)}`;
+      window.open(
+        `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`,
+        "_blank",
+        "width=600,height=500,menubar=no,toolbar=no,resizable=yes"
+      );
     } else if (platform === "more") {
       if (navigator.share) {
         navigator.share({
@@ -1541,8 +1562,34 @@ export default function QrCodeGeneratorClient() {
                     onClick={() => handleSocialShare("whatsapp")}
                     className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-emerald-500 bg-white hover:bg-emerald-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
                   >
-                    <svg className="w-5 h-5 text-emerald-600 fill-current" viewBox="0 0 24 24">
-                      <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.44 0-2.85-.38-4.09-1.1l-.29-.17-3.05.8 1.05-2.97-.19-.31a8.17 8.17 0 0 1-1.25-4.49c0-4.54 3.7-8.25 8.24-8.25h-.46z" />
+                    <svg className="w-5 h-5 text-[#25D366] fill-current" viewBox="0 0 24 24">
+                      <path d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.83.5 3.55 1.37 5.03L2 22l5.12-1.34c1.44.82 3.1 1.34 4.884 1.34 5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2zm5.83 14.37c-.24.68-1.4 1.25-1.94 1.32-.51.07-1.17.1-3.38-.81-2.83-1.16-4.64-4.04-4.78-4.23-.14-.19-1.14-1.52-1.14-2.9 0-1.38.72-2.06.98-2.34.25-.28.56-.35.75-.35.19 0 .37 0 .54.01.17.01.4-.07.63.48.24.57.81 1.98.88 2.13.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.37-.44.5-.15.14-.3.3-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.07 1.31 2.36 1.45.29.15.46.12.63-.07.17-.19.73-.85.92-1.14.19-.29.38-.24.64-.15.26.1 1.65.78 1.93.92.29.15.48.22.55.34.07.13.07.75-.17 1.43z" />
+                    </svg>
+                  </button>
+
+                  {/* Instagram */}
+                  <button
+                    type="button"
+                    title="Share on Instagram"
+                    aria-label="Share on Instagram"
+                    onClick={() => handleSocialShare("instagram")}
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-[#E1306C] bg-white hover:bg-pink-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
+                  >
+                    <svg className="w-5 h-5 text-[#E1306C] fill-current" viewBox="0 0 24 24">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    </svg>
+                  </button>
+
+                  {/* LinkedIn */}
+                  <button
+                    type="button"
+                    title="Share on LinkedIn"
+                    aria-label="Share on LinkedIn"
+                    onClick={() => handleSocialShare("linkedin")}
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-[#0A66C2] bg-white hover:bg-sky-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
+                  >
+                    <svg className="w-5 h-5 text-[#0A66C2] fill-current" viewBox="0 0 24 24">
+                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.73a1.65 1.65 0 1 0 0 3.3 1.65 1.65 0 0 0 0-3.3z" />
                     </svg>
                   </button>
 
@@ -1552,9 +1599,9 @@ export default function QrCodeGeneratorClient() {
                     title="Share on Facebook"
                     aria-label="Share on Facebook"
                     onClick={() => handleSocialShare("facebook")}
-                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-blue-500 bg-white hover:bg-blue-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-[#1877F2] bg-white hover:bg-blue-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
                   >
-                    <svg className="w-5 h-5 text-blue-600 fill-current" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-[#1877F2] fill-current" viewBox="0 0 24 24">
                       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                     </svg>
                   </button>
@@ -1569,33 +1616,6 @@ export default function QrCodeGeneratorClient() {
                   >
                     <svg className="w-5 h-5 text-slate-900 fill-current" viewBox="0 0 24 24">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                  </button>
-
-                  {/* Telegram */}
-                  <button
-                    type="button"
-                    title="Share on Telegram"
-                    aria-label="Share on Telegram"
-                    onClick={() => handleSocialShare("telegram")}
-                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-sky-500 bg-white hover:bg-sky-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
-                  >
-                    <svg className="w-5 h-5 text-sky-500 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z" />
-                    </svg>
-                  </button>
-
-                  {/* Email */}
-                  <button
-                    type="button"
-                    title="Share via Email"
-                    aria-label="Share via Email"
-                    onClick={() => handleSocialShare("email")}
-                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-amber-500 bg-white hover:bg-amber-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
-                  >
-                    <svg className="w-5 h-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect width="20" height="16" x="2" y="4" rx="2" />
-                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                     </svg>
                   </button>
 
