@@ -106,7 +106,7 @@ export default function QrCodeGeneratorClient() {
   const [stressTested, setStressTested] = useState(false);
   const [stressResults, setStressResults] = useState<StressTestResultItem[]>([]);
   const [stressPassCount, setStressPassCount] = useState<number>(0);
-  const [gateNotice, setGateNotice] = useState<string>("Run the stress test to unlock download");
+  const [gateNotice, setGateNotice] = useState<string>("Tip: Run stress test to verify print scannability");
   const [gateNoticeType, setGateNoticeType] = useState<"normal" | "warn" | "ok">("normal");
 
   // Share & download status states
@@ -253,7 +253,7 @@ export default function QrCodeGeneratorClient() {
     setStressTested(false);
     setStressResults([]);
     setStressPassCount(0);
-    setGateNotice("Run the stress test to unlock download");
+    setGateNotice("Tip: Run stress test to verify print scannability");
     setGateNoticeType("normal");
   }, [buildPayload, ecLevel, fgColor, dotStyle, bgColor, cornerStyle, logoDataUrl, logoSize, ensureLibraries]);
 
@@ -375,37 +375,131 @@ export default function QrCodeGeneratorClient() {
 
   // High-res Download helper
   const handleDownload = async (format: "png" | "svg") => {
+    await ensureLibraries();
+    if (!window.QRCodeStyling) return;
+
     const isDigital = mode === "digital";
-    const currentInstance = isDigital ? digitalQr : printQr;
-
-    if (!currentInstance) return;
-
-    if (!isDigital && !stressTested) {
-      setGateNotice('Scan it first — tap "Stress test this QR code" above');
-      setGateNoticeType("warn");
-      return;
-    }
+    const payload = buildPayload();
+    const size = isDigital ? 2000 : exportResolution;
 
     if (format === "png") {
       setIsDownloadingPng(true);
       try {
-        const size = isDigital ? 1200 : exportResolution;
-        await currentInstance.download({
-          name: "spellense-qr-code",
-          extension: "png",
+        const exportOptions: any = {
           width: size,
           height: size,
-        });
+          data: payload,
+          margin: Math.round(size * 0.04),
+          qrOptions: { errorCorrectionLevel: isDigital ? "M" : ecLevel },
+          dotsOptions: {
+            color: fgColor,
+            type: isDigital ? "square" : dotStyle,
+          },
+          backgroundOptions: { color: bgColor },
+          cornersSquareOptions: {
+            color: fgColor,
+            type: isDigital ? "square" : (cornerStyle === "square" ? "square" : cornerStyle),
+          },
+        };
+
+        if (!isDigital && logoDataUrl) {
+          exportOptions.image = logoDataUrl;
+          exportOptions.imageOptions = {
+            crossOrigin: "anonymous",
+            imageSize: logoSize / 100,
+            margin: Math.round(size * 0.015),
+          };
+        }
+
+        const exportInstance = new window.QRCodeStyling(exportOptions);
+
+        let downloaded = false;
+        try {
+          const blob = await exportInstance.getRawData("png");
+          if (blob) {
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            link.download = `spellense-qr-code-${size}px.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+            downloaded = true;
+          }
+        } catch {
+          // fallback to built-in download
+        }
+
+        if (!downloaded) {
+          await exportInstance.download({
+            name: `spellense-qr-code-${size}px`,
+            extension: "png",
+          });
+        }
+      } catch (err) {
+        console.error("PNG export failed:", err);
       } finally {
         setIsDownloadingPng(false);
       }
     } else {
       setIsDownloadingSvg(true);
       try {
-        await currentInstance.download({
-          name: "spellense-qr-code",
-          extension: "svg",
-        });
+        const exportOptions: any = {
+          type: "svg",
+          width: 2000,
+          height: 2000,
+          data: payload,
+          margin: 80,
+          qrOptions: { errorCorrectionLevel: isDigital ? "M" : ecLevel },
+          dotsOptions: {
+            color: fgColor,
+            type: isDigital ? "square" : dotStyle,
+          },
+          backgroundOptions: { color: bgColor },
+          cornersSquareOptions: {
+            color: fgColor,
+            type: isDigital ? "square" : (cornerStyle === "square" ? "square" : cornerStyle),
+          },
+        };
+
+        if (!isDigital && logoDataUrl) {
+          exportOptions.image = logoDataUrl;
+          exportOptions.imageOptions = {
+            crossOrigin: "anonymous",
+            imageSize: logoSize / 100,
+            margin: 30,
+          };
+        }
+
+        const exportInstance = new window.QRCodeStyling(exportOptions);
+
+        let downloaded = false;
+        try {
+          const blob = await exportInstance.getRawData("svg");
+          if (blob) {
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            link.download = "spellense-qr-code-vector.svg";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+            downloaded = true;
+          }
+        } catch {
+          // fallback to built-in download
+        }
+
+        if (!downloaded) {
+          await exportInstance.download({
+            name: "spellense-qr-code-vector",
+            extension: "svg",
+          });
+        }
+      } catch (err) {
+        console.error("SVG export failed:", err);
       } finally {
         setIsDownloadingSvg(false);
       }
@@ -1318,8 +1412,8 @@ export default function QrCodeGeneratorClient() {
                     <button
                       type="button"
                       onClick={() => handleDownload("png")}
-                      disabled={isDownloadingPng || (mode === "print" && !stressTested)}
-                      className={`inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed`}
+                      disabled={isDownloadingPng}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isDownloadingPng ? (
                         <>
@@ -1345,8 +1439,8 @@ export default function QrCodeGeneratorClient() {
                     <button
                       type="button"
                       onClick={() => handleDownload("svg")}
-                      disabled={isDownloadingSvg || (mode === "print" && !stressTested)}
-                      className={`inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed`}
+                      disabled={isDownloadingSvg}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isDownloadingSvg ? (
                         <>
