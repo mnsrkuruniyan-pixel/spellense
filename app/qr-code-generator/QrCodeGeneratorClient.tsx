@@ -116,9 +116,12 @@ export default function QrCodeGeneratorClient() {
 
   // Custom Share Modal State
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [shareTitle, setShareTitle] = useState("My QR Code — Spellense");
-  const [shareDescription, setShareDescription] = useState("Create, test and download verified QR codes online with Spellense.");
+  const [shareTitle, setShareTitle] = useState("My QR Code");
+  const [shareDescription, setShareDescription] = useState("Scan to view contents or connect.");
   const [isLinkCopied, setIsLinkCopied] = useState(false);
+  const [sharePreviewUrl, setSharePreviewUrl] = useState<string | null>(null);
+  const [isImageCopied, setIsImageCopied] = useState(false);
+  const [isSharingImage, setIsSharingImage] = useState(false);
 
   // FAQ accordion
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
@@ -508,72 +511,196 @@ export default function QrCodeGeneratorClient() {
     }
   };
 
-  // Open Custom Share Modal
-  const handleOpenShareModal = () => {
-    setIsLinkCopied(false);
-    setIsShareModalOpen(true);
-  };
+  // Helper to extract a high-res PNG blob of current QR
+  const getQrBlob = useCallback(async (res = 1000): Promise<Blob | null> => {
+    await ensureLibraries();
+    if (!window.QRCodeStyling) return null;
 
-  // Copy shareable link to clipboard
-  const handleCopyShareLink = async () => {
-    const shareUrl = typeof window !== "undefined" ? window.location.href : "https://spellense.com/qr-code-generator";
+    const isDigital = mode === "digital";
+    const payload = buildPayload();
+    const size = res;
+
+    const exportOptions: any = {
+      width: size,
+      height: size,
+      data: payload,
+      margin: Math.round(size * 0.04),
+      qrOptions: { errorCorrectionLevel: isDigital ? "M" : ecLevel },
+      dotsOptions: {
+        color: fgColor,
+        type: isDigital ? "square" : dotStyle,
+      },
+      backgroundOptions: { color: bgColor },
+      cornersSquareOptions: {
+        color: fgColor,
+        type: isDigital ? "square" : (cornerStyle === "square" ? "square" : cornerStyle),
+      },
+    };
+
+    if (!isDigital && logoDataUrl) {
+      exportOptions.image = logoDataUrl;
+      exportOptions.imageOptions = {
+        crossOrigin: "anonymous",
+        imageSize: logoSize / 100,
+        margin: Math.round(size * 0.015),
+      };
+    }
+
+    const exportInstance = new window.QRCodeStyling(exportOptions);
     try {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareUrl);
-        setIsLinkCopied(true);
-        setTimeout(() => setIsLinkCopied(false), 3000);
+      const blob = await exportInstance.getRawData("png");
+      return blob || null;
+    } catch {
+      return null;
+    }
+  }, [mode, buildPayload, ecLevel, fgColor, dotStyle, bgColor, cornerStyle, logoDataUrl, logoSize, ensureLibraries]);
+
+  // Open Custom Share Modal
+  const handleOpenShareModal = async () => {
+    setIsLinkCopied(false);
+    setIsImageCopied(false);
+    setIsShareModalOpen(true);
+    try {
+      const blob = await getQrBlob(600);
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        setSharePreviewUrl(url);
       }
     } catch {
       // ignore
     }
   };
 
-  // Social share triggers
-  const handleSocialShare = (platform: "whatsapp" | "facebook" | "instagram" | "linkedin" | "twitter" | "more") => {
-    const rawUrl = typeof window !== "undefined" ? window.location.href : "https://spellense.com/qr-code-generator";
-    // For social sharing APIs, use public canonical URL if running on localhost to avoid API errors
-    const shareUrl = rawUrl.includes("localhost") || rawUrl.includes("127.0.0.1")
-      ? "https://spellense.com/qr-code-generator"
-      : rawUrl;
-    const text = `${shareTitle} — ${shareDescription}`;
+  // Close Custom Share Modal
+  const handleCloseShareModal = () => {
+    setIsShareModalOpen(false);
+    if (sharePreviewUrl) {
+      URL.revokeObjectURL(sharePreviewUrl);
+      setSharePreviewUrl(null);
+    }
+  };
+
+  // Copy QR Image to clipboard
+  const handleCopyQrImage = async () => {
+    try {
+      const blob = await getQrBlob(1000);
+      if (blob && typeof navigator !== "undefined" && navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        setIsImageCopied(true);
+        setShareSuccessMsg("QR Image copied to clipboard! Paste it directly into your post or chat.");
+        setTimeout(() => {
+          setIsImageCopied(false);
+          setShareSuccessMsg(null);
+        }, 4000);
+        return;
+      }
+    } catch {
+      // ignore
+    }
+    // Fallback if ClipboardItem not supported: download PNG
+    handleDownload("png");
+  };
+
+  // Share QR Image file via native OS share
+  const handleShareQrImageFile = async () => {
+    setIsSharingImage(true);
+    try {
+      const blob = await getQrBlob(1000);
+      if (blob) {
+        const file = new File([blob], "qr-code.png", { type: "image/png" });
+        if (typeof navigator !== "undefined" && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: shareTitle || "My QR Code",
+            text: shareDescription || "",
+            files: [file],
+          });
+          setIsSharingImage(false);
+          return;
+        }
+      }
+    } catch {
+      // cancelled or failed
+    }
+    setIsSharingImage(false);
+    await handleCopyQrImage();
+  };
+
+  // Copy QR Content / Destination to clipboard
+  const handleCopyShareLink = async () => {
+    const payload = buildPayload();
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(payload);
+        setIsLinkCopied(true);
+        setShareSuccessMsg("QR Content copied to clipboard!");
+        setTimeout(() => {
+          setIsLinkCopied(false);
+          setShareSuccessMsg(null);
+        }, 3000);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  // Social share triggers (User's QR content and image, never Spellense)
+  const handleSocialShare = async (platform: "whatsapp" | "facebook" | "instagram" | "linkedin" | "twitter" | "more") => {
+    const payload = buildPayload();
+    const isUrl = payload.startsWith("http://") || payload.startsWith("https://");
+    const text = shareTitle && shareTitle.trim() ? `${shareTitle}\n${payload}` : payload;
 
     if (platform === "whatsapp") {
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`${text}\n${shareUrl}`)}`, "_blank");
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
     } else if (platform === "facebook") {
-      window.open(
-        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(text)}`,
-        "_blank",
-        "width=600,height=500,menubar=no,toolbar=no,resizable=yes"
-      );
-    } else if (platform === "instagram") {
-      if (typeof navigator !== "undefined" && navigator.clipboard) {
-        navigator.clipboard.writeText(`${text}\n${shareUrl}`).catch(() => {});
+      // Copy the QR Code Image to clipboard first so the user can paste it straight into Facebook post!
+      try {
+        const blob = await getQrBlob(1000);
+        if (blob && typeof navigator !== "undefined" && navigator.clipboard && window.ClipboardItem) {
+          await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+          setShareSuccessMsg("QR Image copied! You can paste (Ctrl+V / Cmd+V) it directly into Facebook.");
+          setTimeout(() => setShareSuccessMsg(null), 4000);
+        }
+      } catch {}
+
+      if (isUrl) {
+        // If it's a URL, share the user's destination URL (never Spellense)
+        window.open(
+          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(payload)}`,
+          "_blank",
+          "width=600,height=500,menubar=no,toolbar=no,resizable=yes"
+        );
+      } else {
+        // Otherwise open Facebook feed so they can paste the copied QR image
+        window.open("https://www.facebook.com/", "_blank");
       }
-      setShareSuccessMsg("Link copied! Opening Instagram...");
+    } else if (platform === "instagram") {
+      try {
+        const blob = await getQrBlob(1000);
+        if (blob && typeof navigator !== "undefined" && navigator.clipboard && window.ClipboardItem) {
+          await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        }
+      } catch {}
+      setShareSuccessMsg("QR Image copied! Opening Instagram...");
       setTimeout(() => setShareSuccessMsg(null), 3000);
       window.open("https://www.instagram.com/", "_blank");
     } else if (platform === "linkedin") {
-      window.open(
-        `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
-        "_blank",
-        "width=600,height=600,menubar=no,toolbar=no,resizable=yes"
-      );
+      if (isUrl) {
+        window.open(
+          `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(payload)}`,
+          "_blank",
+          "width=600,height=600,menubar=no,toolbar=no,resizable=yes"
+        );
+      } else {
+        window.open("https://www.linkedin.com/feed/", "_blank");
+      }
     } else if (platform === "twitter") {
       window.open(
-        `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`,
+        `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
         "_blank",
         "width=600,height=500,menubar=no,toolbar=no,resizable=yes"
       );
     } else if (platform === "more") {
-      if (navigator.share) {
-        navigator.share({
-          title: shareTitle,
-          text: shareDescription,
-          url: shareUrl,
-        }).catch(() => {});
-      } else {
-        handleCopyShareLink();
-      }
+      await handleShareQrImageFile();
     }
   };
 
@@ -1547,9 +1674,9 @@ export default function QrCodeGeneratorClient() {
       {/* CUSTOM SHARE MODAL */}
       {isShareModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fadeIn">
-          <div className="relative w-full max-w-lg rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-7 shadow-2xl text-left">
+          <div className="relative w-full max-w-lg rounded-3xl bg-white border border-slate-200/90 p-5 sm:p-7 shadow-2xl text-left max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
                   <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -1561,13 +1688,13 @@ export default function QrCodeGeneratorClient() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">Share QR Code</h3>
-                  <p className="text-xs text-slate-500">Share or copy link to your generated QR code</p>
+                  <h3 className="text-base font-black text-slate-900">Share Your QR Code</h3>
+                  <p className="text-xs text-slate-500">Share or copy your generated QR code image</p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setIsShareModalOpen(false)}
+                onClick={handleCloseShareModal}
                 className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1577,52 +1704,106 @@ export default function QrCodeGeneratorClient() {
               </button>
             </div>
 
+            {/* Notification / Toast Banner */}
+            {shareSuccessMsg && (
+              <div className="mt-3 py-2 px-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs font-bold text-emerald-800 animate-fadeIn">
+                <svg className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>{shareSuccessMsg}</span>
+              </div>
+            )}
+
             {/* Modal Body */}
-            <div className="space-y-4 pt-4">
+            <div className="space-y-4 pt-3.5">
+              {/* QR Image Preview Card & Action Buttons */}
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row items-center gap-3.5">
+                {/* Visual Thumbnail */}
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-white border border-slate-200 p-2 shadow-xs shrink-0 flex items-center justify-center overflow-hidden">
+                  {sharePreviewUrl ? (
+                    <img src={sharePreviewUrl} alt="Your QR Code" className="w-full h-full object-contain" />
+                  ) : (
+                    <div className="text-slate-400 text-xs font-bold text-center">Loading QR...</div>
+                  )}
+                </div>
+
+                {/* Direct Image Share/Copy Buttons */}
+                <div className="flex-1 w-full flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={handleShareQrImageFile}
+                    disabled={isSharingImage}
+                    className="w-full py-2.5 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                    </svg>
+                    <span>{isSharingImage ? "Preparing..." : "Share QR Image (AirDrop / Apps)"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyQrImage}
+                    className={`w-full py-2.5 px-3.5 rounded-xl border text-xs transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-2xs ${
+                      isImageCopied
+                        ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-black"
+                        : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-100/70 text-slate-700 font-bold"
+                    }`}
+                  >
+                    {isImageCopied ? (
+                      <>
+                        <svg className="w-4 h-4 text-emerald-600 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>QR Image Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                          <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                        </svg>
+                        <span>Copy Image to Clipboard</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
               {/* Title input */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
-                  Share Title
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
+                  QR Title (Optional)
                 </label>
                 <input
                   type="text"
                   value={shareTitle}
                   onChange={(e) => setShareTitle(e.target.value)}
-                  placeholder="Title..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                  placeholder="e.g. My Website QR"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                 />
               </div>
 
-              {/* Description input */}
+              {/* QR Content / Destination field */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
-                  Share Description
-                </label>
-                <textarea
-                  rows={2}
-                  value={shareDescription}
-                  onChange={(e) => setShareDescription(e.target.value)}
-                  placeholder="Description..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3.5 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
-                />
-              </div>
-
-              {/* Copy link field */}
-              <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
-                  Page Link
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1">
+                  QR Destination / Content
                 </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     readOnly
-                    value={typeof window !== "undefined" ? window.location.href : "https://spellense.com/qr-code-generator"}
-                    className="flex-1 bg-slate-100 border border-slate-200 rounded-xl py-2 px-3 text-xs font-mono text-slate-700 select-all focus:outline-none"
+                    value={buildPayload()}
+                    className="flex-1 bg-slate-100 border border-slate-200 rounded-xl py-2 px-3 text-xs font-mono text-slate-700 select-all focus:outline-none truncate"
                   />
                   <button
                     type="button"
                     onClick={handleCopyShareLink}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-black text-xs transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
                   >
                     {isLinkCopied ? (
                       <>
@@ -1637,7 +1818,7 @@ export default function QrCodeGeneratorClient() {
                           <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
                           <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
                         </svg>
-                        <span>Copy Link</span>
+                        <span>Copy</span>
                       </>
                     )}
                   </button>
@@ -1645,7 +1826,7 @@ export default function QrCodeGeneratorClient() {
               </div>
 
               {/* Social Platform Icon Buttons */}
-              <div className="pt-2">
+              <div className="pt-1">
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
                   Share directly to
                 </label>
@@ -1656,7 +1837,7 @@ export default function QrCodeGeneratorClient() {
                     title="Share on WhatsApp"
                     aria-label="Share on WhatsApp"
                     onClick={() => handleSocialShare("whatsapp")}
-                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-emerald-500 bg-white hover:bg-emerald-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-emerald-500 bg-white hover:bg-emerald-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-2xs"
                   >
                     <svg className="w-5 h-5 text-[#25D366] fill-current" viewBox="0 0 24 24">
                       <path d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.83.5 3.55 1.37 5.03L2 22l5.12-1.34c1.44.82 3.1 1.34 4.884 1.34 5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2zm5.83 14.37c-.24.68-1.4 1.25-1.94 1.32-.51.07-1.17.1-3.38-.81-2.83-1.16-4.64-4.04-4.78-4.23-.14-.19-1.14-1.52-1.14-2.9 0-1.38.72-2.06.98-2.34.25-.28.56-.35.75-.35.19 0 .37 0 .54.01.17.01.4-.07.63.48.24.57.81 1.98.88 2.13.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.37-.44.5-.15.14-.3.3-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.07 1.31 2.36 1.45.29.15.46.12.63-.07.17-.19.73-.85.92-1.14.19-.29.38-.24.64-.15.26.1 1.65.78 1.93.92.29.15.48.22.55.34.07.13.07.75-.17 1.43z" />
@@ -1669,7 +1850,7 @@ export default function QrCodeGeneratorClient() {
                     title="Share on Instagram"
                     aria-label="Share on Instagram"
                     onClick={() => handleSocialShare("instagram")}
-                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-[#E1306C] bg-white hover:bg-pink-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-[#E1306C] bg-white hover:bg-pink-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-2xs"
                   >
                     <svg className="w-5 h-5 text-[#E1306C] fill-current" viewBox="0 0 24 24">
                       <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
@@ -1682,7 +1863,7 @@ export default function QrCodeGeneratorClient() {
                     title="Share on LinkedIn"
                     aria-label="Share on LinkedIn"
                     onClick={() => handleSocialShare("linkedin")}
-                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-[#0A66C2] bg-white hover:bg-sky-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-[#0A66C2] bg-white hover:bg-sky-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-2xs"
                   >
                     <svg className="w-5 h-5 text-[#0A66C2] fill-current" viewBox="0 0 24 24">
                       <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.73a1.65 1.65 0 1 0 0 3.3 1.65 1.65 0 0 0 0-3.3z" />
@@ -1695,7 +1876,7 @@ export default function QrCodeGeneratorClient() {
                     title="Share on Facebook"
                     aria-label="Share on Facebook"
                     onClick={() => handleSocialShare("facebook")}
-                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-[#1877F2] bg-white hover:bg-blue-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-[#1877F2] bg-white hover:bg-blue-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-2xs"
                   >
                     <svg className="w-5 h-5 text-[#1877F2] fill-current" viewBox="0 0 24 24">
                       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -1708,7 +1889,7 @@ export default function QrCodeGeneratorClient() {
                     title="Share on X"
                     aria-label="Share on X"
                     onClick={() => handleSocialShare("twitter")}
-                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-slate-800 bg-white hover:bg-slate-100 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-slate-800 bg-white hover:bg-slate-100 flex items-center justify-center transition-all cursor-pointer group shadow-2xs"
                   >
                     <svg className="w-5 h-5 text-slate-900 fill-current" viewBox="0 0 24 24">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -1721,7 +1902,7 @@ export default function QrCodeGeneratorClient() {
                     title="More sharing options"
                     aria-label="More sharing options"
                     onClick={() => handleSocialShare("more")}
-                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-purple-500 bg-white hover:bg-purple-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-purple-500 bg-white hover:bg-purple-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-2xs"
                   >
                     <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="1" />
