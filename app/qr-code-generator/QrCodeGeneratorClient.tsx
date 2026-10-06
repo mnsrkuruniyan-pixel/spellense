@@ -536,7 +536,7 @@ export default function QrCodeGeneratorClient() {
                       <select
                         value={contentType}
                         onChange={(e) => setContentType(e.target.value as ContentType)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 pr-10 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
                       >
                         <option value="url">Website link (URL)</option>
                         <option value="text">Plain text</option>
@@ -545,8 +545,8 @@ export default function QrCodeGeneratorClient() {
                         <option value="email">Email address</option>
                         <option value="vcard">Contact card (vCard)</option>
                       </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-slate-400">
+                        <svg className="w-4 h-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="6 9 12 15 18 9" />
                         </svg>
                       </div>
@@ -652,7 +652,7 @@ export default function QrCodeGeneratorClient() {
                             <select
                               value={contentType}
                               onChange={(e) => setContentType(e.target.value as ContentType)}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 pr-10 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
                             >
                               <option value="url">Website link (URL)</option>
                               <option value="text">Plain text</option>
@@ -661,8 +661,8 @@ export default function QrCodeGeneratorClient() {
                               <option value="email">Email address</option>
                               <option value="vcard">Contact card (vCard)</option>
                             </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
-                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-slate-400">
+                              <svg className="w-4 h-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
                                 <polyline points="6 9 12 15 18 9" />
                               </svg>
                             </div>
@@ -940,37 +940,83 @@ export default function QrCodeGeneratorClient() {
                             type="file"
                             accept="image/*"
                             onChange={handleLogoUpload}
-                            className="block w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+                            className="hidden"
                           />
-                          {logoDataUrl && (
-                            <button
-                              type="button"
-                              onClick={handleClearLogo}
-                              className="mt-2 text-xs font-bold text-red-600 hover:text-red-700 cursor-pointer"
+
+                          {!logoDataUrl ? (
+                            <div
+                              onClick={() => logoInputRef.current?.click()}
+                              className="border-2 border-dashed border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/30 rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all group"
                             >
-                              ✕ Remove logo
-                            </button>
+                              <div className="w-12 h-12 rounded-xl bg-slate-100 group-hover:bg-emerald-100 text-slate-500 group-hover:text-emerald-700 flex items-center justify-center transition-colors mb-2.5 shadow-xs">
+                                <svg className="w-6 h-6 stroke-[2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="17 8 12 3 7 8" />
+                                  <line x1="12" y1="3" x2="12" y2="15" />
+                                </svg>
+                              </div>
+                              <span className="text-xs font-black text-slate-700 group-hover:text-emerald-900 transition-colors">
+                                Click to upload logo (SVG / PNG / JPG)
+                              </span>
+                              <span className="text-[11px] font-semibold text-slate-400 mt-0.5">
+                                Center brand icon on your QR code
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                              <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center overflow-hidden shadow-xs shrink-0">
+                                  <img src={logoDataUrl} alt="Logo preview" className="max-w-full max-h-full object-contain" />
+                                </div>
+                                <div className="text-left">
+                                  <span className="block text-xs font-black text-slate-800">Brand Logo Active</span>
+                                  <span className="block text-[11px] font-semibold text-emerald-600">Centered on QR code</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => logoInputRef.current?.click()}
+                                  className="text-xs font-bold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
+                                >
+                                  Change
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleClearLogo}
+                                  className="text-xs font-bold text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer flex items-center gap-1"
+                                >
+                                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                  </svg>
+                                  <span>Remove</span>
+                                </button>
+                              </div>
+                            </div>
                           )}
                         </div>
 
-                        <div>
-                          <div className="flex justify-between items-center mb-1.5">
-                            <label className="text-xs font-black uppercase tracking-wider text-slate-500">
-                              Logo Scale
-                            </label>
-                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                              {logoSize}%
-                            </span>
+                        {logoDataUrl && (
+                          <div>
+                            <div className="flex justify-between items-center mb-1.5">
+                              <label className="text-xs font-black uppercase tracking-wider text-slate-500">
+                                Logo Scale
+                              </label>
+                              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                                {logoSize}%
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="10"
+                              max="40"
+                              value={logoSize}
+                              onChange={(e) => setLogoSize(parseInt(e.target.value, 10))}
+                              className="w-full accent-emerald-600 cursor-pointer"
+                            />
                           </div>
-                          <input
-                            type="range"
-                            min="10"
-                            max="40"
-                            value={logoSize}
-                            onChange={(e) => setLogoSize(parseInt(e.target.value, 10))}
-                            className="w-full accent-emerald-600 cursor-pointer"
-                          />
-                        </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1010,47 +1056,68 @@ export default function QrCodeGeneratorClient() {
                           <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
                             Error Correction Level
                           </label>
-                          <select
-                            value={ecLevel}
-                            onChange={(e) => setEcLevel(e.target.value as EcLevel)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
-                          >
-                            <option value="L">L - Low (7% recovery, high capacity)</option>
-                            <option value="M">M - Medium (15% recovery, standard)</option>
-                            <option value="Q">Q - Quartile (25% recovery, logo safe)</option>
-                            <option value="H">H - High (30% recovery, maximum safety)</option>
-                          </select>
+                          <div className="relative">
+                            <select
+                              value={ecLevel}
+                              onChange={(e) => setEcLevel(e.target.value as EcLevel)}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 pr-10 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+                            >
+                              <option value="L">L - Low (7% recovery, high capacity)</option>
+                              <option value="M">M - Medium (15% recovery, standard)</option>
+                              <option value="Q">Q - Quartile (25% recovery, logo safe)</option>
+                              <option value="H">H - High (30% recovery, maximum safety)</option>
+                            </select>
+                            <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center text-slate-400">
+                              <svg className="w-4 h-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </div>
+                          </div>
                         </div>
 
                         <div>
                           <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
                             Print Material
                           </label>
-                          <select
-                            value={material}
-                            onChange={(e) => setMaterial(e.target.value as Material)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
-                          >
-                            <option value="matte">Matte paper</option>
-                            <option value="glossy">Glossy coated</option>
-                            <option value="fabric">Fabric / Apparel</option>
-                          </select>
+                          <div className="relative">
+                            <select
+                              value={material}
+                              onChange={(e) => setMaterial(e.target.value as Material)}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 pr-10 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+                            >
+                              <option value="matte">Matte paper</option>
+                              <option value="glossy">Glossy coated</option>
+                              <option value="fabric">Fabric / Apparel</option>
+                            </select>
+                            <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center text-slate-400">
+                              <svg className="w-4 h-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </div>
+                          </div>
                         </div>
 
                         <div>
                           <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
                             Where will this be printed?
                           </label>
-                          <select
-                            value={printUseCase}
-                            onChange={(e) => setPrintUseCase(e.target.value as PrintUseCase)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
-                          >
-                            <option value="business-card">Business card (close-up ~15 cm)</option>
-                            <option value="flyer">Flyer / Menu (arm's length ~40 cm)</option>
-                            <option value="poster">Poster (across a room ~150 cm)</option>
-                            <option value="billboard">Billboard / Signage (far away ~500 cm)</option>
-                          </select>
+                          <div className="relative">
+                            <select
+                              value={printUseCase}
+                              onChange={(e) => setPrintUseCase(e.target.value as PrintUseCase)}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 pr-10 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+                            >
+                              <option value="business-card">Business card (close-up ~15 cm)</option>
+                              <option value="flyer">Flyer / Menu (arm's length ~40 cm)</option>
+                              <option value="poster">Poster (across a room ~150 cm)</option>
+                              <option value="billboard">Billboard / Signage (far away ~500 cm)</option>
+                            </select>
+                            <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center text-slate-400">
+                              <svg className="w-4 h-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1477,86 +1544,86 @@ export default function QrCodeGeneratorClient() {
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
                   Share directly to
                 </label>
-                <div className="grid grid-cols-6 gap-2">
+                <div className="flex items-center justify-between gap-2">
                   {/* WhatsApp */}
                   <button
                     type="button"
                     title="Share on WhatsApp"
+                    aria-label="Share on WhatsApp"
                     onClick={() => handleSocialShare("whatsapp")}
-                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 transition-all cursor-pointer group"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-emerald-500 bg-white hover:bg-emerald-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
                   >
                     <svg className="w-5 h-5 text-emerald-600 fill-current" viewBox="0 0 24 24">
                       <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.44 0-2.85-.38-4.09-1.1l-.29-.17-3.05.8 1.05-2.97-.19-.31a8.17 8.17 0 0 1-1.25-4.49c0-4.54 3.7-8.25 8.24-8.25h-.46z" />
                     </svg>
-                    <span className="text-[10px] font-bold text-slate-600 mt-1">WhatsApp</span>
                   </button>
 
                   {/* Facebook */}
                   <button
                     type="button"
                     title="Share on Facebook"
+                    aria-label="Share on Facebook"
                     onClick={() => handleSocialShare("facebook")}
-                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 transition-all cursor-pointer group"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-blue-500 bg-white hover:bg-blue-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
                   >
                     <svg className="w-5 h-5 text-blue-600 fill-current" viewBox="0 0 24 24">
                       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                     </svg>
-                    <span className="text-[10px] font-bold text-slate-600 mt-1">Facebook</span>
                   </button>
 
                   {/* X / Twitter */}
                   <button
                     type="button"
                     title="Share on X"
+                    aria-label="Share on X"
                     onClick={() => handleSocialShare("twitter")}
-                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-slate-800 hover:bg-slate-100 transition-all cursor-pointer group"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-slate-800 bg-white hover:bg-slate-100 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
                   >
                     <svg className="w-5 h-5 text-slate-900 fill-current" viewBox="0 0 24 24">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                     </svg>
-                    <span className="text-[10px] font-bold text-slate-600 mt-1">X</span>
                   </button>
 
                   {/* Telegram */}
                   <button
                     type="button"
                     title="Share on Telegram"
+                    aria-label="Share on Telegram"
                     onClick={() => handleSocialShare("telegram")}
-                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-sky-500 hover:bg-sky-50/50 transition-all cursor-pointer group"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-sky-500 bg-white hover:bg-sky-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
                   >
                     <svg className="w-5 h-5 text-sky-500 fill-current" viewBox="0 0 24 24">
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z" />
                     </svg>
-                    <span className="text-[10px] font-bold text-slate-600 mt-1">Telegram</span>
                   </button>
 
                   {/* Email */}
                   <button
                     type="button"
                     title="Share via Email"
+                    aria-label="Share via Email"
                     onClick={() => handleSocialShare("email")}
-                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 transition-all cursor-pointer group"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-amber-500 bg-white hover:bg-amber-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
                   >
                     <svg className="w-5 h-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <rect width="20" height="16" x="2" y="4" rx="2" />
                       <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                     </svg>
-                    <span className="text-[10px] font-bold text-slate-600 mt-1">Email</span>
                   </button>
 
                   {/* More / Native */}
                   <button
                     type="button"
                     title="More sharing options"
+                    aria-label="More sharing options"
                     onClick={() => handleSocialShare("more")}
-                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 hover:border-purple-500 hover:bg-purple-50/50 transition-all cursor-pointer group"
+                    className="flex-1 h-11 rounded-xl border border-slate-200 hover:border-purple-500 bg-white hover:bg-purple-50/50 flex items-center justify-center transition-all cursor-pointer group shadow-xs"
                   >
                     <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="1" />
                       <circle cx="19" cy="12" r="1" />
                       <circle cx="5" cy="12" r="1" />
                     </svg>
-                    <span className="text-[10px] font-bold text-slate-600 mt-1">More</span>
                   </button>
                 </div>
               </div>
@@ -1645,15 +1712,22 @@ export default function QrCodeGeneratorClient() {
             <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
               Security Protocol
             </label>
-            <select
-              value={wifiEnc}
-              onChange={(e) => setWifiEnc(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
-            >
-              <option value="WPA">WPA / WPA2 / WPA3 (Recommended)</option>
-              <option value="WEP">WEP</option>
-              <option value="nopass">None (Open Network)</option>
-            </select>
+            <div className="relative">
+              <select
+                value={wifiEnc}
+                onChange={(e) => setWifiEnc(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 pr-10 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 appearance-none cursor-pointer"
+              >
+                <option value="WPA">WPA / WPA2 / WPA3 (Recommended)</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">None (Open Network)</option>
+              </select>
+              <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center text-slate-400">
+                <svg className="w-4 h-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       );
