@@ -28,24 +28,52 @@ interface StressTestResultItem {
 
 const FAQ_ITEMS = [
   {
+    q: "What is a QR code generator?",
+    a: "A QR code generator is an online tool that converts data—such as website URLs, text, Wi-Fi credentials, contact cards, emails, or phone numbers—into a two-dimensional scannable barcode matrix.",
+  },
+  {
+    q: "Is the Spellense QR Code Generator free?",
+    a: "Yes. Spellense is 100% free with no subscription, no hidden trial paywall, and no sign-up required. You can generate unlimited custom QR codes with high-res PNG and vector SVG downloads.",
+  },
+  {
+    q: "Can I create a QR code online without signup?",
+    a: "Yes. You can create, customize, test, and download your QR codes immediately in your browser without creating an account or providing an email address.",
+  },
+  {
     q: "What is the difference between Digital and Print mode?",
-    a: "Digital mode is for QR codes shown on a screen, such as social media or a WhatsApp status, where scanning conditions are predictable, so it skips straight to download or share. Print mode is for anything that will be printed, where mistakes cannot be undone after the fact, so it includes a full stress test before the download unlocks.",
+    a: "Digital mode is designed for screens, websites, and social media where scanning conditions are predictable, allowing instant download or sharing. Print mode is built for physical printing—such as business cards, packaging, and flyers—and includes our 4-condition scannability stress test to verify your code before you print.",
   },
   {
     q: "What does the stress test check?",
-    a: "It re-decodes the generated QR code under four simulated real-world conditions: dim lighting, slight blur, a small print size, and an angled scan, the same way a phone camera might encounter it in practice.",
+    a: "The stress test simulates four real-world scanning challenges: dim lighting (underexposure), camera blur, small print sizes (distance scanning), and angled scanning perspective using client-side image decoding to ensure readability.",
+  },
+  {
+    q: "Can I create a QR code for a website?",
+    a: "Yes. Select the URL option, enter your website address (starting with https://), and Spellense will instantly generate a clean, scannable QR code that directs users straight to your site.",
   },
   {
     q: "Can I add a contact card (vCard) QR code?",
-    a: "Yes. Selecting the contact card option encodes a name, phone number, email, company and job title into a standard vCard format that saves directly to a phone's contacts when scanned.",
+    a: "Yes. Choosing vCard encodes your name, phone, email, organization, and job title into standard vCard 3.0 format so mobile cameras can save contact details with one tap.",
   },
   {
-    q: "Why can't I download before running the stress test in Print mode?",
-    a: "Print QR codes can't be edited once printed, so Spellense requires a passed stress test first to catch contrast, logo-size or size issues while they are still easy to fix.",
+    q: "How do I make a printable QR code?",
+    a: "Switch to Print mode, choose high contrast colors (such as black dots on a white background), select your desired dot and corner style, run the scannability stress test, and download at 3000px PNG or vector SVG.",
+  },
+  {
+    q: "Why is QR code contrast important?",
+    a: "QR code scanners require high contrast between foreground dots and the background to detect the matrix alignment markers. Dark dots on a clean light background ensure quick camera detection even in poor lighting.",
+  },
+  {
+    q: "How can I make sure my QR code scans after printing?",
+    a: "Always maintain high color contrast, avoid placing large logos that block more than 20% of the center, choose high error correction (Level H), and run the built-in scannability test before sending files to the print shop.",
+  },
+  {
+    q: "Why is scannability testing recommended before printing?",
+    a: "Once printed on physical paper or merchandise, QR codes cannot be edited. Running a scannability check catches contrast problems, dense payloads, and oversized logos before spending money on printing.",
   },
   {
     q: "What resolution can I download the QR code at?",
-    a: "PNG downloads are available at 1000px, 2000px or 3000px depending on how large the final print will be. SVG is also available and stays sharp at any size since it is vector-based.",
+    a: "In Print mode, PNG downloads can be exported at 1000px, 2000px, or 3000px resolution. Digital mode exports high-resolution PNG at 2000px. Crisp vector SVG export is available in both modes for infinite scaling.",
   },
 ];
 
@@ -706,11 +734,14 @@ export default function QrCodeGeneratorClient() {
 
       <main id="main-content" className="flex-1">
         {/* HERO SECTION — Matching exact standard tool style */}
-        <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16 text-center">
-          <div className="mx-auto max-w-7xl">
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
-              QR codes that are built to actually scan.
+        <section className="relative overflow-hidden px-4 pt-12 pb-8 sm:px-6 sm:pt-16 sm:pb-10 lg:pt-20 lg:pb-12 text-center">
+          <div className="mx-auto max-w-5xl">
+            <h1 className="text-[32px] xs:text-[40px] sm:text-[52px] md:text-[60px] lg:text-[68px] font-black leading-[1.12] tracking-[-1.2px] sm:tracking-[-2px] text-[#0f172a] text-center">
+              Free QR Code Generator with Scannability Check
             </h1>
+            <p className="mt-3 sm:mt-4 text-base sm:text-lg md:text-xl font-bold text-slate-600 max-w-2xl mx-auto tracking-tight">
+              QR codes that are built to actually scan.
+            </p>
           </div>
         </section>
 
@@ -1615,6 +1646,201 @@ export default function QrCodeGeneratorClient() {
           </div>
         </section>
 
+        {/* EXPLANATORY SEO & PRODUCT SECTIONS (Below tool workspace) */}
+        <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8 space-y-8 sm:space-y-10">
+          
+          {/* SECTION 1: INTRO */}
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xs">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Free QR Code Generator
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed">
+              Create a free QR code online for websites, text, Wi-Fi, email, phone numbers, and contact information. Customize your QR code, test its scannability, and download it as a high-quality PNG or SVG for immediate digital or print publishing.
+            </p>
+          </div>
+
+          {/* SECTION 2: DIFFERENTIATOR */}
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xs">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-black mb-3">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Scannability Verification
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Create a QR Code That Actually Scans
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed">
+              A QR code is only useful when people can scan it successfully. Spellense helps you check your QR code before you publish or print it, so you can catch potential readability and scannability problems early.
+            </p>
+            <p className="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed">
+              Our built-in stress test simulates real-world conditions right inside your browser: dim lighting, motion blur, small print sizes, and angled camera perspectives. By verifying contrast, error correction levels, and logo safety margins upfront, you prevent unreadable codes and costly reprinting.
+            </p>
+          </div>
+
+          {/* SECTION 3: DIGITAL & PRINT */}
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xs">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-6">
+              QR Codes for Digital and Print
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 sm:p-6">
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100/70 text-emerald-700 flex items-center justify-center shrink-0">
+                    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect width="20" height="14" x="2" y="3" rx="2" />
+                      <line x1="8" x2="16" y1="21" y2="21" />
+                      <line x1="12" x2="12" y1="17" y2="21" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-black text-slate-900">Digital QR Codes</h3>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Digital QR codes are optimized for screens where lighting and pixels are predictable. Perfect for websites, social media channels, email signatures, presentation decks, video overlays, and mobile content, digital mode produces clean, high-contrast QR codes ready for instant download or one-click sharing.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 sm:p-6">
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100/70 text-emerald-700 flex items-center justify-center shrink-0">
+                    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 6 2 18 2 18 9" />
+                      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                      <rect width="12" height="8" x="6" y="14" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-black text-slate-900">Print QR Codes</h3>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Print QR codes require special care because ink, paper textures, and lighting cannot be edited after printing. Engineered for business cards, flyers, posters, restaurant menus, product packaging, brochures, and banners, print mode includes our 4-point scannability stress test to ensure reliable scanning under any condition.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 4: SUPPORTED TYPES */}
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xs">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-2">
+              What Can You Create With Our QR Code Generator?
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mb-6">
+              Generate six genuinely supported QR code content types tailored for business and personal workflows:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  URL QR Codes
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Direct users straight to any website address, online store, landing page, or digital portfolio.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  Text QR Codes
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Encode plain text messages, product SKU details, serial numbers, event notices, or instructions.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  Wi-Fi QR Codes
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Allow guests, clients, and customers to join your Wi-Fi network instantly without manually typing passwords.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  Email QR Codes
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Open a pre-filled email draft to customer support, inquiries, or direct feedback with a single scan.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  Phone QR Codes
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Trigger an immediate phone call to your office, emergency line, or booking hotline when scanned.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  vCard QR Codes
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Share comprehensive contact cards with name, phone number, email, company, and job title saved directly to phone contacts.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 5: DOWNLOAD EXPLAINER & INTERNAL LINKS */}
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xs">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-3">
+              Download Your QR Code
+            </h2>
+            <p className="text-sm text-slate-600 leading-relaxed mb-6">
+              Export your custom QR code in standard image formats built for modern digital workflows and commercial press:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
+                <h3 className="text-base font-black text-slate-900 mb-2">High-Resolution PNG</h3>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  In Print mode, choose from 1000px, 2000px, or 3000px export resolutions to match small stickers or large promotional posters. In Digital mode, export a crisp 2000px PNG ready for web pages, presentations, and social media.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
+                <h3 className="text-base font-black text-slate-900 mb-2">Vector SVG Format</h3>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Available in both Digital and Print modes, scalable vector SVG files remain pixel-perfect at any size. Essential for graphic designers, commercial printers, laser engravers, and large-format banners.
+                </p>
+              </div>
+            </div>
+
+            {/* INTERNAL TOOLS ECOSYSTEM LINKS */}
+            <div className="mt-8 pt-6 border-t border-slate-100">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
+                More Creative & Document Tools on Spellense
+              </h3>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-slate-600">
+                <Link href="/" className="hover:text-emerald-700 transition-colors">
+                  AI Proofreader & Spell Checker →
+                </Link>
+                <span className="text-slate-300">•</span>
+                <Link href="/flipbook" className="hover:text-emerald-700 transition-colors">
+                  3D Flipbook Creator →
+                </Link>
+                <span className="text-slate-300">•</span>
+                <Link href="/image-compressor" className="hover:text-emerald-700 transition-colors">
+                  Image Compressor →
+                </Link>
+                <span className="text-slate-300">•</span>
+                <Link href="/image-to-text" className="hover:text-emerald-700 transition-colors">
+                  Image to Text (OCR) →
+                </Link>
+                <span className="text-slate-300">•</span>
+                <Link href="/design-check" className="hover:text-emerald-700 transition-colors">
+                  Design Check →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ SECTION */}
         <section className="mx-auto max-w-4xl px-4 pb-24 sm:px-6">
           <div className="text-center mb-10">
@@ -1630,14 +1856,17 @@ export default function QrCodeGeneratorClient() {
             {FAQ_ITEMS.map((item, idx) => {
               const isOpen = openFaqIndex === idx;
               return (
-                <div
+                <details
                   key={idx}
-                  className="rounded-2xl border border-slate-200/90 bg-white transition-all overflow-hidden"
+                  open={isOpen}
+                  className="group rounded-2xl border border-slate-200/90 bg-white transition-all overflow-hidden"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                    className="flex w-full items-center justify-between p-5 text-left text-sm sm:text-base font-bold text-slate-900 hover:text-emerald-700 transition-colors cursor-pointer"
+                  <summary
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpenFaqIndex(isOpen ? null : idx);
+                    }}
+                    className="flex w-full items-center justify-between p-5 text-left text-sm sm:text-base font-bold text-slate-900 hover:text-emerald-700 transition-colors cursor-pointer list-none select-none"
                   >
                     <span>{item.q}</span>
                     <svg
@@ -1653,13 +1882,11 @@ export default function QrCodeGeneratorClient() {
                     >
                       <polyline points="6 9 12 15 18 9" />
                     </svg>
-                  </button>
-                  {isOpen && (
-                    <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                      {item.a}
-                    </div>
-                  )}
-                </div>
+                  </summary>
+                  <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                    {item.a}
+                  </div>
+                </details>
               );
             })}
           </div>
