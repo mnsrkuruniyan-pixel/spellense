@@ -4389,30 +4389,38 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* CARD 8: FREE QR CODE GENERATOR */}
-              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect width="18" height="18" x="3" y="3" rx="2" />
-                    <path d="M7 7h.01M7 12h.01M7 17h.01M12 7h.01M12 12h.01M12 17h.01M17 7h.01M17 12h.01M17 17h.01" />
-                  </svg>
-                </div>
+              {/* CARD 8: FREE QR CODE GENERATOR (FULL WIDTH SHOWCASE AT BOTTOM OF BENTO) */}
+              <div className="group relative rounded-3xl border border-white/90 bg-white/80 p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5 sm:col-span-2 lg:col-span-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-start sm:items-center gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="18" height="18" x="3" y="3" rx="2" />
+                        <path d="M7 7h.01M7 12h.01M7 17h.01M12 7h.01M12 12h.01M12 17h.01M17 7h.01M17 12h.01M17 17h.01" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                        Print QA Utility
+                      </div>
+                      <h3 className="mt-0.5 text-xl font-black text-slate-900">
+                        QR Code Generator with Scannability Scoring
+                      </h3>
+                      <p className="mt-1 text-xs sm:text-sm leading-relaxed text-slate-600 max-w-2xl">
+                        Generate high-resolution vector SVG and PNG QR codes for URLs, WiFi, text &amp; contacts with built-in camera scannability verification before you send to print.
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-blue-600">
-                  Print QA Utility
-                </div>
-                <h3 className="mt-1 text-xl font-black text-slate-900">
-                  QR Code Generator
-                </h3>
-                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
-                  Generate customized QR codes for URLs, WiFi, text &amp; contacts with built-in camera scannability scoring before you send to print.
-                </p>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-slate-400">URL, WiFi, Contact · PNG &amp; SVG</span>
-                  <Link href="/qr-code-generator" className="text-xs font-bold text-blue-600 hover:underline">
-                    Use tool →
-                  </Link>
+                  <div className="flex items-center gap-3 shrink-0 sm:self-center">
+                    <span className="text-[11px] font-semibold text-slate-400 hidden md:inline">URL, WiFi, vCard · SVG &amp; PNG</span>
+                    <Link
+                      href="/qr-code-generator"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 active:scale-95 whitespace-nowrap"
+                    >
+                      <span>Use tool →</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
 
