@@ -552,13 +552,13 @@ export default function QrCodeGeneratorClient() {
       width: size,
       height: size,
       data: payload,
-      margin: Math.round(size * 0.04),
+      margin: Math.max(28, Math.round(size * 0.05)),
       qrOptions: { errorCorrectionLevel: isDigital ? "M" : ecLevel },
       dotsOptions: {
         color: fgColor,
         type: isDigital ? "square" : dotStyle,
       },
-      backgroundOptions: { color: bgColor },
+      backgroundOptions: { color: bgColor || "#ffffff" },
       cornersSquareOptions: {
         color: fgColor,
         type: isDigital ? "square" : (cornerStyle === "square" ? "square" : cornerStyle),
@@ -1504,7 +1504,9 @@ export default function QrCodeGeneratorClient() {
                     </div>
 
                     {/* Resolution selector (strictly 1 single horizontal row) */}
-                    <div className="pt-2 text-left">
+                    <div className={`pt-2 text-left transition-opacity duration-200 ${
+                      !stressTested ? "opacity-40 pointer-events-none select-none" : ""
+                    }`}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-bold text-slate-700">PNG Resolution</span>
                         <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
@@ -1562,7 +1564,9 @@ export default function QrCodeGeneratorClient() {
 
                 {/* ACTION BUTTONS: PNG, SVG, SHARE */}
                 <div className="w-full mt-6 space-y-2.5">
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className={`grid grid-cols-2 gap-2.5 transition-opacity duration-200 ${
+                    mode === "print" && !stressTested ? "opacity-40 pointer-events-none select-none" : ""
+                  }`}>
                     {/* PNG Download */}
                     <button
                       type="button"
@@ -1572,7 +1576,7 @@ export default function QrCodeGeneratorClient() {
                     >
                       {isDownloadingPng ? (
                         <>
-                          <svg className="animate-spin h-4 w-4 text-emerald-600" viewBox="0 0 24 24" fill="none">
+                          <svg className="animate-spin h-4 w-4 text-slate-600" viewBox="0 0 24 24" fill="none">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                           </svg>
@@ -1580,7 +1584,7 @@ export default function QrCodeGeneratorClient() {
                         </>
                       ) : (
                         <>
-                          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                             <polyline points="7 10 12 15 17 10" />
                             <line x1="12" y1="15" x2="12" y2="3" />
@@ -1599,7 +1603,7 @@ export default function QrCodeGeneratorClient() {
                     >
                       {isDownloadingSvg ? (
                         <>
-                          <svg className="animate-spin h-4 w-4 text-emerald-600" viewBox="0 0 24 24" fill="none">
+                          <svg className="animate-spin h-4 w-4 text-slate-600" viewBox="0 0 24 24" fill="none">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                           </svg>
@@ -1607,7 +1611,7 @@ export default function QrCodeGeneratorClient() {
                         </>
                       ) : (
                         <>
-                          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                             <polygon points="12 2 2 7 12 12 22 7 12 2" />
                             <polyline points="2 17 12 22 22 17" />
                             <polyline points="2 12 12 17 22 12" />
@@ -1618,13 +1622,28 @@ export default function QrCodeGeneratorClient() {
                     </button>
                   </div>
 
+                  {/* Print Mode Scan It First / Verification Attention Message */}
+                  {mode === "print" && (
+                    <div
+                      className={`p-2.5 rounded-xl text-xs text-center border transition-all ${
+                        stressTested
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200 font-bold"
+                          : "bg-red-50 text-[#dc2626] border-red-200 font-extrabold animate-pulse"
+                      }`}
+                    >
+                      {stressTested
+                        ? "✓ Verified — ready to download"
+                        : "⚠️ Scan it first: Run the stress test above to verify and unlock downloads"}
+                    </div>
+                  )}
+
                   {/* Share Button (PNG, SVG and Share requirement) */}
                   <button
                     type="button"
                     onClick={handleOpenShareModal}
                     className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-slate-50 hover:bg-slate-100 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-xs transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
                   >
-                    <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="18" cy="5" r="3" />
                       <circle cx="6" cy="12" r="3" />
                       <circle cx="18" cy="19" r="3" />
