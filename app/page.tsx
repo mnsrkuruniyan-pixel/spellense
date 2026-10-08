@@ -1906,26 +1906,34 @@ function computeReadability(text: string) {
   };
 }
 
-const HERO_HEADLINES = [
+const HERO_HEADLINES: {
+  line1: string;
+  line2Prefix: string;
+  line2Accent: string;
+  href?: string;
+}[] = [
   {
     line1: "Not even hiding in a PDF",
     line2Prefix: "will save ",
     line2Accent: "a typo.",
   },
   {
-    line1: "Your last line of defense",
-    line2Prefix: "",
-    line2Accent: "before it ships.",
-  },
-  {
     line1: "Don’t just send a PDF.",
     line2Prefix: "Send ",
     line2Accent: "an experience.",
+    href: "/flipbook",
   },
   {
-    line1: "The pre-flight check",
-    line2Prefix: "your creative work ",
-    line2Accent: "deserves.",
+    line1: "Generate custom QR codes",
+    line2Prefix: "verified to ",
+    line2Accent: "actually scan.",
+    href: "/qr-code-generator",
+  },
+  {
+    line1: "Compress images & PDFs",
+    line2Prefix: "with zero ",
+    line2Accent: "quality loss.",
+    href: "/image-compressor",
   },
 ];
 
@@ -3468,13 +3476,49 @@ export default function Home() {
                   : "opacity-0 -translate-y-2 scale-[0.99]"
               }`}
             >
-              <span>{HERO_HEADLINES[headlineIndex].line1}</span>
-              <br />
-              <span>
-                {HERO_HEADLINES[headlineIndex].line2Prefix}
-                <span className="text-[#0055fe]">{HERO_HEADLINES[headlineIndex].line2Accent}</span>
-              </span>
+              {HERO_HEADLINES[headlineIndex].href ? (
+                <Link
+                  href={HERO_HEADLINES[headlineIndex].href}
+                  className="group inline-block transition-transform duration-200 hover:scale-[1.01]"
+                  title={`Open ${HERO_HEADLINES[headlineIndex].line1}`}
+                >
+                  <span>{HERO_HEADLINES[headlineIndex].line1}</span>
+                  <br />
+                  <span>
+                    {HERO_HEADLINES[headlineIndex].line2Prefix}
+                    <span className="text-[#0055fe] group-hover:underline decoration-4 underline-offset-8">
+                      {HERO_HEADLINES[headlineIndex].line2Accent}
+                    </span>
+                  </span>
+                </Link>
+              ) : (
+                <>
+                  <span>{HERO_HEADLINES[headlineIndex].line1}</span>
+                  <br />
+                  <span>
+                    {HERO_HEADLINES[headlineIndex].line2Prefix}
+                    <span className="text-[#0055fe]">{HERO_HEADLINES[headlineIndex].line2Accent}</span>
+                  </span>
+                </>
+              )}
             </h1>
+
+            {/* CYCLING INDICATOR PILLS */}
+            <div className="mt-4 flex items-center justify-center gap-1.5" aria-hidden="true">
+              {HERO_HEADLINES.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => handleHeadlineSelect(i)}
+                  aria-label={`Show slide ${i + 1}`}
+                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                    i === headlineIndex
+                      ? "w-6 bg-[#0055fe] shadow-2xs shadow-blue-500/30"
+                      : "w-1.5 bg-blue-200/90 hover:bg-blue-300"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
 
 
