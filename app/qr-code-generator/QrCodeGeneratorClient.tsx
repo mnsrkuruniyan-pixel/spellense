@@ -1490,17 +1490,17 @@ export default function QrCodeGeneratorClient() {
                       </div>
                     )}
 
-                    {/* Gate Message */}
+                    {/* Verification / Attention Notice */}
                     <div
-                      className={`p-2.5 rounded-xl text-xs font-bold text-center border ${
-                        gateNoticeType === "ok"
-                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                          : gateNoticeType === "warn"
-                          ? "bg-amber-50 text-amber-800 border-amber-200"
-                          : "bg-slate-50 text-slate-600 border-slate-200"
+                      className={`p-2.5 rounded-xl text-xs text-center border transition-all ${
+                        stressTested
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200 font-bold"
+                          : "bg-red-50 text-[#dc2626] border-red-200 font-extrabold animate-pulse"
                       }`}
                     >
-                      {gateNotice}
+                      {stressTested
+                        ? "✓ Verified — ready to download"
+                        : "⚠️ Scan it first: Run the stress test above to verify and unlock downloads"}
                     </div>
 
                     {/* Resolution selector (strictly 1 single horizontal row) */}
@@ -1621,21 +1621,6 @@ export default function QrCodeGeneratorClient() {
                       )}
                     </button>
                   </div>
-
-                  {/* Print Mode Scan It First / Verification Attention Message */}
-                  {mode === "print" && (
-                    <div
-                      className={`p-2.5 rounded-xl text-xs text-center border transition-all ${
-                        stressTested
-                          ? "bg-emerald-50 text-emerald-800 border-emerald-200 font-bold"
-                          : "bg-red-50 text-[#dc2626] border-red-200 font-extrabold animate-pulse"
-                      }`}
-                    >
-                      {stressTested
-                        ? "✓ Verified — ready to download"
-                        : "⚠️ Scan it first: Run the stress test above to verify and unlock downloads"}
-                    </div>
-                  )}
 
                   {/* Share Button (PNG, SVG and Share requirement) */}
                   <button
