@@ -1930,9 +1930,9 @@ const HERO_HEADLINES: {
     href: "/qr-code-generator",
   },
   {
-    line1: "Compress images & PDFs",
-    line2Prefix: "with zero ",
-    line2Accent: "quality loss.",
+    line1: "Shrink file sizes",
+    line2Prefix: "with ",
+    line2Accent: "maximum quality.",
     href: "/image-compressor",
   },
 ];
