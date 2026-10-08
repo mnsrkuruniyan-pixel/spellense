@@ -431,7 +431,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                   Beta
                 </span>
               </div>
-              <div className="text-[8px] sm:text-[8.5px] font-semibold tracking-[1.1px] sm:tracking-[1.3px] text-slate-400 uppercase mt-0.5 whitespace-nowrap">
+              <div className="text-[8px] sm:text-[8.5px] font-semibold tracking-[1.1px] sm:tracking-[1.3px] text-slate-400 uppercase mt-1.5 sm:mt-2 whitespace-nowrap">
                 ALWAYS GOT YOUR BACK
               </div>
             </div>
