@@ -152,7 +152,7 @@ export default async function BlogPostPage({
       : null;
 
   return (
-    <div className="min-h-screen bg-[#f0f6fe] text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative overflow-x-hidden">
+    <div className="min-h-screen bg-transparent text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative z-10 overflow-x-hidden">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}

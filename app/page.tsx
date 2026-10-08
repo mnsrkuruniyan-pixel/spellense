@@ -2656,7 +2656,7 @@ export default function Home() {
       : (errorCount === 0 ? 100 : 0);
 
     return (
-      <main className="min-h-screen bg-[#f0f6fe] text-black">
+      <main className="min-h-screen bg-transparent text-black relative z-10">
 
         {/* NAVBAR */}
         <Navbar
@@ -3420,7 +3420,7 @@ export default function Home() {
 
   return (
 
-    <main id="main-content" className="min-h-screen bg-[#f0f6fe] text-black">
+    <main id="main-content" className="min-h-screen bg-transparent text-black relative z-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }}

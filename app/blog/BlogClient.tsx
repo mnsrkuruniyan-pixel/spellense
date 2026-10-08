@@ -17,7 +17,7 @@ export default function BlogClient({ posts, categories }: { posts: BlogPost[]; c
   const featuredPost = posts[0];
 
   return (
-    <div className="min-h-screen bg-[#f0f6fe] text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative overflow-x-hidden">
+    <div className="min-h-screen bg-transparent text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative z-10 overflow-x-hidden">
       {/* Ambient glows */}
       <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80" />
       <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />

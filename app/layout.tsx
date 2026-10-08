@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import QuantlConstellation from "@/components/backgrounds/QuantlConstellation";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -113,7 +114,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${plusJakartaSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#f0f6fe]">
+      <body className="min-h-full flex flex-col bg-transparent">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-xl focus:bg-blue-600 focus:px-4 focus:py-2.5 focus:text-xs focus:font-bold focus:text-white focus:shadow-xl focus:outline-none"
@@ -163,6 +164,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             />
           </div>
         </noscript>
+        {/* Global 3D / Shader Atmosphere (White & Light-Blue Patches + Interactive Constellation) */}
+        <QuantlConstellation />
+
         {children}
         <PwaInstallPrompt />
         <FeedbackWidget />

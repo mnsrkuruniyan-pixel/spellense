@@ -190,7 +190,7 @@ export default function UsUkConverterClient() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f0f6fe] text-black font-sans selection:bg-blue-500/10 selection:text-blue-600">
+    <main className="min-h-screen bg-transparent text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative z-10">
       {/* NAVBAR */}
       <Navbar />
 

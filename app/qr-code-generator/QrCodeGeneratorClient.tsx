@@ -728,20 +728,17 @@ export default function QrCodeGeneratorClient() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f0f6fe] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+    <div className="flex min-h-screen flex-col bg-transparent font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
       {/* NAVBAR */}
       <Navbar />
 
-      <main id="main-content" className="flex-1">
+      <main id="main-content" className="flex-1 relative z-10">
         {/* HERO SECTION — Matching exact standard tool style */}
-        <section className="relative overflow-hidden px-4 pt-12 pb-8 sm:px-6 sm:pt-16 sm:pb-10 lg:pt-20 lg:pb-12 text-center">
-          <div className="mx-auto max-w-5xl">
-            <h1 className="text-[32px] xs:text-[40px] sm:text-[52px] md:text-[60px] lg:text-[68px] font-black leading-[1.12] tracking-[-1.2px] sm:tracking-[-2px] text-[#0f172a] text-center">
-              Free QR Code Generator with Scannability Check
-            </h1>
-            <p className="mt-3 sm:mt-4 text-base sm:text-lg md:text-xl font-bold text-slate-600 max-w-2xl mx-auto tracking-tight">
+        <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16 text-center">
+          <div className="mx-auto max-w-7xl">
+            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
               QR codes that are built to actually scan.
-            </p>
+            </h1>
           </div>
         </section>
 
@@ -792,7 +789,7 @@ export default function QrCodeGeneratorClient() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* LEFT COLUMN: CONTROLS (7 COLS) */}
-            <div className="lg:col-span-7 bg-white rounded-[28px] border border-slate-200/90 p-6 sm:p-8 shadow-[0_20px_60px_-15px_rgba(0,85,254,0.06)]">
+            <div className="lg:col-span-7 bg-white rounded-[28px] border border-slate-200 p-6 sm:p-8 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.03)]">
               
               {/* DIGITAL MODE: FLAT MINIMAL FORM */}
               {mode === "digital" && (
@@ -1388,7 +1385,7 @@ export default function QrCodeGeneratorClient() {
             <div className="lg:col-span-5 space-y-6">
               
               {/* QR Preview Card */}
-              <div className="bg-white rounded-[28px] border border-slate-200/90 p-6 sm:p-7 shadow-[0_20px_60px_-15px_rgba(0,85,254,0.06)] flex flex-col items-center justify-center text-center">
+              <div className="bg-white rounded-[28px] border border-slate-200 p-6 sm:p-7 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.03)] flex flex-col items-center justify-center text-center">
                 <span className="text-xs font-black uppercase tracking-wider text-slate-500 mb-4">
                   {mode === "digital" ? "Digital Preview" : "Print Ready Preview"}
                 </span>

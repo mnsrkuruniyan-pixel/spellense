@@ -117,7 +117,7 @@ export default function FaqPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f0f6fe] text-black">
+    <main className="min-h-screen bg-transparent text-black relative z-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}

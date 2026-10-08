@@ -923,7 +923,7 @@ export default function FlipbookClient() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f0f6fe] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+    <div className="flex min-h-screen flex-col bg-transparent font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10">
       {/* Inject viewer & editor CSS */}
       <style dangerouslySetInnerHTML={{ __html: VCSS + APP_CSS }} />
 

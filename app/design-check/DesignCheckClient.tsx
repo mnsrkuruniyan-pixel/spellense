@@ -783,7 +783,7 @@ export default function DesignCheckClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f6fe] text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative overflow-x-hidden">
+    <div className="min-h-screen bg-transparent text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative z-10 overflow-x-hidden">
       {/* Ambient background glows / mesh across full page */}
       <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
       <div className="pointer-events-none absolute top-40 -left-28 h-[420px] w-[420px] rounded-full bg-blue-200/40 blur-[100px]" />

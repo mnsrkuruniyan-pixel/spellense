@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-[#f0f6fe] text-black">
+    <main className="min-h-screen bg-transparent text-black relative z-10">
 
       {/* NAVBAR */}
       <Navbar />

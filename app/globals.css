@@ -20,7 +20,7 @@
 }
 
 body {
-  background: var(--background);
+  background: transparent;
   color: #000000;
   font-family: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   letter-spacing: -0.01em;

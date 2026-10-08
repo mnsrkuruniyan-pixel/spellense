@@ -517,7 +517,7 @@ export default function ImageToTextClient() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f0f6fe] text-slate-800">
+    <main className="min-h-screen bg-transparent text-slate-800 relative z-10">
       {/* NAVBAR */}
       <Navbar />
 
