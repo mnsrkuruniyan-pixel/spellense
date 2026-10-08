@@ -1192,21 +1192,21 @@ export default function ImageCompressorClient() {
                   {/* SQUOOSH-STYLE INTERACTIVE BEFORE/AFTER SLIDER */}
                   <div className="relative rounded-3xl border border-slate-200/80 bg-slate-900/95 overflow-hidden shadow-2xl backdrop-blur-xl">
                     {/* Viewport Top Toolbar */}
-                    <div className="absolute top-3.5 left-3.5 right-3.5 z-30 flex items-center justify-between pointer-events-none">
+                    <div className="absolute top-3 left-3 right-3 sm:top-3.5 sm:left-3.5 sm:right-3.5 z-30 flex items-center justify-between gap-1.5 pointer-events-none">
                       {/* Left Badge: Original */}
-                      <div className="pointer-events-auto rounded-xl bg-slate-900/85 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md border border-white/10 shadow-xs">
-                        ORIGINAL • {activeItem?.width}×{activeItem?.height} •{" "}
+                      <div className="pointer-events-auto rounded-xl bg-slate-900/85 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-white backdrop-blur-md border border-white/10 shadow-xs whitespace-nowrap">
+                        ORIGINAL <span className="hidden sm:inline">• {activeItem?.width}×{activeItem?.height}</span> •{" "}
                         {activeItem ? formatBytes(activeItem.originalSize) : "0 KB"}
                       </div>
 
                       {/* Right Badge: Compressed */}
-                      <div className="pointer-events-auto flex items-center gap-1.5 rounded-xl bg-blue-600/90 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md border border-blue-400/30 shadow-xs">
+                      <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 rounded-xl bg-blue-600/90 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-white backdrop-blur-md border border-blue-400/30 shadow-xs whitespace-nowrap">
                         <span>
                           {activeItem?.format.toUpperCase()} •{" "}
                           {activeItem ? formatBytes(activeItem.compressedSize) : "..."}
                         </span>
                         {activeItem && activeItem.compressedSize > 0 && (
-                          <span className="rounded-full bg-emerald-400/30 px-2 py-0.5 text-[11px] font-bold text-emerald-200">
+                          <span className="rounded-full bg-emerald-400/30 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-emerald-200">
                             -
                             {Math.round(
                               ((activeItem.originalSize - activeItem.compressedSize) /

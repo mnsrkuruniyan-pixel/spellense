@@ -525,7 +525,7 @@ export default function UsUkConverterClient() {
               </div>
 
               {/* Search Bar */}
-              <div className="relative min-w-[260px] sm:w-72">
+              <div className="relative w-full sm:w-72">
                 <input
                   type="text"
                   value={lookupQuery}

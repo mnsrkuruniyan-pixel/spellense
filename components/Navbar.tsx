@@ -749,7 +749,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
         {/* Mobile menu dropdown overlay */}
         {mobileMenuOpen && (
           <div className={`fixed inset-0 ${resultMode ? "top-[116px] sm:top-[76px]" : "top-[68px] sm:top-[76px]"} z-40 bg-slate-900/30 backdrop-blur-md lg:hidden animate-in fade-in duration-200`}>
-            <div className="mx-auto max-w-lg border-b border-slate-200/80 bg-white/95 px-5 pt-4 pb-6 shadow-2xl backdrop-blur-xl">
+            <div className="mx-auto max-w-lg border-b border-slate-200/80 bg-white/95 px-5 pt-4 pb-6 shadow-2xl backdrop-blur-xl max-h-[calc(100dvh-80px)] overflow-y-auto overscroll-contain">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   Navigation &amp; Tools
