@@ -756,12 +756,12 @@ export default function QrCodeGeneratorClient() {
                 onClick={() => setMode("digital")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
                   mode === "digital"
-                    ? "bg-white text-emerald-800 shadow-sm"
+                    ? "bg-white text-slate-900 shadow-sm"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {/* Digital / Screen SVG Icon */}
-                <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect width="20" height="14" x="2" y="3" rx="2" />
                   <line x1="8" x2="16" y1="21" y2="21" />
                   <line x1="12" x2="12" y1="17" y2="21" />
@@ -774,12 +774,12 @@ export default function QrCodeGeneratorClient() {
                 onClick={() => setMode("print")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
                   mode === "print"
-                    ? "bg-white text-emerald-800 shadow-sm"
+                    ? "bg-white text-slate-900 shadow-sm"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {/* Print / Printer SVG Icon */}
-                <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6 9 6 2 18 2 18 9" />
                   <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                   <rect width="12" height="8" x="6" y="14" />
@@ -877,7 +877,7 @@ export default function QrCodeGeneratorClient() {
                       className="w-full flex items-center justify-between px-5 py-4 bg-slate-50 hover:bg-slate-100 text-left font-black text-sm text-slate-800 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
-                        <svg className="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-4 h-4 text-slate-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                           <polyline points="14 2 14 8 20 8" />
                           <line x1="16" x2="8" y1="13" y2="13" />
@@ -940,7 +940,7 @@ export default function QrCodeGeneratorClient() {
                       className="w-full flex items-center justify-between px-5 py-4 bg-slate-50 hover:bg-slate-100 text-left font-black text-sm text-slate-800 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
-                        <svg className="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-4 h-4 text-slate-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="12" cy="12" r="10" />
                           <path d="m4.93 4.93 4.24 4.24" />
                           <path d="m14.83 9.17 4.24-4.24" />
@@ -1165,7 +1165,7 @@ export default function QrCodeGeneratorClient() {
                       className="w-full flex items-center justify-between px-5 py-4 bg-slate-50 hover:bg-slate-100 text-left font-black text-sm text-slate-800 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
-                        <svg className="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-4 h-4 text-slate-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
                           <circle cx="9" cy="9" r="2" />
                           <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
@@ -1228,7 +1228,7 @@ export default function QrCodeGeneratorClient() {
                                 </div>
                                 <div className="text-left">
                                   <span className="block text-xs font-black text-slate-800">Brand Logo Active</span>
-                                  <span className="block text-[11px] font-semibold text-emerald-600">Centered on QR code</span>
+                                  <span className="block text-[11px] font-semibold text-slate-600">Centered on QR code</span>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
@@ -1271,7 +1271,7 @@ export default function QrCodeGeneratorClient() {
                               max="40"
                               value={logoSize}
                               onChange={(e) => setLogoSize(parseInt(e.target.value, 10))}
-                              className="w-full accent-emerald-600 cursor-pointer"
+                              className="w-full accent-slate-600 cursor-pointer"
                             />
                           </div>
                         )}
@@ -1287,7 +1287,7 @@ export default function QrCodeGeneratorClient() {
                       className="w-full flex items-center justify-between px-5 py-4 bg-slate-50 hover:bg-slate-100 text-left font-black text-sm text-slate-800 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
-                        <svg className="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-4 h-4 text-slate-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="12" cy="12" r="3" />
                           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
                         </svg>
@@ -1688,7 +1688,7 @@ export default function QrCodeGeneratorClient() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 sm:p-6">
                 <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100/70 text-emerald-700 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
                     <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <rect width="20" height="14" x="2" y="3" rx="2" />
                       <line x1="8" x2="16" y1="21" y2="21" />
@@ -1704,7 +1704,7 @@ export default function QrCodeGeneratorClient() {
 
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 sm:p-6">
                 <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100/70 text-emerald-700 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
                     <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="6 9 6 2 18 2 18 9" />
                       <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
@@ -1904,7 +1904,7 @@ export default function QrCodeGeneratorClient() {
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
                   <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="18" cy="5" r="3" />
                     <circle cx="6" cy="12" r="3" />
@@ -1932,8 +1932,8 @@ export default function QrCodeGeneratorClient() {
 
             {/* Notification / Toast Banner */}
             {shareSuccessMsg && (
-              <div className="mt-3 py-2 px-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs font-bold text-emerald-800 animate-fadeIn">
-                <svg className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+              <div className="mt-3 py-2 px-3.5 bg-slate-100 border border-slate-200 rounded-xl flex items-center gap-2 text-xs font-bold text-slate-800 animate-fadeIn">
+                <svg className="w-4 h-4 text-slate-600 shrink-0 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
                 <span>{shareSuccessMsg}</span>
@@ -1967,9 +1967,9 @@ export default function QrCodeGeneratorClient() {
                     type="button"
                     onClick={handleShareQrImageFile}
                     disabled={isSharingImage}
-                    className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                    className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                   >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="w-3.5 h-3.5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="18" cy="5" r="3" />
                       <circle cx="6" cy="12" r="3" />
                       <circle cx="18" cy="19" r="3" />
@@ -1984,20 +1984,20 @@ export default function QrCodeGeneratorClient() {
                     onClick={handleCopyQrImage}
                     className={`w-full py-2 px-3 rounded-xl border text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs ${
                       isImageCopied
-                        ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-black"
+                        ? "bg-slate-100 border-slate-300 text-slate-800 font-black"
                         : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-100/70 text-slate-700 font-bold"
                     }`}
                   >
                     {isImageCopied ? (
                       <>
-                        <svg className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-3.5 h-3.5 text-slate-600 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                         <span>QR Image Copied!</span>
                       </>
                     ) : (
                       <>
-                        <svg className="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-3.5 h-3.5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                           <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
                           <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
                         </svg>

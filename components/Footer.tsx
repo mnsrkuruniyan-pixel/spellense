@@ -23,7 +23,7 @@ export default function Footer({ currentPath }: { currentPath?: string }) {
         <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
           <div>
             <div className="text-lg font-bold text-slate-900">
-              Spel<span className="text-blue-600">lense</span>
+              Spellense
             </div>
             <p className="mt-1 text-xs text-slate-400">
               Free English spell checker &amp; visual proofreader for images, documents, and creative work.

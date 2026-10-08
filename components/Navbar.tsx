@@ -425,7 +425,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-[20px] sm:text-[22px] font-extrabold tracking-[-0.8px] text-slate-900 leading-none">
-                  Spel<span className="text-blue-600">lense</span>
+                  Spellense
                 </span>
                 <span className="inline-flex items-center rounded-md bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-700 ring-1 ring-inset ring-blue-700/10">
                   Beta
