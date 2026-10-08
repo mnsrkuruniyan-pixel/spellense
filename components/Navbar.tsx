@@ -448,7 +448,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
         {/* RIGHT ROYAL BLUE NAVIGATION BAR */}
         <div className="flex-1 flex items-center justify-end px-5 sm:px-8 lg:px-10">
           {resultMode ? (
-            <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="hidden sm:flex items-center gap-2.5 sm:gap-3">
               {/* File name pill */}
               <div className="hidden md:flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white max-w-[240px] backdrop-blur-md">
                 <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400 animate-pulse" />
@@ -460,7 +460,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 <button
                   type="button"
                   onClick={resultMode.onDownloadReport}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-white/25 active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-white/25 active:scale-95 cursor-pointer whitespace-nowrap"
                 >
                   <svg
                     width="14"
@@ -484,7 +484,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
               <button
                 type="button"
                 onClick={resultMode.onReset}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 sm:py-2 text-xs font-bold text-[#0055fe] shadow-md transition-all hover:bg-white/95 active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 sm:py-2 text-xs font-bold text-[#0055fe] shadow-md transition-all hover:bg-white/95 active:scale-95 cursor-pointer whitespace-nowrap"
               >
                 <span>+ Check another file</span>
               </button>
@@ -700,9 +700,55 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
           </div>
         </div>
 
+        {/* MOBILE RESULT MODE ACTION BAR */}
+        {resultMode && (
+          <div className="sm:hidden w-full bg-white/95 border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between gap-2 shadow-xs backdrop-blur-md">
+            {/* File name */}
+            <div className="flex items-center gap-1.5 min-w-0 flex-1 text-xs font-semibold text-slate-700">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="truncate">{resultMode.fileName}</span>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 shrink-0">
+              {resultMode.onDownloadReport && (
+                <button
+                  type="button"
+                  onClick={resultMode.onDownloadReport}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition active:scale-95 cursor-pointer whitespace-nowrap"
+                >
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  <span>Report</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={resultMode.onReset}
+                className="inline-flex items-center gap-1 rounded-full bg-[#0055fe] hover:bg-[#0047d9] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
+              >
+                <span>+ Check another</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Mobile menu dropdown overlay */}
         {mobileMenuOpen && (
-          <div className="fixed inset-0 top-[68px] sm:top-[76px] z-40 bg-slate-900/30 backdrop-blur-md lg:hidden animate-in fade-in duration-200">
+          <div className={`fixed inset-0 ${resultMode ? "top-[116px] sm:top-[76px]" : "top-[68px] sm:top-[76px]"} z-40 bg-slate-900/30 backdrop-blur-md lg:hidden animate-in fade-in duration-200`}>
             <div className="mx-auto max-w-lg border-b border-slate-200/80 bg-white/95 px-5 pt-4 pb-6 shadow-2xl backdrop-blur-xl">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
