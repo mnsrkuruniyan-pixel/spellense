@@ -1,14 +1,27 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
-const LOWERCASE_WORDS = new Set([
-  "a", "an", "and", "as", "at", "but", "by", "en", "for", "if", "in", "nor",
-  "of", "on", "or", "per", "the", "to", "via", "vs", "vs.", "v.", "with"
-]);
+import {
+  toSentenceCase,
+  toLowerCase,
+  toUpperCase,
+  toTitleCase,
+  toCapitalizedCase,
+  toAlternatingCase,
+  toCamelCase,
+  toPascalCase,
+  toSnakeCase,
+  toKebabCase,
+  toConstantCase,
+  toInverseCase,
+  removeExtraSpaces,
+  removeBlankLines,
+  straightenQuotes,
+  stripHtmlTags,
+} from "@/lib/caseConverter";
 
 const SAMPLE_TEXT = `the quick BROWN fox jumps OVER the lazy dog! this interactive text formatter by spellense allows creators, copywriters, and developers to switch between various casing styles effortlessly. whether you need clean "camelCase" for javascript variables, standard Title Case for marketing headlines, or sentence case for blog posts, spellense gets it done in real-time.`;
 
@@ -16,6 +29,9 @@ export default function CaseConverterClient() {
   const [text, setText] = useState("");
   const [copied, setCopied] = useState(false);
   const [activeTransform, setActiveTransform] = useState<string | null>(null);
+  const [history, setHistory] = useState<string[]>([]);
+  const [notification, setNotification] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Statistics calculation
   const stats = useMemo(() => {
@@ -39,206 +55,196 @@ export default function CaseConverterClient() {
     };
   }, [text]);
 
-  // Conversion functions
+  const updateTextWithHistory = (newText: string) => {
+    if (newText === text) return;
+    setHistory((prev) => [...prev.slice(-49), text]);
+    setText(newText);
+  };
+
+  const handleUndo = () => {
+    if (history.length === 0) return;
+    const previous = history[history.length - 1];
+    setHistory((prev) => prev.slice(0, -1));
+    setText(previous);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        if (history.length > 0) {
+          e.preventDefault();
+          handleUndo();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [history]);
+
+  // Conversion functions using shared tokenizer & robust library
   const transform = (type: string) => {
     if (!text) return;
     setActiveTransform(type);
     setTimeout(() => setActiveTransform(null), 700);
 
+    let result = text;
     switch (type) {
-      case "sentence": {
-        // Capitalize first letter of each sentence and after newlines
-        const result = text.toLowerCase().replace(/(^\s*|[.!?]\s+|\n\s*)([a-z])/g, (_, prefix, char) => {
-          return prefix + char.toUpperCase();
-        });
-        setText(result);
+      case "sentence":
+        result = toSentenceCase(text);
         break;
-      }
-
       case "lower":
-        setText(text.toLowerCase());
+        result = toLowerCase(text);
         break;
-
       case "upper":
-        setText(text.toUpperCase());
+        result = toUpperCase(text);
         break;
-
-      case "title": {
-        // Smart title case: capitalize major words, keep articles/prepositions lowercase unless first/last word
-        const lines = text.split("\n");
-        const transformedLines = lines.map((line) => {
-          const words = line.split(" ");
-          return words
-            .map((word, index) => {
-              if (!word) return word;
-              const cleanWord = word.toLowerCase().replace(/[^a-z0-9]/g, "");
-              const isFirstOrLast = index === 0 || index === words.length - 1;
-              if (!isFirstOrLast && LOWERCASE_WORDS.has(cleanWord)) {
-                return word.toLowerCase();
-              }
-              return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-            })
-            .join(" ");
-        });
-        setText(transformedLines.join("\n"));
+      case "title":
+        result = toTitleCase(text);
         break;
-      }
-
-      case "capitalized": {
-        // Capitalize every word
-        const result = text.replace(/\b([a-zA-Z])/g, (char) => char.toUpperCase());
-        setText(result);
+      case "capitalized":
+        result = toCapitalizedCase(text);
         break;
-      }
-
-      case "alternating": {
-        let capitalize = false;
-        let result = "";
-        for (let i = 0; i < text.length; i++) {
-          const char = text[i];
-          if (/[a-zA-Z]/.test(char)) {
-            result += capitalize ? char.toUpperCase() : char.toLowerCase();
-            capitalize = !capitalize;
-          } else {
-            result += char;
-          }
-        }
-        setText(result);
+      case "alternating":
+        result = toAlternatingCase(text);
         break;
-      }
-
-      case "inverse": {
-        let result = "";
-        for (let i = 0; i < text.length; i++) {
-          const char = text[i];
-          if (char === char.toUpperCase()) {
-            result += char.toLowerCase();
-          } else {
-            result += char.toUpperCase();
-          }
-        }
-        setText(result);
+      case "camel":
+        result = toCamelCase(text);
         break;
-      }
-
-      case "camel": {
-        const words = text
-          .replace(/[^a-zA-Z0-9\s_-]/g, "")
-          .split(/[\s_-]+/)
-          .filter(Boolean);
-        if (words.length === 0) return;
-        const camel = words
-          .map((w, i) =>
-            i === 0
-              ? w.toLowerCase()
-              : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
-          )
-          .join("");
-        setText(camel);
+      case "pascal":
+        result = toPascalCase(text);
         break;
-      }
-
-      case "pascal": {
-        const words = text
-          .replace(/[^a-zA-Z0-9\s_-]/g, "")
-          .split(/[\s_-]+/)
-          .filter(Boolean);
-        if (words.length === 0) return;
-        const pascal = words
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-          .join("");
-        setText(pascal);
+      case "snake":
+        result = toSnakeCase(text);
         break;
-      }
-
-      case "snake": {
-        const words = text
-          .replace(/[^a-zA-Z0-9\s_-]/g, "")
-          .trim()
-          .split(/[\s_-]+/)
-          .filter(Boolean);
-        setText(words.map((w) => w.toLowerCase()).join("_"));
+      case "kebab":
+        result = toKebabCase(text);
         break;
-      }
-
-      case "kebab": {
-        const words = text
-          .replace(/[^a-zA-Z0-9\s_-]/g, "")
-          .trim()
-          .split(/[\s_-]+/)
-          .filter(Boolean);
-        setText(words.map((w) => w.toLowerCase()).join("-"));
+      case "constant":
+        result = toConstantCase(text);
         break;
-      }
-
-      case "constant": {
-        const words = text
-          .replace(/[^a-zA-Z0-9\s_-]/g, "")
-          .trim()
-          .split(/[\s_-]+/)
-          .filter(Boolean);
-        setText(words.map((w) => w.toUpperCase()).join("_"));
+      case "inverse":
+        result = toInverseCase(text);
         break;
-      }
-
       default:
-        break;
+        return;
     }
+    updateTextWithHistory(result);
   };
 
   // Text cleaners
   const cleanText = (type: "extra-spaces" | "empty-lines" | "smart-quotes" | "strip-html") => {
     if (!text) return;
+    let result = text;
     switch (type) {
-      case "extra-spaces": {
-        // Collapse multiple spaces into one and trim each line
-        const result = text
-          .split("\n")
-          .map((line) => line.replace(/[ \t]+/g, " ").trim())
-          .join("\n");
-        setText(result);
+      case "extra-spaces":
+        result = removeExtraSpaces(text);
         break;
-      }
-      case "empty-lines": {
-        const result = text
-          .split("\n")
-          .filter((line) => line.trim().length > 0)
-          .join("\n");
-        setText(result);
+      case "empty-lines":
+        result = removeBlankLines(text);
         break;
-      }
-      case "smart-quotes": {
-        const result = text
-          .replace(/[\u2018\u2019]/g, "'")
-          .replace(/[\u201C\u201D]/g, '"')
-          .replace(/[\u00AB\u00BB]/g, '"');
-        setText(result);
+      case "smart-quotes":
+        result = straightenQuotes(text);
         break;
-      }
-      case "strip-html": {
-        const result = text.replace(/<[^>]*>?/gm, "");
-        setText(result);
+      case "strip-html":
+        result = stripHtmlTags(text);
         break;
+    }
+    updateTextWithHistory(result);
+  };
+
+  const handlePaste = async () => {
+    let pastedSuccessfully = false;
+    if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
+      try {
+        const clipText = await navigator.clipboard.readText();
+        if (clipText) {
+          updateTextWithHistory(clipText);
+          pastedSuccessfully = true;
+          return;
+        }
+      } catch {
+        pastedSuccessfully = false;
       }
+    }
+
+    if (!pastedSuccessfully) {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+      setNotification("Tap and hold the text box to paste directly.");
+      setTimeout(() => setNotification(null), 4000);
     }
   };
 
   const handleCopy = async () => {
     if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
+    let copiedSuccessfully = false;
+
+    // 1. Try modern async Clipboard API if supported and in secure context
+    if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        copiedSuccessfully = true;
+      } catch {
+        copiedSuccessfully = false;
+      }
+    }
+
+    // 2. Fallback using existing textarea element (proven reliability on mobile Safari & Android)
+    if (!copiedSuccessfully && textareaRef.current) {
+      try {
+        textareaRef.current.focus();
+        textareaRef.current.select();
+        textareaRef.current.setSelectionRange(0, textareaRef.current.value.length);
+        copiedSuccessfully = document.execCommand("copy");
+        window.getSelection()?.removeAllRanges();
+      } catch {
+        copiedSuccessfully = false;
+      }
+    }
+
+    // 3. Fallback using temporary off-screen textarea with iOS Range selection
+    if (!copiedSuccessfully) {
+      try {
+        const tempArea = document.createElement("textarea");
+        tempArea.value = text;
+        tempArea.contentEditable = "true";
+        tempArea.readOnly = false;
+        tempArea.style.position = "fixed";
+        tempArea.style.left = "-9999px";
+        tempArea.style.top = "-9999px";
+        tempArea.style.opacity = "0";
+        tempArea.style.fontSize = "16px";
+        document.body.appendChild(tempArea);
+
+        const range = document.createRange();
+        range.selectNodeContents(tempArea);
+        const sel = window.getSelection();
+        if (sel) {
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+        tempArea.setSelectionRange(0, text.length);
+
+        copiedSuccessfully = document.execCommand("copy");
+        document.body.removeChild(tempArea);
+        if (sel) sel.removeAllRanges();
+      } catch {
+        copiedSuccessfully = false;
+      }
+    }
+
+    if (copiedSuccessfully) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    } else {
+      // If browser security strictly restricts automated copy, select text for easy device copy
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.select();
+      }
+      setNotification("Text selected! Tap Copy on your device popup menu.");
+      setTimeout(() => setNotification(null), 4000);
     }
   };
 
@@ -288,7 +294,7 @@ export default function CaseConverterClient() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setText(SAMPLE_TEXT)}
+                  onClick={() => updateTextWithHistory(SAMPLE_TEXT)}
                   className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-blue-600 cursor-pointer"
                 >
                   Load Sample
@@ -298,12 +304,21 @@ export default function CaseConverterClient() {
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={async () => {
-                    try {
-                      const clipText = await navigator.clipboard.readText();
-                      if (clipText) setText(clipText);
-                    } catch {}
-                  }}
+                  onClick={handleUndo}
+                  disabled={history.length === 0}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  title="Undo last conversion (Ctrl+Z / Cmd+Z)"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 7v6h6" />
+                    <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+                  </svg>
+                  Undo
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePaste}
                   className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 cursor-pointer"
                   title="Paste from clipboard"
                 >
@@ -316,7 +331,7 @@ export default function CaseConverterClient() {
 
                 <button
                   type="button"
-                  onClick={() => setText("")}
+                  onClick={() => updateTextWithHistory("")}
                   disabled={!text}
                   className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   title="Clear text"
@@ -358,9 +373,31 @@ export default function CaseConverterClient() {
               </div>
             </div>
 
+            {/* NOTIFICATION */}
+            {notification && (
+              <div className="mb-3 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/90 px-3.5 py-2 text-xs font-medium text-blue-800 animate-in fade-in duration-200">
+                <span className="flex items-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-blue-600">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                  {notification}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setNotification(null)}
+                  className="ml-2 font-bold hover:text-blue-950 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             {/* TEXTAREA INPUT */}
             <div className="relative">
               <textarea
+                ref={textareaRef}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 rows={9}
