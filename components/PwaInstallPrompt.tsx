@@ -119,14 +119,36 @@ export default function PwaInstallPrompt() {
     <>
       {/* FLOATING INSTALL BANNER (Mobile optimized) */}
       <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md animate-in fade-in slide-in-from-bottom-5 duration-300">
-        <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/90 bg-white/95 p-3.5 shadow-2xl shadow-slate-900/15 backdrop-blur-xl ring-1 ring-black/5">
+        <div className="relative flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-3.5 pr-12 shadow-2xl shadow-slate-900/15 backdrop-blur-xl ring-1 ring-black/5">
+          {/* Top-Right Dedicated Close (X) Button */}
+          <button
+            type="button"
+            onClick={handleDismiss}
+            aria-label="Close install prompt"
+            className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 border border-slate-200/80 shadow-xs transition hover:bg-slate-200 hover:text-slate-800 active:scale-95 cursor-pointer"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+
           {/* App Icon */}
-          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-white p-1 shadow-xs">
+          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-white p-1 shadow-xs">
             <Image
               src="/icon-96.png"
               alt="Spellense App"
-              width={48}
-              height={48}
+              width={44}
+              height={44}
               className="h-full w-full object-contain"
             />
           </div>
@@ -134,7 +156,7 @@ export default function PwaInstallPrompt() {
           {/* Text Content */}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-slate-900">
+              <span className="text-sm font-bold text-slate-900 leading-tight">
                 Install Spellense App
               </span>
               <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-600">
@@ -146,34 +168,14 @@ export default function PwaInstallPrompt() {
             </p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex shrink-0 items-center gap-1.5">
+          {/* Action Button */}
+          <div className="shrink-0">
             <button
               type="button"
               onClick={handleInstallClick}
-              className="rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
+              className="rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-95 cursor-pointer"
             >
               Install
-            </button>
-            <button
-              type="button"
-              onClick={handleDismiss}
-              aria-label="Dismiss install prompt"
-              className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
             </button>
           </div>
         </div>
@@ -199,11 +201,12 @@ export default function PwaInstallPrompt() {
               <button
                 type="button"
                 onClick={() => setShowIosInstructions(false)}
-                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100"
+                aria-label="Close instructions"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 border border-slate-200/80 transition hover:bg-slate-200 hover:text-slate-800 active:scale-95 cursor-pointer"
               >
                 <svg
-                  width="18"
-                  height="18"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
