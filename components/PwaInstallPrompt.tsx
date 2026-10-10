@@ -117,8 +117,8 @@ export default function PwaInstallPrompt() {
 
   return (
     <>
-      {/* FLOATING INSTALL BANNER (Mobile optimized) */}
-      <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md animate-in fade-in slide-in-from-bottom-5 duration-300">
+      {/* FLOATING INSTALL BANNER (Mobile optimized, elevated above feedback FAB) */}
+      <div className="fixed bottom-[88px] left-3.5 right-3.5 sm:bottom-6 sm:left-6 sm:right-auto sm:max-w-sm sm:mx-0 z-40 mx-auto max-w-md animate-in fade-in slide-in-from-bottom-5 duration-300">
         <div className="relative flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-3.5 pr-12 shadow-2xl shadow-slate-900/15 backdrop-blur-xl ring-1 ring-black/5">
           {/* Top-Right Dedicated Close (X) Button */}
           <button
