@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -9,11 +10,17 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function PwaInstallPrompt() {
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIos, setIsIos] = useState(false);
   const [showIosInstructions, setShowIosInstructions] = useState(false);
+
+  // Suppress PWA install banner on print sheet maker to keep workspace clean
+  if (pathname === "/print-sheet-maker") {
+    return null;
+  }
 
   useEffect(() => {
     // 1. Register Service Worker
@@ -119,28 +126,7 @@ export default function PwaInstallPrompt() {
     <>
       {/* FLOATING INSTALL BANNER (Mobile optimized, elevated above feedback FAB) */}
       <div className="fixed bottom-[88px] left-3.5 right-3.5 sm:bottom-6 sm:left-6 sm:right-auto sm:max-w-sm sm:mx-0 z-40 mx-auto max-w-md animate-in fade-in slide-in-from-bottom-5 duration-300">
-        <div className="relative flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-3.5 pr-12 shadow-2xl shadow-slate-900/15 backdrop-blur-xl ring-1 ring-black/5">
-          {/* Top-Right Dedicated Close (X) Button */}
-          <button
-            type="button"
-            onClick={handleDismiss}
-            aria-label="Close install prompt"
-            className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 border border-slate-200/80 shadow-xs transition hover:bg-slate-200 hover:text-slate-800 active:scale-95 cursor-pointer"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-3.5 shadow-2xl shadow-slate-900/15 backdrop-blur-xl ring-1 ring-black/5">
 
           {/* App Icon */}
           <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-white p-1 shadow-xs">
@@ -168,14 +154,35 @@ export default function PwaInstallPrompt() {
             </p>
           </div>
 
-          {/* Action Button */}
-          <div className="shrink-0">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={handleInstallClick}
               className="rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-95 cursor-pointer"
             >
               Install
+            </button>
+            <button
+              type="button"
+              onClick={handleDismiss}
+              aria-label="Close"
+              title="Close"
+              className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-slate-200 transition active:scale-95 cursor-pointer"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
         </div>

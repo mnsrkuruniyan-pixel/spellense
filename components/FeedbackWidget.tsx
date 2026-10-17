@@ -168,8 +168,15 @@ export default function FeedbackWidget() {
     `${message || ""}\n\n---\nSent from: ${pathname || "/"}${email ? `\nReply to: ${email}` : ""}`
   )}`;
 
+  const isPrintSheet = pathname?.startsWith("/print-sheet-maker");
+
   return (
-    <div ref={containerRef} className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50">
+    <div
+      ref={containerRef}
+      className={`fixed ${
+        isPrintSheet ? "bottom-20 right-3 sm:bottom-6 sm:right-6" : "bottom-5 right-5 sm:bottom-6 sm:right-6"
+      } z-50`}
+    >
       {/* FLOATING FEEDBACK POP-UP CARD */}
       {isOpen && (
         <div className="absolute bottom-18 right-0 w-[350px] max-w-[calc(100vw-2.5rem)] rounded-3xl border border-slate-200/90 bg-white/95 p-5 sm:p-6 shadow-2xl shadow-blue-900/20 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -343,7 +350,7 @@ export default function FeedbackWidget() {
       {/* FLOATING ACTION CIRCLE BUTTON (FAB) */}
       <div className="relative flex items-center gap-2">
         {/* HOVER TOOLTIP PILL */}
-        {!isOpen && !hasInteracted && (
+        {!isOpen && !hasInteracted && !isPrintSheet && (
           <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-md shadow-slate-900/5 backdrop-blur-md">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
               <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />

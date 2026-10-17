@@ -39,7 +39,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            value: "camera=(self), microphone=(), geolocation=()",
           },
           {
             key: "Strict-Transport-Security",
@@ -61,6 +61,26 @@ const nextConfig: NextConfig = {
         ],
         destination: "https://spellense.com/:path*",
         permanent: true,
+      },
+      {
+        source: "/id",
+        destination: "/print-sheet-maker",
+        permanent: false,
+      },
+      {
+        source: "/id-card",
+        destination: "/print-sheet-maker",
+        permanent: false,
+      },
+      {
+        source: "/id-print-maker",
+        destination: "/print-sheet-maker",
+        permanent: false,
+      },
+      {
+        source: "/id-card-maker",
+        destination: "/print-sheet-maker",
+        permanent: false,
       },
     ];
   },

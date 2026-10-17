@@ -25,6 +25,25 @@ const SAMPLES = {
   },
 };
 
+const FAQ_ITEMS = [
+  {
+    q: "How do I translate American English into British English?",
+    a: "Simply paste or type your American (US) text into the input pane. The translator automatically detects American spellings (such as color, realize, center) and vocabulary (such as elevator, sidewalk) and translates them into standard British (UK) English in real-time.",
+  },
+  {
+    q: "What are the biggest differences in UK English spelling?",
+    a: "The primary differences include -our endings (flavour, honour), -ise verbs (organise, prioritise), -re endings (theatre, metre), and doubled consonants in inflected verbs (travelled, cancelling).",
+  },
+  {
+    q: "Is -ize or -ise correct in British English?",
+    a: "Both are technically acceptable in British English. The Oxford University Press (OUP) favors the -ize spelling (known as Oxford spelling) because of its ancient Greek etymology. However, modern British usage, government publications, and UK news outlets (such as the BBC and The Guardian) predominantly use the -ise form.",
+  },
+  {
+    q: "Is this US to UK English translator free and private?",
+    a: "Yes, 100% free with unlimited conversions. All translation and rule mapping occurs entirely in your local browser memory. Your text, articles, and assignments are never stored on any server.",
+  },
+];
+
 export default function UsUkConverterClient() {
   const [direction, setDirection] = useState<"us-to-uk" | "uk-to-us">("us-to-uk");
   const [input, setInput] = useState("");
@@ -33,6 +52,7 @@ export default function UsUkConverterClient() {
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupCategory, setLookupCategory] = useState<string>("All");
   const [copiedWordIdx, setCopiedWordIdx] = useState<number | null>(null);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -190,57 +210,57 @@ export default function UsUkConverterClient() {
   };
 
   return (
-    <main className="min-h-screen bg-transparent text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative z-10">
+    <div className="flex min-h-screen flex-col bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10 text-[15px]">
       {/* NAVBAR */}
       <Navbar />
 
-      {/* HERO & TOOL SECTION */}
-      <section className="relative overflow-hidden pb-20 pt-8 sm:pt-12">
-        {/* Ambient background glows */}
-        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
-        <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
-        <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
-
-        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          {/* HEADER */}
-          <div className="text-center pt-2 pb-2 sm:pt-4 sm:pb-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/80 px-3.5 py-1.5 shadow-2xs backdrop-blur-md mb-4">
-              <span className="flex h-2 w-2 rounded-full bg-blue-600" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
-                Free American ↔ British English Translator
-              </span>
+      <main id="main-content" className="flex-1">
+        {/* HERO TITLE — Matching Figma Layout Style */}
+        <section className="px-4 max-w-7xl mx-auto pt-3 sm:pt-6 pb-1.5 sm:pb-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+            <div>
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0f172a]">
+                US ↔ UK English Translator
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1 line-clamp-1 sm:line-clamp-none">
+                Translate spelling, vocabulary, and phrases between American and British English in real-time.
+              </p>
             </div>
 
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
-              US to UK English Translator
-            </h1>
-
-            <p className="mx-auto mt-4 max-w-2xl text-[15px] sm:text-base leading-relaxed text-slate-600">
-              Translate text instantly between American and British English. Compare spelling variations, view live highlighted diffs, and look up vocabulary differences.
-            </p>
+            {/* Fast / Local Badge */}
+            <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 text-xs font-semibold text-emerald-800 self-start sm:self-center shadow-2xs">
+              <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              <span>Instant client-side translation</span>
+            </div>
           </div>
+        </section>
 
+        {/* WORKSPACE SECTION */}
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-16 mt-2 sm:mt-4">
           {/* DIRECTION SELECTOR SWITCH */}
-          <div className="mt-8 flex items-center justify-center">
-            <div className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/90 bg-white/90 p-1.5 shadow-sm backdrop-blur-md">
+          <div className="mb-6 flex items-center justify-center">
+            <div className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/90 bg-white p-1.5 shadow-2xs">
               <button
                 type="button"
                 onClick={() => setDirection("us-to-uk")}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
                   direction === "us-to-uk"
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/60"
+                    ? "border border-[#0055fe] bg-[#0055fe] text-white shadow-xs"
+                    : "border border-transparent text-slate-600 hover:text-[#0055fe] hover:bg-slate-50"
                 }`}
               >
                 <span>🇺🇸 American (US)</span>
-                <span className="text-slate-300">→</span>
+                <span className={direction === "us-to-uk" ? "text-blue-200" : "text-slate-400"}>→</span>
                 <span>🇬🇧 British (UK)</span>
               </button>
 
               <button
                 type="button"
                 onClick={toggleDirection}
-                className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-[#0055fe] transition cursor-pointer"
                 title="Swap translation direction"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -256,21 +276,21 @@ export default function UsUkConverterClient() {
                 onClick={() => setDirection("uk-to-us")}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
                   direction === "uk-to-us"
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/60"
+                    ? "border border-[#0055fe] bg-[#0055fe] text-white shadow-xs"
+                    : "border border-transparent text-slate-600 hover:text-[#0055fe] hover:bg-slate-50"
                 }`}
               >
                 <span>🇬🇧 British (UK)</span>
-                <span className="text-slate-300">→</span>
+                <span className={direction === "uk-to-us" ? "text-blue-200" : "text-slate-400"}>→</span>
                 <span>🇺🇸 American (US)</span>
               </button>
             </div>
           </div>
 
           {/* TWO-PANE WORKSPACE */}
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-5 lg:grid-cols-2">
             {/* INPUT PANE */}
-            <div className="flex flex-col rounded-3xl border border-white/90 bg-white/85 p-5 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
+            <div className="flex flex-col rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)]">
               {/* Toolbar */}
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
@@ -291,7 +311,7 @@ export default function UsUkConverterClient() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-blue-600 cursor-pointer"
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-[#0055fe] hover:border-blue-300 cursor-pointer"
                     title="Upload .txt document"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -310,7 +330,7 @@ export default function UsUkConverterClient() {
                         if (clipText) setInput(clipText);
                       } catch {}
                     }}
-                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 cursor-pointer"
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-[#0055fe] hover:border-blue-300 cursor-pointer"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
@@ -323,7 +343,7 @@ export default function UsUkConverterClient() {
                     type="button"
                     onClick={() => setInput("")}
                     disabled={!input}
-                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40 cursor-pointer"
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 disabled:opacity-40 cursor-pointer"
                   >
                     Clear
                   </button>
@@ -336,7 +356,7 @@ export default function UsUkConverterClient() {
                 onChange={(e) => setInput(e.target.value)}
                 rows={11}
                 placeholder={`Type or paste ${direction === "us-to-uk" ? "American (US)" : "British (UK)"} text here to translate...`}
-                className="w-full flex-1 rounded-2xl border border-slate-200/90 bg-white/70 p-4 text-[14px] leading-relaxed text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                className="w-full flex-1 rounded-2xl border border-slate-200/90 bg-slate-50/50 p-4 text-[14px] leading-relaxed text-slate-800 placeholder-slate-400 outline-none transition focus:border-[#0055fe] focus:bg-white focus:ring-4 focus:ring-blue-500/10"
               />
 
               {/* Sample Presets Bar */}
@@ -348,21 +368,21 @@ export default function UsUkConverterClient() {
                       key={key}
                       type="button"
                       onClick={() => loadPreset(key)}
-                      className="rounded-lg bg-slate-100 px-2 py-0.5 font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 cursor-pointer"
+                      className="rounded-lg bg-slate-100 px-2.5 py-1 font-semibold text-slate-600 transition hover:bg-slate-200 hover:text-[#0055fe] cursor-pointer"
                     >
                       {SAMPLES[key].label}
                     </button>
                   ))}
                 </div>
 
-                <div className="text-[11px] text-slate-400">
+                <div className="text-[11px] text-slate-400 font-medium">
                   <span>{input.trim() ? input.trim().split(/\s+/).length : 0} words • {input.length} chars</span>
                 </div>
               </div>
             </div>
 
             {/* OUTPUT PANE */}
-            <div className="flex flex-col rounded-3xl border border-white/90 bg-white/85 p-5 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
+            <div className="flex flex-col rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)]">
               {/* Toolbar */}
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
@@ -370,7 +390,7 @@ export default function UsUkConverterClient() {
                     {direction === "us-to-uk" ? "🇬🇧 British English (Output)" : "🇺🇸 American English (Output)"}
                   </span>
                   {result.changeCount > 0 && (
-                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                    <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-bold text-blue-700">
                       {result.changeCount} {result.changeCount === 1 ? "word" : "words"} translated
                     </span>
                   )}
@@ -382,7 +402,7 @@ export default function UsUkConverterClient() {
                     <button
                       type="button"
                       onClick={() => setOutputViewMode("plain")}
-                      className={`rounded-md px-2 py-1 font-semibold transition cursor-pointer ${
+                      className={`rounded-md px-2.5 py-1 font-semibold transition cursor-pointer ${
                         outputViewMode === "plain"
                           ? "bg-white text-slate-900 shadow-2xs"
                           : "text-slate-500 hover:text-slate-800"
@@ -393,7 +413,7 @@ export default function UsUkConverterClient() {
                     <button
                       type="button"
                       onClick={() => setOutputViewMode("diff")}
-                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-semibold transition cursor-pointer ${
+                      className={`flex items-center gap-1 rounded-md px-2.5 py-1 font-semibold transition cursor-pointer ${
                         outputViewMode === "diff"
                           ? "bg-white text-emerald-800 shadow-2xs font-bold"
                           : "text-slate-500 hover:text-slate-800"
@@ -410,10 +430,10 @@ export default function UsUkConverterClient() {
                     type="button"
                     onClick={handleCopy}
                     disabled={!result.text}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition shadow-xs cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-bold transition cursor-pointer ${
                       copied
-                        ? "bg-emerald-600 text-white"
-                        : "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                        ? "border-emerald-600 bg-emerald-600 text-white"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:text-[#0055fe] hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                     }`}
                   >
                     {copied ? (
@@ -438,7 +458,7 @@ export default function UsUkConverterClient() {
                     type="button"
                     onClick={handleDownload}
                     disabled={!result.text}
-                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 transition hover:border-blue-300 hover:bg-slate-50 hover:text-[#0055fe] disabled:opacity-40 cursor-pointer"
                     title="Download output as .txt"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -485,7 +505,7 @@ export default function UsUkConverterClient() {
 
           {/* TRANSFORMED WORDS PILL BADGES */}
           {uniqueChanges.length > 0 && (
-            <div className="mt-5 rounded-2xl border border-blue-200/80 bg-white/90 p-4 shadow-xs backdrop-blur-md">
+            <div className="mt-6 rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                   Detected Translations:
@@ -494,7 +514,7 @@ export default function UsUkConverterClient() {
                   ({uniqueChanges.length} unique terms)
                 </span>
               </div>
-              <div className="mt-2.5 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {uniqueChanges.map((item, idx) => (
                   <span
                     key={`${item.original}-${idx}`}
@@ -509,13 +529,11 @@ export default function UsUkConverterClient() {
             </div>
           )}
 
-          {/* NEW FEATURE: INSTANT US ↔ UK WORD LOOKUP CHEAT SHEET */}
-          <div className="mt-12 rounded-3xl border border-slate-200/90 bg-white/95 p-6 sm:p-8 shadow-sm backdrop-blur-xl">
+          {/* INSTANT US ↔ UK WORD LOOKUP CHEAT SHEET */}
+          <div className="mt-10 rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-7 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 uppercase tracking-wide">
-                  Instant Dictionary Lookup
-                </div>
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Instant Dictionary Lookup</span>
                 <h3 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                   UK &amp; US English Spelling &amp; Vocabulary Cheat Sheet
                 </h3>
@@ -531,7 +549,7 @@ export default function UsUkConverterClient() {
                   value={lookupQuery}
                   onChange={(e) => setLookupQuery(e.target.value)}
                   placeholder="Search a word (e.g. elevator, color)..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-2 pl-9 text-xs text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-2 pl-9 text-xs text-slate-800 placeholder-slate-400 outline-none transition focus:border-[#0055fe] focus:bg-white focus:ring-2 focus:ring-blue-500/10"
                 />
                 <svg
                   className="absolute left-3 top-2.5 h-4 w-4 text-slate-400"
@@ -549,7 +567,7 @@ export default function UsUkConverterClient() {
                   <button
                     type="button"
                     onClick={() => setLookupQuery("")}
-                    className="absolute right-2.5 top-2 text-xs text-slate-400 hover:text-slate-600"
+                    className="absolute right-2.5 top-2 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
                   >
                     ✕
                   </button>
@@ -565,10 +583,10 @@ export default function UsUkConverterClient() {
                     key={cat}
                     type="button"
                     onClick={() => setLookupCategory(cat)}
-                    className={`rounded-xl px-3 py-1 text-xs font-semibold transition cursor-pointer ${
+                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
                       lookupCategory === cat
-                        ? "bg-blue-600 text-white shadow-2xs"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
+                        ? "bg-[#0055fe] text-white shadow-2xs"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900"
                     }`}
                   >
                     {cat}
@@ -583,7 +601,7 @@ export default function UsUkConverterClient() {
                 filteredWords.map((item, idx) => (
                   <div
                     key={`${item.us}-${idx}`}
-                    className="group rounded-2xl border border-slate-200/80 bg-slate-50/50 p-3.5 transition hover:border-blue-300 hover:bg-white hover:shadow-xs"
+                    className="group rounded-2xl border border-slate-100 bg-slate-50/60 p-3.5 transition hover:border-blue-300 hover:bg-white hover:shadow-xs"
                   >
                     <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1.5">
                       <span className="font-semibold uppercase tracking-wider text-blue-600">
@@ -608,7 +626,7 @@ export default function UsUkConverterClient() {
                         <button
                           type="button"
                           onClick={() => copyWordPair(item, idx)}
-                          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 cursor-pointer"
+                          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-blue-300 hover:text-[#0055fe] cursor-pointer"
                           title="Copy word"
                         >
                           {copiedWordIdx === idx ? "Copied!" : "Copy"}
@@ -616,7 +634,7 @@ export default function UsUkConverterClient() {
                         <button
                           type="button"
                           onClick={() => insertWordToInput(direction === "us-to-uk" ? item.us : item.uk)}
-                          className="rounded-lg bg-slate-200/70 px-2 py-0.5 text-[10px] font-medium text-slate-700 transition hover:bg-slate-300 cursor-pointer"
+                          className="rounded-lg bg-slate-200/70 px-2 py-0.5 text-[10px] font-medium text-slate-700 transition hover:bg-blue-50 hover:text-[#0055fe] cursor-pointer"
                           title="Append to translator input"
                         >
                           + Use
@@ -633,32 +651,11 @@ export default function UsUkConverterClient() {
             </div>
           </div>
 
-          {/* CROSS-PROMO CTA */}
-          <div className="mt-8 rounded-3xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-white p-6 sm:p-7 shadow-xs backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-            <div>
-              <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-100/80 px-2 py-0.5 text-[11px] font-bold text-blue-700 uppercase tracking-wide">
-                Visual OCR Spell Checker
-              </div>
-              <h3 className="mt-1.5 text-base sm:text-lg font-bold text-slate-900">
-                Check banners, presentations, contracts, and PDFs
-              </h3>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Upload graphics or office docs to highlight spelling mistakes right over the visual layout.
-              </p>
-            </div>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/35 shrink-0"
-            >
-              <span>Scan File with Spellense</span>
-              <span>→</span>
-            </Link>
-          </div>
-
           {/* EDUCATIONAL GUIDE SECTION */}
           <div className="mt-14 space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Linguistic Reference</span>
+              <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 Key Differences Between American &amp; British English
               </h2>
               <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
@@ -667,134 +664,202 @@ export default function UsUkConverterClient() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">1. -or vs. -our</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">Color ↔ Colour</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   American English drops the &apos;u&apos; from Latinate words ending in <code className="font-mono text-blue-600">-our</code>.
                 </p>
-                <div className="mt-3 rounded-lg bg-slate-50 p-2 text-xs font-mono text-slate-700">
+                <div className="mt-3 rounded-lg bg-white border border-slate-200/80 p-2.5 text-xs font-mono text-slate-700">
                   US: honor, labor, harbor<br />
                   UK: honour, labour, harbour
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">2. -ize vs. -ise</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">Organize ↔ Organise</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   US English uses <code className="font-mono text-blue-600">-ize</code> exclusively, whereas British English traditionally favors <code className="font-mono text-blue-600">-ise</code> for verbs derived from Greek.
                 </p>
-                <div className="mt-3 rounded-lg bg-slate-50 p-2 text-xs font-mono text-slate-700">
+                <div className="mt-3 rounded-lg bg-white border border-slate-200/80 p-2.5 text-xs font-mono text-slate-700">
                   US: realize, prioritize, analyze<br />
                   UK: realise, prioritise, analyse
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">3. -er vs. -re</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">Center ↔ Centre</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   Words borrowed from French ending in <code className="font-mono text-blue-600">-re</code> were phoneticized in US English to end in <code className="font-mono text-blue-600">-er</code>.
                 </p>
-                <div className="mt-3 rounded-lg bg-slate-50 p-2 text-xs font-mono text-slate-700">
+                <div className="mt-3 rounded-lg bg-white border border-slate-200/80 p-2.5 text-xs font-mono text-slate-700">
                   US: theater, meter, fiber<br />
                   UK: theatre, metre, fibre
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">4. -ense vs. -ence</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">Defense ↔ Defence</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   US English spells noun forms with an &apos;s&apos; (<code className="font-mono text-blue-600">defense</code>, <code className="font-mono text-blue-600">offense</code>), while British English preserves the &apos;c&apos;.
                 </p>
-                <div className="mt-3 rounded-lg bg-slate-50 p-2 text-xs font-mono text-slate-700">
+                <div className="mt-3 rounded-lg bg-white border border-slate-200/80 p-2.5 text-xs font-mono text-slate-700">
                   US: license, pretense<br />
                   UK: licence, pretence
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">5. Single vs. Double &apos;L&apos;</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">Traveled ↔ Travelled</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   When adding suffixes to verbs ending in a single &apos;l&apos;, British English doubles the &apos;l&apos; regardless of stress, whereas American English keeps a single &apos;l&apos; unless stressed.
                 </p>
-                <div className="mt-3 rounded-lg bg-slate-50 p-2 text-xs font-mono text-slate-700">
+                <div className="mt-3 rounded-lg bg-white border border-slate-200/80 p-2.5 text-xs font-mono text-slate-700">
                   US: canceling, signaling<br />
                   UK: cancelling, signalling
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">6. Everyday Vocabulary</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">Apartment ↔ Flat</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   Entirely different words are used for common objects, transport, food, and clothing between American and British dialects.
                 </p>
-                <div className="mt-3 rounded-lg bg-slate-50 p-2 text-xs font-mono text-slate-700">
+                <div className="mt-3 rounded-lg bg-white border border-slate-200/80 p-2.5 text-xs font-mono text-slate-700">
                   US: elevator, cookie, trunk, sidewalk<br />
                   UK: lift, biscuit, boot, pavement
                 </div>
               </div>
             </div>
           </div>
+        </section>
 
-          {/* FAQ SECTION */}
-          <section className="mt-16 rounded-3xl border border-slate-200/90 bg-white/95 p-6 sm:p-8 shadow-xs">
-            <div className="text-center sm:text-left mb-6">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-                Frequently Asked Questions
+        {/* FAQ SECTION — 2-Column Clean Figma Layout */}
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-16 border-t border-slate-200/80">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            {/* Left 4 Columns */}
+            <div className="md:col-span-4 space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">
+                FREQUENTLY ASKED QUESTIONS
               </span>
-              <h3 className="mt-1 text-2xl font-black text-slate-900 tracking-tight">
-                US to UK English Translation &amp; Spelling FAQ
-              </h3>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                US to UK English FAQ
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
+                Common questions about dialect rules, Oxford spelling, and accuracy.
+              </p>
             </div>
 
-            <div className="divide-y divide-slate-100">
-              <div className="py-4 first:pt-0">
-                <h4 className="text-sm sm:text-base font-bold text-slate-900">
-                  How do I translate American English into British English?
-                </h4>
-                <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Simply paste or type your American (US) text into the input pane. The translator automatically detects American spellings (such as <code className="text-blue-600 font-mono">color</code>, <code className="text-blue-600 font-mono">realize</code>, <code className="text-blue-600 font-mono">center</code>) and vocabulary (such as <code className="text-blue-600 font-mono">elevator</code>, <code className="text-blue-600 font-mono">sidewalk</code>) and translates them into standard British (UK) English in real-time.
-                </p>
-              </div>
+            {/* Right 8 Columns */}
+            <div className="md:col-span-8 space-y-3">
+              {FAQ_ITEMS.map((faq, index) => {
+                const isOpen = openFaqIndex === index;
+                return (
+                  <div
+                    key={faq.q}
+                    className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition"
+                  >
+                    <button
+                      type="button"
+                      id={`faq-btn-${index}`}
+                      aria-expanded={isOpen}
+                      aria-controls={`faq-answer-${index}`}
+                      onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                      className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
+                    >
+                      <span className="text-sm font-bold text-slate-900 pr-2">
+                        {faq.q}
+                      </span>
+                      <span
+                        className={`ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition-transform duration-200 ${
+                          isOpen ? "rotate-180 text-blue-600" : ""
+                        }`}
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </span>
+                    </button>
 
-              <div className="py-4">
-                <h4 className="text-sm sm:text-base font-bold text-slate-900">
-                  What are the biggest differences in UK English spelling?
-                </h4>
-                <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  The primary differences include <code className="text-blue-600 font-mono">-our</code> endings (<code className="text-blue-600 font-mono">flavour</code>, <code className="text-blue-600 font-mono">honour</code>), <code className="text-blue-600 font-mono">-ise</code> verbs (<code className="text-blue-600 font-mono">organise</code>, <code className="text-blue-600 font-mono">prioritise</code>), <code className="text-blue-600 font-mono">-re</code> endings (<code className="text-blue-600 font-mono">theatre</code>, <code className="text-blue-600 font-mono">metre</code>), and doubled consonants in inflected verbs (<code className="text-blue-600 font-mono">travelled</code>, <code className="text-blue-600 font-mono">cancelling</code>).
-                </p>
-              </div>
-
-              <div className="py-4">
-                <h4 className="text-sm sm:text-base font-bold text-slate-900">
-                  Is -ize or -ise correct in British English?
-                </h4>
-                <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Both are technically acceptable in British English. The Oxford University Press (OUP) favors the <code className="text-blue-600 font-mono">-ize</code> spelling (known as Oxford spelling) because of its ancient Greek etymology. However, modern British usage, government publications, and UK news outlets (such as the BBC and The Guardian) predominantly use the <code className="text-blue-600 font-mono">-ise</code> form.
-                </p>
-              </div>
-
-              <div className="py-4 last:pb-0">
-                <h4 className="text-sm sm:text-base font-bold text-slate-900">
-                  Is this US to UK English translator free and private?
-                </h4>
-                <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Yes, 100% free with unlimited conversions. All translation and rule mapping occurs entirely in your local browser memory. Your text, articles, and assignments are never stored on any server.
-                </p>
-              </div>
+                    <div
+                      id={`faq-answer-${index}`}
+                      role="region"
+                      aria-labelledby={`faq-btn-${index}`}
+                      className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
+                        isOpen
+                          ? "grid-rows-[1fr] opacity-100"
+                          : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                      }`}
+                    >
+                      <div className="overflow-hidden">
+                        <div className="border-t border-slate-100 px-4 sm:px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal">
+                          {faq.a}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </section>
-        </div>
-      </section>
+          </div>
+        </section>
+
+        {/* RELATED CREATIVE TOOLS SECTION */}
+        <section className="border-t border-slate-200/80 bg-white/60 py-14 px-3 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="text-center mb-8">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Cross-Tool Workflows</span>
+              <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">Explore More Free Creative Tools</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Link
+                href="/case-converter"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Text Casing &amp; Cleanup</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Case Converter</div>
+                <p className="mt-1 text-xs text-slate-500">Convert between Title Case, sentence case, camelCase, snake_case, and clean spaces.</p>
+              </Link>
+
+              <Link
+                href="/print-sheet-maker"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">ID &amp; Photo Layout</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">ID Print Maker</div>
+                <p className="mt-1 text-xs text-slate-500">Fit photos and ID cards on one A4 or custom page at exact physical mm.</p>
+              </Link>
+
+              <Link
+                href="/image-to-text"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">OCR Document Extraction</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Image to Text (OCR)</div>
+                <p className="mt-1 text-xs text-slate-500">Extract editable text from images, photos, and scanned PDFs instantly.</p>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
 
       {/* FOOTER */}
       <Footer currentPath="/us-uk-converter" />
-    </main>
+    </div>
   );
 }

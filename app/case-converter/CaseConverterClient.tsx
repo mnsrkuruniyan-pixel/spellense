@@ -25,12 +25,36 @@ import {
 
 const SAMPLE_TEXT = `the quick BROWN fox jumps OVER the lazy dog! this interactive text formatter by spellense allows creators, copywriters, and developers to switch between various casing styles effortlessly. whether you need clean "camelCase" for javascript variables, standard Title Case for marketing headlines, or sentence case for blog posts, spellense gets it done in real-time.`;
 
+const FAQ_ITEMS = [
+  {
+    q: "How does Title Case determine which words to capitalize?",
+    a: "Spellense follows standard editorial capitalization rules (similar to AP and Chicago style). Major words like nouns, verbs, adjectives, and adverbs are capitalized, while minor conjunctions, prepositions, and articles (like 'a', 'an', 'the', 'and', 'in', 'of') remain lowercase unless they are the first word of a sentence or headline.",
+  },
+  {
+    q: "Is my text saved or sent to an external server?",
+    a: "No. All text transformations, character counts, and sanitization cleaners run 100% locally in your web browser using client-side JavaScript. None of your text, personal notes, or confidential code is ever logged, stored, or transmitted to any server.",
+  },
+  {
+    q: "What is the difference between camelCase and PascalCase?",
+    a: "Both styles remove spaces between words and capitalize each word's first letter. However, camelCase begins with a lowercase letter (e.g., userAccountBalance), commonly used for functions and variables in JavaScript and Swift. PascalCase begins with an uppercase letter (e.g., UserAccountBalance), standard for classes and types in TypeScript, C#, and React.",
+  },
+  {
+    q: "Can I undo a conversion if I make a mistake?",
+    a: "Yes! Spellense tracks your recent transformation history. You can press Ctrl+Z (or Cmd+Z on macOS) or click the Undo button in the toolbar to restore your previous text state at any time.",
+  },
+  {
+    q: "Are there any character or word limits?",
+    a: "There are no artificial limits. You can paste and convert essays, full-length articles, source code, or lengthy markdown files without restriction, completely free with no registration required.",
+  },
+];
+
 export default function CaseConverterClient() {
   const [text, setText] = useState("");
   const [copied, setCopied] = useState(false);
   const [activeTransform, setActiveTransform] = useState<string | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Statistics calculation
@@ -260,31 +284,42 @@ export default function CaseConverterClient() {
   };
 
   return (
-    <main className="min-h-screen bg-transparent text-black relative z-10">
+    <div className="flex min-h-screen flex-col bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10 text-[15px]">
       {/* NAVBAR */}
       <Navbar />
 
-      {/* HERO & TOOL SECTION */}
-      <section className="relative overflow-hidden pb-20 pt-8 sm:pt-12">
-        {/* Ambient background glows */}
-        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
-        <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
-        <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
+      <main id="main-content" className="flex-1">
+        {/* HERO TITLE — Matching Figma Layout Style */}
+        <section className="px-4 max-w-7xl mx-auto pt-3 sm:pt-6 pb-1.5 sm:pb-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+            <div>
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0f172a]">
+                Case Converter &amp; Text Formatter
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1 line-clamp-1 sm:line-clamp-none">
+                Transform text between Title Case, sentence case, UPPERCASE, camelCase, snake_case, and clean formatting.
+              </p>
+            </div>
 
-        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          {/* HEADER */}
-          <div className="text-center pt-2 pb-2 sm:pt-4 sm:pb-4">
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
-              Case Converter &amp; Text Formatter
-            </h1>
+            {/* Fast / Local Badge */}
+            <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 text-xs font-semibold text-emerald-800 self-start sm:self-center shadow-2xs">
+              <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              <span>Instant real-time formatting in browser</span>
+            </div>
           </div>
+        </section>
 
+        {/* WORKSPACE CONTAINER */}
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-16 mt-2 sm:mt-4">
           {/* MAIN TOOL CARD */}
-          <div className="mt-8 rounded-3xl border border-white/90 bg-white/85 p-4 sm:p-7 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
+          <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-7 shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)]">
             {/* TOOLBAR */}
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="4 7 4 4 20 4 20 7" />
                     <line x1="9" y1="20" x2="15" y2="20" />
@@ -295,7 +330,7 @@ export default function CaseConverterClient() {
                 <button
                   type="button"
                   onClick={() => updateTextWithHistory(SAMPLE_TEXT)}
-                  className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-blue-600 cursor-pointer"
+                  className="rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-[#0055fe] shadow-2xs transition cursor-pointer"
                 >
                   Load Sample
                 </button>
@@ -306,7 +341,7 @@ export default function CaseConverterClient() {
                   type="button"
                   onClick={handleUndo}
                   disabled={history.length === 0}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-[#0055fe] shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   title="Undo last conversion (Ctrl+Z / Cmd+Z)"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -319,7 +354,7 @@ export default function CaseConverterClient() {
                 <button
                   type="button"
                   onClick={handlePaste}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 cursor-pointer"
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-[#0055fe] shadow-2xs transition cursor-pointer"
                   title="Paste from clipboard"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -333,7 +368,7 @@ export default function CaseConverterClient() {
                   type="button"
                   onClick={() => updateTextWithHistory("")}
                   disabled={!text}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200/90 bg-white hover:bg-rose-50 hover:border-rose-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-rose-600 shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   title="Clear text"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -347,10 +382,10 @@ export default function CaseConverterClient() {
                   type="button"
                   onClick={handleCopy}
                   disabled={!text}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition shadow-xs cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 px-3 py-1 text-xs font-bold transition shadow-2xs cursor-pointer ${
                     copied
-                      ? "bg-emerald-600 text-white"
-                      : "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "bg-emerald-600 text-white border-emerald-600"
+                      : "bg-white hover:bg-slate-50 hover:border-blue-400 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   {copied ? (
@@ -402,7 +437,7 @@ export default function CaseConverterClient() {
                 onChange={(e) => setText(e.target.value)}
                 rows={9}
                 placeholder="Type, paste, or load sample text here to transform its case..."
-                className="w-full rounded-2xl border border-slate-200/90 bg-white/70 p-4 text-[15px] leading-relaxed text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 font-mono sm:font-sans"
+                className="w-full rounded-2xl border border-slate-200/90 bg-slate-50/50 p-4 text-[15px] leading-relaxed text-slate-800 placeholder-slate-400 outline-none transition focus:border-[#0055fe] focus:bg-white focus:ring-4 focus:ring-blue-500/10 font-mono sm:font-sans"
               />
             </div>
 
@@ -450,12 +485,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "sentence"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold">Sentence case</span>
-                  <span className={`text-[10px] ${activeTransform === "sentence" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "sentence" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     First letter capitalized
                   </span>
                 </button>
@@ -466,12 +501,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "lower"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold">lower case</span>
-                  <span className={`text-[10px] ${activeTransform === "lower" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "lower" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     all letters small
                   </span>
                 </button>
@@ -482,12 +517,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "upper"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold uppercase">UPPER CASE</span>
-                  <span className={`text-[10px] ${activeTransform === "upper" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "upper" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     ALL LETTERS CAPITAL
                   </span>
                 </button>
@@ -498,12 +533,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "title"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold">Title Case</span>
-                  <span className={`text-[10px] ${activeTransform === "title" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "title" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     Smart Headings
                   </span>
                 </button>
@@ -514,12 +549,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "capitalized"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold">Capitalized</span>
-                  <span className={`text-[10px] ${activeTransform === "capitalized" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "capitalized" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     Every Word Initial
                   </span>
                 </button>
@@ -530,12 +565,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "alternating"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold">aLtErNaTiNg</span>
-                  <span className={`text-[10px] ${activeTransform === "alternating" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "alternating" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     mOcKiNg cAsE
                   </span>
                 </button>
@@ -546,12 +581,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "camel"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold font-mono">camelCase</span>
-                  <span className={`text-[10px] ${activeTransform === "camel" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "camel" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     JavaScript / Swift
                   </span>
                 </button>
@@ -562,12 +597,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "pascal"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold font-mono">PascalCase</span>
-                  <span className={`text-[10px] ${activeTransform === "pascal" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "pascal" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     Classes &amp; Types
                   </span>
                 </button>
@@ -578,12 +613,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "snake"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold font-mono">snake_case</span>
-                  <span className={`text-[10px] ${activeTransform === "snake" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "snake" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     Python / SQL
                   </span>
                 </button>
@@ -594,12 +629,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "kebab"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold font-mono">kebab-case</span>
-                  <span className={`text-[10px] ${activeTransform === "kebab" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "kebab" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     URLs &amp; CSS
                   </span>
                 </button>
@@ -610,12 +645,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "constant"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold font-mono">CONSTANT</span>
-                  <span className={`text-[10px] ${activeTransform === "constant" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "constant" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     ENV_VARIABLES
                   </span>
                 </button>
@@ -626,12 +661,12 @@ export default function CaseConverterClient() {
                   disabled={!text}
                   className={`group flex flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all cursor-pointer ${
                     activeTransform === "inverse"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]"
-                      : "border-slate-200/90 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      ? "border-[#0055fe] bg-[#0055fe] text-white shadow-sm scale-[1.02]"
+                      : "border-slate-200/90 bg-white hover:border-blue-400 hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] disabled:opacity-40 disabled:cursor-not-allowed"
                   }`}
                 >
                   <span className="text-xs font-bold">iNVERSE cASE</span>
-                  <span className={`text-[10px] ${activeTransform === "inverse" ? "text-blue-100" : "text-slate-400 group-hover:text-blue-600"}`}>
+                  <span className={`text-[10px] ${activeTransform === "inverse" ? "text-blue-100" : "text-slate-400 group-hover:text-[#0055fe]"}`}>
                     Invert Letter Case
                   </span>
                 </button>
@@ -648,7 +683,7 @@ export default function CaseConverterClient() {
                   type="button"
                   onClick={() => cleanText("extra-spaces")}
                   disabled={!text}
-                  className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-white hover:text-blue-600 hover:border-blue-200 disabled:opacity-40 cursor-pointer"
+                  className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-white hover:text-[#0055fe] hover:border-blue-300 disabled:opacity-40 cursor-pointer"
                 >
                   Remove Extra Spaces
                 </button>
@@ -656,7 +691,7 @@ export default function CaseConverterClient() {
                   type="button"
                   onClick={() => cleanText("empty-lines")}
                   disabled={!text}
-                  className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-white hover:text-blue-600 hover:border-blue-200 disabled:opacity-40 cursor-pointer"
+                  className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-white hover:text-[#0055fe] hover:border-blue-300 disabled:opacity-40 cursor-pointer"
                 >
                   Remove Blank Lines
                 </button>
@@ -664,7 +699,7 @@ export default function CaseConverterClient() {
                   type="button"
                   onClick={() => cleanText("smart-quotes")}
                   disabled={!text}
-                  className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-white hover:text-blue-600 hover:border-blue-200 disabled:opacity-40 cursor-pointer"
+                  className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-white hover:text-[#0055fe] hover:border-blue-300 disabled:opacity-40 cursor-pointer"
                 >
                   Straighten Quotes (&quot; &apos;)
                 </button>
@@ -672,7 +707,7 @@ export default function CaseConverterClient() {
                   type="button"
                   onClick={() => cleanText("strip-html")}
                   disabled={!text}
-                  className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-white hover:text-blue-600 hover:border-blue-200 disabled:opacity-40 cursor-pointer"
+                  className="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-white hover:text-[#0055fe] hover:border-blue-300 disabled:opacity-40 cursor-pointer"
                 >
                   Strip HTML Tags
                 </button>
@@ -682,7 +717,7 @@ export default function CaseConverterClient() {
                 type="button"
                 onClick={handleDownload}
                 disabled={!text}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-blue-600 disabled:opacity-40 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-[#0055fe] hover:border-blue-300 disabled:opacity-40 cursor-pointer"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -694,95 +729,192 @@ export default function CaseConverterClient() {
             </div>
           </div>
 
-          {/* CROSS-PROMO CTA CARD */}
-          <div className="mt-8 rounded-3xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-white p-6 sm:p-7 shadow-xs backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-            <div>
-              <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-100/80 px-2 py-0.5 text-[11px] font-bold text-blue-700 uppercase tracking-wide">
-                Need to check spelling?
-              </div>
-              <h3 className="mt-1.5 text-base sm:text-lg font-bold text-slate-900">
-                Catch typos in images, slides, DOCX, or PDFs
-              </h3>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Run Spellense visual OCR &amp; grammar proofreader with zero sign-up.
-              </p>
-            </div>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/35 shrink-0"
-            >
-              <span>Open Spellense Checker</span>
-              <span>→</span>
-            </Link>
-          </div>
-
           {/* EDUCATIONAL GUIDE SECTION */}
           <div className="mt-14 space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Style Guidelines</span>
+              <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 Guide to Letter Casing &amp; Naming Conventions
               </h2>
-              <p className="mt-2 text-xs sm:text-sm text-slate-500">
-                Learn when to apply different capitalization styles across writing, design, and software engineering.
+              <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-2xl mx-auto">
+                Learn when to apply different capitalization styles across writing, UX design, and software engineering.
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">Title Case</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">Headlines &amp; Book Titles</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   Follows editorial guidelines (such as Chicago, APA, or AP). Capitalizes major words (nouns, pronouns, verbs, adjectives), while leaving articles (a, an, the) and short prepositions (in, on, of) lowercase.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">Sentence case</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">Modern UX &amp; Body Copy</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   Capitalizes only the first letter of each sentence and proper nouns. Recommended by Apple, Google Material Design, and Microsoft for modern digital interfaces and button labels.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">camelCase &amp; PascalCase</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">Programming Identifiers</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   Removes spaces and joins words. camelCase begins lowercase (<code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px]">userProfile</code>) for functions and variables. PascalCase begins uppercase (<code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px]">UserProfile</code>) for classes and React components.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">snake_case &amp; CONSTANT</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">Database &amp; Environment Keys</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   Separates words using underscores. Widely used in Python, SQL schemas, and database column names. CONSTANT_CASE is standard for environment variables and immutable configuration settings.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">kebab-case</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">SEO URLs &amp; CSS Classes</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   Separates words with hyphens (<code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px]">page-title-header</code>). Favored by Google search crawlers for clean slug URLs and standard in HTML/CSS class naming.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">Cleaners</div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">Space &amp; Line Formatter</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-normal">
                   Instantly sanitizes copied text by eliminating double spaces, excessive line breaks, and converting curly smart quotes into standard straight quotes for clean code pasting.
                 </p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* FAQ SECTION — 2-Column Clean Figma Layout */}
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-16 border-t border-slate-200/80">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            {/* Left 4 Columns */}
+            <div className="md:col-span-4 space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">
+                FREQUENTLY ASKED QUESTIONS
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                Case Converter FAQ
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
+                Everything you need to know about text conversions, formatting guidelines, and privacy.
+              </p>
+            </div>
+
+            {/* Right 8 Columns */}
+            <div className="md:col-span-8 space-y-3">
+              {FAQ_ITEMS.map((faq, index) => {
+                const isOpen = openFaqIndex === index;
+                return (
+                  <div
+                    key={faq.q}
+                    className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition"
+                  >
+                    <button
+                      type="button"
+                      id={`faq-btn-${index}`}
+                      aria-expanded={isOpen}
+                      aria-controls={`faq-answer-${index}`}
+                      onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                      className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
+                    >
+                      <span className="text-sm font-bold text-slate-900 pr-2">
+                        {faq.q}
+                      </span>
+                      <span
+                        className={`ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition-transform duration-200 ${
+                          isOpen ? "rotate-180 text-blue-600" : ""
+                        }`}
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </span>
+                    </button>
+
+                    <div
+                      id={`faq-answer-${index}`}
+                      role="region"
+                      aria-labelledby={`faq-btn-${index}`}
+                      className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
+                        isOpen
+                          ? "grid-rows-[1fr] opacity-100"
+                          : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                      }`}
+                    >
+                      <div className="overflow-hidden">
+                        <div className="border-t border-slate-100 px-4 sm:px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal">
+                          {faq.a}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* RELATED CREATIVE TOOLS SECTION */}
+        <section className="border-t border-slate-200/80 bg-white/60 py-14 px-3 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="text-center mb-8">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Cross-Tool Workflows</span>
+              <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">Explore More Free Creative Tools</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Link
+                href="/print-sheet-maker"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">ID &amp; Photo Layout</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">ID Print Maker</div>
+                <p className="mt-1 text-xs text-slate-500">Fit photos and ID cards on one A4 or custom page at exact physical mm.</p>
+              </Link>
+
+              <Link
+                href="/image-compressor"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Visual Optimization</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Image Compressor</div>
+                <p className="mt-1 text-xs text-slate-500">Lossless &amp; lossy image compression with side-by-side comparison slider.</p>
+              </Link>
+
+              <Link
+                href="/qr-code-generator"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Print Scannability QA</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">QR Code Generator</div>
+                <p className="mt-1 text-xs text-slate-500">Create custom QR codes and verify camera scannability before printing.</p>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
 
       {/* FOOTER */}
       <Footer currentPath="/case-converter" />
-    </main>
+    </div>
   );
 }
 

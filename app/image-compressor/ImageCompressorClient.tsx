@@ -911,21 +911,35 @@ export default function ImageCompressorClient() {
   }, [items]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-transparent font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10">
+    <div className="flex min-h-screen flex-col bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10 text-[15px]">
       <Navbar />
 
       <main className="flex-1">
-        {/* HERO SECTION — Title color only black, strictly 1 single line, generous spacing */}
-        <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
-          <div className="mx-auto max-w-7xl text-center">
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
-              Shrink the file. Not the quality.
-            </h1>
+        {/* HERO TITLE — Matching Figma Layout Style */}
+        <section className="px-4 max-w-7xl mx-auto pt-3 sm:pt-6 pb-1.5 sm:pb-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+            <div>
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0f172a]">
+                Image Compressor
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1 line-clamp-1 sm:line-clamp-none">
+                Compress JPG, PNG, WebP, AVIF, and multi-page PDFs with zero loss in visual quality.
+              </p>
+            </div>
+
+            {/* Privacy Badge: compact on desktop */}
+            <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 text-xs font-semibold text-emerald-800 self-start sm:self-center shadow-2xs">
+              <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              <span>Your images never leave your device</span>
+            </div>
           </div>
         </section>
 
         {/* WORKSPACE SECTION */}
-        <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-20 mt-2 sm:mt-4">
           {items.length === 0 ? (
             /* UPLOAD DROPZONE */
             <div>
@@ -934,7 +948,7 @@ export default function ImageCompressorClient() {
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`group relative mx-auto max-w-[920px] cursor-pointer rounded-[28px] border p-8 sm:p-14 text-center transition-all duration-300 overflow-hidden ${
+                className={`group relative w-full cursor-pointer rounded-2xl sm:rounded-3xl border py-12 px-6 sm:py-16 sm:px-12 lg:py-20 text-center transition-all duration-300 overflow-hidden ${
                   isDragging
                     ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.01]"
                     : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
@@ -960,11 +974,11 @@ export default function ImageCompressorClient() {
                     height="68"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#0055fe"
-                    strokeWidth="1.8"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="group-hover:-translate-y-1 transition-transform duration-300"
+                    className="text-slate-400 group-hover:text-slate-500 group-hover:-translate-y-1 transition-all duration-300"
                   >
                     <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
                     <path d="M12 12v9" />
@@ -972,33 +986,38 @@ export default function ImageCompressorClient() {
                   </svg>
                 </div>
 
-                <h2 className="mt-4 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
+                <h2 className="mt-5 text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
                   Drop your images or multi-page catalogs here
                 </h2>
-                <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
-                  Supports JPG, PNG, WebP, AVIF &amp; multi-page PDFs • 100% private in-browser
-                </p>
 
-                {/* Action Button */}
-                <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                {/* BUTTONS (SIDE BY SIDE WITH BREATHING SPACE) */}
+                <div className="mt-8 sm:mt-10 mb-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       fileInputRef.current?.click();
                     }}
-                    className="inline-flex items-center gap-2.5 rounded-xl bg-[#0055fe] hover:bg-[#0047d9] px-8 py-3.5 text-sm sm:text-base font-semibold text-white shadow-md shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                    className="group/btn inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 19V5" />
-                      <path d="m5 12 7-7 7 7" />
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-slate-400 group-hover/btn:text-[#0055fe] transition-colors"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
-                    <span>Choose Images or PDF Catalog</span>
+                    <span>Upload Now</span>
                   </button>
-                </div>
 
-                {/* Sample Link */}
-                <div className="mt-5 flex justify-center">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -1006,19 +1025,19 @@ export default function ImageCompressorClient() {
                       handleLoadSample();
                     }}
                     disabled={loadingSample}
-                    className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#0055fe] hover:underline cursor-pointer"
+                    className="group/sample inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-blue-400/80 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] transition-all cursor-pointer shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
                     title="Test immediately with a sample image"
                   >
                     {loadingSample ? (
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
                     ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover/sample:text-[#0055fe] transition-colors">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                         <circle cx="8.5" cy="8.5" r="1.5" />
                         <polyline points="21 15 16 10 5 21" />
                       </svg>
                     )}
-                    <span>🖼️ Try a Sample Image</span>
+                    <span>Try Sample</span>
                   </button>
                 </div>
 
@@ -1037,10 +1056,10 @@ export default function ImageCompressorClient() {
               </div>
 
               {/* 4 Trust Feature Cards */}
-              <div className="mt-8 max-w-[920px] mx-auto">
+              <div className="mt-6 sm:mt-8 w-full">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-                  <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-[#0055fe]">
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                         <polyline points="21 15 16 10 5 21" />
@@ -1056,8 +1075,8 @@ export default function ImageCompressorClient() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100/70 text-purple-600">
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                       </svg>
@@ -1072,8 +1091,8 @@ export default function ImageCompressorClient() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100/70 text-emerald-600">
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
                         <path d="m9 12 2 2 4-4" />
@@ -1089,8 +1108,8 @@ export default function ImageCompressorClient() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100/70 text-amber-600">
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                         <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -1887,127 +1906,146 @@ export default function ImageCompressorClient() {
         </section>
 
         {/* BENTO GRID: WHY USE SPELLENSE IMAGE COMPRESSOR */}
-        <section className="mx-auto max-w-6xl px-5 pt-12 pb-16 border-t border-slate-200/80">
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pt-14 pb-16 border-t border-slate-200/80">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
               High-Fidelity Visual Optimization Built for Creators
             </h2>
-            <p className="mt-2.5 text-xs sm:text-sm text-slate-600 font-normal">
+            <p className="mt-2 text-xs sm:text-sm text-slate-500 font-normal">
               Everything you love about Google Squoosh, tailored for design catalogs, marketing decks, and high-res print files.
             </p>
           </div>
 
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-sm">
-              <div className="h-10 w-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold mb-4">
-                📐
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 3H3v18h18V3z" />
+                  <path d="M9 3v18" />
+                  <path d="M15 3v18" />
+                  <path d="M3 9h18" />
+                  <path d="M3 15h18" />
+                </svg>
               </div>
               <h3 className="font-bold text-slate-900 text-base">Locked Dimensions</h3>
-              <p className="mt-2 text-xs leading-relaxed text-slate-600 font-normal">
+              <p className="mt-2 text-xs leading-relaxed text-slate-500 font-normal">
                 1200×1200 stays exactly 1200×1200. Only unneeded color bloat and invisible metadata are removed so your design layout remains crisp.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-sm">
-              <div className="h-10 w-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold mb-4">
-                🔍
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="12" y1="3" x2="12" y2="21" />
+                  <path d="m8 10-2 2 2 2" />
+                  <path d="m16 10 2 2-2 2" />
+                </svg>
               </div>
               <h3 className="font-bold text-slate-900 text-base">Squoosh Split Screen</h3>
-              <p className="mt-2 text-xs leading-relaxed text-slate-600 font-normal">
+              <p className="mt-2 text-xs leading-relaxed text-slate-500 font-normal">
                 Inspect before and after side-by-side with an interactive drag divider and up to 2× zoom to guarantee no text or line blur.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-sm">
-              <div className="h-10 w-10 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600 font-bold mb-4">
-                📚
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                  <path d="M6 6h10" />
+                  <path d="M6 10h10" />
+                </svg>
               </div>
               <h3 className="font-bold text-slate-900 text-base">Multi-Page &amp; ZIP Export</h3>
-              <p className="mt-2 text-xs leading-relaxed text-slate-600 font-normal">
+              <p className="mt-2 text-xs leading-relaxed text-slate-500 font-normal">
                 Drop entire product catalogs or 50 images at once. Compress them simultaneously and download a single tidy ZIP archive.
               </p>
             </div>
           </div>
         </section>
 
-        {/* FAQ SECTION — Exact Design from Image to Text Page */}
-        <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-          <div className="text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/70 bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs">
-              Frequently Asked Questions
+        {/* FAQ 2-COLUMN SECTION — Matching ID Print Maker layout */}
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-16 border-t border-slate-200/80">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            {/* Left 4 Columns */}
+            <div className="md:col-span-4 space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">
+                FREQUENTLY ASKED QUESTIONS
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                Image Compressor FAQ
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                Everything you need to know about compressing images and multi-page catalogs without losing quality.
+              </p>
             </div>
-            <h2 className="mt-2.5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-              Image Compressor FAQ
-            </h2>
-            <p className="mt-2 text-xs sm:text-sm text-slate-500 font-normal">
-              Everything you need to know about compressing images without losing quality.
-            </p>
-          </div>
 
-          <div className="mt-10 space-y-3.5">
-            {FAQ_ITEMS.map((faq, index) => {
-              const isOpen = openFaqIndex === index;
-              return (
-                <div
-                  key={faq.q}
-                  className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-2xs backdrop-blur-sm transition"
-                >
-                  <button
-                    type="button"
-                    id={`faq-btn-${index}`}
-                    aria-expanded={isOpen}
-                    aria-controls={`faq-answer-${index}`}
-                    onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                    className="flex w-full items-center justify-between p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
+            {/* Right 8 Columns */}
+            <div className="md:col-span-8 space-y-3">
+              {FAQ_ITEMS.map((faq, index) => {
+                const isOpen = openFaqIndex === index;
+                return (
+                  <div
+                    key={faq.q}
+                    className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition"
                   >
-                    <span className="text-sm sm:text-base font-bold text-slate-900">
-                      {faq.q}
-                    </span>
-                    <span
-                      className={`ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-transform duration-200 ${
-                        isOpen ? "rotate-180 bg-blue-50 text-blue-600" : ""
+                    <button
+                      type="button"
+                      id={`faq-btn-${index}`}
+                      aria-expanded={isOpen}
+                      aria-controls={`faq-answer-${index}`}
+                      onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                      className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
+                    >
+                      <span className="text-sm font-bold text-slate-900 pr-2">
+                        {faq.q}
+                      </span>
+                      <span
+                        className={`ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition-transform duration-200 ${
+                          isOpen ? "rotate-180 text-blue-600" : ""
+                        }`}
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </span>
+                    </button>
+
+                    <div
+                      id={`faq-answer-${index}`}
+                      role="region"
+                      aria-labelledby={`faq-btn-${index}`}
+                      className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
+                        isOpen
+                          ? "grid-rows-[1fr] opacity-100"
+                          : "grid-rows-[0fr] opacity-0 pointer-events-none"
                       }`}
                     >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </span>
-                  </button>
-
-                  <div
-                    id={`faq-answer-${index}`}
-                    role="region"
-                    aria-labelledby={`faq-btn-${index}`}
-                    className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
-                      isOpen
-                        ? "grid-rows-[1fr] opacity-100"
-                        : "grid-rows-[0fr] opacity-0 pointer-events-none"
-                    }`}
-                  >
-                    <div className="overflow-hidden">
-                      <div className="border-t border-slate-100 px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal">
-                        {faq.a}
+                      <div className="overflow-hidden">
+                        <div className="border-t border-slate-100 px-4 sm:px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal">
+                          {faq.a}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </section>
 
         {/* RELATED CREATIVE TOOLS SECTION */}
-        <section className="border-t border-slate-200/80 bg-white/60 py-14 px-4 sm:px-6">
-          <div className="mx-auto max-w-6xl">
+        <section className="border-t border-slate-200/80 bg-white/60 py-14 px-3 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
             <div className="text-center mb-8">
               <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Cross-Tool Workflows</span>
               <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">Explore More Free Creative Tools</h2>
@@ -2016,7 +2054,7 @@ export default function ImageCompressorClient() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Link
                 href="/qr-code-generator"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
               >
                 <div className="text-xs font-bold text-blue-600 uppercase mb-1">Print Scannability QA</div>
                 <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">QR Code Generator</div>
@@ -2024,17 +2062,17 @@ export default function ImageCompressorClient() {
               </Link>
 
               <Link
-                href="/design-check"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
+                href="/print-sheet-maker"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
               >
-                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Pre-flight Proofreader</div>
-                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Design Check</div>
-                <p className="mt-1 text-xs text-slate-500">Find typos, low contrast &amp; print errors in graphics and documents.</p>
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">ID &amp; Photo Layout</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">ID Print Maker</div>
+                <p className="mt-1 text-xs text-slate-500">Fit photos and ID cards on one A4 or custom page at exact physical mm.</p>
               </Link>
 
               <Link
                 href="/flipbook"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
               >
                 <div className="text-xs font-bold text-blue-600 uppercase mb-1">3D Publishing</div>
                 <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">3D Digital Flipbook</div>

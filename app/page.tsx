@@ -2664,7 +2664,7 @@ export default function Home() {
       : (errorCount === 0 ? 100 : 0);
 
     return (
-      <main className="min-h-screen bg-transparent text-black relative z-10">
+      <main className="min-h-screen bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10 text-[15px]">
 
         {/* NAVBAR */}
         <Navbar
@@ -2680,10 +2680,7 @@ export default function Home() {
 
         {/* RESULTS HERO */}
         <section className="relative overflow-hidden">
-          {/* Ambient lighting */}
-          <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[900px] rounded-full bg-gradient-to-tr from-blue-400/15 via-indigo-400/15 to-purple-400/10 blur-[120px] opacity-75 animate-pulse-glow" />
-
-          <div className="relative mx-auto max-w-7xl px-5 pb-20 pt-10 sm:px-6 lg:px-10">
+          <div className="relative mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-20 pt-6 sm:pt-10">
 
             {/* STATUS BANNER & HEADER */}
             <div className="text-center">
@@ -3428,7 +3425,7 @@ export default function Home() {
 
   return (
 
-    <main id="main-content" className="min-h-screen bg-transparent text-black relative z-10">
+    <main id="main-content" className="min-h-screen bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10 text-[15px]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }}
@@ -3457,13 +3454,7 @@ export default function Home() {
 
       <section className="relative overflow-hidden">
 
-        {/* Ambient background glows / mesh */}
-        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
-        <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
-        <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
-
-
-        <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-7 sm:px-6 sm:pt-10 lg:px-10 lg:pt-14">
+        <div className="relative mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-16 pt-3 sm:pt-6">
 
           {/* HERO */}
 
@@ -3524,7 +3515,7 @@ export default function Home() {
 
           {/* UPLOAD & TEXT CHECK SECTION */}
 
-          <div className="mx-auto mt-10 sm:mt-12 lg:mt-16 max-w-[920px]">
+          <div className="mx-auto mt-6 sm:mt-8 max-w-7xl">
 
             {/* MODE, ENGINE & DIALECT SELECTOR BAR (SINGLE LINE) */}
             <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2 px-1">
@@ -3532,10 +3523,10 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setInputMode(inputMode === "upload" ? "text" : "upload")}
-                className={`flex items-center gap-2 rounded-2xl px-3.5 py-1.5 text-xs font-bold transition-all border shadow-xs backdrop-blur-md cursor-pointer ${
+                className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all border shadow-2xs backdrop-blur-md cursor-pointer ${
                   inputMode === "text"
-                    ? "bg-slate-900 text-white border-slate-900 shadow-xs"
-                    : "bg-white/85 text-slate-700 border-slate-200/80 hover:bg-slate-100/70 hover:text-slate-900"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                    : "bg-white text-slate-700 border-slate-200/90 hover:bg-slate-50 hover:text-[#0055fe]"
                 }`}
                 title={inputMode === "text" ? "Switch back to document upload" : "Paste or type text directly instead of uploading a file"}
               >
@@ -3563,15 +3554,15 @@ export default function Home() {
               {/* ENGINE & DIALECT SELECTOR TOGGLES */}
               <div className="flex flex-wrap items-center gap-2">
                 {/* ENGINE SELECTOR TOGGLE */}
-                <div className="inline-flex items-center gap-1 rounded-2xl bg-white/85 p-1 border border-slate-200/80 shadow-xs backdrop-blur-md">
+                <div className="inline-flex items-center gap-1 rounded-xl bg-white p-1 border border-slate-200/90 shadow-2xs">
                   <span className="hidden sm:inline-block pl-2.5 pr-1 text-[11px] font-semibold text-slate-400">Engine:</span>
                   <button
                     type="button"
                     onClick={() => handleAiModeToggle(false)}
-                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       !aiMode
-                        ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                        ? "bg-[#0055fe] text-white shadow-2xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                     }`}
                     title="Fast offline dictionary check (instant)"
                   >
@@ -3580,10 +3571,10 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => handleAiModeToggle(true)}
-                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       aiMode
-                        ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
-                        : "text-slate-600 hover:text-blue-600 hover:bg-blue-50/50"
+                        ? "bg-[#0055fe] text-white shadow-2xs"
+                        : "text-slate-600 hover:text-[#0055fe] hover:bg-blue-50/50"
                     }`}
                     title="AI Deep Proofreading with Google Gemini (catches grammar, typos & contextual errors)"
                   >
@@ -3592,15 +3583,15 @@ export default function Home() {
                 </div>
 
                 {/* DIALECT SELECTOR TOGGLE */}
-                <div className="inline-flex items-center gap-1 rounded-2xl bg-white/85 p-1 border border-slate-200/80 shadow-xs backdrop-blur-md">
+                <div className="inline-flex items-center gap-1 rounded-xl bg-white p-1 border border-slate-200/90 shadow-2xs">
                   <span className="hidden sm:inline-block pl-2.5 pr-1 text-[11px] font-semibold text-slate-400">Dictionary:</span>
                   <button
                     type="button"
                     onClick={() => handleDialectChange("en-US")}
-                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       dialect === "en-US"
-                        ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                        ? "bg-[#0055fe] text-white shadow-2xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                     }`}
                     title="Check spelling using American English rules (e.g., color, organize)"
                   >
@@ -3609,10 +3600,10 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => handleDialectChange("en-GB")}
-                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       dialect === "en-GB"
-                        ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                        ? "bg-[#0055fe] text-white shadow-2xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                     }`}
                     title="Check spelling using British English rules (e.g., colour, organise)"
                   >
@@ -3762,14 +3753,14 @@ export default function Home() {
                   openFilePicker();
                 }
               }}
-              className={`group relative rounded-[28px] border transition-all duration-300 cursor-pointer overflow-hidden ${
+              className={`group relative w-full cursor-pointer rounded-2xl sm:rounded-3xl border transition-all duration-300 overflow-hidden ${
                 dragging
                   ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.01]"
                   : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
               }`}
             >
 
-              <div className="relative p-8 sm:p-14 text-center transition-all duration-300">
+              <div className="relative py-12 px-6 sm:py-16 sm:px-12 lg:py-20 text-center transition-all duration-300">
 
                 {/* BEFORE UPLOAD */}
 
@@ -3784,11 +3775,11 @@ export default function Home() {
                         height="68"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="#0055fe"
-                        strokeWidth="1.8"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="group-hover:-translate-y-1 transition-transform duration-300"
+                        className="text-slate-400 group-hover:text-slate-500 group-hover:-translate-y-1 transition-all duration-300"
                       >
                         <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
                         <path d="M12 12v9" />
@@ -3796,34 +3787,28 @@ export default function Home() {
                       </svg>
                     </div>
 
-                    <h2 className="mt-4 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
-                      {dragging ? "Release your file to inspect" : "Drop your file here"}
+                    <h2 className="mt-5 text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
+                      {dragging ? "Release your file to inspect" : "Drop your documents or images here"}
                     </h2>
 
-                    <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
-                      or click to choose a file
-                    </p>
-
-                    {/* BUTTONS */}
-                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    {/* BUTTONS (SIDE BY SIDE WITH BREATHING SPACE) */}
+                    <div className="mt-8 sm:mt-10 mb-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           openFilePicker();
                         }}
-                        className="inline-flex items-center gap-2.5 rounded-xl bg-[#0055fe] hover:bg-[#0047d9] px-8 py-3.5 text-sm sm:text-base font-semibold text-white shadow-md shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                        className="group/btn inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 19V5" />
-                          <path d="m5 12 7-7 7 7" />
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover/btn:text-[#0055fe] transition-colors">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="17 8 12 3 7 8" />
+                          <line x1="12" y1="3" x2="12" y2="15" />
                         </svg>
-                        <span>Choose File</span>
+                        <span>Upload Now</span>
                       </button>
-                    </div>
 
-                    {/* SAMPLE DOCUMENT LINK */}
-                    <div className="mt-5 flex justify-center">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -3831,20 +3816,20 @@ export default function Home() {
                           loadSampleFile();
                         }}
                         disabled={loadingSample}
-                        className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#0055fe] hover:underline cursor-pointer"
+                        className="group/sample inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-blue-400/80 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] transition-all cursor-pointer shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
                         title="Test immediately with a sample document"
                       >
                         {loadingSample ? (
                           <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
                         ) : (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover/sample:text-[#0055fe] transition-colors">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                             <polyline points="14 2 14 8 20 8" />
                             <line x1="16" y1="13" x2="8" y2="13" />
                             <line x1="16" y1="17" x2="8" y2="17" />
                           </svg>
                         )}
-                        <span>Try a Sample Document</span>
+                        <span>Try Sample</span>
                       </button>
                     </div>
 
@@ -4043,13 +4028,13 @@ export default function Home() {
             )}
 
 
-            {/* 4 FEATURE TRUST PILLARS (MATCHING SCREENSHOT) */}
-            <div className="mt-8 max-w-5xl mx-auto">
+            {/* 4 FEATURE TRUST PILLARS */}
+            <div className="mt-8 max-w-7xl mx-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
                 
                 {/* 1. Documents & Images */}
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-[#0055fe]">
+                <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 border border-slate-200/80">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                       <polyline points="14 2 14 8 20 8" />
@@ -4068,8 +4053,8 @@ export default function Home() {
                 </div>
 
                 {/* 2. Fast and accurate */}
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100/70 text-purple-600">
+                <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 border border-slate-200/80">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                     </svg>
@@ -4079,14 +4064,14 @@ export default function Home() {
                       Fast and accurate
                     </div>
                     <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                      AI-powered checks
+                      AI &amp; dictionary checks
                     </div>
                   </div>
                 </div>
 
                 {/* 3. No signup required */}
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100/70 text-emerald-600">
+                <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 border border-slate-200/80">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
                       <circle cx="12" cy="7" r="4" />
@@ -4103,8 +4088,8 @@ export default function Home() {
                 </div>
 
                 {/* 4. Files stay private */}
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100/70 text-amber-600">
+                <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 border border-slate-200/80">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                     </svg>
@@ -4114,7 +4099,7 @@ export default function Home() {
                       Your files stay private
                     </div>
                     <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                      No storage, in-memory processing
+                      Zero server storage, in-memory
                     </div>
                   </div>
                 </div>
@@ -4124,7 +4109,7 @@ export default function Home() {
 
           </div>
 
-          <section className="mx-auto mt-20 max-w-6xl border-t border-slate-200/80 pt-20">
+          <section className="mx-auto mt-16 max-w-7xl border-t border-slate-200/80 pt-16">
 
             {/* BENTO GRID: THE SPELLENSE SUITE */}
             <div className="text-center max-w-5xl mx-auto">
@@ -4643,125 +4628,83 @@ export default function Home() {
 
             {/* HOMEPAGE FAQ ACCORDION */}
             <div className="mt-16 border-t border-slate-200/80 pt-16">
-              <div className="text-center mb-10">
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/70 bg-white/80 px-3 py-1 shadow-2xs backdrop-blur-md">
-                  <span className="flex h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
-                    Frequently Asked Questions
-                  </span>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div className="lg:col-span-4 lg:sticky lg:top-8">
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/70 bg-white/80 px-3 py-1 shadow-2xs backdrop-blur-md">
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+                      Frequently Asked Questions
+                    </span>
+                  </div>
+                  <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                    Everything you need to know about Spellense
+                  </h3>
+                  <p className="mt-2 text-xs text-slate-500 sm:text-sm leading-relaxed">
+                    Quick answers about our in-memory OCR proofreading, supported formats, and privacy policies.
+                  </p>
                 </div>
-                <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-                  Everything you need to know about Spellense
-                </h3>
-                <p className="mx-auto mt-2 max-w-xl text-xs text-slate-500 sm:text-sm">
-                  Quick answers about our in-memory OCR proofreading, supported formats, and privacy policies.
-                </p>
-              </div>
 
-              <div className="space-y-3.5 max-w-3xl mx-auto">
-                <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
-                  <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
-                    <span>How does Spellense detect spelling mistakes in images and visual designs?</span>
-                    <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </span>
-                  </summary>
-                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
-                    Spellense applies high-precision Optical Character Recognition (OCR) to detect readable text inside raster graphics (PNG, JPG, WebP) and scanned PDF pages. Each word token is verified against comprehensive English dictionaries, and suspected typos are highlighted with red bounding boxes drawn directly over your original artwork.
-                  </p>
-                </details>
+                <div className="lg:col-span-8 space-y-3.5">
+                  <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-2xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-xs">
+                    <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                      <span>How does Spellense detect spelling mistakes in images and visual designs?</span>
+                      <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-transform duration-200 group-open:rotate-180 group-open:bg-blue-50 group-open:text-blue-600">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </span>
+                    </summary>
+                    <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                      Spellense applies high-precision Optical Character Recognition (OCR) to detect readable text inside raster graphics (PNG, JPG, WebP) and scanned PDF pages. Each word token is verified against comprehensive English dictionaries, and suspected typos are highlighted with red bounding boxes drawn directly over your original artwork.
+                    </p>
+                  </details>
 
-                <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
-                  <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
-                    <span>Are my uploaded files, contracts, or presentations saved on your server?</span>
-                    <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </span>
-                  </summary>
-                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
-                    No. Spellense operates on a strict zero-storage, in-memory architecture. Files are processed ephemerally in RAM exclusively for OCR analysis and dictionary checking, then discarded immediately after results are returned. Files are never stored on disk or used to train artificial intelligence models.
-                  </p>
-                </details>
+                  <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-2xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-xs">
+                    <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                      <span>Are my uploaded files, contracts, or presentations saved on your server?</span>
+                      <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-transform duration-200 group-open:rotate-180 group-open:bg-blue-50 group-open:text-blue-600">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </span>
+                    </summary>
+                    <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                      No. Spellense operates on a strict zero-storage, in-memory architecture. Files are processed ephemerally in RAM exclusively for OCR analysis and dictionary checking, then discarded immediately after results are returned. Files are never stored on disk or used to train artificial intelligence models.
+                    </p>
+                  </details>
 
-                <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
-                  <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
-                    <span>Which document formats and file sizes are supported?</span>
-                    <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </span>
-                  </summary>
-                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
-                    Spellense supports PNG, JPG, JPEG, and WebP images, native and scanned multi-page PDF documents, Microsoft Word (DOCX), PowerPoint (PPTX) slide decks, and Excel (XLSX) workbooks up to 25 MB per file.
-                  </p>
-                </details>
+                  <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-2xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-xs">
+                    <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                      <span>Which document formats and file sizes are supported?</span>
+                      <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-transform duration-200 group-open:rotate-180 group-open:bg-blue-50 group-open:text-blue-600">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </span>
+                    </summary>
+                    <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                      Spellense supports PNG, JPG, JPEG, and WebP images, native and scanned multi-page PDF documents, Microsoft Word (DOCX), PowerPoint (PPTX) slide decks, and Excel (XLSX) workbooks up to 25 MB per file.
+                    </p>
+                  </details>
 
-                <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
-                  <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
-                    <span>Does Spellense support both American and British English spelling?</span>
-                    <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </span>
-                  </summary>
-                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
-                    Yes. You can switch effortlessly between American English (en-US) and British English (en-GB) dictionaries to ensure accurate suggestions for regional variations like color/colour, organize/organise, and center/centre.
-                  </p>
-                </details>
+                  <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-2xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-xs">
+                    <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                      <span>Does Spellense support both American and British English spelling?</span>
+                      <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-transform duration-200 group-open:rotate-180 group-open:bg-blue-50 group-open:text-blue-600">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </span>
+                    </summary>
+                    <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                      Yes. You can switch effortlessly between American English (en-US) and British English (en-GB) dictionaries to ensure accurate suggestions for regional variations like color/colour, organize/organise, and center/centre.
+                    </p>
+                  </details>
 
-                <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-md">
-                  <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
-                    <span>Is Spellense completely free to use?</span>
-                    <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-transform duration-200 group-open:rotate-180">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </span>
-                  </summary>
-                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
-                    Yes, Spellense is 100% free with no account creation, no subscriptions, and no paywalls. All features including OCR inspection and case converters are immediately available.
-                  </p>
-                </details>
-              </div>
-            </div>
-
-            {/* BOTTOM CALL TO ACTION STRIP */}
-            <div className="mt-16 rounded-3xl border border-blue-200/50 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-8 sm:p-12 text-white text-center shadow-2xl shadow-blue-500/25">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
-                Get Started In Seconds
-              </div>
-              <h3 className="mt-4 text-2xl font-black sm:text-4xl tracking-tight text-white">
-                Ready to catch mistakes before your clients do?
-              </h3>
-              <p className="mt-3 max-w-xl mx-auto text-xs sm:text-sm text-blue-100 leading-relaxed font-normal">
-                Built for creators, art directors, and marketers who need flaw-free designs, pitch decks, and documents.
-              </p>
-
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-                <button
-                  type="button"
-                  onClick={openFilePicker}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-xs sm:text-sm font-bold text-blue-700 shadow-md transition hover:bg-blue-50 hover:scale-105 active:scale-95 cursor-pointer"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" x2="12" y1="3" y2="15" />
-                  </svg>
-                  <span>Upload &amp; Proofread File</span>
-                </button>
-
-                <Link
-                  href="/design-check"
-                  className="inline-flex items-center gap-2 rounded-2xl border border-white/30 bg-white/10 px-6 py-3.5 text-xs sm:text-sm font-bold text-white backdrop-blur-md transition hover:bg-white/20 hover:scale-105 active:scale-95 cursor-pointer"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                  <span>Launch Design Check AI</span>
-                </Link>
-              </div>
-
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-[11px] text-blue-100/90 font-medium">
-                <span>✓ 100% Free</span>
-                <span>✓ No Sign-up Required</span>
-                <span>✓ Zero Server File Storage</span>
+                  <details className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-2xs backdrop-blur-md transition-all open:border-blue-300 open:shadow-xs">
+                    <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                      <span>Is Spellense completely free to use?</span>
+                      <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-transform duration-200 group-open:rotate-180 group-open:bg-blue-50 group-open:text-blue-600">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </span>
+                    </summary>
+                    <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                      Yes, Spellense is 100% free with no account creation, no subscriptions, and no paywalls. All features including OCR inspection and case converters are immediately available.
+                    </p>
+                  </details>
+                </div>
               </div>
             </div>
 

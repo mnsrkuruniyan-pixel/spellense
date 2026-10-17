@@ -4,6 +4,7 @@ const FOOTER_LINKS = [
   { label: "Home", href: "/" },
   { label: "3D Flipbook", href: "/flipbook", badge: "New" },
   { label: "Image Compressor", href: "/image-compressor" },
+  { label: "ID Print Maker", href: "/print-sheet-maker", badge: "New" },
   { label: "QR Code Generator", href: "/qr-code-generator", badge: "New" },
   { label: "Image to Text", href: "/image-to-text" },
   { label: "Design Check", href: "/design-check", badge: "New" },

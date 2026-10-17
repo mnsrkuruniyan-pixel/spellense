@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source "../components";
+@source "../lib";
 
 :root {
   --background: #f0f6fe;
@@ -123,5 +125,63 @@ body {
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Print Sheet Maker 3-Column Responsive Grid */
+.print-sheet-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: stretch;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .print-sheet-workspace-grid {
+    grid-template-columns: 340px minmax(0, 1fr) 320px !important;
+    gap: 1.5rem;
+    align-items: start;
+  }
+}
+
+/* Custom emerald range slider for Print Sheet Maker */
+.print-sheet-range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 9999px;
+  background: #00875a;
+  outline: none;
+  cursor: pointer;
+}
+
+.print-sheet-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #00875a;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.print-sheet-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.print-sheet-range-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #00875a;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
 }
 

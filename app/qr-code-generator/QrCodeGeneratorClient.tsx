@@ -399,7 +399,7 @@ export default function QrCodeGeneratorClient() {
       setGateNotice("Verified — ready to download");
       setGateNoticeType("ok");
     } else {
-      setGateNotice(`${passCount}/${testDefs.length} passed — fix the issues above, then re-run the test`);
+      setGateNotice(`${passCount}/${testDefs.length} passed — downloads remain active; adjust contrast or size if needed`);
       setGateNoticeType("warn");
     }
 
@@ -728,37 +728,51 @@ export default function QrCodeGeneratorClient() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-transparent font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+    <div className="flex min-h-screen flex-col bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10 text-[15px]">
       {/* NAVBAR */}
       <Navbar />
 
-      <main id="main-content" className="flex-1 relative z-10">
-        {/* HERO SECTION — Matching exact standard tool style */}
-        <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16 text-center">
-          <div className="mx-auto max-w-7xl">
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
-              QR codes that are built to actually scan.
-            </h1>
+      <main id="main-content" className="flex-1">
+        {/* HERO TITLE — Matching Figma Layout Style */}
+        <section className="px-4 max-w-7xl mx-auto pt-3 sm:pt-6 pb-1.5 sm:pb-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+            <div>
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0f172a]">
+                QR Code Generator
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1 line-clamp-1 sm:line-clamp-none">
+                Generate high-resolution vector SVG and 3000px PNG QR codes with camera scannability verification.
+              </p>
+            </div>
+
+            {/* Privacy / Feature Badge */}
+            <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 text-xs font-semibold text-emerald-800 self-start sm:self-center shadow-2xs">
+              <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              <span>Generated 100% locally in your browser</span>
+            </div>
           </div>
         </section>
 
         {/* WORKSPACE CONTAINER */}
-        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-16 mt-2 sm:mt-4">
           
           {/* MODE SWITCHER TABS */}
-          <div className="mx-auto max-w-xs mb-8">
-            <div className="bg-slate-200/80 p-1 rounded-2xl flex items-center border border-slate-300/70 shadow-inner">
+          <div className="mx-auto max-w-xs mb-6 sm:mb-8">
+            <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200/80 shadow-2xs">
               <button
                 type="button"
                 onClick={() => setMode("digital")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3.5 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                   mode === "digital"
-                    ? "bg-white text-slate-900 shadow-sm"
+                    ? "bg-white text-slate-900 shadow-2xs border border-slate-200/70"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {/* Digital / Screen SVG Icon */}
-                <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <rect width="20" height="14" x="2" y="3" rx="2" />
                   <line x1="8" x2="16" y1="21" y2="21" />
                   <line x1="12" x2="12" y1="17" y2="21" />
@@ -769,14 +783,14 @@ export default function QrCodeGeneratorClient() {
               <button
                 type="button"
                 onClick={() => setMode("print")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3.5 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                   mode === "print"
-                    ? "bg-white text-slate-900 shadow-sm"
+                    ? "bg-white text-slate-900 shadow-2xs border border-slate-200/70"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {/* Print / Printer SVG Icon */}
-                <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6 9 6 2 18 2 18 9" />
                   <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                   <rect width="12" height="8" x="6" y="14" />
@@ -786,10 +800,10 @@ export default function QrCodeGeneratorClient() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
             
             {/* LEFT COLUMN: CONTROLS (7 COLS) */}
-            <div className="lg:col-span-7 bg-white rounded-[28px] border border-slate-200 p-6 sm:p-8 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.03)]">
+            <div className="lg:col-span-7 bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 p-5 sm:p-7 shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)]">
               
               {/* DIGITAL MODE: FLAT MINIMAL FORM */}
               {mode === "digital" && (
@@ -1385,8 +1399,8 @@ export default function QrCodeGeneratorClient() {
             <div className="lg:col-span-5 space-y-6">
               
               {/* QR Preview Card */}
-              <div className="bg-white rounded-[28px] border border-slate-200 p-6 sm:p-7 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.03)] flex flex-col items-center justify-center text-center">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-500 mb-4">
+              <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 p-5 sm:p-7 shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] flex flex-col items-center justify-center text-center">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">
                   {mode === "digital" ? "Digital Preview" : "Print Ready Preview"}
                 </span>
 
@@ -1406,15 +1420,19 @@ export default function QrCodeGeneratorClient() {
                       type="button"
                       onClick={runStressTest}
                       disabled={isStressTesting}
-                      className={`w-full py-3 px-4 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${
-                        stressTested
-                          ? "bg-emerald-50 text-emerald-800 border border-emerald-300"
-                          : "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
+                      className={`w-full py-3 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs ${
+                        isStressTesting
+                          ? "bg-slate-100 text-slate-500 border border-slate-200"
+                          : stressTested
+                          ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
+                          : stressResults.length > 0
+                          ? "bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100"
+                          : "bg-white hover:bg-slate-50 text-slate-700 hover:text-[#0055fe] border border-slate-200/90 hover:border-blue-400"
                       }`}
                     >
                       {isStressTesting ? (
                         <>
-                          <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                          <svg className="animate-spin h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                           </svg>
@@ -1427,9 +1445,18 @@ export default function QrCodeGeneratorClient() {
                           </svg>
                           <span>✓ Verified — 4/4 Tests Passed</span>
                         </>
+                      ) : stressResults.length > 0 ? (
+                        <>
+                          <svg className="w-4 h-4 text-amber-600 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                          </svg>
+                          <span>Re-test Scannability ({stressPassCount}/4 Passed)</span>
+                        </>
                       ) : (
                         <>
-                          <svg className="w-4 h-4 text-white stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                          <svg className="w-4 h-4 text-slate-500 stroke-[2.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
                             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                           </svg>
                           <span>Stress test this QR code</span>
@@ -1441,11 +1468,11 @@ export default function QrCodeGeneratorClient() {
                     {stressResults.length > 0 && (
                       <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-2.5">
                         <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                          <span className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                             Stress Test Results
                           </span>
                           <span
-                            className={`text-xs font-black px-2 py-0.5 rounded-md ${
+                            className={`text-xs font-bold px-2 py-0.5 rounded-md ${
                               stressPassCount === 4
                                 ? "bg-emerald-100 text-emerald-800"
                                 : "bg-amber-100 text-amber-800"
@@ -1455,12 +1482,12 @@ export default function QrCodeGeneratorClient() {
                           </span>
                         </div>
 
-                        <ul className="space-y-1.5 text-xs font-bold">
+                        <ul className="space-y-1.5 text-xs font-semibold">
                           {stressResults.map((item) => (
                             <li key={item.key} className="flex items-center justify-between">
                               <span className="text-slate-600">{item.label}</span>
                               <span
-                                className={`inline-flex items-center gap-1 font-black ${
+                                className={`inline-flex items-center gap-1 font-bold ${
                                   item.passed ? "text-emerald-600" : "text-red-500"
                                 }`}
                               >
@@ -1492,21 +1519,23 @@ export default function QrCodeGeneratorClient() {
                       className={`p-2.5 rounded-xl text-xs text-center border transition-all ${
                         stressTested
                           ? "bg-emerald-50 text-emerald-800 border-emerald-200 font-bold"
-                          : "bg-red-50 text-[#dc2626] border-red-200 font-extrabold animate-pulse"
+                          : stressResults.length > 0
+                          ? "bg-amber-50 text-amber-900 border-amber-200 font-bold"
+                          : "bg-slate-50 text-slate-600 border-slate-200 font-medium"
                       }`}
                     >
                       {stressTested
-                        ? "✓ Verified — ready to download"
-                        : "⚠️ Scan it first: Run the stress test above to verify and unlock downloads"}
+                        ? "✓ Verified — 4/4 conditions passed, ready for print"
+                        : stressResults.length > 0
+                        ? `⚠️ Scan check: ${stressPassCount}/4 passed. Downloads remain active, but check contrast/size for optimal scanning.`
+                        : "💡 Tip: Run stress test to verify scannability under dim, blur, and angled conditions"}
                     </div>
 
-                    {/* Resolution selector (strictly 1 single horizontal row) */}
-                    <div className={`pt-2 text-left transition-opacity duration-200 ${
-                      !stressTested ? "opacity-40 pointer-events-none select-none" : ""
-                    }`}>
+                    {/* Resolution selector (strictly 1 single horizontal row) — Always active */}
+                    <div className="pt-2 text-left">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-bold text-slate-700">PNG Resolution</span>
-                        <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
                           {exportResolution} × {exportResolution} px
                         </span>
                       </div>
@@ -1527,8 +1556,8 @@ export default function QrCodeGeneratorClient() {
                             >
                               <div
                                 style={{
-                                  backgroundColor: isSel ? "#10b981" : "#ffffff",
-                                  borderColor: isSel ? "#10b981" : "#cbd5e1",
+                                  backgroundColor: isSel ? "#0055fe" : "#ffffff",
+                                  borderColor: isSel ? "#0055fe" : "#cbd5e1",
                                 }}
                                 className={`h-5 w-5 sm:h-5.5 sm:w-5.5 shrink-0 rounded-[7px] border-2 flex items-center justify-center transition-all ${
                                   !isSel ? "group-hover:border-slate-400" : ""
@@ -1548,7 +1577,7 @@ export default function QrCodeGeneratorClient() {
                                   </svg>
                                 )}
                               </div>
-                              <span className="text-xs sm:text-[13px] font-black text-[#0f172a]">
+                              <span className="text-xs sm:text-[13px] font-bold text-[#0f172a]">
                                 {opt.label}
                               </span>
                             </button>
@@ -1559,21 +1588,19 @@ export default function QrCodeGeneratorClient() {
                   </div>
                 )}
 
-                {/* ACTION BUTTONS: PNG, SVG, SHARE */}
+                {/* ACTION BUTTONS: PNG, SVG, SHARE — Always active */}
                 <div className="w-full mt-6 space-y-2.5">
-                  <div className={`grid grid-cols-2 gap-2.5 transition-opacity duration-200 ${
-                    mode === "print" && !stressTested ? "opacity-40 pointer-events-none select-none" : ""
-                  }`}>
+                  <div className="grid grid-cols-2 gap-2.5">
                     {/* PNG Download */}
                     <button
                       type="button"
                       onClick={() => handleDownload("png")}
                       disabled={isDownloadingPng}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="group inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-4 py-3 text-xs sm:text-sm font-bold text-slate-700 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isDownloadingPng ? (
                         <>
-                          <svg className="animate-spin h-4 w-4 text-slate-600" viewBox="0 0 24 24" fill="none">
+                          <svg className="animate-spin h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                           </svg>
@@ -1581,7 +1608,7 @@ export default function QrCodeGeneratorClient() {
                         </>
                       ) : (
                         <>
-                          <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg className="w-4 h-4 text-slate-500 group-hover:text-[#0055fe] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                             <polyline points="7 10 12 15 17 10" />
                             <line x1="12" y1="15" x2="12" y2="3" />
@@ -1596,11 +1623,11 @@ export default function QrCodeGeneratorClient() {
                       type="button"
                       onClick={() => handleDownload("svg")}
                       disabled={isDownloadingSvg}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-sm transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="group inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-4 py-3 text-xs sm:text-sm font-bold text-slate-700 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isDownloadingSvg ? (
                         <>
-                          <svg className="animate-spin h-4 w-4 text-slate-600" viewBox="0 0 24 24" fill="none">
+                          <svg className="animate-spin h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                           </svg>
@@ -1608,7 +1635,7 @@ export default function QrCodeGeneratorClient() {
                         </>
                       ) : (
                         <>
-                          <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg className="w-4 h-4 text-slate-500 group-hover:text-[#0055fe] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                             <polygon points="12 2 2 7 12 12 22 7 12 2" />
                             <polyline points="2 17 12 22 22 17" />
                             <polyline points="2 12 12 17 22 12" />
@@ -1619,13 +1646,13 @@ export default function QrCodeGeneratorClient() {
                     </button>
                   </div>
 
-                  {/* Share Button (PNG, SVG and Share requirement) */}
+                  {/* Share Button */}
                   <button
                     type="button"
                     onClick={handleOpenShareModal}
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-slate-50 hover:bg-slate-100 px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 shadow-xs transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+                    className="group w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-4 py-3 text-xs sm:text-sm font-bold text-slate-700 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer"
                   >
-                    <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="w-4 h-4 text-slate-500 group-hover:text-[#0055fe] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="18" cy="5" r="3" />
                       <circle cx="6" cy="12" r="3" />
                       <circle cx="18" cy="19" r="3" />
@@ -1648,69 +1675,69 @@ export default function QrCodeGeneratorClient() {
         </section>
 
         {/* EXPLANATORY SEO & PRODUCT SECTIONS (Below tool workspace) */}
-        <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8 space-y-8 sm:space-y-10">
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pt-14 pb-16 border-t border-slate-200/80 space-y-6 sm:space-y-8">
           
           {/* SECTION 1: INTRO */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xs">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-2xs">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
               Free QR Code Generator
             </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed">
+            <p className="mt-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
               Create a free QR code online for websites, text, Wi-Fi, email, phone numbers, and contact information. Customize your QR code, test its scannability, and download it as a high-quality PNG or SVG for immediate digital or print publishing.
             </p>
           </div>
 
           {/* SECTION 2: DIFFERENTIATOR */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xs">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-black mb-3">
+          <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-2xs">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold mb-3 border border-emerald-200/80">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Scannability Verification
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
               Create a QR Code That Actually Scans
             </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed">
+            <p className="mt-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
               A QR code is only useful when people can scan it successfully. Spellense helps you check your QR code before you publish or print it, so you can catch potential readability and scannability problems early.
             </p>
-            <p className="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed">
+            <p className="mt-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
               Our built-in stress test simulates real-world conditions right inside your browser: dim lighting, motion blur, small print sizes, and angled camera perspectives. By verifying contrast, error correction levels, and logo safety margins upfront, you prevent unreadable codes and costly reprinting.
             </p>
           </div>
 
           {/* SECTION 3: DIGITAL & PRINT */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xs">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-6">
+          <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-2xs">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mb-5">
               QR Codes for Digital and Print
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 sm:p-6">
-                <div className="flex items-center gap-2.5 mb-2.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
+                <div className="flex items-center gap-2.5 mb-2">
                   <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <rect width="20" height="14" x="2" y="3" rx="2" />
                       <line x1="8" x2="16" y1="21" y2="21" />
                       <line x1="12" x2="12" y1="17" y2="21" />
                     </svg>
                   </div>
-                  <h3 className="text-base font-black text-slate-900">Digital QR Codes</h3>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900">Digital QR Codes</h3>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
                   Digital QR codes are optimized for screens where lighting and pixels are predictable. Perfect for websites, social media channels, email signatures, presentation decks, video overlays, and mobile content, digital mode produces clean, high-contrast QR codes ready for instant download or one-click sharing.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 sm:p-6">
-                <div className="flex items-center gap-2.5 mb-2.5">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
+                <div className="flex items-center gap-2.5 mb-2">
                   <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="6 9 6 2 18 2 18 9" />
                       <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                       <rect width="12" height="8" x="6" y="14" />
                     </svg>
                   </div>
-                  <h3 className="text-base font-black text-slate-900">Print QR Codes</h3>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900">Print QR Codes</h3>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
                   Print QR codes require special care because ink, paper textures, and lighting cannot be edited after printing. Engineered for business cards, flyers, posters, restaurant menus, product packaging, brochures, and banners, print mode includes our 4-point scannability stress test to ensure reliable scanning under any condition.
                 </p>
               </div>
@@ -1718,70 +1745,70 @@ export default function QrCodeGeneratorClient() {
           </div>
 
           {/* SECTION 4: SUPPORTED TYPES */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xs">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-2">
+          <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-2xs">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mb-2">
               What Can You Create With Our QR Code Generator?
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mb-6">
+            <p className="text-xs sm:text-sm text-slate-500 mb-6 font-normal">
               Generate six genuinely supported QR code content types tailored for business and personal workflows:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                   URL QR Codes
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed font-normal">
                   Direct users straight to any website address, online store, landing page, or digital portfolio.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                   Text QR Codes
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed font-normal">
                   Encode plain text messages, product SKU details, serial numbers, event notices, or instructions.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                   Wi-Fi QR Codes
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed font-normal">
                   Allow guests, clients, and customers to join your Wi-Fi network instantly without manually typing passwords.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                   Email QR Codes
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed font-normal">
                   Open a pre-filled email draft to customer support, inquiries, or direct feedback with a single scan.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                   Phone QR Codes
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed font-normal">
                   Trigger an immediate phone call to your office, emergency line, or booking hotline when scanned.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-                <h3 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1.5">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                   vCard QR Codes
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed font-normal">
                   Share comprehensive contact cards with name, phone number, email, company, and job title saved directly to phone contacts.
                 </p>
               </div>
@@ -1789,107 +1816,146 @@ export default function QrCodeGeneratorClient() {
           </div>
 
           {/* SECTION 5: DOWNLOAD EXPLAINER & INTERNAL LINKS */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xs">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-3">
+          <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-2xs">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mb-2.5">
               Download Your QR Code
             </h2>
-            <p className="text-sm text-slate-600 leading-relaxed mb-6">
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6 font-normal">
               Export your custom QR code in standard image formats built for modern digital workflows and commercial press:
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
-                <h3 className="text-base font-black text-slate-900 mb-2">High-Resolution PNG</h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-1.5">High-Resolution PNG</h3>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
                   In Print mode, choose from 1000px, 2000px, or 3000px export resolutions to match small stickers or large promotional posters. In Digital mode, export a crisp 2000px PNG ready for web pages, presentations, and social media.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
-                <h3 className="text-base font-black text-slate-900 mb-2">Vector SVG Format</h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-1.5">Vector SVG Format</h3>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
                   Available in both Digital and Print modes, scalable vector SVG files remain pixel-perfect at any size. Essential for graphic designers, commercial printers, laser engravers, and large-format banners.
                 </p>
-              </div>
-            </div>
-
-            {/* INTERNAL TOOLS ECOSYSTEM LINKS */}
-            <div className="mt-8 pt-6 border-t border-slate-100">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
-                More Creative & Document Tools on Spellense
-              </h3>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-slate-600">
-                <Link href="/" className="hover:text-emerald-700 transition-colors">
-                  AI Proofreader & Spell Checker →
-                </Link>
-                <span className="text-slate-300">•</span>
-                <Link href="/flipbook" className="hover:text-emerald-700 transition-colors">
-                  3D Flipbook Creator →
-                </Link>
-                <span className="text-slate-300">•</span>
-                <Link href="/image-compressor" className="hover:text-emerald-700 transition-colors">
-                  Image Compressor →
-                </Link>
-                <span className="text-slate-300">•</span>
-                <Link href="/image-to-text" className="hover:text-emerald-700 transition-colors">
-                  Image to Text (OCR) →
-                </Link>
-                <span className="text-slate-300">•</span>
-                <Link href="/design-check" className="hover:text-emerald-700 transition-colors">
-                  Design Check →
-                </Link>
               </div>
             </div>
           </div>
         </section>
 
-        {/* FAQ SECTION */}
-        <section className="mx-auto max-w-4xl px-4 pb-24 sm:px-6">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Frequently Asked Questions
-            </h2>
-            <p className="mt-2 text-sm sm:text-base text-slate-600">
-              Everything you need to know about QR scannability and print requirements.
-            </p>
-          </div>
+        {/* FAQ SECTION — 2-Column Clean Figma Layout */}
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-16 border-t border-slate-200/80">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            {/* Left 4 Columns */}
+            <div className="md:col-span-4 space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">
+                FREQUENTLY ASKED QUESTIONS
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                QR Code FAQ
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
+                Everything you need to know about generating, customizing, and verifying scannable QR codes for digital and physical print use.
+              </p>
+            </div>
 
-          <div className="space-y-3.5">
-            {FAQ_ITEMS.map((item, idx) => {
-              const isOpen = openFaqIndex === idx;
-              return (
-                <details
-                  key={idx}
-                  open={isOpen}
-                  className="group rounded-2xl border border-slate-200/90 bg-white transition-all overflow-hidden"
-                >
-                  <summary
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setOpenFaqIndex(isOpen ? null : idx);
-                    }}
-                    className="flex w-full items-center justify-between p-5 text-left text-sm sm:text-base font-bold text-slate-900 hover:text-emerald-700 transition-colors cursor-pointer list-none select-none"
+            {/* Right 8 Columns */}
+            <div className="md:col-span-8 space-y-3">
+              {FAQ_ITEMS.map((faq, index) => {
+                const isOpen = openFaqIndex === index;
+                return (
+                  <div
+                    key={faq.q}
+                    className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition"
                   >
-                    <span>{item.q}</span>
-                    <svg
-                      className={`h-4 w-4 text-slate-400 transition-transform duration-200 shrink-0 ml-4 ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                    <button
+                      type="button"
+                      id={`faq-btn-${index}`}
+                      aria-expanded={isOpen}
+                      aria-controls={`faq-answer-${index}`}
+                      onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                      className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
                     >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </summary>
-                  <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                    {item.a}
+                      <span className="text-sm font-bold text-slate-900 pr-2">
+                        {faq.q}
+                      </span>
+                      <span
+                        className={`ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition-transform duration-200 ${
+                          isOpen ? "rotate-180 text-blue-600" : ""
+                        }`}
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </span>
+                    </button>
+
+                    <div
+                      id={`faq-answer-${index}`}
+                      role="region"
+                      aria-labelledby={`faq-btn-${index}`}
+                      className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
+                        isOpen
+                          ? "grid-rows-[1fr] opacity-100"
+                          : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                      }`}
+                    >
+                      <div className="overflow-hidden">
+                        <div className="border-t border-slate-100 px-4 sm:px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal">
+                          {faq.a}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </details>
-              );
-            })}
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* RELATED CREATIVE TOOLS SECTION */}
+        <section className="border-t border-slate-200/80 bg-white/60 py-14 px-3 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="text-center mb-8">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Cross-Tool Workflows</span>
+              <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">Explore More Free Creative Tools</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Link
+                href="/print-sheet-maker"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">ID &amp; Photo Layout</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">ID Print Maker</div>
+                <p className="mt-1 text-xs text-slate-500">Fit photos and ID cards on one A4 or custom page at exact physical mm.</p>
+              </Link>
+
+              <Link
+                href="/image-compressor"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Visual Optimization</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Image Compressor</div>
+                <p className="mt-1 text-xs text-slate-500">Lossless &amp; lossy image compression with side-by-side comparison slider.</p>
+              </Link>
+
+              <Link
+                href="/flipbook"
+                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+              >
+                <div className="text-xs font-bold text-blue-600 uppercase mb-1">3D Publishing</div>
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">3D Digital Flipbook</div>
+                <p className="mt-1 text-xs text-slate-500">Transform static PDFs and catalogs into interactive 3D page-turning flipbooks.</p>
+              </Link>
+            </div>
           </div>
         </section>
       </main>

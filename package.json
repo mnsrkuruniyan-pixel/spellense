@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@cantoo/pdf-lib": "2.11.1",
     "@napi-rs/canvas": "^1.0.9",
     "dictionary-en": "^4.0.0",
     "dictionary-en-gb": "^3.0.0",
