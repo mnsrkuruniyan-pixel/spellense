@@ -17,11 +17,6 @@ export default function PwaInstallPrompt() {
   const [isIos, setIsIos] = useState(false);
   const [showIosInstructions, setShowIosInstructions] = useState(false);
 
-  // Suppress PWA install banner on print sheet maker to keep workspace clean
-  if (pathname === "/print-sheet-maker") {
-    return null;
-  }
-
   useEffect(() => {
     // 1. Register Service Worker
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
@@ -118,7 +113,8 @@ export default function PwaInstallPrompt() {
     );
   };
 
-  if (!showPrompt) {
+  // Suppress PWA install banner on print sheet maker to keep workspace clean
+  if (!showPrompt || pathname?.startsWith("/print-sheet-maker")) {
     return null;
   }
 
