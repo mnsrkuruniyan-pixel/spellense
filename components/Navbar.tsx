@@ -274,12 +274,126 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
         </Link>
 
         {/* RIGHT NAVIGATION */}
-        <div className="flex items-center gap-3">
-          {resultMode ? (
-            <div className="hidden sm:flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Main Navigation (Always visible on desktop) */}
+          <nav className="hidden xl:flex items-center gap-1 xl:gap-1.5 text-[13px] font-semibold">
+            {/* 1. Home */}
+            <Link
+              href="/"
+              onClick={() => {
+                if (resultMode) {
+                  resultMode.onReset();
+                }
+              }}
+              className={`py-1.5 px-3 rounded-lg transition ${
+                isActive("/")
+                  ? "bg-blue-50 text-[#0055fe] font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <span>Home</span>
+            </Link>
+
+            {/* 2. 3D Flipbook */}
+            <Link
+              href="/flipbook"
+              className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg transition ${
+                isActive("/flipbook")
+                  ? "bg-blue-50 text-[#0055fe] font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <span>3D Flipbook</span>
+              <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
+                New
+              </span>
+            </Link>
+
+            {/* 3. Image Compressor */}
+            <Link
+              href="/image-compressor"
+              className={`py-1.5 px-3 rounded-lg transition ${
+                isActive("/image-compressor")
+                  ? "bg-blue-50 text-[#0055fe] font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <span>Image Compressor</span>
+            </Link>
+
+            {/* 4. QR Code Generator */}
+            <Link
+              href="/qr-code-generator"
+              className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg transition ${
+                isActive("/qr-code-generator")
+                  ? "bg-blue-50 text-[#0055fe] font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <span>QR Code</span>
+              <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
+                New
+              </span>
+            </Link>
+
+            {/* 5. ID Print Maker */}
+            <Link
+              href="/print-sheet-maker"
+              className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg transition ${
+                isActive("/print-sheet-maker")
+                  ? "bg-blue-50 text-[#0055fe] font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <span>ID Print Maker</span>
+              <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
+                New
+              </span>
+            </Link>
+
+            {/* 6. Image to Text */}
+            <Link
+              href="/image-to-text"
+              className={`py-1.5 px-3 rounded-lg transition ${
+                isActive("/image-to-text")
+                  ? "bg-blue-50 text-[#0055fe] font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <span>Image to Text</span>
+            </Link>
+
+            {/* 7. Case Converter */}
+            <Link
+              href="/case-converter"
+              className={`py-1.5 px-3 rounded-lg transition ${
+                isActive("/case-converter")
+                  ? "bg-blue-50 text-[#0055fe] font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <span>Case Converter</span>
+            </Link>
+
+            {/* 8. US ↔ UK */}
+            <Link
+              href="/us-uk-converter"
+              className={`py-1.5 px-3 rounded-lg transition ${
+                isActive("/us-uk-converter")
+                  ? "bg-blue-50 text-[#0055fe] font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <span>US ↔ UK</span>
+            </Link>
+          </nav>
+
+          {/* RESULT MODE ACTIONS */}
+          {resultMode && (
+            <div className="hidden sm:flex items-center gap-2 sm:gap-2.5 xl:border-l xl:border-slate-200 xl:pl-3">
               {/* File name pill */}
-              <div className="hidden md:flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white max-w-[240px] backdrop-blur-md">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="hidden 2xl:flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 max-w-[180px] shadow-2xs">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="truncate">{resultMode.fileName}</span>
               </div>
 
@@ -288,7 +402,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                 <button
                   type="button"
                   onClick={resultMode.onDownloadReport}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-white/25 active:scale-95 cursor-pointer whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:border-slate-300 active:scale-95 cursor-pointer whitespace-nowrap"
                 >
                   <svg
                     width="14"
@@ -312,118 +426,11 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
               <button
                 type="button"
                 onClick={resultMode.onReset}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 sm:py-2 text-xs font-bold text-[#0055fe] shadow-md transition-all hover:bg-white/95 active:scale-95 cursor-pointer whitespace-nowrap"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#0055fe] hover:bg-blue-700 px-3.5 py-1.5 sm:py-2 text-xs font-bold text-white shadow-xs shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer whitespace-nowrap"
               >
                 <span>+ Check another file</span>
               </button>
             </div>
-          ) : (
-            <nav className="hidden xl:flex items-center gap-1 xl:gap-1.5 text-[13px] font-semibold">
-              {/* 1. Home */}
-              <Link
-                href="/"
-                className={`py-1.5 px-3 rounded-lg transition ${
-                  isActive("/")
-                    ? "bg-blue-50 text-[#0055fe] font-bold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <span>Home</span>
-              </Link>
-
-              {/* 2. 3D Flipbook */}
-              <Link
-                href="/flipbook"
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg transition ${
-                  isActive("/flipbook")
-                    ? "bg-blue-50 text-[#0055fe] font-bold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <span>3D Flipbook</span>
-                <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
-                  New
-                </span>
-              </Link>
-
-              {/* 3. Image Compressor */}
-              <Link
-                href="/image-compressor"
-                className={`py-1.5 px-3 rounded-lg transition ${
-                  isActive("/image-compressor")
-                    ? "bg-blue-50 text-[#0055fe] font-bold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <span>Image Compressor</span>
-              </Link>
-
-              {/* 4. QR Code Generator */}
-              <Link
-                href="/qr-code-generator"
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg transition ${
-                  isActive("/qr-code-generator")
-                    ? "bg-blue-50 text-[#0055fe] font-bold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <span>QR Code</span>
-                <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
-                  New
-                </span>
-              </Link>
-
-              {/* 5. ID Print Maker */}
-              <Link
-                href="/print-sheet-maker"
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg transition ${
-                  isActive("/print-sheet-maker")
-                    ? "bg-blue-50 text-[#0055fe] font-bold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <span>ID Print Maker</span>
-                <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
-                  New
-                </span>
-              </Link>
-
-              {/* 6. Image to Text */}
-              <Link
-                href="/image-to-text"
-                className={`py-1.5 px-3 rounded-lg transition ${
-                  isActive("/image-to-text")
-                    ? "bg-blue-50 text-[#0055fe] font-bold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <span>Image to Text</span>
-              </Link>
-
-              {/* 7. Case Converter */}
-              <Link
-                href="/case-converter"
-                className={`py-1.5 px-3 rounded-lg transition ${
-                  isActive("/case-converter")
-                    ? "bg-blue-50 text-[#0055fe] font-bold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <span>Case Converter</span>
-              </Link>
-
-              {/* 8. US ↔ UK */}
-              <Link
-                href="/us-uk-converter"
-                className={`py-1.5 px-3 rounded-lg transition ${
-                  isActive("/us-uk-converter")
-                    ? "bg-blue-50 text-[#0055fe] font-bold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <span>US ↔ UK</span>
-              </Link>
-            </nav>
           )}
 
           {/* Mobile / Tablet Hamburger Button */}
