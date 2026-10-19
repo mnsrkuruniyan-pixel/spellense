@@ -3517,101 +3517,6 @@ export default function Home() {
 
           <div className="mx-auto mt-6 sm:mt-8 max-w-7xl">
 
-            {/* MODE, ENGINE & DIALECT SELECTOR BAR (SINGLE LINE) */}
-            <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2 px-1">
-              {/* PASTE / TEXT MODE TOGGLE */}
-              <button
-                type="button"
-                onClick={() => setInputMode(inputMode === "upload" ? "text" : "upload")}
-                className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all border shadow-2xs backdrop-blur-md cursor-pointer ${
-                  inputMode === "text"
-                    ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
-                    : "bg-white text-slate-700 border-slate-200/90 hover:bg-slate-50 hover:text-[#0055fe]"
-                }`}
-                title={inputMode === "text" ? "Switch back to document upload" : "Paste or type text directly instead of uploading a file"}
-              >
-                {inputMode === "text" ? (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                      <polyline points="17 8 12 3 7 8"/>
-                      <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <span>Upload Document</span>
-                  </>
-                ) : (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 20h9"/>
-                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                    </svg>
-                    <span>Paste or Type Text</span>
-                    <span className="rounded-full bg-blue-100 px-1.5 py-0.2 text-[9px] font-black text-blue-600">NEW</span>
-                  </>
-                )}
-              </button>
-
-              {/* ENGINE & DIALECT SELECTOR TOGGLES */}
-              <div className="flex flex-wrap items-center gap-2">
-                {/* ENGINE SELECTOR TOGGLE */}
-                <div className="inline-flex items-center gap-1 rounded-xl bg-white p-1 border border-slate-200/90 shadow-2xs">
-                  <span className="hidden sm:inline-block pl-2.5 pr-1 text-[11px] font-semibold text-slate-400">Engine:</span>
-                  <button
-                    type="button"
-                    onClick={() => handleAiModeToggle(false)}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                      !aiMode
-                        ? "bg-[#0055fe] text-white shadow-2xs"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                    }`}
-                    title="Fast offline dictionary check (instant)"
-                  >
-                    <span>⚡ Fast</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleAiModeToggle(true)}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                      aiMode
-                        ? "bg-[#0055fe] text-white shadow-2xs"
-                        : "text-slate-600 hover:text-[#0055fe] hover:bg-blue-50/50"
-                    }`}
-                    title="AI Deep Proofreading with Google Gemini (catches grammar, typos & contextual errors)"
-                  >
-                    <span>✨ AI Deep Check</span>
-                  </button>
-                </div>
-
-                {/* DIALECT SELECTOR TOGGLE */}
-                <div className="inline-flex items-center gap-1 rounded-xl bg-white p-1 border border-slate-200/90 shadow-2xs">
-                  <span className="hidden sm:inline-block pl-2.5 pr-1 text-[11px] font-semibold text-slate-400">Dictionary:</span>
-                  <button
-                    type="button"
-                    onClick={() => handleDialectChange("en-US")}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                      dialect === "en-US"
-                        ? "bg-[#0055fe] text-white shadow-2xs"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                    }`}
-                    title="Check spelling using American English rules (e.g., color, organize)"
-                  >
-                    <span>🇺🇸 US</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDialectChange("en-GB")}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                      dialect === "en-GB"
-                        ? "bg-[#0055fe] text-white shadow-2xs"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                    }`}
-                    title="Check spelling using British English rules (e.g., colour, organise)"
-                  >
-                    <span>🇬🇧 UK</span>
-                  </button>
-                </div>
-              </div>
-            </div>
 
             {/* UPLOAD VALIDATION ERROR BANNER */}
             {uploadError && (
@@ -3642,89 +3547,160 @@ export default function Home() {
             )}
 
             {inputMode === "text" ? (
-              <div className="relative rounded-[32px] bg-white/95 backdrop-blur-xl p-6 sm:p-8 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.07),0_0_20px_rgba(59,130,246,0.04)]">
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-2 w-2 rounded-full bg-blue-600" />
-                    <label htmlFor="pasted-text-input" className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Paste or write your English text
-                    </label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setInputMode("upload")}
-                      className="text-xs font-semibold text-slate-500 hover:text-slate-800 hover:underline cursor-pointer mr-2"
-                    >
-                      ← Upload Document
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPastedText(
-                          "We definately want to recieve your feedback on our new documnet. The acommodation was wonderfull, but the calender had an unecesary error in the schedual."
-                        );
-                      }}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
-                    >
-                      Try Sample Text
-                    </button>
-                    {pastedText && (
+              <div className="relative rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white shadow-[0_20px_60px_-15px_rgba(0,85,254,0.08)] overflow-hidden">
+                {/* TEXT MODE HEADER */}
+                <div className="flex flex-wrap items-center justify-between gap-3 px-5 sm:px-8 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/40">
+                  <button
+                    type="button"
+                    onClick={() => setInputMode("upload")}
+                    className="inline-flex items-center gap-2 text-xs sm:text-[13px] font-semibold text-slate-700 hover:text-[#0055fe] transition-colors py-1 px-1.5 rounded-lg cursor-pointer"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span>← Upload Document</span>
+                  </button>
+
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                    {/* Engine */}
+                    <div className="inline-flex items-center gap-1.5">
+                      <span className="text-[11px] font-medium text-slate-400">Engine:</span>
                       <button
                         type="button"
-                        onClick={() => setPastedText("")}
-                        className="text-xs font-semibold text-slate-400 hover:text-slate-600 cursor-pointer ml-2"
+                        onClick={() => handleAiModeToggle(false)}
+                        className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          !aiMode
+                            ? "bg-[#0055fe] text-white shadow-2xs"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                        }`}
+                        title="Fast offline dictionary check (instant)"
                       >
-                        Clear
+                        <span>⚡ Fast</span>
                       </button>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() => handleAiModeToggle(true)}
+                        className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          aiMode
+                            ? "bg-[#0055fe] text-white shadow-2xs"
+                            : "text-slate-600 hover:text-[#0055fe] hover:bg-blue-50/50"
+                        }`}
+                        title="AI Deep Proofreading with Google Gemini"
+                      >
+                        <span>✨ AI Deep Check</span>
+                      </button>
+                    </div>
+
+                    {/* Dictionary */}
+                    <div className="inline-flex items-center gap-1.5 sm:border-l sm:border-slate-200/80 sm:pl-3">
+                      <span className="text-[11px] font-medium text-slate-400">Dictionary:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDialectChange("en-US")}
+                        className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          dialect === "en-US"
+                            ? "bg-[#0055fe] text-white shadow-2xs"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                        }`}
+                        title="American English rules"
+                      >
+                        <span>🇺🇸 US</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDialectChange("en-GB")}
+                        className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          dialect === "en-GB"
+                            ? "bg-[#0055fe] text-white shadow-2xs"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                        }`}
+                        title="British English rules"
+                      >
+                        <span>🇬🇧 UK</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <textarea
-                  id="pasted-text-input"
-                  value={pastedText}
-                  onChange={(e) => setPastedText(e.target.value)}
-                  placeholder="Type or paste any text here (essays, emails, blog posts, articles) to instantly scan for typos and spelling mistakes..."
-                  rows={8}
-                  className="w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 font-mono sm:font-sans"
-                />
-
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                  <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
-                    <span>
-                      <strong className="text-slate-800">
-                        {pastedText.trim() ? pastedText.trim().split(/\s+/).length : 0}
-                      </strong>{" "}
-                      words
-                    </span>
-                    <span>•</span>
-                    <span>
-                      <strong className="text-slate-800">{pastedText.length}</strong> characters
-                    </span>
+                <div className="p-6 sm:p-8">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-2 w-2 rounded-full bg-blue-600" />
+                      <label htmlFor="pasted-text-input" className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Paste or write your English text
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPastedText(
+                            "We definately want to recieve your feedback on our new documnet. The acommodation was wonderfull, but the calender had an unecesary error in the schedual."
+                          );
+                        }}
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                      >
+                        Try Sample Text
+                      </button>
+                      {pastedText && (
+                        <button
+                          type="button"
+                          onClick={() => setPastedText("")}
+                          className="text-xs font-semibold text-slate-400 hover:text-slate-600 cursor-pointer ml-2"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={checkPastedText}
-                    disabled={checking || !pastedText.trim()}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35 disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-0 cursor-pointer"
-                  >
-                    {checking ? (
-                      <>
-                        <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                        </svg>
-                        <span>{checkingMessage}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Check My Text</span>
-                        <span>→</span>
-                      </>
-                    )}
-                  </button>
+                  <textarea
+                    id="pasted-text-input"
+                    value={pastedText}
+                    onChange={(e) => setPastedText(e.target.value)}
+                    placeholder="Type or paste any text here (essays, emails, blog posts, articles) to instantly scan for typos and spelling mistakes..."
+                    rows={8}
+                    className="w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 font-mono sm:font-sans"
+                  />
+
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                    <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
+                      <span>
+                        <strong className="text-slate-800">
+                          {pastedText.trim() ? pastedText.trim().split(/\s+/).length : 0}
+                        </strong>{" "}
+                        words
+                      </span>
+                      <span>•</span>
+                      <span>
+                        <strong className="text-slate-800">{pastedText.length}</strong> characters
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={checkPastedText}
+                      disabled={checking || !pastedText.trim()}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/35 disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-0 cursor-pointer"
+                    >
+                      {checking ? (
+                        <>
+                          <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                          </svg>
+                          <span>{checkingMessage}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Check My Text</span>
+                          <span>→</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -3753,12 +3729,93 @@ export default function Home() {
                   openFilePicker();
                 }
               }}
-              className={`group relative w-full cursor-pointer rounded-2xl sm:rounded-3xl border transition-all duration-300 overflow-hidden ${
+              className={`group relative w-full cursor-pointer rounded-2xl sm:rounded-3xl border transition-all duration-300 overflow-hidden bg-white ${
                 dragging
-                  ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.01]"
-                  : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
+                  ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.005]"
+                  : "border-slate-200/90 hover:border-blue-400/80 shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
               }`}
             >
+              {/* TOP HEADER: PASTE/TEXT TOGGLE & ENGINE / DIALECT SELECTORS */}
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="flex flex-wrap items-center justify-between gap-3 px-5 sm:px-8 pt-4 sm:pt-5 pb-3 sm:pb-3.5 border-b border-slate-100/90 bg-white cursor-default text-left"
+              >
+                {/* Left: Paste or Type Text */}
+                <button
+                  type="button"
+                  onClick={() => setInputMode("text")}
+                  className="inline-flex items-center gap-2 text-xs sm:text-[13px] font-semibold text-slate-700 hover:text-[#0055fe] transition-colors py-1 px-1.5 rounded-lg cursor-pointer group/paste"
+                  title="Paste or type text directly instead of uploading a file"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover/paste:text-[#0055fe] transition-colors">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
+                  <span>Paste or Type Text</span>
+                  <span className="rounded-full bg-blue-100 px-1.5 py-0.2 text-[9px] font-black text-blue-600 tracking-wider">NEW</span>
+                </button>
+
+                {/* Right: Engine & Dialect Selectors */}
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                  {/* Engine */}
+                  <div className="inline-flex items-center gap-1.5">
+                    <span className="text-[11px] font-medium text-slate-400">Engine:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleAiModeToggle(false)}
+                      className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                        !aiMode
+                          ? "bg-[#0055fe] text-white shadow-2xs"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                      }`}
+                      title="Fast offline dictionary check (instant)"
+                    >
+                      <span>⚡ Fast</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAiModeToggle(true)}
+                      className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                        aiMode
+                          ? "bg-[#0055fe] text-white shadow-2xs"
+                          : "text-slate-600 hover:text-[#0055fe] hover:bg-blue-50/50"
+                      }`}
+                      title="AI Deep Proofreading with Google Gemini"
+                    >
+                      <span>✨ AI Deep Check</span>
+                    </button>
+                  </div>
+
+                  {/* Dictionary */}
+                  <div className="inline-flex items-center gap-1.5 sm:border-l sm:border-slate-200/80 sm:pl-3">
+                    <span className="text-[11px] font-medium text-slate-400">Dictionary:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDialectChange("en-US")}
+                      className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                        dialect === "en-US"
+                          ? "bg-[#0055fe] text-white shadow-2xs"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                      }`}
+                      title="American English rules"
+                    >
+                      <span>🇺🇸 US</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDialectChange("en-GB")}
+                      className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                        dialect === "en-GB"
+                          ? "bg-[#0055fe] text-white shadow-2xs"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                      }`}
+                      title="British English rules"
+                    >
+                      <span>🇬🇧 UK</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               <div className="relative py-12 px-6 sm:py-16 sm:px-12 lg:py-20 text-center transition-all duration-300">
 
@@ -3768,18 +3825,19 @@ export default function Home() {
 
                   <div className="relative transition-all duration-300">
 
-                    {/* CLOUD UPLOAD ICON WITH UPWARD ARROW */}
-                    <div className="mx-auto flex justify-center items-center">
+                    {/* CLEAN LIGHT-GREY CLOUD UPLOAD ICON */}
+                    <div className="mx-auto mb-4 flex justify-center items-center">
                       <svg
-                        width="68"
-                        height="68"
+                        width="70"
+                        height="70"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
+                        stroke="#94a3b8"
+                        strokeWidth="1.65"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="text-slate-400 group-hover:text-slate-500 group-hover:-translate-y-1 transition-all duration-300"
+                        className="transition-transform duration-300 group-hover:-translate-y-1 text-slate-400"
+                        style={{ stroke: "#94a3b8" }}
                       >
                         <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
                         <path d="M12 12v9" />
@@ -3787,19 +3845,19 @@ export default function Home() {
                       </svg>
                     </div>
 
-                    <h2 className="mt-5 text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
+                    <h2 className="mt-4 text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
                       {dragging ? "Release your file to inspect" : "Drop your documents or images here"}
                     </h2>
 
                     {/* BUTTONS (SIDE BY SIDE WITH BREATHING SPACE) */}
-                    <div className="mt-8 sm:mt-10 mb-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+                    <div className="mt-8 sm:mt-9 mb-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           openFilePicker();
                         }}
-                        className="group/btn inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                        className="group/btn inline-flex min-w-[180px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-8 sm:px-10 py-3.5 sm:py-4 text-sm sm:text-base font-semibold text-slate-800 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                       >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover/btn:text-[#0055fe] transition-colors">
                           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -3816,7 +3874,7 @@ export default function Home() {
                           loadSampleFile();
                         }}
                         disabled={loadingSample}
-                        className="group/sample inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-blue-400/80 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] transition-all cursor-pointer shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
+                        className="group/sample inline-flex min-w-[180px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-8 sm:px-10 py-3.5 sm:py-4 text-sm sm:text-base font-semibold text-slate-800 hover:text-[#0055fe] transition-all cursor-pointer shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
                         title="Test immediately with a sample document"
                       >
                         {loadingSample ? (
@@ -3835,34 +3893,34 @@ export default function Home() {
 
                     {/* FORMAT BADGES */}
                     <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-rose-50 hover:text-rose-600">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-rose-50 hover:text-rose-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
                         PDF
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-blue-50 hover:text-blue-600">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-blue-50 hover:text-blue-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                         DOCX
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-amber-50 hover:text-amber-600">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-amber-50 hover:text-amber-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                         PPTX
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-emerald-50 hover:text-emerald-600">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-emerald-50 hover:text-emerald-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         XLSX
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-purple-50 hover:text-purple-600">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:scale-105 hover:bg-purple-50 hover:text-purple-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
                         JPG • PNG • WEBP
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 text-[11px] font-bold text-slate-500 shadow-2xs">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 px-3 py-1 text-[11px] font-bold text-slate-500 shadow-2xs">
                         <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
                         Max 25MB
                       </span>
                     </div>
 
                     {/* WORKFLOW COMPATIBILITY */}
-                    <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-400">
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-400">
                       <span>Optimized for designs from</span>
                       <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-600">Canva</span>
                       <span className="rounded-md bg-purple-50 px-2 py-0.5 text-[11px] font-bold text-purple-600">Figma</span>
