@@ -1006,7 +1006,7 @@ export default function ImageCompressorClient() {
                   lineHeight: 1.55,
                   margin: "18px auto 0",
                 }}
-                className="text-center font-normal px-4 max-w-[540px] mx-auto"
+                className="text-center font-normal px-4 max-w-2xl sm:max-w-[720px] mx-auto"
               >
                 Compress JPG, PNG, WebP, and multi-page PDFs with zero visual loss.
               </p>
