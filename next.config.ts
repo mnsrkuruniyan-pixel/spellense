@@ -72,22 +72,37 @@ const nextConfig: NextConfig = {
       {
         source: "/id",
         destination: "/print-sheet-maker",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/id-card",
         destination: "/print-sheet-maker",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/id-print-maker",
         destination: "/print-sheet-maker",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/id-card-maker",
         destination: "/print-sheet-maker",
-        permanent: false,
+        permanent: true,
+      },
+      {
+        source: "/blog/how-to-spell-check-images-and-graphics-online",
+        destination: "/blog/why-normal-spell-checkers-miss-typos-in-images",
+        permanent: true,
+      },
+      {
+        source: "/blog/top-5-mistakes-in-presentation-slides",
+        destination: "/blog/how-to-check-spelling-in-canva-before-publishing",
+        permanent: true,
+      },
+      {
+        source: "/blog/american-vs-british-english-spelling-guide",
+        destination: "/blog/how-to-find-spelling-mistakes-in-scanned-pdf",
+        permanent: true,
       },
     ];
   },

@@ -1185,7 +1185,7 @@ export default function FlipbookClient() {
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src="/flipbook-sample-preview.png"
+                              src="/flipbook-sample-preview.webp"
                               alt="Sample 3D Editorial Lookbook Catalog"
                               className="w-full h-auto object-cover block"
                             />
@@ -1260,7 +1260,7 @@ export default function FlipbookClient() {
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src="/flipbook-sample-preview.png"
+                                src="/flipbook-sample-preview.webp"
                                 alt="Sample 3D Editorial Lookbook Catalog"
                                 className="w-full h-auto object-cover block"
                               />
@@ -4327,7 +4327,7 @@ function initFlipbookApp() {
           if (a === "t") {
             var thEl = root.querySelector(".th");
             if (!thEl.innerHTML) {
-              thEl.innerHTML = P.map(function(u, idx) { return '<img data-i="' + idx + '" src="' + u + '">'; }).join("");
+              thEl.innerHTML = P.map(function(u, idx) { return '<img data-i="' + idx + '" src="' + u + '" alt="Page ' + (idx + 1) + '">'; }).join("");
             }
             thEl.hidden = !thEl.hidden;
           }

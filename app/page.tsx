@@ -2284,13 +2284,13 @@ export default function Home() {
     try {
       setLoadingSample(true);
       setUploadError(null);
-      const res = await fetch("/botanical-invitation.png");
+      const res = await fetch("/botanical-invitation.webp");
       if (!res.ok) {
         throw new Error("Failed to fetch sample document");
       }
       const blob = await res.blob();
-      const sampleFile = new File([blob], "botanical-invitation.png", {
-        type: "image/png",
+      const sampleFile = new File([blob], "botanical-invitation.webp", {
+        type: "image/webp",
       });
       handleFiles([sampleFile]);
     } catch (err) {
@@ -4195,7 +4195,7 @@ export default function Home() {
                             <circle cx="9" cy="9" r="2"/>
                             <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
                           </svg>
-                          <span>botanical-invitation.png</span>
+                          <span>botanical-invitation.webp</span>
                         </div>
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
                           SAMPLE PREVIEW
@@ -4213,7 +4213,7 @@ export default function Home() {
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src="/botanical-invitation.png"
+                            src="/botanical-invitation.webp"
                             alt="Sample Botanical Invitation with detected typos"
                             className="w-full h-auto object-cover"
                           />
@@ -4280,7 +4280,7 @@ export default function Home() {
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src="/botanical-invitation.png"
+                              src="/botanical-invitation.webp"
                               alt="Sample Botanical Invitation with detected typos"
                               className="w-full h-auto object-cover block"
                             />
@@ -4887,7 +4887,7 @@ export default function Home() {
                 {/* GUIDE 1 */}
                 <ScrollReveal delay={0} className="h-full">
                   <Link
-                    href="/blog/how-to-spell-check-images-and-graphics-online"
+                    href="/blog/why-normal-spell-checkers-miss-typos-in-images"
                     style={{ borderColor: "#e5e5df" }}
                     className="group flex h-full flex-col justify-between rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-lg hover:shadow-[#3158d5]/5"
                   >
@@ -4896,7 +4896,7 @@ export default function Home() {
                         Visual Design Guide
                       </span>
                       <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-[#3158d5] transition">
-                        How to Spell Check Images and Graphics Online (Without Retyping)
+                        Why Normal Spell Checkers Miss Typos in Images (and How OCR Fixes It)
                       </h4>
                       <p className="mt-2 text-xs leading-relaxed text-slate-600">
                         Learn how optical recognition pinpoints errors inside rasterized Canva banners, Figma artboards, and marketing flyers in seconds.
@@ -4912,19 +4912,19 @@ export default function Home() {
                 {/* GUIDE 2 */}
                 <ScrollReveal delay={120} className="h-full">
                   <Link
-                    href="/blog/top-5-mistakes-in-presentation-slides"
+                    href="/blog/how-to-check-spelling-in-canva-before-publishing"
                     style={{ borderColor: "#e5e5df" }}
                     className="group flex h-full flex-col justify-between rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-lg hover:shadow-[#3158d5]/5"
                   >
                     <div>
                       <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
-                        Pitch Decks &amp; Slides
+                        Canva &amp; Creative Workflow
                       </span>
                       <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-[#3158d5] transition">
-                        Top 5 Spelling and Design Mistakes in Presentation Slides
+                        How to Check Spelling in Canva Designs Before Publishing
                       </h4>
                       <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                        The subtle slide mistakes that damage pitch credibility—from headline typos to inconsistent typographic hierarchy.
+                        Step-by-step pre-flight proofreading guide for Canva flyers, social media carousels, infographics, and exported prints.
                       </p>
                     </div>
                     <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#3158d5]">
@@ -4937,19 +4937,19 @@ export default function Home() {
                 {/* GUIDE 3 */}
                 <ScrollReveal delay={240} className="h-full">
                   <Link
-                    href="/blog/american-vs-british-english-spelling-guide"
+                    href="/blog/how-to-find-spelling-mistakes-in-scanned-pdf"
                     style={{ borderColor: "#e5e5df" }}
                     className="group flex h-full flex-col justify-between rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-lg hover:shadow-[#3158d5]/5"
                   >
                     <div>
                       <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
-                        Global Copywriting
+                        Document Proofreading
                       </span>
                       <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-[#3158d5] transition">
-                        American vs British English Spelling: A Complete Visual Guide
+                        How to Find Spelling Mistakes in a Scanned PDF (Without Retyping)
                       </h4>
                       <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                        Master key regional orthographic variations (-ize vs -ise, -or vs -our) so your cross-border campaigns remain consistent.
+                        Extract text, spot hidden typos, and proofread non-selectable PDF contracts and scans using browser-based OCR.
                       </p>
                     </div>
                     <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#3158d5]">

@@ -1201,7 +1201,7 @@ export default function ImageCompressorClient() {
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src="/compressor-sample-preview.png"
+                            src="/compressor-sample-preview.webp"
                             alt="Sample High-Res Catalog Image"
                             className="w-full h-auto object-cover block"
                           />
@@ -1266,7 +1266,7 @@ export default function ImageCompressorClient() {
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src="/compressor-sample-preview.png"
+                              src="/compressor-sample-preview.webp"
                               alt="Sample High-Res Catalog Image"
                               className="w-full h-auto object-cover block"
                             />

@@ -172,9 +172,9 @@ export default function DesignCheckClient() {
     try {
       setLoadingSample(true);
       setError(null);
-      let res = await fetch("/design-check-poster.png");
-      let fileName = "design-check-poster.png";
-      let fileType = "image/png";
+      let res = await fetch("/design-check-poster.webp");
+      let fileName = "design-check-poster.webp";
+      let fileType = "image/webp";
 
       if (!res.ok) {
         res = await fetch("/spellense-launch-banner.jpg");
@@ -1082,7 +1082,7 @@ export default function DesignCheckClient() {
                               <circle cx="9" cy="9" r="2" />
                               <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
                             </svg>
-                            <span>design-check-poster.png</span>
+                            <span>design-check-poster.webp</span>
                           </div>
                           <span className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
                             DESIGN AUDIT PREVIEW
@@ -1100,7 +1100,7 @@ export default function DesignCheckClient() {
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src="/design-check-poster.png"
+                              src="/design-check-poster.webp"
                               alt="Creative QA poster sample with spelling, contrast, and safe-margin findings"
                               className="w-full h-auto object-cover"
                             />
@@ -1179,7 +1179,7 @@ export default function DesignCheckClient() {
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                              src="/design-check-poster.png"
+                              src="/design-check-poster.webp"
                               alt="Creative QA poster sample with spelling, contrast, and safe-margin findings"
                                 className="w-full h-auto object-cover block"
                               />
