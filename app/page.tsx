@@ -4053,7 +4053,7 @@ export default function Home() {
                                 e.stopPropagation();
                                 loadSampleFile();
                               }}
-                              className="text-xs font-semibold text-[#3158d5] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                              className="text-xs font-semibold text-[#1c201a] hover:underline inline-flex items-center gap-1 cursor-pointer"
                             >
                               <span>Try a sample document</span>
                               <span>→</span>

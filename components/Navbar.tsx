@@ -377,9 +377,6 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
               }`}
             >
               <span>3D Flipbook</span>
-              <span className="hidden 2xl:inline-block text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
-                New
-              </span>
             </Link>
 
             {/* 3. Image Compressor */}
@@ -404,9 +401,6 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
               }`}
             >
               <span>QR Code Generator</span>
-              <span className="hidden xl:inline-block text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
-                New
-              </span>
             </Link>
 
             {/* 5. ID Print Maker */}
@@ -419,9 +413,6 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
               }`}
             >
               <span>ID Print Maker</span>
-              <span className="hidden 2xl:inline-block text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
-                New
-              </span>
             </Link>
 
             {/* 6. Image to Text */}

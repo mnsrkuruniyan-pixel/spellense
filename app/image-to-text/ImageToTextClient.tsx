@@ -861,7 +861,7 @@ export default function ImageToTextClient() {
                             handleLoadSample();
                           }}
                           disabled={loadingSample}
-                          className="text-xs font-semibold text-[#3158d5] hover:underline inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                          className="text-xs font-semibold text-[#1c201a] hover:underline inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                         >
                           {loadingSample ? (
                             <span>Loading sample...</span>
