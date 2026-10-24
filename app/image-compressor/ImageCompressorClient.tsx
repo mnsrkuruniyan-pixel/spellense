@@ -1016,7 +1016,7 @@ export default function ImageCompressorClient() {
             <div className="mt-2 sm:mt-4">
               {items.length === 0 ? (
                 /* UPLOAD STAGE: SPLIT HERO CARD (EXACT MATCH TO HOME PAGE) */
-                <div className="mx-auto mt-6 sm:mt-8 max-w-[980px]">
+                <div className="mx-auto mt-6 sm:mt-8 w-full">
                   {uploadError && (
                     <div className="mx-auto mb-4 flex items-center justify-between rounded-2xl border border-rose-200/90 bg-rose-50/95 px-5 py-3.5 text-sm font-semibold text-rose-700 shadow-sm backdrop-blur-md">
                       <div className="flex items-center gap-3">

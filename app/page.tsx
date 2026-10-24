@@ -3613,7 +3613,7 @@ export default function Home() {
 
           {/* UPLOAD & TEXT CHECK SECTION */}
 
-          <div className="mx-auto mt-8 max-w-[980px] sm:mt-10">
+          <div className="mx-auto mt-8 w-full sm:mt-10">
 
 
             {/* UPLOAD VALIDATION ERROR BANNER */}

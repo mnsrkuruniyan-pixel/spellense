@@ -628,7 +628,7 @@ export default function ImageToTextClient() {
 
         {/* INTERACTIVE WORKSPACE SECTION */}
         <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-16 mt-3 sm:mt-5">
-          <div className="mx-auto max-w-[980px] w-full">
+          <div className="mx-auto w-full">
             {/* UPLOAD ERROR ALERT */}
             {uploadError && (
               <div

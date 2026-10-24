@@ -1006,7 +1006,7 @@ export default function FlipbookClient() {
               </div>
 
               {/* UPLOAD CARD CONTAINER (SPLIT: LEFT UPLOAD, RIGHT SAMPLE PREVIEW - EXACT MATCH TO HOME PAGE) */}
-              <div className="mx-auto mt-6 sm:mt-8 max-w-[980px]">
+              <div className="mx-auto mt-6 sm:mt-8 w-full">
                 <div
                   style={{
                     borderColor: "#e5e5df",

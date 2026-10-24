@@ -366,7 +366,7 @@ export default function CaseConverterClient() {
 
         {/* WORKSPACE CONTAINER */}
         <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-16 mt-3 sm:mt-5">
-          <div className="mx-auto max-w-[980px]">
+          <div className="mx-auto w-full">
             {/* MAIN TOOL CARD */}
             <div
               style={{

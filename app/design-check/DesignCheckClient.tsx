@@ -889,7 +889,7 @@ export default function DesignCheckClient() {
         )}
 
         <section className={`mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 ${result ? "mt-0 pb-0" : "pb-16 mt-3 sm:mt-5"}`}>
-          <div className="mx-auto max-w-[980px]">
+          <div className="mx-auto w-full">
             {/* Always-mounted hidden file input so "Audit Another Design" works from results view */}
             <input
               ref={fileInputRef}
