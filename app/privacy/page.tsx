@@ -35,42 +35,40 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-transparent text-black relative z-10">
+    <main style={{ backgroundColor: "#faf9f6" }} className="relative z-10 min-h-screen bg-[#faf9f6] font-sans text-[15px] text-[#1c201a] antialiased selection:bg-[#bcd5ff] selection:text-black">
 
       {/* NAVBAR */}
       <Navbar />
 
       {/* HERO & CONTENT SECTION */}
-      <section className="relative overflow-hidden pb-24 pt-12 sm:pt-16">
-        {/* Ambient background glows */}
-        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
-        <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
-        <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
-
-        <div className="relative mx-auto max-w-4xl px-5 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden pb-20 pt-3 sm:pb-24 sm:pt-6">
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
 
           {/* PAGE HEADER */}
-          <div className="text-center pt-2 pb-2 sm:pt-4 sm:pb-4">
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
+          <div className="pb-2 pt-2 text-center sm:pb-4 sm:pt-6">
+            <div style={{ color: "#3158d5", letterSpacing: "0.18em", fontSize: "12px", fontWeight: 700 }} className="mb-3 inline-flex items-center uppercase sm:mb-4">
+              Privacy &amp; Security
+            </div>
+            <h1 className="mx-auto max-w-5xl text-center text-[34px] font-black leading-[1.12] tracking-[-0.035em] text-[#1c201a] sm:text-[56px] md:text-[64px] lg:text-[72px]">
               Privacy Policy
             </h1>
           </div>
 
           {/* PRIVACY PILLARS SUMMARY CARDS */}
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/90 bg-white/80 p-5 shadow-xs backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-md">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+          <div className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-3">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-5 shadow-2xs transition hover:-translate-y-0.5 hover:shadow-md">
+              <div style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="flex h-10 w-10 items-center justify-center rounded-xl">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
                   <path d="m9 12 2 2 4-4" />
                 </svg>
               </div>
-              <h3 className="mt-3 font-bold text-slate-900">Zero File Storage</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500">Files are processed ephemerally in RAM and wiped immediately after analysis completes.</p>
+              <h3 className="mt-3 font-bold text-[#1c201a]">Zero File Storage</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-[#70746d]">Files are processed ephemerally in RAM and wiped immediately after analysis completes.</p>
             </div>
 
-            <div className="rounded-2xl border border-white/90 bg-white/80 p-5 shadow-xs backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-md">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-5 shadow-2xs transition hover:-translate-y-0.5 hover:shadow-md">
+              <div style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="flex h-10 w-10 items-center justify-center rounded-xl">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <path d="M4.93 4.93l4.24 4.24" />
@@ -80,84 +78,84 @@ export default function PrivacyPage() {
                   <circle cx="12" cy="12" r="4" />
                 </svg>
               </div>
-              <h3 className="mt-3 font-bold text-slate-900">No Account Required</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500">We never collect your name, email, credentials, or personal tracking identifiers.</p>
+              <h3 className="mt-3 font-bold text-[#1c201a]">No Account Required</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-[#70746d]">We never collect your name, email, credentials, or personal tracking identifiers.</p>
             </div>
 
-            <div className="rounded-2xl border border-white/90 bg-white/80 p-5 shadow-xs backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-md">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-5 shadow-2xs transition hover:-translate-y-0.5 hover:shadow-md">
+              <div style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="flex h-10 w-10 items-center justify-center rounded-xl">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
               </div>
-              <h3 className="mt-3 font-bold text-slate-900">No AI Training</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500">Your documents and proprietary intellectual property are never used to train machine learning models.</p>
+              <h3 className="mt-3 font-bold text-[#1c201a]">No AI Training</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-[#70746d]">Your documents and proprietary intellectual property are never used to train machine learning models.</p>
             </div>
           </div>
 
           {/* DETAILED PRIVACY CLAUSES */}
-          <div className="mt-12 space-y-6">
+          <div className="mt-8 space-y-4 sm:mt-10 sm:space-y-5">
 
             {/* 1 */}
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">1. What Spellense Does &amp; Core Purpose</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">1. What Spellense Does &amp; Core Purpose</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 Spellense provides an automated visual spelling inspection service. Users upload visual documents including images (JPEG, PNG, WebP), Portable Document Formats (PDF), Microsoft Word documents (DOCX), PowerPoint presentations (PPTX), and Excel spreadsheets (XLSX). The platform extracts English language text strings strictly to detect spelling irregularities and provide contextual suggestions.
               </p>
             </div>
 
             {/* 2 */}
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">2. In-Memory Processing &amp; Zero File Storage</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">2. In-Memory Processing &amp; Zero File Storage</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 When you submit a document for spelling verification, the file is held temporarily in random access memory (RAM) exclusively to execute Optical Character Recognition (OCR) and dictionary queries. 
               </p>
-              <ul className="mt-3 space-y-2 text-sm text-slate-600 list-disc list-inside">
-                <li>Files are <strong className="text-slate-800">never written to permanent disk storage</strong> or uploaded to persistent databases.</li>
+              <ul className="mt-3 list-inside list-disc space-y-2 text-sm text-[#70746d]">
+                <li>Files are <strong className="text-[#1c201a]">never written to permanent disk storage</strong> or uploaded to persistent databases.</li>
                 <li>Once the check response is returned to your browser, server memory pointers for the file are immediately cleared.</li>
                 <li>Spellense operates without a database of user files or document archives.</li>
               </ul>
             </div>
 
             {/* 3 */}
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">3. Optical Character Recognition (OCR) &amp; Text Parsing</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">3. Optical Character Recognition (OCR) &amp; Text Parsing</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 For image assets and scanned PDFs without selectable text layers, OCR technology identifies visible English alphanumeric characters. The parsed tokens are matched against local dictionary engines (including American and British English lexicons). Document layouts and bounding box coordinates are mapped in the client browser session so you can visually review detected mistakes.
               </p>
             </div>
 
             {/* 4 */}
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">4. No Account, Registration, or Personal Profiles</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">4. No Account, Registration, or Personal Profiles</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 Spellense is deliberately designed as a friction-free utility. You do not need to register, create a username, verify an email address, or enter payment details. Consequently, Spellense does not maintain user account profiles, mailing lists, or marketing CRM records.
               </p>
             </div>
 
             {/* 5 */}
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">5. Data Security in Transit</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">5. Data Security in Transit</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 All communications between your web browser and Spellense servers are encrypted using modern Transport Layer Security (TLS 1.3/HTTPS). This ensures that your files cannot be intercepted or modified by unauthorized third parties during upload.
               </p>
             </div>
 
             {/* 6 */}
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">6. Cookies &amp; Technical Analytics</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">6. Cookies &amp; Technical Analytics</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 Spellense does not deploy tracking cookies for cross-site behavioral profiling. Our hosting infrastructure may collect standard, anonymized server access logs (such as IP address, browser user-agent, and response latency) solely for rate limiting, DDoS mitigation, and server stability monitoring.
               </p>
             </div>
 
             {/* 7 */}
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">7. Contact &amp; Inquiries</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">7. Contact &amp; Inquiries</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 If you have questions regarding this Privacy Policy, our in-memory architecture, or data handling practices, please contact us directly via email at{" "}
-                <a className="font-semibold text-blue-600 hover:underline" href="mailto:hello@spellense.com">
+                <a className="font-semibold text-[#3158d5] underline-offset-2 hover:underline" href="mailto:hello@spellense.com">
                   hello@spellense.com
                 </a>.
               </p>
@@ -166,14 +164,15 @@ export default function PrivacyPage() {
           </div>
 
           {/* BOTTOM QUICK CALLOUT */}
-          <div className="mt-12 rounded-3xl border border-blue-200/80 bg-gradient-to-r from-blue-50/80 via-indigo-50/60 to-white p-7 text-center shadow-xs backdrop-blur-md sm:flex sm:items-center sm:justify-between sm:text-left">
+          <div style={{ borderColor: "#e5e5df", backgroundColor: "#efeee7" }} className="mt-10 rounded-[24px] border p-6 text-center shadow-2xs sm:flex sm:items-center sm:justify-between sm:p-8 sm:text-left">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Ready to check your spelling privately?</h3>
-              <p className="mt-1 text-xs text-slate-500">Scan any image, PDF, or Office file with zero signup.</p>
+              <h3 className="text-base font-bold text-[#1c201a]">Ready to check your spelling privately?</h3>
+              <p className="mt-1 text-xs text-[#70746d]">Scan any image, PDF, or Office file with zero signup.</p>
             </div>
             <Link
               href="/"
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/35 sm:mt-0"
+              style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-xs font-bold text-white shadow-xs shadow-[#3158d5]/20 transition hover:-translate-y-0.5 hover:opacity-90 sm:mt-0"
             >
               <span>Launch Spell Checker</span>
               <span>→</span>

@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source ".";
+@source "../app";
 @source "../components";
 @source "../lib";
 
@@ -12,6 +14,212 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-serif: var(--font-instrument-serif), "Instrument Serif", Georgia, serif;
+  --color-brand-blue: #3158d5;
+  --color-brand-blue-hover: #2546b8;
+  --color-brand-cream: #f6f5f3;
+  --color-brand-cream-light: #efeee7;
+  --color-brand-border: #e5e5df;
+  --color-brand-border-light: #f0efe9;
+}
+
+/* Explicit brand utilities ensuring Tailwind v4 renders flat blue, cream and soft light borders */
+.bg-brand-blue,
+.bg-\[\#3158d5\] {
+  background-color: #3158d5 !important;
+}
+
+.hover\:bg-brand-blue-hover:hover,
+.hover\:bg-\[\#2546b8\]:hover {
+  background-color: #2546b8 !important;
+}
+
+.text-brand-blue,
+.text-\[\#3158d5\] {
+  color: #3158d5 !important;
+}
+
+.border-brand-border,
+.border-\[\#deded6\],
+.border-\[\#e5e5df\] {
+  border-color: #e5e5df !important;
+}
+
+.bg-brand-cream,
+.bg-\[\#f6f5f3\] {
+  background-color: #f6f5f3 !important;
+}
+
+/* Explicit responsive visibility utilities — always compiled via @layer */
+@layer base {
+  .converter-desktop-only {
+    display: none;
+  }
+  .converter-mobile-only {
+    display: flex;
+  }
+  .spellense-desktop-only {
+    display: none;
+  }
+  .spellense-mobile-only {
+    display: flex;
+  }
+}
+
+@media (width >= 640px) {
+  .converter-desktop-only {
+    display: flex !important;
+  }
+  .converter-mobile-only {
+    display: none !important;
+  }
+  .usuk-desktop {
+    display: flex !important;
+  }
+  .usuk-mobile {
+    display: none !important;
+  }
+  .spellense-desktop-only {
+    display: flex !important;
+  }
+  .spellense-mobile-only {
+    display: none !important;
+  }
+}
+
+/* Card Crop Editor Modal Mobile Single Line Controls */
+@media (max-width: 639px) {
+  .usuk-mobile {
+    display: flex !important;
+  }
+  .usuk-desktop {
+    display: none !important;
+  }
+  .modal-mobile-single-line {
+    justify-content: center !important;
+    flex-wrap: nowrap !important;
+    gap: 3px !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    overflow: hidden !important;
+  }
+  .modal-mobile-btn {
+    height: 28px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    border-radius: 7px !important;
+  }
+  .modal-mobile-btn-done {
+    height: 30px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    font-size: 10.5px !important;
+    white-space: nowrap !important;
+    border-radius: 9999px !important;
+  }
+}
+
+
+.bg-brand-cream-light,
+.bg-\[\#efeee7\] {
+  background-color: #efeee7 !important;
+}
+
+.bg-brand-paper,
+.bg-\[\#faf9f6\] {
+  background-color: #faf9f6 !important;
+}
+
+.bg-brand-canvas,
+.bg-\[\#ecebe4\] {
+  background-color: #ecebe4 !important;
+}
+
+.max-w-\[980px\] {
+  max-width: 980px !important;
+}
+
+/* Global Text Selection: font color is ALWAYS black across the entire site */
+::selection,
+*::selection {
+  background-color: #bcd5ff !important;
+  color: #000000 !important;
+}
+
+::-moz-selection,
+*::-moz-selection {
+  background-color: #bcd5ff !important;
+  color: #000000 !important;
+}
+
+input::selection,
+textarea::selection {
+  background-color: #bcd5ff !important;
+  color: #000000 !important;
+}
+
+@media (min-width: 1024px) {
+  .qr-card-left-col {
+    width: 50% !important;
+    max-width: 50% !important;
+    flex: 0 0 50% !important;
+  }
+  .qr-card-right-col {
+    width: 50% !important;
+    max-width: 50% !important;
+    flex: 0 0 50% !important;
+  }
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/InstrumentSerif-Italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/InstrumentSerif-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'ITC Modern No. 216';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ITCModernNo216-Italic.woff2') format('woff2'),
+       url('/fonts/ITCModernNo216-Italic.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'ITC Modern No. 216';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ITCModernNo216-Italic.woff2') format('woff2'),
+       url('/fonts/ITCModernNo216-Italic.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'ITC Modern No. 216';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/ITCModernNo216-BoldItalic.woff2') format('woff2'),
+       url('/fonts/ITCModernNo216-BoldItalic.ttf') format('truetype');
+}
+
+.font-editorial, .font-itc-modern {
+  font-family: var(--font-itc-modern), 'ITC Modern No. 216', var(--font-instrument-serif), 'Instrument Serif', Georgia, serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -184,4 +392,19 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   cursor: pointer;
 }
+
+/* Hide native disclosure triangle on details/summary for custom chevrons */
+summary {
+  list-style: none;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+summary::marker {
+  display: none;
+}
+
+
+
+
 

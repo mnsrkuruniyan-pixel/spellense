@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ScrollReveal from "@/components/ScrollReveal";
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 const ALLOWED_EXTENSIONS = [
@@ -84,7 +85,7 @@ async function optimizeImageForOcr(imageFile: File): Promise<File> {
 const FAQ_ITEMS = [
   {
     q: "What image formats and file types are supported?",
-    a: "Spellense supports JPG, JPEG, PNG, and WebP raster images, as well as multi-page PDF documents. You can upload high-resolution screenshots, smartphone photos, scanned documents, and infographics with no registration required.",
+    a: "Spellense supports JPG, JPEG, PNG, and WebP raster images, as well as multi-page PDF documents and Office files (DOCX, PPTX, XLSX). You can upload high-resolution screenshots, smartphone photos, scanned documents, and infographics with no registration required.",
   },
   {
     q: "What is the maximum file size limit?",
@@ -125,6 +126,7 @@ export default function ImageToTextClient() {
   const [copied, setCopied] = useState(false);
   const [loadingSample, setLoadingSample] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [showImagePreview, setShowImagePreview] = useState(true);
 
   // Clean up object URLs on unmount or file change
   useEffect(() => {
@@ -153,7 +155,6 @@ export default function ImageToTextClient() {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(extractedText);
       } else {
-        // Fallback for older browsers or non-secure contexts
         const textArea = document.createElement("textarea");
         textArea.value = extractedText;
         textArea.style.position = "fixed";
@@ -481,7 +482,7 @@ export default function ImageToTextClient() {
     }
   };
 
-  // Load sample file
+  // Test with sample document
   const handleLoadSample = async () => {
     try {
       setLoadingSample(true);
@@ -517,42 +518,139 @@ export default function ImageToTextClient() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10 text-[15px]">
+    <div
+      style={{ backgroundColor: "#faf9f6" }}
+      className="flex min-h-screen flex-col bg-[#faf9f6] font-sans text-slate-800 antialiased selection:bg-[#bcd5ff] selection:text-black relative z-10 text-[15px]"
+    >
       {/* NAVBAR */}
-      <Navbar />
+      <Navbar onUploadClick={() => fileInputRef.current?.click()} />
 
-      <main id="main-content" className="flex-1">
-        {/* HERO TITLE — Matching Figma Layout Style */}
-        <section className="px-4 max-w-7xl mx-auto pt-3 sm:pt-6 pb-1.5 sm:pb-2.5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-            <div>
-              <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0f172a]">
-                Image to Text (OCR)
+      <main id="main-content" className="flex-1 pb-16 sm:pb-24">
+        {/* HERO TITLE — EXACT HOMEPAGE TYPOGRAPHY MATCH */}
+        <section className="relative overflow-hidden pt-3 sm:pt-6 pb-2">
+          <div className="relative mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-5xl text-center pt-2 sm:pt-4 pb-2">
+              {/* EYEBROW FROM HOMEPAGE */}
+              <div
+                style={{
+                  color: "#3158d5",
+                  letterSpacing: "0.18em",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                }}
+                className="inline-flex items-center uppercase mb-3 sm:mb-4"
+              >
+                IMAGE TO TEXT CONVERTER
+              </div>
+
+              {/* TWO-PART EXPRESSIVE HEADING */}
+              <h1
+                aria-live="polite"
+                className="text-center tracking-tight text-[#1c201a] flex flex-col items-center justify-center"
+                style={{ margin: "0 auto" }}
+              >
+                <span
+                  style={{
+                    fontSize: "clamp(38px, 5.2vw, 68px)",
+                    fontWeight: 900,
+                    lineHeight: 1.05,
+                    letterSpacing: "-0.035em",
+                    color: "#1c201a",
+                    display: "block",
+                    fontFamily:
+                      "var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                  }}
+                >
+                  Extract text.
+                </span>
+                <span
+                  style={{
+                    fontFamily:
+                      "'ITC Modern No. 216', var(--font-itc-modern), 'Instrument Serif', Georgia, serif",
+                    fontSize: "clamp(32px, 4.4vw, 58px)",
+                    fontWeight: 400,
+                    fontStyle: "italic",
+                    lineHeight: 1.05,
+                    letterSpacing: "-0.01em",
+                    color: "#1c201a",
+                    display: "block",
+                    marginTop: "6px",
+                  }}
+                >
+                  From any photo or PDF.
+                </span>
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1 line-clamp-1 sm:line-clamp-none">
-                Extract copyable, editable text from scanned images, screenshots, and PDF documents with zero data retention.
-              </p>
-            </div>
 
-            {/* Privacy Badge */}
-            <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 text-xs font-semibold text-emerald-800 self-start sm:self-center shadow-2xs">
-              <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-              <span>100% private — processed locally in browser</span>
+              {/* SUBTITLE */}
+              <p
+                style={{
+                  color: "#70746d",
+                  fontSize: "16px",
+                  lineHeight: 1.55,
+                  maxWidth: "560px",
+                  margin: "18px auto 0",
+                }}
+                className="text-center font-normal"
+              >
+                Fast, private OCR that pulls clean, editable text from screenshots, scanned documents, and images. Zero data retention.
+              </p>
+
+              {/* PRIVACY PILL BADGE */}
+              <div className="mt-4 flex items-center justify-center">
+                <div
+                  style={{
+                    backgroundColor: "#ecfdf5",
+                    borderColor: "#a7f3d0",
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    color: "#047857",
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold shadow-2xs"
+                >
+                  <svg
+                    className="w-3.5 h-3.5 text-emerald-600 shrink-0"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                  <span>100% private — processed locally with zero server storage</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* INTERACTIVE WORKSPACE SECTION */}
-        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-16 mt-2 sm:mt-4">
-          <div className="w-full">
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-16 mt-3 sm:mt-5">
+          <div className="mx-auto max-w-[980px] w-full">
             {/* UPLOAD ERROR ALERT */}
             {uploadError && (
-              <div className="mb-4 rounded-2xl border border-red-200 bg-red-50/90 p-4 text-xs font-semibold text-red-700 shadow-xs flex items-center justify-between gap-3 animate-in fade-in duration-200">
+              <div
+                style={{
+                  borderColor: "#fecaca",
+                  backgroundColor: "#fef2f2",
+                  color: "#b91c1c",
+                }}
+                className="mb-4 rounded-2xl border p-4 text-xs sm:text-sm font-semibold shadow-xs flex items-center justify-between gap-3 animate-in fade-in duration-200"
+              >
                 <div className="flex items-center gap-2.5">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-red-600">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="shrink-0 text-red-600"
+                  >
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -563,6 +661,7 @@ export default function ImageToTextClient() {
                   type="button"
                   onClick={() => setUploadError(null)}
                   className="text-red-500 hover:text-red-800 font-bold px-2 py-1 cursor-pointer"
+                  title="Dismiss error"
                 >
                   ✕
                 </button>
@@ -584,671 +683,1219 @@ export default function ImageToTextClient() {
 
             {/* STATE 1: EXTRACTION IN PROGRESS */}
             {extracting && (
-              <div className="rounded-2xl sm:rounded-3xl border border-blue-200 bg-white p-10 sm:p-14 text-center shadow-xs animate-in fade-in duration-200">
+              <div
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ffffff",
+                }}
+                className="rounded-2xl sm:rounded-[24px] p-10 sm:p-14 text-center shadow-xs animate-in fade-in duration-200"
+              >
                 <div className="relative mx-auto flex h-20 w-20 items-center justify-center">
-                  <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-xl animate-pulse" />
-                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0055fe] text-white shadow-md shadow-blue-600/30">
+                  <div className="absolute inset-0 rounded-full bg-[#3158d5]/15 blur-xl animate-pulse" />
+                  <div
+                    style={{ backgroundColor: "#3158d5" }}
+                    className="relative flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-md shadow-[#3158d5]/30"
+                  >
                     <svg className="h-8 w-8 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8H4z"
+                      />
                     </svg>
                   </div>
                 </div>
 
-                <h2 className="mt-6 text-xl sm:text-2xl font-bold text-slate-900">
+                <h2 className="mt-6 text-xl sm:text-2xl font-bold text-[#1c201a]">
                   Extracting copyable text...
                 </h2>
-                <p className="mt-2 text-xs sm:text-sm font-medium text-slate-500">
+                <p className="mt-2 text-xs sm:text-sm font-medium text-[#70746d]">
                   {extractingStep}
                 </p>
-                <div className="mx-auto mt-6 max-w-xs h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#0055fe] rounded-full animate-pulse w-3/4" />
+                <div
+                  style={{ backgroundColor: "#efeee7" }}
+                  className="mx-auto mt-6 max-w-xs h-1.5 w-full rounded-full overflow-hidden"
+                >
+                  <div
+                    style={{ backgroundColor: "#3158d5" }}
+                    className="h-full rounded-full animate-pulse w-3/4"
+                  />
                 </div>
               </div>
             )}
 
-            {/* STATE 2: NO FILE UPLOADED OR WAITING (DROPZONE) */}
+            {/* STATE 2: NO FILE UPLOADED OR WAITING (EXACT HOMEPAGE SIZE & COMPACT LAYOUT) */}
             {!extracting && !hasExtracted && (
-              <div>
+              <div
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ecebe4",
+                  boxShadow: "none",
+                }}
+                className="relative w-full rounded-2xl sm:rounded-[24px] overflow-hidden"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
+                  {/* LEFT COLUMN: CONTROLS & DROPZONE (4/12) */}
+                  <div
+                    style={{ borderRight: "1px solid #e5e5df" }}
+                    className="lg:col-span-4 xl:col-span-4 p-6 sm:p-7 flex flex-col justify-between bg-white"
+                  >
+                    <div>
+                      {/* HEADER */}
+                      <div
+                        style={{ borderBottom: "1px solid #e5e5df" }}
+                        className="flex items-center justify-between pb-3"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-[#3158d5]" />
+                          <h2 className="text-xs sm:text-[13px] font-bold text-[#1c201a]">
+                            Upload Document
+                          </h2>
+                        </div>
+                        <span
+                          style={{
+                            backgroundColor: "#efeee7",
+                            borderColor: "#e5e5df",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                            color: "#555a52",
+                          }}
+                          className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full"
+                        >
+                          Max 25 MB
+                        </span>
+                      </div>
+
+                      {/* DASHED DROP ZONE */}
+                      <div
+                        onDragEnter={(e) => {
+                          e.preventDefault();
+                          setIsDragging(true);
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsDragging(true);
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          setIsDragging(false);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDragging(false);
+                          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                            processFile(e.dataTransfer.files[0]);
+                          }
+                        }}
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          borderColor: isDragging ? "#3158d5" : "#deded6",
+                          backgroundColor: isDragging ? "#f0f4fe" : "#f6f5f3",
+                        }}
+                        className={`mt-4 rounded-2xl border-2 border-dashed p-5 sm:p-6 text-center transition-all cursor-pointer ${
+                          isDragging
+                            ? "border-[#3158d5] bg-blue-50/70"
+                            : "hover:border-[#3158d5]/50"
+                        }`}
+                      >
+                        <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg text-[#3158d5]">
+                          <svg
+                            width="26"
+                            height="26"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <path d="M12 18v-6" />
+                            <path d="m9 15 3-3 3 3" />
+                          </svg>
+                        </div>
+
+                        <h3 className="mt-2.5 text-sm sm:text-[15px] font-bold text-[#1c201a]">
+                          Drop your image or PDF here
+                        </h3>
+
+                        <div className="mt-3.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              fileInputRef.current?.click();
+                            }}
+                            style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg px-7 py-2.5 text-sm font-bold shadow-xs transition hover:opacity-95 active:scale-[0.98] cursor-pointer min-w-[150px]"
+                          >
+                            <span>Choose file</span>
+                            <span className="text-base font-bold">↗</span>
+                          </button>
+                        </div>
+
+                        <p className="mt-2.5 text-[11px] text-[#767a74]">
+                          JPG, PNG, WebP, PDF &amp; Office files · Up to 25 MB
+                        </p>
+                      </div>
+
+                      {/* SAMPLE DOCUMENT BUTTON */}
+                      <div className="mt-3.5 text-center">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLoadSample();
+                          }}
+                          disabled={loadingSample}
+                          className="text-xs font-semibold text-[#3158d5] hover:underline inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                        >
+                          {loadingSample ? (
+                            <span>Loading sample...</span>
+                          ) : (
+                            <>
+                              <span>Try a sample document</span>
+                              <span>→</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* RIGHT COLUMN: SAMPLE OCR PREVIEW (8/12 - EXACT HOMEPAGE MATCH) */}
+                  <div
+                    style={{ backgroundColor: "#ecebe4" }}
+                    className="lg:col-span-8 xl:col-span-8 p-3.5 sm:p-5 lg:p-7 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div
+                        style={{ borderBottom: "1px solid #deded6" }}
+                        className="flex items-center justify-between pb-3 sm:pb-3.5"
+                      >
+                        <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-slate-500"
+                          >
+                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                            <circle cx="9" cy="9" r="2" />
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                          </svg>
+                          <span>sample-document.png</span>
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                          SAMPLE OCR PREVIEW
+                        </span>
+                      </div>
+
+                      {/* DESKTOP LAYOUT (>= 1024px): EXACT HOMEPAGE MATCH */}
+                      <div className="hidden lg:flex mt-5 flex-row items-start gap-6">
+                        {/* ARTWORK CARD */}
+                        <div
+                          onClick={handleLoadSample}
+                          style={{
+                            width: "240px",
+                            minWidth: "220px",
+                            maxWidth: "250px",
+                            flexShrink: 0,
+                            borderColor: "#deded6",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                          }}
+                          className="rounded-xl overflow-hidden shadow-xs bg-white cursor-pointer group/art transition hover:scale-[1.01]"
+                          title="Click to run OCR on this sample"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src="/sample-document.png"
+                            alt="Sample document for OCR text extraction"
+                            className="w-full h-auto object-cover block"
+                          />
+                        </div>
+
+                        {/* EXTRACTED TEXT OCR OUTPUT PREVIEW */}
+                        <div className="flex-1 min-w-0 w-full flex flex-col justify-between self-stretch">
+                          <div>
+                            <div className="flex items-center gap-2 text-xs font-bold text-[#1c201a]">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                              <span>OCR Output</span>
+                            </div>
+
+                            <div
+                              style={{ border: "2px solid #3158d5", backgroundColor: "#ffffff" }}
+                              className="mt-3 rounded-xl p-3.5 shadow-xs"
+                            >
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                EXTRACTED TEXT
+                              </div>
+                              <div className="mt-1 text-xs font-bold text-[#1c201a] truncate">
+                                SPELLENSE DEMO DOCUMENT
+                              </div>
+                              <p className="mt-1 text-[11px] font-mono text-[#555a52] leading-relaxed line-clamp-3">
+                                Annual Design &amp; Marketing Brief...<br />
+                                Welcome to the official review copy of our launch flyer. This document demonstrates our layout standards.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 pt-1">
+                            <p className="text-[11.5px] font-medium text-[#767a74] text-center flex items-center justify-center gap-1.5">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+                                <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
+                                <path d="m9 12 2 2 4-4" />
+                              </svg>
+                              <span>In-memory OCR &bull; Zero data retention</span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* MOBILE & TABLET LAYOUT (< 1024px): EXACT HOMEPAGE MATCH */}
+                      <div className="block lg:hidden mt-3.5 sm:mt-5">
+                        <div className="flex flex-row items-start gap-3 sm:gap-4">
+                          <div
+                            onClick={handleLoadSample}
+                            style={{
+                              width: "38%",
+                              minWidth: "120px",
+                              maxWidth: "165px",
+                              flexShrink: 0,
+                              borderColor: "#deded6",
+                              borderWidth: "1px",
+                              borderStyle: "solid",
+                            }}
+                            className="rounded-xl overflow-hidden shadow-xs bg-white cursor-pointer group/art transition hover:scale-[1.01]"
+                            title="Click to run OCR on this sample"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src="/sample-document.png"
+                              alt="Sample document for OCR text extraction"
+                              className="w-full h-auto object-cover block"
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
+                            <div>
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-[#1c201a]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                <span>OCR Output</span>
+                              </div>
+
+                              <div
+                                style={{ border: "2px solid #3158d5", backgroundColor: "#ffffff" }}
+                                className="mt-2 rounded-xl p-2.5 sm:p-3 shadow-xs"
+                              >
+                                <div className="text-[9px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                  EXTRACTED TEXT
+                                </div>
+                                <div className="mt-0.5 text-xs font-bold text-[#1c201a] truncate">
+                                  SPELLENSE DEMO
+                                </div>
+                                <p className="mt-0.5 text-[10px] font-mono text-[#555a52] leading-tight line-clamp-2">
+                                  Annual Design Brief...
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="mt-2.5">
+                              <p className="text-[10px] font-medium text-[#767a74] text-center flex items-center justify-center gap-1">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+                                  <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
+                                  <path d="m9 12 2 2 4-4" />
+                                </svg>
+                                <span>In-memory OCR &bull; Zero data retention</span>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STATE 3: EXTRACTED OUTPUT PANEL */}
+            {!extracting && hasExtracted && (
+              <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-200">
+                {/* FILE STATUS BAR */}
                 <div
-                  onDragEnter={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
+                  style={{
+                    borderColor: "#e5e5df",
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    backgroundColor: "#ffffff",
                   }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                      processFile(e.dataTransfer.files[0]);
-                    }
-                  }}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`group relative w-full rounded-2xl sm:rounded-3xl border py-12 px-6 sm:py-16 sm:px-12 lg:py-20 text-center transition-all duration-300 cursor-pointer overflow-hidden ${
-                    isDragging
-                      ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.01]"
-                      : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
-                  }`}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4 shadow-xs"
                 >
-                  <div className="relative">
-                    {/* Cloud Upload Icon */}
-                    <div className="mx-auto flex justify-center items-center">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      style={{
+                        backgroundColor: "#e8effe",
+                        borderColor: "#bcd5ff",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        color: "#3158d5",
+                      }}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                    >
                       <svg
-                        width="68"
-                        height="68"
+                        width="18"
+                        height="18"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="1.6"
+                        strokeWidth="2.2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="text-slate-400 group-hover:text-slate-500 group-hover:-translate-y-1 transition-all duration-300"
                       >
-                        <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-                        <path d="M12 12v9" />
-                        <path d="m16 16-4-4-4 4" />
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
                       </svg>
                     </div>
-
-                    <h2 className="mt-5 text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
-                      {isDragging ? "Drop file to extract text" : "Drop your image or document here"}
-                    </h2>
-
-                    {/* BUTTONS (SIDE BY SIDE WITH BREATHING SPACE) */}
-                    <div className="mt-8 sm:mt-10 mb-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          fileInputRef.current?.click();
-                        }}
-                        className="group/btn inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
-                      >
-                        <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="text-slate-400 group-hover/btn:text-[#0055fe] transition-colors"
-                        >
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="17 8 12 3 7 8" />
-                          <line x1="12" y1="3" x2="12" y2="15" />
-                        </svg>
-                        <span>Upload Now</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLoadSample();
-                        }}
-                        disabled={loadingSample}
-                        className="group/sample inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-blue-400/80 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] transition-all cursor-pointer shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
-                        title="Test immediately with a sample image"
-                      >
-                        {loadingSample ? (
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-                        ) : (
-                          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover/sample:text-[#0055fe] transition-colors">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <polyline points="21 15 16 10 5 21" />
-                          </svg>
-                        )}
-                        <span>Try Sample</span>
-                      </button>
-                    </div>
-
-                    {/* Format chips */}
-                    <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-[11px] font-bold text-slate-700">
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
-                        <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                        PDF
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                        DOCX
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                        PPTX
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        XLSX
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1 shadow-2xs">
-                        <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
-                        JPG • PNG • WEBP
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4 Trust Feature Cards */}
-                <div className="mt-6 sm:mt-8 w-full">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-                    <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                          <polyline points="14 2 14 8 20 8" />
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                          All Document Formats
-                        </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                          PDF, Word, PPTX, Images
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                          AI OCR Accuracy
-                        </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                          Preserves formatting &amp; lines
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
-                          <path d="m9 12 2 2 4-4" />
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                          Instant Copy &amp; Export
-                        </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                          One-click copy • 100% Free
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                          Zero Data Retention
-                        </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                          In-memory RAM processing
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-          {/* STATE 3: EXTRACTED OUTPUT PANEL */}
-          {!extracting && hasExtracted && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              {/* FILE BAR */}
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white/90 px-4 py-3 shadow-xs backdrop-blur-md">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                      <circle cx="8.5" cy="8.5" r="1.5" />
-                      <polyline points="21 15 16 10 5 21" />
-                    </svg>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate text-xs font-bold text-slate-800">
-                        {file?.name || "Uploaded Document"}
-                      </span>
-                      {file && (
-                        <span className="shrink-0 text-[10px] font-semibold text-slate-400">
-                          ({(file.size / 1024).toFixed(0)} KB)
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-xs sm:text-sm font-bold text-[#1c201a]">
+                          {file?.name || "Uploaded Document"}
                         </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] font-medium text-emerald-600 flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      <span>OCR Extraction Complete</span>
+                        {file && (
+                          <span className="shrink-0 text-[10px] font-semibold text-[#70746d]">
+                            ({(file.size / 1024).toFixed(0)} KB)
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] font-medium text-emerald-600 flex items-center gap-1.5 mt-0.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        <span>OCR Extraction Complete</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:text-blue-600 cursor-pointer"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                    <path d="M3 3v5h5" />
-                  </svg>
-                  <span>Extract another image</span>
-                </button>
-              </div>
-
-              {/* NO TEXT DETECTED ALERT */}
-              {noTextDetected ? (
-                <div className="rounded-3xl border border-amber-200/90 bg-amber-50/90 p-8 text-center shadow-xs">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                  </div>
-                  <h3 className="mt-4 text-lg font-black text-slate-900">
-                    No readable English text was detected
-                  </h3>
-                  <p className="mx-auto mt-2 max-w-md text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    We could not recognize clear letterforms in this image. Please ensure the image is clear, well-lit, has legible contrast, and is not overly compressed.
-                  </p>
-                  <div className="mt-5">
+                  <div className="flex items-center gap-2">
+                    {previewUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setShowImagePreview(!showImagePreview)}
+                        style={{
+                          backgroundColor: "#faf9f6",
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          color: "#1c201a",
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold shadow-2xs transition hover:bg-[#efeee7] cursor-pointer"
+                      >
+                        <span>{showImagePreview ? "Hide image" : "Show image"}</span>
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={handleReset}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-slate-800 cursor-pointer"
-                    >
-                      <span>Upload a different image</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* EXTRACTED TEXT PANEL */
-                <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-7 shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)]">
-                  {/* HEADER ROW */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-[#0055fe]" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Extracted Text
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-xs font-medium text-slate-500">
-                      <span>
-                        <strong className="text-slate-800 font-bold">{stats.words}</strong> words
-                      </span>
-                      <span>•</span>
-                      <span>
-                        <strong className="text-slate-800 font-bold">{stats.chars}</strong> chars
-                      </span>
-                      <span>•</span>
-                      <span>
-                        <strong className="text-slate-800 font-bold">{stats.lines}</strong> lines
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* EDITABLE TEXTAREA */}
-                  <div className="mt-4">
-                    <textarea
-                      ref={outputTextareaRef}
-                      value={extractedText}
-                      onChange={(e) => setExtractedText(e.target.value)}
-                      rows={12}
-                      placeholder="Extracted text will appear here..."
-                      className="w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-sm leading-relaxed text-slate-800 outline-none transition focus:border-[#0055fe] focus:bg-white focus:ring-4 focus:ring-blue-500/10 font-mono sm:font-sans"
-                    />
-                  </div>
-
-                  {/* ACTIONS BAR */}
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* COPY BUTTON */}
-                      <button
-                        type="button"
-                        onClick={handleCopy}
-                        className={`group inline-flex items-center gap-1.5 rounded-xl border border-slate-200/90 px-4 py-2.5 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs hover:border-blue-400 ${
-                          copied
-                            ? "bg-emerald-600 text-white"
-                            : "bg-white hover:bg-slate-50 text-slate-700 hover:text-[#0055fe]"
-                        }`}
-                      >
-                        {copied ? (
-                          <>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            <span>Copied to Clipboard!</span>
-                          </>
-                        ) : (
-                          <>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 group-hover:text-[#0055fe] transition-colors">
-                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                            </svg>
-                            <span>Copy to clipboard</span>
-                          </>
-                        )}
-                      </button>
-
-                      {/* DOWNLOAD BUTTON */}
-                      <button
-                        type="button"
-                        onClick={handleDownload}
-                        className="group inline-flex items-center gap-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-4 py-2.5 text-xs font-bold text-slate-700 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all cursor-pointer"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 group-hover:text-[#0055fe] transition-colors">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="7 10 12 15 17 10" />
-                          <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        <span>Download as .txt</span>
-                      </button>
-                    </div>
-
-                    {/* SPELLCHECK CTA BUTTON */}
-                    <button
-                      type="button"
-                      onClick={handleRunSpellcheck}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#0055fe] hover:bg-blue-700 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/25 transition-all hover:-translate-y-0.5 cursor-pointer"
-                    >
-                      <span>Found a typo? Run spellcheck on this text</span>
-                      <span>→</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* CROSS-PROMOTION FUNNEL BANNER */}
-              {!noTextDetected && (
-                <div className="rounded-2xl sm:rounded-3xl border border-blue-200/90 bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-                  <div>
-                    <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-100/90 px-2.5 py-0.5 text-[11px] font-bold text-blue-700 uppercase tracking-wide">
-                      Need Visual Proofreading?
-                    </div>
-                    <h3 className="mt-1.5 text-base sm:text-lg font-bold text-slate-900">
-                      Want to check this text for typos and grammatical errors?
-                    </h3>
-                    <p className="mt-0.5 text-xs text-slate-500 font-normal">
-                      Carry this text straight into Spellense&apos;s dual-engine visual proofreader with zero re-uploading.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleRunSpellcheck}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#0055fe] hover:bg-blue-700 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition hover:-translate-y-0.5 shrink-0 cursor-pointer"
-                  >
-                    <span>Open Spellense Checker</span>
-                    <span>→</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* HOW IT WORKS SECTION */}
-      <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-16 border-t border-slate-200/80">
-        <div className="text-center max-w-2xl mx-auto">
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-            Fast &amp; Simple
-          </span>
-          <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-            How to extract text from images in 3 easy steps
-          </h2>
-          <p className="mt-2 text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
-            Effortlessly transform screenshots, photos, and scanned PDF documents into editable text in seconds.
-          </p>
-        </div>
-
-        <div className="mt-10 grid gap-5 sm:gap-6 md:grid-cols-3">
-          {/* STEP 1 */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-700">
-              01
-            </span>
-            <h3 className="mt-4 text-base font-bold text-slate-900">
-              Upload your image or PDF
-            </h3>
-            <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500 font-normal">
-              Drop any JPG, PNG, WebP image, or multi-page scanned PDF up to 25MB. No account or credit card required.
-            </p>
-          </div>
-
-          {/* STEP 2 */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-700">
-              02
-            </span>
-            <h3 className="mt-4 text-base font-bold text-slate-900">
-              In-Memory OCR Extraction
-            </h3>
-            <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500 font-normal">
-              High-accuracy Optical Character Recognition scans pixel matrices, extracting text tokens while preserving paragraphs and line breaks.
-            </p>
-          </div>
-
-          {/* STEP 3 */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-700">
-              03
-            </span>
-            <h3 className="mt-4 text-base font-bold text-slate-900">
-              Copy, Download, or Spellcheck
-            </h3>
-            <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500 font-normal">
-              Copy to clipboard with one click, save as a clean .txt file, or funnel straight into our spellchecker to catch hidden typos.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* WHY USE SPELLENSE OCR (FEATURE HIGHLIGHTS) */}
-      <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-16">
-        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xs">
-          <div className="max-w-2xl">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-              Built for Speed &amp; Accuracy
-            </span>
-            <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-              Why use Spellense Image to Text Converter?
-            </h2>
-            <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-500 font-normal">
-              Engineered for graphic designers, researchers, students, and professionals who need accurate text extraction without privacy risks.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
-              <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">Optical Precision</div>
-              <h3 className="mt-1 text-base font-bold text-slate-900">High-Resolution OCR</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500 font-normal">
-                Recognizes text from varied font families, contrast ratios, and complex flyer layouts with state-of-the-art accuracy.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
-              <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">Strict Privacy</div>
-              <h3 className="mt-1 text-base font-bold text-slate-900">Zero Server Storage</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500 font-normal">
-                100% ephemeral in-memory RAM processing. Your confidential screenshots, receipts, or contracts are never stored to disk or used for AI training.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
-              <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">Layout Preservation</div>
-              <h3 className="mt-1 text-base font-bold text-slate-900">Paragraph &amp; Line Breaks</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500 font-normal">
-                Unlike primitive OCR engines that bunch text into a single messy paragraph, Spellense retains your original line breaks.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
-              <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">PDF Ready</div>
-              <h3 className="mt-1 text-base font-bold text-slate-900">Scanned PDFs Handled</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500 font-normal">
-                Easily convert scanned multi-page PDF documents without native text layers directly into plain text without third-party converters.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
-              <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">Seamless Spellcheck</div>
-              <h3 className="mt-1 text-base font-bold text-slate-900">One-Click Proofreading</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500 font-normal">
-                Extracted text can be immediately passed to our spell checking engine with one click to highlight and fix any typos.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
-              <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">100% Free</div>
-              <h3 className="mt-1 text-base font-bold text-slate-900">No Signup, No Limits</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500 font-normal">
-                No subscription gates, credit card requirements, or daily scan quotas. Enjoy generous 25MB file limits anytime.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ SECTION — 2-Column Clean Figma Layout */}
-      <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-16 border-t border-slate-200/80">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          {/* Left 4 Columns */}
-          <div className="md:col-span-4 space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">
-              FREQUENTLY ASKED QUESTIONS
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-              Image to Text FAQ
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
-              Everything you need to know about extracting text from images and multi-page documents with Spellense.
-            </p>
-          </div>
-
-          {/* Right 8 Columns */}
-          <div className="md:col-span-8 space-y-3">
-            {FAQ_ITEMS.map((faq, index) => {
-              const isOpen = openFaqIndex === index;
-              return (
-                <div
-                  key={faq.q}
-                  className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition"
-                >
-                  <button
-                    type="button"
-                    id={`faq-btn-${index}`}
-                    aria-expanded={isOpen}
-                    aria-controls={`faq-answer-${index}`}
-                    onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                    className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
-                  >
-                    <span className="text-sm font-bold text-slate-900 pr-2">
-                      {faq.q}
-                    </span>
-                    <span
-                      className={`ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition-transform duration-200 ${
-                        isOpen ? "rotate-180 text-blue-600" : ""
-                      }`}
+                      style={{
+                        backgroundColor: "#ffffff",
+                        borderColor: "#e5e5df",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        color: "#1c201a",
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold shadow-2xs transition hover:bg-[#efeee7] cursor-pointer"
                     >
                       <svg
-                        width="12"
-                        height="12"
+                        width="13"
+                        height="13"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="2.5"
+                        strokeWidth="2.2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       >
-                        <polyline points="6 9 12 15 18 9" />
+                        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
                       </svg>
-                    </span>
-                  </button>
+                      <span>Extract another</span>
+                    </button>
+                  </div>
+                </div>
 
+                {/* NO TEXT DETECTED ALERT */}
+                {noTextDetected ? (
                   <div
-                    id={`faq-answer-${index}`}
-                    role="region"
-                    aria-labelledby={`faq-btn-${index}`}
-                    className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
-                      isOpen
-                        ? "grid-rows-[1fr] opacity-100"
-                        : "grid-rows-[0fr] opacity-0 pointer-events-none"
-                    }`}
+                    style={{
+                      borderColor: "#fde68a",
+                      backgroundColor: "#fffbeb",
+                    }}
+                    className="rounded-2xl sm:rounded-[24px] border p-8 text-center shadow-xs"
                   >
-                    <div className="overflow-hidden">
-                      <div className="border-t border-slate-100 px-4 sm:px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal">
-                        {faq.a}
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                      <svg
+                        width="26"
+                        height="26"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                    </div>
+                    <h3 className="mt-4 text-lg font-bold text-[#1c201a]">
+                      No readable English text was detected
+                    </h3>
+                    <p className="mx-auto mt-2 max-w-md text-xs sm:text-sm text-[#70746d] leading-relaxed font-normal">
+                      We could not recognize clear letterforms in this document. Please ensure the document is clear, well-lit, has legible contrast, and is not blurred.
+                    </p>
+                    <div className="mt-5">
+                      <button
+                        type="button"
+                        onClick={handleReset}
+                        style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                        className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-xs font-bold shadow-md hover:bg-[#2546b8] transition cursor-pointer"
+                      >
+                        <span>Upload a different image</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* EXTRACTED TEXT PANEL */
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#ffffff",
+                    }}
+                    className="rounded-2xl sm:rounded-[24px] p-5 sm:p-7 shadow-xs"
+                  >
+                    {/* HEADER ROW */}
+                    <div
+                      style={{ borderBottom: "1px solid #e5e5df" }}
+                      className="flex flex-wrap items-center justify-between gap-3 pt-1 pb-4 mb-4"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-[#3158d5]" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-[#1c201a]">
+                          Extracted Text
+                        </span>
                       </div>
+
+                      <div className="flex items-center gap-3 text-xs font-medium text-[#70746d]">
+                        <span>
+                          <strong className="text-[#1c201a] font-bold">{stats.words}</strong> words
+                        </span>
+                        <span>•</span>
+                        <span>
+                          <strong className="text-[#1c201a] font-bold">{stats.chars}</strong> chars
+                        </span>
+                        <span>•</span>
+                        <span>
+                          <strong className="text-[#1c201a] font-bold">{stats.lines}</strong> lines
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* MAIN WORKSPACE GRID: OPTIONAL IMAGE PREVIEW + TEXTAREA */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                      {previewUrl && showImagePreview && (
+                        <div
+                          style={{
+                            borderColor: "#e5e5df",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                            backgroundColor: "#faf9f6",
+                          }}
+                          className="lg:col-span-5 rounded-xl overflow-hidden p-2.5 shadow-2xs"
+                        >
+                          <div className="text-[11px] font-bold text-[#70746d] mb-1.5 px-1 flex items-center justify-between">
+                            <span>Original Document</span>
+                            <span className="text-[10px] text-emerald-600 font-semibold">1:1 Reference</span>
+                          </div>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={previewUrl}
+                            alt="Original uploaded document preview"
+                            className="w-full h-auto max-h-[340px] object-contain rounded-lg bg-white"
+                          />
+                        </div>
+                      )}
+
+                      <div className={previewUrl && showImagePreview ? "lg:col-span-7" : "lg:col-span-12"}>
+                        <textarea
+                          ref={outputTextareaRef}
+                          value={extractedText}
+                          onChange={(e) => setExtractedText(e.target.value)}
+                          rows={14}
+                          placeholder="Extracted text will appear here..."
+                          style={{
+                            borderColor: "#e5e5df",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                            backgroundColor: "#fdfcf9",
+                            color: "#1c201a",
+                          }}
+                          className="w-full resize-y rounded-xl p-4 text-xs sm:text-sm leading-relaxed outline-none transition focus:border-[#3158d5] focus:bg-white focus:ring-2 focus:ring-[#3158d5]/15 font-mono sm:font-sans"
+                        />
+                      </div>
+                    </div>
+
+                    {/* ACTIONS BAR */}
+                    <div
+                      style={{ borderTop: "1px solid #efeee7" }}
+                      className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* COPY BUTTON */}
+                        <button
+                          type="button"
+                          onClick={handleCopy}
+                          style={{
+                            backgroundColor: copied ? "#059669" : "#ffffff",
+                            borderColor: copied ? "#059669" : "#e5e5df",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                            color: copied ? "#ffffff" : "#1c201a",
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:bg-[#faf9f6]"
+                        >
+                          {copied ? (
+                            <>
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                              <span>Copied to Clipboard!</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-[#70746d]"
+                              >
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                              </svg>
+                              <span>Copy text</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* DOWNLOAD BUTTON */}
+                        <button
+                          type="button"
+                          onClick={handleDownload}
+                          style={{
+                            backgroundColor: "#ffffff",
+                            borderColor: "#e5e5df",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                            color: "#1c201a",
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold shadow-2xs hover:bg-[#faf9f6] transition-all cursor-pointer"
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-[#70746d]"
+                          >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                          <span>Download .txt</span>
+                        </button>
+                      </div>
+
+                      {/* SPELLCHECK CTA BUTTON */}
+                      <button
+                        type="button"
+                        onClick={handleRunSpellcheck}
+                        style={{
+                          backgroundColor: "#3158d5",
+                          color: "#ffffff",
+                        }}
+                        className="inline-flex items-center gap-2 rounded-xl px-5 py-2 text-xs font-bold shadow-md shadow-[#3158d5]/20 hover:bg-[#2546b8] active:scale-95 transition-all cursor-pointer"
+                      >
+                        <span>Found a typo? Run spellcheck on this text</span>
+                        <span>→</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* EXPLANATORY SEO & PRODUCT SECTIONS (HOMEPAGE MATCH - PERFECTLY ALIGNED) */}
+        <section
+          style={{
+            marginTop: "32px",
+            paddingTop: "16px",
+          }}
+          className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 w-full pb-28 sm:pb-32"
+        >
+          <div className="mx-auto max-w-[980px] w-full space-y-4 sm:space-y-6">
+            {/* SECTION 1: INTRO */}
+            <ScrollReveal>
+              <div
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ffffff",
+                }}
+                className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs"
+              >
+                <h2 className="text-xl sm:text-2xl font-black text-[#1c201a] tracking-tight">
+                  Convert Photos, Scans, and PDFs into Clean Editable Text
+                </h2>
+                <p className="mt-2.5 text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                  Spellense Optical Character Recognition (OCR) converts flattened images, screenshots, smartphone pictures, and multi-page scanned PDF documents into selectable, copyable digital text with zero data retention and no sign-up required.
+                </p>
+              </div>
+            </ScrollReveal>
+
+            {/* SECTION 2: 3-STEP WORKFLOW */}
+            <ScrollReveal delay={50}>
+              <div
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ffffff",
+                }}
+                className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs"
+              >
+                <h2 className="text-xl sm:text-2xl font-black text-[#1c201a] tracking-tight mb-2.5">
+                  How to Extract Text in 3 Easy Steps
+                </h2>
+                <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed mb-6 font-normal">
+                  Effortlessly transform screenshots, photos, and scanned PDF documents into editable text in seconds:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+                  {/* Step 1 */}
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "20px",
+                    }}
+                    className="rounded-2xl flex flex-col justify-between"
+                  >
+                    <div>
+                      <div
+                        style={{
+                          backgroundColor: "#f6f5f3",
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          color: "#3158d5",
+                        }}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl mb-3 shadow-2xs shrink-0 font-black text-sm"
+                      >
+                        1
+                      </div>
+                      <h3 className="text-sm sm:text-base font-bold text-[#1c201a] mb-1.5">
+                        Upload Image or PDF
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                        Drop any JPG, PNG, WebP image, or multi-page scanned PDF up to 25MB. No account, registration, or credit card required.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "20px",
+                    }}
+                    className="rounded-2xl flex flex-col justify-between"
+                  >
+                    <div>
+                      <div
+                        style={{
+                          backgroundColor: "#f6f5f3",
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          color: "#3158d5",
+                        }}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl mb-3 shadow-2xs shrink-0 font-black text-sm"
+                      >
+                        2
+                      </div>
+                      <h3 className="text-sm sm:text-base font-bold text-[#1c201a] mb-1.5">
+                        In-Memory Optical Scan
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                        High-accuracy OCR scans letterforms and pixel matrices, extracting text tokens while preserving original paragraphs and line breaks.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "20px",
+                    }}
+                    className="rounded-2xl flex flex-col justify-between"
+                  >
+                    <div>
+                      <div
+                        style={{
+                          backgroundColor: "#f6f5f3",
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          color: "#3158d5",
+                        }}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl mb-3 shadow-2xs shrink-0 font-black text-sm"
+                      >
+                        3
+                      </div>
+                      <h3 className="text-sm sm:text-base font-bold text-[#1c201a] mb-1.5">
+                        Copy, Save, or Proofread
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                        Copy to clipboard with one click, save as a clean .txt file, or carry directly into our proofreading engine to catch hidden typos.
+                      </p>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+              </div>
+            </ScrollReveal>
 
-      {/* RELATED CREATIVE TOOLS SECTION */}
-      <section className="border-t border-slate-200/80 bg-white/60 py-14 px-3 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="text-center mb-8">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Cross-Tool Workflows</span>
-            <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">Explore More Free Creative Tools</h2>
-          </div>
+            {/* SECTION 3: 6-GRID FEATURE HIGHLIGHTS */}
+            <ScrollReveal delay={100}>
+              <div
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ffffff",
+                }}
+                className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs"
+              >
+                <div className="max-w-2xl mb-6">
+                  <div
+                    style={{ color: "#3158d5" }}
+                    className="text-xs font-bold uppercase tracking-wider mb-1"
+                  >
+                    Built for Speed &amp; Accuracy
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black text-[#1c201a] tracking-tight">
+                    Why Use Spellense Image to Text Converter?
+                  </h2>
+                  <p className="mt-1.5 text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                    Engineered for graphic designers, researchers, students, and professionals who need accurate text extraction without privacy compromises.
+                  </p>
+                </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Link
-              href="/print-sheet-maker"
-              className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "18px",
+                    }}
+                    className="rounded-2xl space-y-1.5"
+                  >
+                    <div className="text-xs font-bold text-[#3158d5] uppercase tracking-wide">
+                      Optical Precision
+                    </div>
+                    <h3 className="text-sm sm:text-base font-bold text-[#1c201a]">
+                      High-Resolution OCR
+                    </h3>
+                    <p className="text-xs text-[#575a53] leading-relaxed font-normal">
+                      Recognizes text from varied font families, contrast ratios, and complex flyer layouts with state-of-the-art accuracy.
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "18px",
+                    }}
+                    className="rounded-2xl space-y-1.5"
+                  >
+                    <div className="text-xs font-bold text-[#3158d5] uppercase tracking-wide">
+                      Strict Privacy
+                    </div>
+                    <h3 className="text-sm sm:text-base font-bold text-[#1c201a]">
+                      Zero Server Storage
+                    </h3>
+                    <p className="text-xs text-[#575a53] leading-relaxed font-normal">
+                      100% ephemeral in-memory RAM processing. Your confidential screenshots, receipts, or contracts are never stored to disk or used for AI training.
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "18px",
+                    }}
+                    className="rounded-2xl space-y-1.5"
+                  >
+                    <div className="text-xs font-bold text-[#3158d5] uppercase tracking-wide">
+                      Structure Retention
+                    </div>
+                    <h3 className="text-sm sm:text-base font-bold text-[#1c201a]">
+                      Paragraph &amp; Line Breaks
+                    </h3>
+                    <p className="text-xs text-[#575a53] leading-relaxed font-normal">
+                      Unlike primitive OCR engines that bunch text into a single messy block, Spellense retains your original line breaks.
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "18px",
+                    }}
+                    className="rounded-2xl space-y-1.5"
+                  >
+                    <div className="text-xs font-bold text-[#3158d5] uppercase tracking-wide">
+                      PDF Support
+                    </div>
+                    <h3 className="text-sm sm:text-base font-bold text-[#1c201a]">
+                      Scanned PDFs Handled
+                    </h3>
+                    <p className="text-xs text-[#575a53] leading-relaxed font-normal">
+                      Easily convert scanned multi-page PDF documents without native text layers directly into plain text without external software.
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "18px",
+                    }}
+                    className="rounded-2xl space-y-1.5"
+                  >
+                    <div className="text-xs font-bold text-[#3158d5] uppercase tracking-wide">
+                      Seamless Workflow
+                    </div>
+                    <h3 className="text-sm sm:text-base font-bold text-[#1c201a]">
+                      One-Click Proofreading
+                    </h3>
+                    <p className="text-xs text-[#575a53] leading-relaxed font-normal">
+                      Extracted text can be immediately passed to our spell checking engine with one click to highlight and fix any typos.
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "18px",
+                    }}
+                    className="rounded-2xl space-y-1.5"
+                  >
+                    <div className="text-xs font-bold text-[#3158d5] uppercase tracking-wide">
+                      100% Free
+                    </div>
+                    <h3 className="text-sm sm:text-base font-bold text-[#1c201a]">
+                      No Signup, No Limits
+                    </h3>
+                    <p className="text-xs text-[#575a53] leading-relaxed font-normal">
+                      No subscription gates, credit card requirements, or daily scan quotas. Enjoy generous 25MB file limits anytime.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* SECTION 4: FAQ SECTION — 2-Column Clean Layout (HOMEPAGE MATCH) */}
+            <div
+              style={{
+                borderTop: "1px solid #e5e5df",
+                marginTop: "48px",
+                paddingTop: "48px",
+                marginBottom: "48px",
+              }}
+              className="w-full pb-12 sm:pb-20"
             >
-              <div className="text-xs font-bold text-blue-600 uppercase mb-1">ID &amp; Photo Layout</div>
-              <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">ID Print Maker</div>
-              <p className="mt-1 text-xs text-slate-500">Fit photos and ID cards on one A4 or custom page at exact physical mm.</p>
-            </Link>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Left 4 Columns */}
+                <ScrollReveal className="lg:col-span-4 lg:sticky lg:top-8">
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#ffffff",
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 shadow-2xs"
+                  >
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-[#3158d5] animate-pulse" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                      FREQUENTLY ASKED QUESTIONS
+                    </span>
+                  </div>
+                  <h2 className="mt-3 text-2xl sm:text-3xl font-black tracking-tight text-[#1c201a]">
+                    Image to Text FAQ
+                  </h2>
+                  <p className="mt-2 text-xs sm:text-sm text-[#70746d] leading-relaxed font-normal">
+                    Everything you need to know about extracting text from images, photos, and scanned documents with Spellense.
+                  </p>
+                </ScrollReveal>
 
-            <Link
-              href="/image-compressor"
-              className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
-            >
-              <div className="text-xs font-bold text-blue-600 uppercase mb-1">Visual Optimization</div>
-              <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Image Compressor</div>
-              <p className="mt-1 text-xs text-slate-500">Lossless &amp; lossy image compression with side-by-side comparison slider.</p>
-            </Link>
+                {/* Right 8 Columns */}
+                <div className="lg:col-span-8 space-y-3.5">
+                  {FAQ_ITEMS.map((faq, index) => {
+                    const isOpen = openFaqIndex === index;
+                    return (
+                      <ScrollReveal key={faq.q} delay={index * 30}>
+                        <div
+                          style={{
+                            borderColor: "#e5e5df",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                            backgroundColor: "#ffffff",
+                          }}
+                          className="rounded-2xl overflow-hidden shadow-2xs transition"
+                        >
+                          <button
+                            type="button"
+                            id={`faq-btn-${index}`}
+                            aria-expanded={isOpen}
+                            aria-controls={`faq-answer-${index}`}
+                            onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                            className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition hover:bg-[#faf9f6] cursor-pointer"
+                          >
+                            <span className="text-sm sm:text-base font-bold text-[#1c201a] pr-2">
+                              {faq.q}
+                            </span>
+                            <span
+                              className={`ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[#70746d] transition-transform duration-200 ${
+                                isOpen ? "rotate-180 text-[#3158d5]" : ""
+                              }`}
+                            >
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </span>
+                          </button>
 
-            <Link
-              href="/qr-code-generator"
-              className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
-            >
-              <div className="text-xs font-bold text-blue-600 uppercase mb-1">Print Scannability QA</div>
-              <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">QR Code Generator</div>
-              <p className="mt-1 text-xs text-slate-500">Create custom QR codes and verify camera scannability before printing.</p>
-            </Link>
+                          <div
+                            id={`faq-answer-${index}`}
+                            role="region"
+                            aria-labelledby={`faq-btn-${index}`}
+                            className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
+                              isOpen
+                                ? "grid-rows-[1fr] opacity-100"
+                                : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                            }`}
+                          >
+                            <div className="overflow-hidden">
+                              <div
+                                style={{ borderTop: "1px solid #efeee7" }}
+                                className="px-4 sm:px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-[#555a52] font-normal"
+                              >
+                                {faq.a}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </ScrollReveal>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 5: RELATED CREATIVE TOOLS */}
+            <ScrollReveal delay={150}>
+              <div
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ffffff",
+                }}
+                className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs"
+              >
+                <div className="text-center mb-6">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#3158d5]">
+                    Cross-Tool Workflows
+                  </span>
+                  <h2 className="mt-1 text-xl sm:text-2xl font-black text-[#1c201a]">
+                    Explore More Free Creative Tools
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Link
+                    href="/print-sheet-maker"
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                    }}
+                    className="group p-5 rounded-2xl hover:border-[#3158d5] hover:bg-white shadow-2xs transition"
+                  >
+                    <div className="text-xs font-bold text-[#3158d5] uppercase mb-1">
+                      ID &amp; Photo Layout
+                    </div>
+                    <div className="font-bold text-[#1c201a] group-hover:text-[#3158d5] transition">
+                      ID Print Maker
+                    </div>
+                    <p className="mt-1 text-xs text-[#70746d]">
+                      Fit photos and ID cards on one A4 or custom page at exact physical mm scale.
+                    </p>
+                  </Link>
+
+                  <Link
+                    href="/image-compressor"
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                    }}
+                    className="group p-5 rounded-2xl hover:border-[#3158d5] hover:bg-white shadow-2xs transition"
+                  >
+                    <div className="text-xs font-bold text-[#3158d5] uppercase mb-1">
+                      Visual Optimization
+                    </div>
+                    <div className="font-bold text-[#1c201a] group-hover:text-[#3158d5] transition">
+                      Image Compressor
+                    </div>
+                    <p className="mt-1 text-xs text-[#70746d]">
+                      Lossless &amp; lossy image compression with side-by-side comparison slider.
+                    </p>
+                  </Link>
+
+                  <Link
+                    href="/qr-code-generator"
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                    }}
+                    className="group p-5 rounded-2xl hover:border-[#3158d5] hover:bg-white shadow-2xs transition"
+                  >
+                    <div className="text-xs font-bold text-[#3158d5] uppercase mb-1">
+                      Print Scannability QA
+                    </div>
+                    <div className="font-bold text-[#1c201a] group-hover:text-[#3158d5] transition">
+                      QR Code Generator
+                    </div>
+                    <p className="mt-1 text-xs text-[#70746d]">
+                      Create custom QR codes and verify camera scannability before printing.
+                    </p>
+                  </Link>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* FOOTER ACTION LINKS (MATCHES HOMEPAGE) */}
+            <ScrollReveal delay={180} style={{ borderTop: "1px solid #e5e5df" }} className="mt-12 flex flex-wrap items-center justify-between gap-4 pt-8 text-xs text-slate-500">
+              <div className="flex flex-wrap items-center gap-5 font-medium">
+                <Link href="/faq" className="hover:text-[#3158d5] transition">
+                  Frequently Asked Questions →
+                </Link>
+                <Link href="/privacy" className="hover:text-[#3158d5] transition">
+                  Zero-Storage Privacy Policy →
+                </Link>
+                <Link href="/about" className="hover:text-[#3158d5] transition">
+                  About Spellense →
+                </Link>
+              </div>
+
+              <div className="text-slate-400">
+                In-memory OCR &bull; High Precision
+              </div>
+            </ScrollReveal>
           </div>
-        </div>
-      </section>
+        </section>
       </main>
 
       {/* FOOTER */}

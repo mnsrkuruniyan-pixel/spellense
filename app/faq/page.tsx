@@ -117,7 +117,7 @@ export default function FaqPage() {
   };
 
   return (
-    <main className="min-h-screen bg-transparent text-black relative z-10">
+    <main style={{ backgroundColor: "#faf9f6" }} className="relative z-10 min-h-screen bg-[#faf9f6] font-sans text-[15px] text-[#1c201a] antialiased selection:bg-[#bcd5ff] selection:text-black">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
@@ -127,40 +127,42 @@ export default function FaqPage() {
       <Navbar />
 
       {/* HERO & CONTENT SECTION */}
-      <section className="relative overflow-hidden pb-24 pt-12 sm:pt-16">
-        {/* Ambient background glows */}
-        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
-        <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
-        <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
-
-        <div className="relative mx-auto max-w-4xl px-5 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden pb-20 pt-3 sm:pb-24 sm:pt-6">
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
 
           {/* PAGE HEADER */}
-          <div className="text-center pt-2 pb-2 sm:pt-4 sm:pb-4">
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
+          <div className="pb-2 pt-2 text-center sm:pb-4 sm:pt-6">
+            <div style={{ color: "#3158d5", letterSpacing: "0.18em", fontSize: "12px", fontWeight: 700 }} className="mb-3 inline-flex items-center uppercase sm:mb-4">
+              Help Center
+            </div>
+            <h1 className="mx-auto max-w-5xl text-center text-[34px] font-black leading-[1.12] tracking-[-0.035em] text-[#1c201a] sm:text-[56px] md:text-[64px] lg:text-[72px]">
               Frequently Asked Questions
             </h1>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#70746d] sm:text-base">
+              Quick answers about file formats, privacy, and how Spellense works.
+            </p>
           </div>
 
           {/* FAQ ITEMS LIST */}
-          <div className="mt-12 space-y-4">
+          <div className="mt-8 space-y-3 sm:mt-10 sm:space-y-4">
             {faqItems.map((item, index) => (
               <div
                 key={item.question}
-                className="group rounded-3xl border border-white/90 bg-white/80 p-6 sm:p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:border-blue-200 hover:bg-white hover:shadow-md"
+                style={{ borderColor: "#e5e5df" }}
+                className="group rounded-2xl border bg-white p-5 shadow-2xs transition-all duration-200 hover:border-[#3158d5]/40 hover:shadow-xs sm:p-6"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                      <span style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider">
                         {item.category}
                       </span>
-                      <span className="text-xs text-slate-400">Q{index + 1}</span>
+                      <span className="text-xs text-[#92958f]">Q{index + 1}</span>
                     </div>
-                    <h2 className="mt-2.5 text-lg font-bold text-black sm:text-xl">
+                    <h2 className="mt-2.5 text-lg font-bold text-[#1c201a] sm:text-xl">
                       {item.question}
                     </h2>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
+                    <p className="mt-2 text-sm leading-relaxed text-[#70746d] sm:text-[15px]">
                       {item.answer}
                     </p>
                   </div>
@@ -170,14 +172,15 @@ export default function FaqPage() {
           </div>
 
           {/* BOTTOM QUICK CALLOUT */}
-          <div className="mt-12 rounded-3xl border border-blue-200/80 bg-gradient-to-r from-blue-50/80 via-indigo-50/60 to-white p-7 text-center shadow-xs backdrop-blur-md sm:flex sm:items-center sm:justify-between sm:text-left">
+          <div style={{ borderColor: "#e5e5df", backgroundColor: "#efeee7" }} className="mt-10 rounded-[24px] border p-6 text-center shadow-2xs sm:flex sm:items-center sm:justify-between sm:p-8 sm:text-left">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Have a document to check right now?</h3>
-              <p className="mt-1 text-xs text-slate-500">Upload your file and receive instant OCR spelling results.</p>
+              <h3 className="text-base font-bold text-[#1c201a]">Have a document to check right now?</h3>
+              <p className="mt-1 text-xs text-[#70746d]">Upload your file and receive instant OCR spelling results.</p>
             </div>
             <Link
               href="/"
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/35 sm:mt-0"
+              style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-xs font-bold text-white shadow-xs shadow-[#3158d5]/20 transition hover:-translate-y-0.5 hover:opacity-90 sm:mt-0"
             >
               <span>Check your file now</span>
               <span>→</span>

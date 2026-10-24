@@ -1709,6 +1709,27 @@ function isReasonableWord(
   return true;
 }
 
+/**
+ * OCR engines sometimes lose the small gap after the article "A" in display
+ * type, reading "A little" as "Alittle". The source image is still correct,
+ * so do not turn that spacing uncertainty into a spelling error.
+ *
+ * This deliberately runs only for OCR input. Editable text with the same
+ * characters continues through the normal spell checker.
+ */
+function isLikelyOcrArticleSpacingMerge(
+  original: string,
+  dialect = "en-US",
+  customWords?: Set<string>
+): boolean {
+  if (!/^[Aa][a-z]{3,}$/.test(original)) {
+    return false;
+  }
+
+  const trailingWord = normalizeWord(original.slice(1));
+  return Boolean(trailingWord) && isValidEnglishWord(trailingWord, dialect, customWords);
+}
+
 function isLikelyNamedOrAcronym(
   word: string,
   dialect = "en-US"
@@ -2028,6 +2049,10 @@ function checkWithOurEngine(
     }
 
     if (!isReasonableWord(cleanWord, isDigitalText, original)) {
+      continue;
+    }
+
+    if (!isDigitalText && isLikelyOcrArticleSpacingMerge(original, dialect, customWords)) {
       continue;
     }
 

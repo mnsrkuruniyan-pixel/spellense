@@ -53,12 +53,9 @@ export default function Footer({ currentPath }: { currentPath?: string }) {
                 </Link>
               );
             })}
-            <a
-              href="mailto:hello@spellense.com"
-              className="transition hover:text-slate-900"
-            >
+            <Link href="/contact" className="transition hover:text-slate-900">
               Contact
-            </a>
+            </Link>
           </div>
         </div>
 

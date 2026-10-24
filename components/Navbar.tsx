@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -176,7 +176,21 @@ const NAV_ITEMS = [
     ),
   },
   {
-    label: "US ↔ UK",
+    label: "Design Check",
+    shortLabel: "Design Check",
+    href: "/design-check",
+    description: "Review spelling, contrast, and layout issues in your design",
+    tag: "New",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <path d="M14 2v6h6" />
+        <path d="m8 15 2.5 2.5L16 12" />
+      </svg>
+    ),
+  },
+  {
+    label: "US ↔ UK Converter",
     shortLabel: "US/UK",
     href: "/us-uk-converter",
     description: "American vs British dialect spelling switcher",
@@ -198,11 +212,26 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    label: "About Us",
+    shortLabel: "About",
+    href: "/about",
+    description: "Learn about Spellense and our mission",
+    tag: null,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+      </svg>
+    ),
+  },
 ];
 
 export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const hamburgerRef = useRef<HTMLButtonElement | null>(null);
 
   const [prevPathname, setPrevPathname] = useState(pathname);
   if (prevPathname !== pathname) {
@@ -222,6 +251,49 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
     };
   }, [mobileMenuOpen]);
 
+  // Close mobile menu on outside click or touch
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const handleOutsideInteraction = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      // If clicked inside the floating menu card, do not close
+      if (menuRef.current && menuRef.current.contains(target)) return;
+      // If clicked on the hamburger button, let the button handle toggle
+      if (hamburgerRef.current && hamburgerRef.current.contains(target)) return;
+      // If target is no longer in DOM (e.g. replaced icon), ignore
+      if (!document.contains(target)) return;
+
+      setMobileMenuOpen(false);
+    };
+
+    // Attach after a short delay so the tap that opened the menu does not trigger an immediate close
+    const timer = setTimeout(() => {
+      document.addEventListener("pointerdown", handleOutsideInteraction);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("pointerdown", handleOutsideInteraction);
+    };
+  }, [mobileMenuOpen]);
+
+  // Close mobile menu on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileMenuOpen(false);
+      }
+    };
+    if (mobileMenuOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
+
   // Check if link is active
   const isActive = (href: string) => {
     if (href === "/") {
@@ -231,8 +303,9 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-2xs transition-colors">
-      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-6 2xl:px-10 h-16 sm:h-[70px] flex items-center justify-between gap-3 sm:gap-4">
+    <>
+      <header style={{ borderBottomColor: "#e5e5df" }} className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b shadow-2xs transition-colors">
+      <div className="w-full px-3 sm:px-4 lg:px-5 min-h-16 sm:min-h-[70px] py-4 flex items-center justify-between gap-3 sm:gap-4">
         {/* LOGO */}
         <Link
           href="/"
@@ -264,7 +337,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-[19px] sm:text-[21px] font-extrabold tracking-[-0.6px] text-slate-900 leading-none">
+            <span className="text-[20px] sm:text-[22px] font-extrabold tracking-[-0.6px] text-slate-900 leading-none">
               Spellense
             </span>
             <span className="inline-flex items-center rounded-md bg-blue-50 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#0055fe] border border-blue-200/60">
@@ -276,7 +349,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
         {/* RIGHT NAVIGATION */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Main Navigation (Always visible on desktop) */}
-          <nav className="hidden xl:flex items-center gap-1 xl:gap-1.5 text-[13px] font-semibold">
+          <nav className="hidden lg:flex flex-wrap items-center justify-end gap-2 text-[13px] xl:text-sm font-semibold">
             {/* 1. Home */}
             <Link
               href="/"
@@ -285,7 +358,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
                   resultMode.onReset();
                 }
               }}
-              className={`py-1.5 px-3 rounded-lg transition ${
+              className={`whitespace-nowrap py-1.5 px-3 xl:px-3.5 rounded-lg transition focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
                 isActive("/")
                   ? "bg-blue-50 text-[#0055fe] font-bold"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -297,14 +370,14 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
             {/* 2. 3D Flipbook */}
             <Link
               href="/flipbook"
-              className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg transition ${
+              className={`flex items-center gap-1 whitespace-nowrap py-1.5 px-3 xl:px-3.5 rounded-lg transition focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
                 isActive("/flipbook")
                   ? "bg-blue-50 text-[#0055fe] font-bold"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <span>3D Flipbook</span>
-              <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
+              <span className="hidden 2xl:inline-block text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
                 New
               </span>
             </Link>
@@ -312,7 +385,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
             {/* 3. Image Compressor */}
             <Link
               href="/image-compressor"
-              className={`py-1.5 px-3 rounded-lg transition ${
+              className={`whitespace-nowrap py-1.5 px-3 xl:px-3.5 rounded-lg transition focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
                 isActive("/image-compressor")
                   ? "bg-blue-50 text-[#0055fe] font-bold"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -324,14 +397,14 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
             {/* 4. QR Code Generator */}
             <Link
               href="/qr-code-generator"
-              className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg transition ${
+              className={`flex items-center gap-1 whitespace-nowrap py-1.5 px-3 xl:px-3.5 rounded-lg transition focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
                 isActive("/qr-code-generator")
                   ? "bg-blue-50 text-[#0055fe] font-bold"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
-              <span>QR Code</span>
-              <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
+              <span>QR Code Generator</span>
+              <span className="hidden xl:inline-block text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
                 New
               </span>
             </Link>
@@ -339,14 +412,14 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
             {/* 5. ID Print Maker */}
             <Link
               href="/print-sheet-maker"
-              className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg transition ${
+              className={`flex items-center gap-1 whitespace-nowrap py-1.5 px-3 xl:px-3.5 rounded-lg transition focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
                 isActive("/print-sheet-maker")
                   ? "bg-blue-50 text-[#0055fe] font-bold"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <span>ID Print Maker</span>
-              <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
+              <span className="hidden 2xl:inline-block text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-[#0055fe]">
                 New
               </span>
             </Link>
@@ -354,7 +427,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
             {/* 6. Image to Text */}
             <Link
               href="/image-to-text"
-              className={`py-1.5 px-3 rounded-lg transition ${
+              className={`whitespace-nowrap py-1.5 px-3 xl:px-3.5 rounded-lg transition focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
                 isActive("/image-to-text")
                   ? "bg-blue-50 text-[#0055fe] font-bold"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -366,7 +439,7 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
             {/* 7. Case Converter */}
             <Link
               href="/case-converter"
-              className={`py-1.5 px-3 rounded-lg transition ${
+              className={`whitespace-nowrap py-1.5 px-3 xl:px-3.5 rounded-lg transition focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
                 isActive("/case-converter")
                   ? "bg-blue-50 text-[#0055fe] font-bold"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -375,76 +448,57 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
               <span>Case Converter</span>
             </Link>
 
+            {/* Design Check */}
+            <Link
+              href="/design-check"
+              className={`flex items-center gap-1 whitespace-nowrap py-1.5 px-3 xl:px-3.5 rounded-lg transition focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
+                isActive("/design-check")
+                  ? "bg-blue-50 text-[#0055fe] font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <span>Design Check</span>
+            </Link>
+
             {/* 8. US ↔ UK */}
             <Link
               href="/us-uk-converter"
-              className={`py-1.5 px-3 rounded-lg transition ${
+              className={`whitespace-nowrap py-1.5 px-3 xl:px-3.5 rounded-lg transition focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
                 isActive("/us-uk-converter")
                   ? "bg-blue-50 text-[#0055fe] font-bold"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
-              <span>US ↔ UK</span>
+              <span>US ↔ UK Converter</span>
+            </Link>
+
+            {/* About Us */}
+            <Link
+              href="/about"
+              className={`whitespace-nowrap py-1.5 px-3 xl:px-3.5 rounded-lg transition focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
+                isActive("/about")
+                  ? "bg-blue-50 text-[#0055fe] font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <span>About Us</span>
             </Link>
           </nav>
 
-          {/* RESULT MODE ACTIONS */}
-          {resultMode && (
-            <div className="hidden sm:flex items-center gap-2 sm:gap-2.5 xl:border-l xl:border-slate-200 xl:pl-3">
-              {/* File name pill */}
-              <div className="hidden 2xl:flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 max-w-[180px] shadow-2xs">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="truncate">{resultMode.fileName}</span>
-              </div>
-
-              {/* Download report button */}
-              {resultMode.onDownloadReport && (
-                <button
-                  type="button"
-                  onClick={resultMode.onDownloadReport}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:border-slate-300 active:scale-95 cursor-pointer whitespace-nowrap"
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  <span>Report</span>
-                </button>
-              )}
-
-              {/* Check another file */}
-              <button
-                type="button"
-                onClick={resultMode.onReset}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#0055fe] hover:bg-blue-700 px-3.5 py-1.5 sm:py-2 text-xs font-bold text-white shadow-xs shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer whitespace-nowrap"
-              >
-                <span>+ Check another file</span>
-              </button>
-            </div>
-          )}
-
-          {/* Mobile / Tablet Hamburger Button */}
-          <div className="flex xl:hidden items-center gap-2">
+          {/* Mobile / Tablet Hamburger Button - shown below the wide desktop navigation */}
+          <div className="flex lg:hidden items-center gap-2">
             <button
+              ref={hamburgerRef}
               type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
               aria-label={mobileMenuOpen ? "Close menu" : "Open navigation menu"}
               aria-expanded={mobileMenuOpen}
-              className={`flex h-10 w-10 items-center justify-center rounded-xl border transition cursor-pointer active:scale-95 shadow-2xs ${
-                mobileMenuOpen
-                  ? "bg-blue-50 border-blue-200 text-[#0055fe] shadow-blue-500/10"
-                  : "bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300"
-              }`}
+              style={{
+                borderColor: mobileMenuOpen ? "#3158d5" : "#e5e5df",
+                backgroundColor: mobileMenuOpen ? "#efeee7" : "#ffffff",
+                color: mobileMenuOpen ? "#3158d5" : "#1c201a",
+              }}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border transition cursor-pointer active:scale-95 shadow-2xs"
             >
               {mobileMenuOpen ? (
                 <svg
@@ -481,110 +535,118 @@ export default function Navbar({ onUploadClick, resultMode }: NavbarProps) {
         </div>
       </div>
 
-        {/* MOBILE RESULT MODE ACTION BAR */}
-        {resultMode && (
-          <div className="sm:hidden w-full bg-white/95 border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between gap-2 shadow-xs backdrop-blur-md">
-            {/* File name */}
-            <div className="flex items-center gap-1.5 min-w-0 flex-1 text-xs font-semibold text-slate-700">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="truncate">{resultMode.fileName}</span>
-            </div>
+      </header>
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-2 shrink-0">
-              {resultMode.onDownloadReport && (
+      {/* Mobile menu dropdown overlay OUTSIDE header to prevent backdrop-blur containing block bug */}
+      {mobileMenuOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation Menu"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setMobileMenuOpen(false);
+            }
+          }}
+          className={`fixed inset-0 "top-[64px] sm:top-[70px]" z-50 bg-[#1c201a]/40 backdrop-blur-sm lg:hidden flex flex-col items-center justify-start p-3.5 sm:p-5 overflow-y-auto overscroll-contain cursor-pointer transition-opacity duration-200`}
+        >
+          {/* Floating Menu Card (NOT full bleed, rounded all around, stopping propagation) */}
+          <div
+            ref={menuRef}
+            onClick={(e) => e.stopPropagation()}
+            style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df" }}
+            className="w-full max-w-[420px] rounded-3xl border shadow-2xl overflow-hidden flex flex-col my-auto sm:my-4 cursor-default animate-in fade-in zoom-in-95 duration-200"
+          >
+            {/* Header bar */}
+            <div
+              style={{ borderBottomColor: "#e5e5df" }}
+              className="flex items-center justify-between p-4 pb-3 border-b shrink-0"
+            >
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#70746d]">
+                Navigation &amp; Tools
+              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  style={{ backgroundColor: "#efeee7", borderColor: "#e5e5df", color: "#3158d5" }}
+                  className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold shadow-2xs"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#3158d5] animate-pulse" />
+                  Free · No Signup
+                </span>
                 <button
                   type="button"
-                  onClick={resultMode.onDownloadReport}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition active:scale-95 cursor-pointer whitespace-nowrap"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border text-slate-500 hover:text-slate-800 transition active:scale-95 cursor-pointer"
+                  title="Close navigation"
+                  aria-label="Close navigation"
                 >
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
-                  <span>Report</span>
                 </button>
-              )}
-
-              <button
-                type="button"
-                onClick={resultMode.onReset}
-                className="inline-flex items-center gap-1 rounded-full bg-[#0055fe] hover:bg-[#0047d9] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
-              >
-                <span>+ Check another</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Mobile menu dropdown overlay */}
-        {mobileMenuOpen && (
-          <div className={`fixed inset-0 ${resultMode ? "top-[112px] sm:top-[70px]" : "top-[64px] sm:top-[70px]"} z-40 bg-slate-900/30 backdrop-blur-md xl:hidden animate-in fade-in duration-200`}>
-            <div className="mx-auto max-w-lg border-b border-slate-200/80 bg-white/95 px-5 pt-4 pb-6 shadow-2xl backdrop-blur-xl max-h-[calc(100dvh-80px)] overflow-y-auto overscroll-contain">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Navigation &amp; Tools
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Free • No Signup
-                </span>
               </div>
-              <div className="mt-3 space-y-1.5">
-                {NAV_ITEMS.map((item) => {
-                  const active = isActive(item.href);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3.5 rounded-2xl p-3 transition-all ${
-                        active
-                          ? "bg-blue-50/90 text-blue-700 shadow-xs ring-1 ring-blue-200/80"
-                          : "text-slate-700 hover:bg-slate-50 active:bg-slate-100"
-                      }`}
+            </div>
+
+            {/* Navigation Items (NO dark outline, soft border #e5e5df, scrollable if height is constrained) */}
+            <div className="p-3.5 space-y-2 max-h-[calc(100dvh-170px)] overflow-y-auto overscroll-contain">
+              {NAV_ITEMS.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{
+                      borderColor: "#e5e5df",
+                      backgroundColor: active ? "#efeee7" : "#ffffff",
+                    }}
+                    className="flex items-center gap-3.5 rounded-2xl border p-3 transition-all active:scale-[0.99] shadow-2xs hover:bg-[#f6f5f3]"
+                  >
+                    <div
+                      style={{
+                        backgroundColor: active ? "#3158d5" : "#f6f5f3",
+                        color: active ? "#ffffff" : "#3158d5",
+                        borderColor: active ? "#3158d5" : "#e5e5df",
+                      }}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition shadow-2xs"
                     >
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${
-                          active
-                            ? "bg-blue-600 text-white shadow-sm shadow-blue-600/20"
-                            : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
-                        }`}
-                      >
-                        {item.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold truncate">
-                            {item.label}
+                      {item.icon}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          style={{ color: "#1c201a" }}
+                          className={`text-[15px] ${active ? "font-bold" : "font-semibold"}`}
+                        >
+                          {item.label}
+                        </span>
+                        {item.tag && (
+                          <span
+                            style={{
+                              backgroundColor: active ? "#3158d5" : "#efeee7",
+                              color: active ? "#ffffff" : "#3158d5",
+                              borderColor: "#e5e5df",
+                            }}
+                            className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border shadow-2xs"
+                          >
+                            {item.tag}
                           </span>
-                          {item.tag && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                              {item.tag}
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-0.5 text-xs text-slate-500 truncate">
-                          {item.description}
-                        </p>
+                        )}
                       </div>
-                    </Link>
-                  );
-                })}
-              </div>
+                      <p style={{ color: "#70746d" }} className="mt-0.5 text-xs truncate">
+                        {item.description}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
-        )}
-      </header>
+        </div>
+      )}
+    </>
   );
 }

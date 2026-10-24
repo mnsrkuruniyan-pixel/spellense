@@ -152,7 +152,7 @@ export default async function BlogPostPage({
       : null;
 
   return (
-    <div className="min-h-screen bg-transparent text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative z-10 overflow-x-hidden">
+    <div style={{ backgroundColor: "#faf9f6" }} className="relative z-10 min-h-screen overflow-x-hidden bg-[#faf9f6] font-sans text-[15px] text-[#1c201a] antialiased selection:bg-[#bcd5ff] selection:text-black">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
@@ -168,47 +168,45 @@ export default async function BlogPostPage({
         />
       )}
 
-      {/* Ambient background glows */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80" />
-      <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
-      <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
-
       <Navbar />
 
-      <main className="relative mx-auto max-w-7xl px-5 pt-4 pb-20 sm:px-6 lg:px-8">
+      <main className="relative mx-auto max-w-7xl px-4 pb-20 pt-3 sm:px-6 sm:pt-6 lg:px-8">
         {/* BREADCRUMBS */}
-        <nav aria-label="Breadcrumbs" className="mb-6 flex items-center gap-2 text-xs font-medium text-slate-400">
-          <Link href="/" className="transition hover:text-slate-700">Home</Link>
+        <nav aria-label="Breadcrumbs" className="mb-6 flex items-center gap-2 text-xs font-medium text-[#92958f]">
+          <Link href="/" className="text-[#70746d] transition hover:text-[#3158d5] hover:underline">Home</Link>
           <span>/</span>
-          <Link href="/blog" className="transition hover:text-slate-700">Blog</Link>
+          <Link href="/blog" className="text-[#70746d] transition hover:text-[#3158d5] hover:underline">Blog</Link>
           <span>/</span>
           <span className="truncate max-w-[280px] sm:max-w-md text-slate-600 font-semibold">{post.title}</span>
         </nav>
 
         {/* ARTICLE HEADER HERO */}
-        <header className="mx-auto max-w-4xl text-center pb-8 border-b border-slate-200/80">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/80 px-3.5 py-1.5 shadow-2xs backdrop-blur-md">
-            <span className="flex h-2 w-2 rounded-full bg-blue-600" />
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+        <header style={{ borderColor: "#e5e5df" }} className="mx-auto max-w-4xl border-b pb-8 text-center">
+          <div style={{ borderColor: "#e5e5df", backgroundColor: "#efeee7", color: "#3158d5" }} className="inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5">
+            <span className="flex h-2 w-2 rounded-full bg-[#3158d5]" />
+            <span className="text-[11px] font-bold uppercase tracking-wider">
               {post.category}
             </span>
           </div>
 
-          <h1 className="mt-4 text-[29px] xs:text-[34px] sm:text-4xl lg:text-[46px] font-extrabold tracking-[-0.8px] sm:tracking-[-1.5px] leading-[1.2] sm:leading-[1.18] text-black">
+          <h1
+            style={{ fontSize: "clamp(28px, 2.35vw, 36px)", fontWeight: 900, lineHeight: 1.08, letterSpacing: "-0.04em" }}
+            className="mt-5 text-[#1c201a]"
+          >
             {post.title}
           </h1>
 
-          <p className="mx-auto mt-4 max-w-2xl text-[15px] sm:text-base leading-relaxed text-slate-600">
+          <p className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-[#70746d] sm:text-base">
             {post.subtitle}
           </p>
 
           {/* META INFO */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-[#92958f]">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 font-bold text-[10px] text-white">
+              <div style={{ backgroundColor: "#3158d5" }} className="flex h-7 w-7 items-center justify-center rounded-full font-bold text-[10px] text-white">
                 SP
               </div>
-              <span className="font-semibold text-slate-800">{post.author.name}</span>
+              <span className="font-semibold text-[#1c201a]">{post.author.name}</span>
             </div>
             <span>•</span>
             <time dateTime={post.publishedAt}>{post.publishedAt}</time>
@@ -221,8 +219,8 @@ export default async function BlogPostPage({
         <div className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-12">
           {/* SIDEBAR: TABLE OF CONTENTS (4 COLS ON DESKTOP) */}
           <aside className="lg:col-span-4 hidden lg:block">
-            <div className="sticky top-24 rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-md">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div style={{ borderColor: "#e5e5df" }} className="sticky top-24 rounded-2xl border bg-white p-6 shadow-2xs">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#92958f]">
                 Table of Contents
               </p>
               <nav className="mt-3 space-y-2">
@@ -230,7 +228,7 @@ export default async function BlogPostPage({
                   <a
                     key={item.id}
                     href={`#${item.id}`}
-                    className="block text-xs leading-relaxed text-slate-600 transition hover:text-blue-600 hover:translate-x-1"
+                    className="block text-xs leading-relaxed text-[#70746d] transition hover:translate-x-1 hover:text-[#3158d5]"
                   >
                     <span className="text-slate-400 font-mono mr-1.5">{index + 1}.</span>
                     <span>{item.title}</span>
@@ -239,17 +237,18 @@ export default async function BlogPostPage({
               </nav>
 
               {/* SIDEBAR TOOL PROMO */}
-              <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-center">
+              <div style={{ borderColor: "#e5e5df", backgroundColor: "#f6f5f3" }} className="mt-8 rounded-2xl border p-4 text-center">
                 <span className="text-2xl">⚡</span>
-                <h4 className="mt-2 text-xs font-bold text-slate-900">
+                <h4 className="mt-2 text-xs font-bold text-[#1c201a]">
                   {post.ctaTool.title}
                 </h4>
-                <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
+                <p className="mt-1 text-[11px] leading-relaxed text-[#70746d]">
                   {post.ctaTool.description}
                 </p>
                 <Link
                   href={post.ctaTool.href}
-                  className="mt-3 block w-full rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700"
+                  style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                  className="mt-3 block w-full rounded-xl px-3 py-2 text-xs font-bold text-white shadow-xs transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3158d5]"
                 >
                   {post.ctaTool.buttonText}
                 </Link>
@@ -259,10 +258,10 @@ export default async function BlogPostPage({
 
           {/* MAIN ARTICLE BODY (8 COLS) */}
           <article className="lg:col-span-8">
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-lg shadow-slate-200/30">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-5 shadow-2xs sm:rounded-[24px] sm:p-10">
               {/* MOBILE TABLE OF CONTENTS */}
-              <div className="mb-8 block rounded-2xl border border-slate-200 bg-slate-50/70 p-5 lg:hidden">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div style={{ borderColor: "#e5e5df", backgroundColor: "#f6f5f3" }} className="mb-8 block rounded-2xl border p-5 lg:hidden">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#92958f]">
                   In This Guide
                 </p>
                 <div className="mt-2.5 space-y-2">
@@ -270,7 +269,7 @@ export default async function BlogPostPage({
                     <a
                       key={item.id}
                       href={`#${item.id}`}
-                      className="block text-xs text-slate-600 hover:text-blue-600"
+                      className="block text-xs text-[#70746d] transition hover:text-[#3158d5]"
                     >
                       <span className="font-mono text-slate-400 mr-1">{index + 1}.</span>
                       {item.title}
@@ -281,12 +280,12 @@ export default async function BlogPostPage({
 
               {/* RENDERED ARTICLE HTML */}
               <div
-                className="prose prose-slate max-w-none text-sm sm:text-base leading-relaxed text-slate-700
-                prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-slate-900
+                className="prose prose-slate max-w-none text-sm leading-relaxed text-[#70746d] sm:text-base
+                prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-[#1c201a]
                 prose-h2:mt-10 prose-h2:mb-4 prose-h2:text-2xl
                 prose-p:my-4 prose-p:leading-relaxed
-                prose-a:text-blue-600 prose-a:font-semibold prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-blue-800
-                prose-code:text-blue-700 prose-code:bg-slate-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs
+                prose-a:text-[#3158d5] prose-a:font-semibold prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-[#1c201a]
+                prose-code:text-[#3158d5] prose-code:bg-[#f6f5f3] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs
                 prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6
                 prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6
                 prose-li:my-1.5"
@@ -295,23 +294,23 @@ export default async function BlogPostPage({
 
               {/* FAQ SECTION */}
               {post.faqs && post.faqs.length > 0 && (
-                <section id="faq" className="mt-12 rounded-3xl border border-slate-200/90 bg-white/95 p-6 sm:p-8 shadow-xs backdrop-blur-md">
+                <section id="faq" style={{ borderColor: "#e5e5df" }} className="mt-12 rounded-2xl border bg-[#faf9f6] p-6 shadow-2xs sm:p-8">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="flex h-2.5 w-2.5 rounded-full bg-blue-600" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                    <span className="flex h-2.5 w-2.5 rounded-full bg-[#3158d5]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#3158d5]">
                       Got Questions?
                     </span>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  <h3 className="text-xl font-black tracking-tight text-[#1c201a] sm:text-2xl">
                     Frequently Asked Questions
                   </h3>
                   <div className="mt-6 divide-y divide-slate-100">
                     {post.faqs.map((faq, idx) => (
                       <div key={idx} className="py-4.5 first:pt-2 last:pb-2">
-                        <h4 className="text-base font-bold text-slate-900">
+                        <h4 className="text-base font-bold text-[#1c201a]">
                           {faq.question}
                         </h4>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                        <p className="mt-2 text-sm leading-relaxed text-[#70746d]">
                           {faq.answer}
                         </p>
                       </div>
@@ -321,20 +320,21 @@ export default async function BlogPostPage({
               )}
 
               {/* IN-ARTICLE CTA BOX */}
-              <div className="mt-12 rounded-3xl border border-blue-200 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-8 text-white shadow-xl shadow-blue-500/20">
-                <span className="inline-block rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
+              <div style={{ borderColor: "#e5e5df", backgroundColor: "#efeee7" }} className="mt-12 rounded-2xl border p-6 shadow-2xs sm:p-8">
+                <span style={{ backgroundColor: "#ffffff", color: "#3158d5" }} className="inline-block rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider">
                   Try It in Action
                 </span>
-                <h3 className="mt-3 text-xl sm:text-2xl font-extrabold text-white">
+                <h3 className="mt-3 text-xl font-extrabold text-[#1c201a] sm:text-2xl">
                   {post.ctaTool.title}
                 </h3>
-                <p className="mt-2 text-xs sm:text-sm text-blue-100 max-w-xl leading-relaxed">
+                <p className="mt-2 max-w-xl text-xs leading-relaxed text-[#70746d] sm:text-sm">
                   {post.ctaTool.description}
                 </p>
                 <div className="mt-5">
                   <Link
                     href={post.ctaTool.href}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-xs font-bold text-blue-700 shadow-md transition hover:bg-blue-50 hover:scale-105 active:scale-95"
+                    style={{ color: "#3158d5" }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-xs font-bold shadow-md transition hover:scale-105 hover:bg-[#f6f5f3] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                   >
                     <span>{post.ctaTool.buttonText}</span>
                     <span>&rarr;</span>
@@ -343,15 +343,16 @@ export default async function BlogPostPage({
               </div>
 
               {/* TAGS */}
-              <div className="mt-8 border-t border-slate-100 pt-6">
+              <div style={{ borderColor: "#e5e5df" }} className="mt-8 border-t pt-6">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1">
+                  <span className="mr-1 text-xs font-bold uppercase tracking-wider text-[#92958f]">
                     Related Tags:
                   </span>
                   {post.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600"
+                      style={{ backgroundColor: "#f6f5f3", color: "#70746d" }}
+                      className="rounded-lg px-2.5 py-1 text-xs font-medium"
                     >
                       #{tag}
                     </span>
@@ -364,12 +365,12 @@ export default async function BlogPostPage({
 
         {/* RELATED ARTICLES SECTION */}
         {relatedPosts.length > 0 && (
-          <section className="mx-auto mt-20 max-w-6xl border-t border-slate-200/80 pt-12">
+          <section style={{ borderColor: "#e5e5df" }} className="mx-auto mt-16 max-w-6xl border-t pt-12">
             <div className="text-center sm:text-left mb-8">
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#3158d5]">
                 Continue Reading
               </p>
-              <h3 className="mt-1 text-2xl font-extrabold text-slate-900">
+              <h3 className="mt-1 text-2xl font-extrabold text-[#1c201a]">
                 Related Proofreading &amp; Design Guides
               </h3>
             </div>
@@ -378,24 +379,25 @@ export default async function BlogPostPage({
               {relatedPosts.map((related) => (
                 <div
                   key={related.slug}
-                  className="rounded-3xl border border-slate-200/80 bg-white/90 p-6 shadow-sm transition hover:border-blue-300 hover:shadow-md"
+                  style={{ borderColor: "#e5e5df" }}
+                  className="group rounded-2xl border bg-white p-5 shadow-2xs transition hover:border-[#3158d5]/40 hover:shadow-md sm:p-6"
                 >
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-600 uppercase">
+                  <span style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase">
                     {related.category}
                   </span>
                   <Link href={`/blog/${related.slug}`} className="block mt-3">
-                    <h4 className="text-base font-bold text-slate-900 hover:text-blue-600">
+                    <h4 className="text-lg font-bold leading-snug text-[#1c201a] transition group-hover:text-[#3158d5] sm:text-xl">
                       {related.title}
                     </h4>
-                    <p className="mt-2 text-xs text-slate-500 line-clamp-2">
+                    <p className="mt-2 line-clamp-2 text-xs text-[#70746d]">
                       {related.description}
                     </p>
                   </Link>
-                  <div className="mt-4 flex items-center justify-between text-xs pt-3 border-t border-slate-100">
-                    <span className="text-slate-400">{related.readingTime}</span>
+                  <div style={{ borderColor: "#efeee7" }} className="mt-4 flex items-center justify-between border-t pt-3 text-xs">
+                    <span className="text-[#92958f]">{related.readingTime}</span>
                     <Link
                       href={`/blog/${related.slug}`}
-                      className="font-bold text-blue-600 hover:text-blue-800"
+                      className="font-bold text-[#3158d5] transition hover:text-[#1c201a] hover:underline"
                     >
                       Read Guide &rarr;
                     </Link>

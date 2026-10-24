@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ScrollReveal from "@/components/ScrollReveal";
 import Link from "next/link";
 
 // ── SVG Noise & Texture Filters for Realistic Book Covers ────────────────────
@@ -46,7 +47,7 @@ const VCSS = `
   --wl: 2px;
   --wr: 12px;
 }
-.fbv{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 18px;border-radius:22px;overflow:hidden;box-sizing:border-box;font-family:inherit;transition:background .3s}
+.fbv{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 16px;border-radius:0;overflow:hidden;box-sizing:border-box;font-family:inherit;transition:background .3s;background-color:#efeee7;width:100%}
 .fbv.full{border-radius:0;min-height:100vh;height:100vh;padding:12px 18px;justify-content:space-between;box-sizing:border-box}
 .fbv .ov{position:absolute;inset:0;pointer-events:none}
 .fbh{display:flex;justify-content:space-between;align-items:center;width:100%;gap:16px;z-index:10}
@@ -110,42 +111,47 @@ const VCSS = `
 .stf__hardInnerShadow{position:absolute;left:0;top:0}
 
 /* Viewer Controls Bar */
-.ct{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;z-index:10;background:rgba(15,23,42,.85);padding:6px 12px;border-radius:999px;color:#fff;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 30px -5px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15);margin-top:4px}
+.ct{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;z-index:10;background:rgba(28,32,26,.88);padding:6px 12px;border-radius:999px;color:#fff;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 30px -5px rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);margin-top:4px}
 .ct button{all:unset;cursor:pointer;width:34px;height:34px;text-align:center;line-height:34px;border-radius:50%;font-size:1.05rem;transition:all .15s;display:flex;align-items:center;justify-content:center}
 .ct button:hover,.ct button:focus-visible{background:rgba(255,255,255,.2);transform:scale(1.08)}
 .ct button svg{display:block;pointer-events:none}
 .ct .sep{display:none}
-.fbv.clean .ct{background:#fff;color:#334155;gap:2px;padding:4px 8px;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(15,23,42,.06),0 10px 28px -14px rgba(15,23,42,.22);-webkit-backdrop-filter:none;backdrop-filter:none}
-.fbv.clean .ct button{width:32px;height:32px;color:#475569}
-.fbv.clean .ct button:hover,.fbv.clean .ct button:focus-visible{background:#f1f5f9;color:#0f172a;transform:none}
-.fbv.clean .ct .pg{color:#334155;font-weight:600;font-variant-numeric:tabular-nums;min-width:64px}
-.fbv.clean .ct .sep{display:block;width:1px;height:18px;background:#e2e8f0;margin:0 6px}
-.fbv.clean .th img{box-shadow:0 1px 4px rgba(15,23,42,.18);border-radius:6px}
-.fbv.clean .cr{opacity:.6}
+.fbv.clean .ct{background:#ffffff;color:#1c201a;gap:2px;padding:4px 8px;border:1px solid #e5e5df;border-radius:999px;box-shadow:0 2px 10px -2px rgba(0,0,0,.06);position:relative;order:1;align-self:flex-end;margin:0 4px 0 0;flex-wrap:nowrap;z-index:12;-webkit-backdrop-filter:none;backdrop-filter:none}
+.fbv.clean .ct button{width:32px;height:32px;color:#575a53;border-radius:50%;transition:all .15s}
+.fbv.clean .ct button:hover,.fbv.clean .ct button:focus-visible{background:#f6f5f3;color:#3158d5;transform:scale(1.06)}
+.fbv.clean .ct .pg{color:#1c201a;font-weight:700;font-variant-numeric:tabular-nums;min-width:64px;font-size:.75rem}
+.fbv.clean .ct .sep{display:block;width:1px;height:18px;background:#e5e5df;margin:0 6px}
+.fbv.clean .ct svg{width:18px;height:18px}
+.fbv.clean .th img{box-shadow:0 2px 6px rgba(0,0,0,.08);border-radius:6px;border:2px solid transparent;transition:all .18s}
+.fbv.clean .th img:hover,.fbv.clean .th img.on{border-color:#3158d5;transform:translateY(-2px)}
+.fbv.clean .th{background:#ffffff;border:1px solid #e5e5df;border-radius:16px;padding:10px 14px;box-shadow:0 4px 16px -2px rgba(0,0,0,.06)}
+.fbv.clean .cr{opacity:.75;color:#70746d;font-size:11px;font-weight:600}
+.fbv.clean .cr:hover{color:#3158d5;opacity:1}
 .nv{display:none}
-.fbv.clean .nv{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:760px;z-index:10;color:#475569}
-.fbv.clean .nv button{all:unset;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#0f172a;transition:background .15s}
-.fbv.clean .nv button:hover,.fbv.clean .nv button:focus-visible{background:rgba(15,23,42,.08)}
-.fbv.clean .nv svg{width:26px;height:26px}
-.fbv.clean .nv .pg{font-size:.75rem;min-width:64px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;color:#475569}
-.fbv.clean .sl{-webkit-appearance:none;appearance:none;flex:1;min-width:80px;height:6px;border-radius:999px;background:rgba(15,23,42,.14);outline:none;cursor:pointer;margin:0}
-.fbv.clean .sl::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:44px;height:6px;border-radius:999px;background:#64748b;border:0}
-.fbv.clean .sl::-moz-range-thumb{width:44px;height:6px;border-radius:999px;background:#64748b;border:0}
-.fbv.clean .ct{position:relative;order:1;align-self:flex-end;margin:0;flex-wrap:nowrap;border-radius:12px;padding:4px;gap:0;z-index:12}
+.fbv.clean .nv{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:720px;z-index:10;color:#1c201a;background:#ffffff;border:1px solid #e5e5df;padding:6px 14px;border-radius:999px;box-shadow:0 2px 12px -2px rgba(0,0,0,.06)}
+.fbv.clean .nv button{all:unset;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#1c201a;background:#f6f5f3;border:1px solid #e5e5df;transition:all .15s}
+.fbv.clean .nv button:hover,.fbv.clean .nv button:focus-visible{background:#efeee7;color:#3158d5;border-color:#3158d5;transform:scale(1.06)}
+.fbv.clean .nv svg{width:18px;height:18px}
+.fbv.clean .nv .pg{font-size:.75rem;min-width:64px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;color:#1c201a;background:#faf9f6;padding:3px 10px;border-radius:999px;border:1px solid #e5e5df}
+.fbv.clean .sl{-webkit-appearance:none;appearance:none;flex:1;min-width:80px;height:5px;border-radius:999px;background:#e5e5df;outline:none;cursor:pointer;margin:0}
+.fbv.clean .sl::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:#3158d5;border:2px solid #ffffff;box-shadow:0 2px 6px rgba(49,88,213,.35);transition:transform .15s;cursor:pointer}
+.fbv.clean .sl::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.fbv.clean .sl::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#3158d5;border:2px solid #ffffff;box-shadow:0 2px 6px rgba(49,88,213,.35);cursor:pointer}
 .fbv.clean .fbh{order:0;align-self:stretch}.fbv.clean .stage{order:2}.fbv.clean .nv{order:3}.fbv.clean .th{order:4}
-.fbv.clean .ct button{width:38px;height:38px;color:#0f172a}
-.fbv.clean .ct svg{width:21px;height:21px}
 .fbv.clean .stage{height:clamp(420px,68vh,760px)}
 .fbv.clean.full{justify-content:flex-start}
 .fbv.clean.full .stage{height:auto;flex:1 1 0;min-height:240px;max-height:none}
-.fbv.flat #book{filter:drop-shadow(0 16px 24px rgba(15,23,42,.2))}
-.fbv.clean.dk .nv{color:#e2e8f0}
-.fbv.clean.dk .nv button{color:#fff}
-.fbv.clean.dk .nv button:hover,.fbv.clean.dk .nv button:focus-visible{background:rgba(255,255,255,.16)}
-.fbv.clean.dk .nv .pg{color:#cbd5e1}
+.fbv.flat #book{filter:drop-shadow(0 16px 24px rgba(0,0,0,.15))}
+.fbv.clean.dk .ct{background:#1c201a;color:#ffffff;border-color:rgba(255,255,255,.15)}
+.fbv.clean.dk .ct button{color:#d1d5db}
+.fbv.clean.dk .ct button:hover{background:rgba(255,255,255,.15);color:#ffffff}
+.fbv.clean.dk .nv{background:#1c201a;color:#ffffff;border-color:rgba(255,255,255,.15)}
+.fbv.clean.dk .nv button{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);color:#ffffff}
+.fbv.clean.dk .nv button:hover{background:rgba(255,255,255,.2);color:#ffffff;border-color:#3158d5}
+.fbv.clean.dk .nv .pg{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);color:#ffffff}
 .fbv.clean.dk .sl{background:rgba(255,255,255,.24)}
-.fbv.clean.dk .sl::-webkit-slider-thumb{background:#e2e8f0}
-.fbv.clean.dk .sl::-moz-range-thumb{background:#e2e8f0}
+.fbv.clean.dk .sl::-webkit-slider-thumb{background:#3158d5;border-color:#ffffff}
+.fbv.clean.dk .sl::-moz-range-thumb{background:#3158d5;border-color:#ffffff}
 /* Browse display modes (Glide, Deck, Arc, Single, Scroll, Wall, Fan) */
 .fbv.alt .stage{perspective:none;-webkit-perspective:none;overflow:hidden;touch-action:pan-y}
 .fbv.alt.alt-glide .stage,.fbv.alt.alt-scroll .stage,.fbv.alt.alt-wall .stage{touch-action:auto}
@@ -190,10 +196,10 @@ const VCSS = `
 // ── App Specific CSS for Customizer & Workspace ───────────────────────────────
 const APP_CSS = `
 #fbapp {
-  --fb-primary: #2563eb;
-  --fb-line: #e2e8f0;
+  --fb-primary: #3158d5;
+  --fb-line: #e5e5df;
 }
-#upload-stage[hidden], #ed[hidden], #ex[hidden], #ask[hidden] {
+#upload-stage[hidden], #ed[hidden], #ex[hidden], #ask[hidden], #fb-topbar[hidden] {
   display: none !important;
 }
 #ed {
@@ -202,33 +208,37 @@ const APP_CSS = `
   gap: 24px;
   align-items: start;
 }
+#pv {
+  background-color: #efeee7;
+  min-height: 480px;
+}
 .fpn {
   background: #ffffff;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 28px;
+  border: 1px solid #e5e5df;
+  border-radius: 24px;
   padding: 18px;
   position: sticky;
   top: 24px;
-  box-shadow: 0 20px 45px -15px rgba(15,23,42,.07), 0 0 1px rgba(15,23,42,.08);
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.03);
 }
 .ftb {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 4px;
-  background: #f1f5f9;
-  padding: 4px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  gap: 3px;
+  background: #efeee7;
+  padding: 3px;
+  border-radius: 14px;
+  border: 1px solid #e5e5df;
   margin-bottom: 16px;
 }
 .dsp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.dpg{grid-column:1/-1;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-top:6px}
+.dpg{grid-column:1/-1;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#70746d;margin-top:6px}
 .dpg:first-child{margin-top:0}
-.dpc{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px 7px;border:1.5px solid #e2e8f0;border-radius:12px;background:#fff;color:#475569;font-size:11px;font-weight:700;text-align:center;transition:border-color .15s,background .15s,color .15s}
+.dpc{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px 7px;border:1px solid #e5e5df;border-radius:12px;background:#fff;color:#555a50;font-size:11px;font-weight:700;text-align:center;transition:border-color .15s,background .15s,color .15s}
 .dpc svg{width:36px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.dpc:hover{border-color:#93c5fd}
-.dpc:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
-.dpc.fon{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}
+.dpc:hover{border-color:#3158d5;background:#faf9f6}
+.dpc:focus-visible{outline:2px solid #3158d5;outline-offset:2px}
+.dpc.fon{border-color:#3158d5;background:#eff6ff;color:#3158d5}
 @media (max-width: 640px) {
   .ftb {
     display: flex;
@@ -241,9 +251,9 @@ const APP_CSS = `
 .ftb button {
   border: 1px solid transparent;
   background: transparent;
-  color: #64748b;
+  color: #70746d;
   padding: 8px 2px;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: .7rem;
   white-space: nowrap;
@@ -255,29 +265,29 @@ const APP_CSS = `
   text-overflow: ellipsis;
 }
 .ftb button:hover {
-  color: #0f172a;
+  color: #1c201a;
   background: rgba(255,255,255,.6);
 }
 .ftb .fon {
   background: #ffffff !important;
-  color: #2563eb !important;
-  border-color: #cbd5e1 !important;
-  box-shadow: 0 2px 8px rgba(15,23,42,.07) !important;
+  color: #3158d5 !important;
+  border: 1px solid #e5e5df !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05) !important;
   font-weight: 800 !important;
 }
 .pm-bar{display:flex;flex-wrap:wrap;gap:6px}
 .pm-bar button:disabled{opacity:.45;cursor:not-allowed}
 .pm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
-.pm-item{position:relative;border:2px solid #e2e8f0;border-radius:10px;background:#fff;padding:4px;cursor:grab;transition:border-color .15s,box-shadow .15s}
-.pm-item.sel{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.18)}
+.pm-item{position:relative;border:1px solid #e5e5df;border-radius:10px;background:#fff;padding:4px;cursor:grab;transition:border-color .15s,box-shadow .15s}
+.pm-item.sel{border-color:#3158d5;box-shadow:0 0 0 2px rgba(49,88,213,.18)}
 .pm-item.drag{opacity:.4}
 .pm-item.over{border-color:#f59e0b}
-.pm-item img{display:block;width:100%;aspect-ratio:.714/1;object-fit:contain;background:#f1f5f9;border-radius:6px;pointer-events:none}
-.pm-n{position:absolute;left:8px;bottom:38px;background:rgba(15,23,42,.82);color:#fff;font:700 10px system-ui,sans-serif;padding:1px 6px;border-radius:999px;pointer-events:none}
+.pm-item img{display:block;width:100%;aspect-ratio:.714/1;object-fit:contain;background:#f6f5f3;border-radius:6px;pointer-events:none}
+.pm-n{position:absolute;left:8px;bottom:38px;background:rgba(28,32,26,.85);color:#fff;font:700 10px system-ui,sans-serif;padding:1px 6px;border-radius:999px;pointer-events:none}
 .pm-chk{position:absolute;left:8px;top:8px;width:18px;height:18px;z-index:2;cursor:pointer;margin:0}
 .pm-acts{display:flex;gap:3px;padding-top:4px}
-.pm-acts button{all:unset;cursor:pointer;flex:1;text-align:center;font-size:12px;font-weight:800;color:#475569;border-radius:6px;padding:4px 0;background:#f1f5f9}
-.pm-acts button:hover{background:#e2e8f0;color:#0f172a}
+.pm-acts button{all:unset;cursor:pointer;flex:1;text-align:center;font-size:12px;font-weight:800;color:#555a50;border-radius:6px;padding:4px 0;background:#efeee7}
+.pm-acts button:hover{background:#e5e5df;color:#1c201a}
 .pm-acts button[data-a=del]:hover{background:#fee2e2;color:#b91c1c}
 .ftp {
   display: flex;
@@ -291,7 +301,7 @@ const APP_CSS = `
 .ftp label {
   font-size: .8125rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #1c201a;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -309,7 +319,7 @@ const APP_CSS = `
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: #64748b;
+  color: #70746d;
   margin-top: 4px;
 }
 .ftg {
@@ -319,14 +329,14 @@ const APP_CSS = `
   padding: 2px 1px;
 }
 .ftc {
-  border: 1.5px solid #e2e8f0;
+  border: 1px solid #e5e5df;
   background: #ffffff;
   border-radius: 12px;
   padding: 6px 8px;
   cursor: pointer;
   font-size: .6875rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #1c201a;
   text-align: left;
   transition: all .16s ease;
   display: flex;
@@ -335,12 +345,12 @@ const APP_CSS = `
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
-  box-shadow: 0 1px 2px rgba(15,23,42,.04);
+  box-shadow: 0 1px 2px rgba(0,0,0,.03);
 }
 .ftc:hover {
-  border-color: #93c5fd;
+  border-color: #3158d5;
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px -2px rgba(37,99,235,.12);
+  box-shadow: 0 4px 10px -2px rgba(49,88,213,.15);
 }
 .ftc i {
   display: block;
@@ -359,10 +369,10 @@ const APP_CSS = `
   letter-spacing: -0.01em;
 }
 .ftc.fon {
-  border-color: #2563eb !important;
+  border-color: #3158d5 !important;
   background: #eff6ff !important;
-  color: #1d4ed8 !important;
-  box-shadow: inset 0 0 0 1.5px #2563eb, 0 3px 8px -2px rgba(37,99,235,.25) !important;
+  color: #3158d5 !important;
+  box-shadow: inset 0 0 0 1.5px #3158d5, 0 3px 8px -2px rgba(49,88,213,.25) !important;
 }
 
 /* Modern Toggle Switch Options */
@@ -373,14 +383,14 @@ const APP_CSS = `
   padding: 12px 14px;
   border-radius: 16px;
   background: #ffffff;
-  border: 1.5px solid #e2e8f0;
+  border: 1px solid #e5e5df;
   transition: all .15s ease;
   cursor: pointer;
   user-select: none;
 }
 .f-toggle-card:hover {
-  border-color: #93c5fd;
-  background: #f8faff;
+  border-color: #3158d5;
+  background: #faf9f6;
 }
 .f-toggle-switch {
   position: relative;
@@ -415,7 +425,7 @@ const APP_CSS = `
   box-shadow: 0 1px 3px rgba(0,0,0,.25);
 }
 .f-toggle-switch input:checked + .f-toggle-slider {
-  background-color: #2563eb;
+  background-color: #3158d5;
 }
 .f-toggle-switch input:checked + .f-toggle-slider:before {
   transform: translateX(18px);
@@ -424,7 +434,7 @@ const APP_CSS = `
 .f-upload-zone {
   border: 1.5px dashed #cbd5e1;
   border-radius: 18px;
-  background: #f8fafc;
+  background: #f6f5f3;
   padding: 16px;
   text-align: center;
   cursor: pointer;
@@ -436,15 +446,15 @@ const APP_CSS = `
   gap: 6px;
 }
 .f-upload-zone:hover {
-  border-color: #3b82f6;
+  border-color: #3158d5;
   background: #eff6ff;
 }
 .f-upload-icon {
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  background: #dbeafe;
-  color: #2563eb;
+  background: #eff6ff;
+  color: #3158d5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -469,11 +479,11 @@ const APP_CSS = `
   padding: 0;
   flex-shrink: 0;
 }
-.fpl button.on { box-shadow: 0 0 0 2.5px #2563eb; }
+.fpl button.on { box-shadow: 0 0 0 2.5px #3158d5; }
 .fpl button.pn { background: linear-gradient(45deg,#e2e8f0 25%,transparent 25%,transparent 75%,#e2e8f0 75%),linear-gradient(45deg,#e2e8f0 25%,#fff 25%,#fff 75%,#e2e8f0 75%); background-size: 10px 10px; background-position: 0 0, 5px 5px; }
 .fpl button:hover {
   transform: scale(1.15);
-  box-shadow: 0 0 0 2px #2563eb;
+  box-shadow: 0 0 0 2px #3158d5;
 }
 .ftp input[type=color] {
   appearance: none;
@@ -495,11 +505,11 @@ const APP_CSS = `
   font: inherit;
   font-size: .8125rem;
   padding: 9px 12px;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 14px;
+  border: 1px solid #e5e5df;
+  border-radius: 12px;
   width: 100%;
   background: #ffffff;
-  color: #0f172a;
+  color: #1c201a;
   transition: border-color .15s, box-shadow .15s;
   box-sizing: border-box;
 }
@@ -516,16 +526,16 @@ const APP_CSS = `
 }
 .ftp textarea:focus, .ftp select:focus, .ftp input[type=text]:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+  border-color: #3158d5;
+  box-shadow: 0 0 0 3px rgba(49,88,213,.15);
 }
 .fbtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid #cbd5e1;
+  border: 1px solid #e5e5df;
   background: #ffffff;
-  color: #1e293b;
+  color: #1c201a;
   padding: 8px 14px;
   border-radius: 12px;
   cursor: pointer;
@@ -534,14 +544,14 @@ const APP_CSS = `
   transition: all .15s;
 }
 .fbtn:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
+  background: #f6f5f3;
+  border-color: #cbd5e1;
 }
 .fcta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  background: #3158d5;
   color: #ffffff;
   border: 0;
   font-size: .8125rem;
@@ -549,11 +559,11 @@ const APP_CSS = `
   padding: 9px 16px;
   border-radius: 12px;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(37,99,235,.28);
+  box-shadow: 0 4px 12px rgba(49,88,213,.25);
   transition: all .18s;
 }
 .fcta:hover {
-  box-shadow: 0 8px 22px rgba(37,99,235,.38);
+  opacity: 0.95;
   transform: translateY(-1px);
 }
 .feye-btn {
@@ -562,9 +572,9 @@ const APP_CSS = `
   gap: 6px;
   padding: 7px 12px;
   border-radius: 12px;
-  background: #f8fafc;
-  border: 1.5px solid #cbd5e1;
-  color: #334155;
+  background: #ffffff;
+  border: 1px solid #e5e5df;
+  color: #1c201a;
   font-size: .75rem;
   font-weight: 700;
   cursor: pointer;
@@ -573,8 +583,8 @@ const APP_CSS = `
 }
 .feye-btn:hover {
   background: #eff6ff;
-  border-color: #93c5fd;
-  color: #1d4ed8;
+  border-color: #3158d5;
+  color: #3158d5;
 }
 @media (max-width: 900px) {
   #ed {
@@ -913,7 +923,6 @@ function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) =
 export default function FlipbookClient() {
   const initDone = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   useEffect(() => {
     if (!initDone.current) {
@@ -923,233 +932,584 @@ export default function FlipbookClient() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10 text-[15px]">
+    <div style={{ backgroundColor: "#faf9f6" }} className="flex min-h-screen flex-col bg-[#faf9f6] font-sans text-[#1c201a] antialiased selection:bg-[#bcd5ff] selection:text-black relative z-10 text-[15px]">
       {/* Inject viewer & editor CSS */}
       <style dangerouslySetInnerHTML={{ __html: VCSS + APP_CSS }} />
 
       <Navbar />
 
       <main className="flex-1">
-        {/* UPLOAD STAGE: HERO + DROPZONE + CARDS (HIDDEN AFTER UPLOAD) */}
-        <div id="upload-stage">
-          {/* HERO TITLE — Matching Figma Layout Style */}
-          <section className="px-4 max-w-7xl mx-auto pt-3 sm:pt-6 pb-1.5 sm:pb-2.5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-              <div>
-                <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0f172a]">
-                  3D Digital Flipbook Maker
+        <section className="relative overflow-hidden">
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16 pt-3 sm:pt-6">
+            {/* UPLOAD STAGE: HERO + DROPZONE + CARDS (HIDDEN AFTER UPLOAD) */}
+            <div id="upload-stage">
+              {/* HERO TITLE — Exact Match to Home Page Layout */}
+              <div className="mx-auto max-w-5xl text-center pt-2 sm:pt-6 pb-2">
+                <div
+                  style={{
+                    color: "#3158d5",
+                    letterSpacing: "0.18em",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                  }}
+                  className="inline-flex items-center uppercase mb-3 sm:mb-4"
+                >
+                  3D DIGITAL FLIPBOOK
+                </div>
+
+                <h1
+                  aria-live="polite"
+                  className="text-center tracking-tight text-[#1c201a] flex flex-col items-center justify-center"
+                  style={{ margin: "0 auto" }}
+                >
+                  <span
+                    style={{
+                      fontSize: "clamp(44px, 5.8vw, 72px)",
+                      fontWeight: 900,
+                      lineHeight: 1.04,
+                      letterSpacing: "-0.035em",
+                      color: "#1c201a",
+                      display: "block",
+                      fontFamily: "var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                    }}
+                  >
+                    Turn pages.
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "'ITC Modern No. 216', var(--font-itc-modern), 'Instrument Serif', Georgia, serif",
+                      fontSize: "clamp(38px, 4.8vw, 64px)",
+                      fontWeight: 400,
+                      fontStyle: "italic",
+                      lineHeight: 1.05,
+                      letterSpacing: "-0.01em",
+                      color: "#1c201a",
+                      display: "block",
+                      marginTop: "6px",
+                    }}
+                  >
+                    Like a real book.
+                  </span>
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1 line-clamp-1 sm:line-clamp-none">
-                  Turn multi-page PDFs or image catalogs into interactive realistic 3D page-turning flipbooks.
+
+                <p
+                  style={{
+                    color: "#70746d",
+                    fontSize: "16px",
+                    lineHeight: 1.55,
+                    margin: "18px auto 0",
+                  }}
+                  className="text-center font-normal px-4 max-w-[540px] mx-auto"
+                >
+                  Convert PDFs and images into realistic 3D digital books.
                 </p>
               </div>
 
-              {/* Fast / Local Badge */}
-              <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 text-xs font-semibold text-emerald-800 self-start sm:self-center shadow-2xs">
-                <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-                <span>Client-side 3D rendering • Zero server uploads</span>
-              </div>
-            </div>
-          </section>
-
-          <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 mt-2 sm:mt-4">
-            {/* DROPZONE */}
-            <div
-              id="drop"
-              tabIndex={0}
-              role="button"
-              aria-label="Upload PDF or images"
-              onDragEnter={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault();
-                setIsDragging(false);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                setIsDragging(false);
-              }}
-              className={`group relative w-full cursor-pointer rounded-2xl sm:rounded-3xl border py-12 px-6 sm:py-16 sm:px-12 lg:py-20 text-center transition-all duration-300 overflow-hidden ${
-                isDragging
-                  ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.01]"
-                  : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
-              }`}
-            >
-              {/* Cloud Upload Icon */}
-              <div className="mx-auto flex justify-center items-center">
-                <svg
-                  width="68"
-                  height="68"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-slate-400 group-hover:text-slate-500 group-hover:-translate-y-1 transition-all duration-300"
-                >
-                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-                  <path d="M12 12v9" />
-                  <path d="m16 16-4-4-4 4" />
-                </svg>
-              </div>
-
-              <h2 className="mt-5 text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
-                Drop your images or multi-page catalogs here
-              </h2>
-
-              {/* BUTTONS (SIDE BY SIDE WITH BREATHING SPACE) */}
-              <div className="mt-8 sm:mt-10 mb-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-                <span className="group/btn inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover/btn:text-[#0055fe] transition-colors">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                  <span>Upload Now</span>
-                </span>
-
-                <button
-                  type="button"
-                  id="btn-sample"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const w = window as unknown as Record<string, unknown>;
-                    if (typeof w["loadSampleCatalog"] === "function") {
-                      (w["loadSampleCatalog"] as () => void)();
-                    }
+              {/* UPLOAD CARD CONTAINER (SPLIT: LEFT UPLOAD, RIGHT SAMPLE PREVIEW - EXACT MATCH TO HOME PAGE) */}
+              <div className="mx-auto mt-6 sm:mt-8 max-w-[980px]">
+                <div
+                  style={{
+                    borderColor: "#e5e5df",
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    backgroundColor: "#ecebe4",
+                    boxShadow: "none",
                   }}
-                  className="group/sample inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-blue-400/80 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] transition-all cursor-pointer shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
-                  title="Test immediately with a demo catalog"
+                  className="relative w-full rounded-2xl sm:rounded-[24px] overflow-hidden transition-all duration-300"
                 >
-                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover/sample:text-[#0055fe] transition-colors">
-                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
-                    <path d="M6 6h10" />
-                    <path d="M6 10h10" />
-                  </svg>
-                  <span>Try Sample</span>
-                </button>
-              </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
+                    {/* LEFT COLUMN: UPLOAD BOX & CONTROLS (4/12 or 5/12) */}
+                    <div
+                      style={{ borderRight: "1px solid #e5e5df" }}
+                      className="lg:col-span-5 xl:col-span-4 p-5 sm:p-7 flex flex-col justify-between bg-white"
+                    >
+                      <div>
+                        {/* HEADER */}
+                        <div
+                          style={{ borderBottom: "1px solid #e5e5df" }}
+                          className="flex items-center justify-between pb-3"
+                        >
+                          <span
+                            style={{
+                              backgroundColor: "#efeee7",
+                              color: "#3158d5",
+                              border: "1px solid #e5e5df",
+                            }}
+                            className="text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                              <path d="M6 6h10" />
+                              <path d="M6 10h10" />
+                            </svg>
+                            <span>PDF &amp; Images</span>
+                          </span>
 
-              <div id="st" aria-live="polite" className="mt-4 text-xs font-semibold text-blue-600 min-h-[1.5em]"></div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                            11 STYLES · 3D
+                          </span>
+                        </div>
+
+                        {/* DASHED DROPZONE */}
+                        <div
+                          id="drop"
+                          tabIndex={0}
+                          role="button"
+                          aria-label="Upload PDF or images"
+                          onDragEnter={(e) => {
+                            e.preventDefault();
+                            setIsDragging(true);
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setIsDragging(true);
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            setIsDragging(false);
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setIsDragging(false);
+                          }}
+                          style={{
+                            borderColor: isDragging ? "#3158d5" : "#deded6",
+                            backgroundColor: isDragging ? "#eff6ff" : "#f6f5f3",
+                          }}
+                          className={`mt-4 rounded-2xl border-2 border-dashed p-5 sm:p-6 text-center transition-all cursor-pointer ${
+                            isDragging
+                              ? "border-[#3158d5] bg-blue-50/70"
+                              : "hover:border-[#3158d5]/50"
+                          }`}
+                        >
+                          <div
+                            style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                            className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border shadow-2xs text-[#3158d5] transition-transform duration-200 group-hover:scale-105"
+                          >
+                            <svg
+                              width="22"
+                              height="22"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                              <path d="M6 6h10" />
+                              <path d="M6 10h10" />
+                              <path d="m14 16 3 3 3-3" />
+                              <path d="M17 19v-6" />
+                            </svg>
+                          </div>
+
+                          <h3 className="mt-3 text-sm sm:text-[15px] font-bold text-[#1c201a]">
+                            Drop your work here
+                          </h3>
+
+                          <div className="mt-3.5">
+                            <span
+                              style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                              className="inline-flex items-center justify-center gap-2 rounded-lg px-7 py-2.5 text-sm font-bold shadow-xs transition hover:opacity-95 active:scale-[0.98] cursor-pointer min-w-[150px]"
+                            >
+                              <span>Choose file</span>
+                              <span className="text-base font-bold">↗</span>
+                            </span>
+                          </div>
+
+                          <p className="mt-2.5 text-[11px] text-[#767a74]">
+                            PDF, JPG, PNG &amp; WebP · Up to 50+ pages
+                          </p>
+                        </div>
+
+                        <div className="mt-3.5 text-center">
+                          <button
+                            type="button"
+                            id="btn-sample"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const w = window as unknown as Record<string, unknown>;
+                              if (typeof w["loadSampleCatalog"] === "function") {
+                                (w["loadSampleCatalog"] as () => void)();
+                              }
+                            }}
+                            className="text-xs font-semibold text-[#3158d5] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>Try a sample catalog</span>
+                            <span>→</span>
+                          </button>
+                        </div>
+
+                        <div id="st" aria-live="polite" className="mt-2 text-center text-xs font-semibold text-[#3158d5] min-h-[1.2em]"></div>
+                      </div>
+                    </div>
+
+                    {/* RIGHT COLUMN: SAMPLE PREVIEW (7/12 or 8/12) */}
+                    <div
+                      style={{ backgroundColor: "#ecebe4" }}
+                      className="lg:col-span-7 xl:col-span-8 p-3.5 sm:p-5 lg:p-7 flex flex-col justify-between"
+                    >
+                      <div>
+                        {/* HEADER: SAMPLE PREVIEW */}
+                        <div
+                          style={{ borderBottom: "1px solid #deded6" }}
+                          className="flex items-center justify-between pb-3 sm:pb-3.5"
+                        >
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+                              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                              <path d="M6 6h10" />
+                              <path d="M6 10h10" />
+                            </svg>
+                            <span>editorial-lookbook.pdf</span>
+                          </div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                            SAMPLE PREVIEW
+                          </span>
+                        </div>
+
+                        {/* DESKTOP LAYOUT (>= 1024px) */}
+                        <div className="hidden lg:flex mt-5 flex-row items-start gap-6">
+                          {/* ARTWORK CARD */}
+                          <div
+                            onClick={() => {
+                              const w = window as unknown as Record<string, unknown>;
+                              if (typeof w["loadSampleCatalog"] === "function") {
+                                (w["loadSampleCatalog"] as () => void)();
+                              }
+                            }}
+                            style={{ width: "240px", minWidth: "220px", maxWidth: "250px", flexShrink: 0 }}
+                            className="rounded-xl overflow-hidden shadow-xs border border-[#deded6] bg-white cursor-pointer group/art transition hover:scale-[1.01]"
+                            title="Click to test 3D flipbook with this sample catalog"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src="/flipbook-sample-preview.png"
+                              alt="Sample 3D Editorial Lookbook Catalog"
+                              className="w-full h-auto object-cover block"
+                            />
+                          </div>
+
+                          {/* DETAILS & FEATURES LIST */}
+                          <div className="flex-1 min-w-0 w-full flex flex-col justify-between self-stretch">
+                            <div>
+                              <div className="flex items-center gap-2 text-xs font-bold text-[#1c201a]">
+                                <span style={{ backgroundColor: "#3158d5" }} className="h-2 w-2 rounded-full inline-block" />
+                                <span>3D Flipbook Sample</span>
+                              </div>
+
+                              {/* INTERACTIVE SAMPLE CARD 1 */}
+                              <div
+                                onClick={() => {
+                                  const w = window as unknown as Record<string, unknown>;
+                                  if (typeof w["loadSampleCatalog"] === "function") {
+                                    (w["loadSampleCatalog"] as () => void)();
+                                  }
+                                }}
+                                style={{ border: "2px solid #365cd6", backgroundColor: "#ffffff" }}
+                                className="mt-3 rounded-xl p-3.5 shadow-xs cursor-pointer hover:border-[#2546b8] transition"
+                              >
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-[#3158d5]">
+                                  INTERACTIVE DEMO
+                                </div>
+                                <div className="mt-1 flex items-center justify-between text-xs font-bold text-[#1c201a]">
+                                  <span>Editorial Lookbook</span>
+                                  <span className="text-[#3158d5] font-semibold text-[11px]">Click to open →</span>
+                                </div>
+                                <p className="mt-1 text-[11px] text-[#767a74]">
+                                  Realistic page curl &amp; sound
+                                </p>
+                              </div>
+
+                              {/* SAMPLE CARD 2 */}
+                              <div
+                                style={{ border: "1px solid #deded6", backgroundColor: "#ffffff" }}
+                                className="mt-2.5 rounded-xl p-3.5 shadow-2xs"
+                              >
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                  MODES
+                                </div>
+                                <div className="mt-1 flex items-center justify-between text-xs font-bold text-[#1c201a]">
+                                  <span>11 Book Formats</span>
+                                  <span className="text-slate-400 font-normal text-[11px]">Hardcover, Magazine</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <p className="mt-4 text-[11px] leading-relaxed text-[#767a74] text-center">
+                              Click cover to open interactive 3D flipbook
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* MOBILE & TABLET LAYOUT (< 1024px) */}
+                        <div className="block lg:hidden mt-3.5 sm:mt-5">
+                          <div className="flex flex-row items-start gap-3 sm:gap-4">
+                            {/* ARTWORK CARD */}
+                            <div
+                              onClick={() => {
+                                const w = window as unknown as Record<string, unknown>;
+                                if (typeof w["loadSampleCatalog"] === "function") {
+                                  (w["loadSampleCatalog"] as () => void)();
+                                }
+                              }}
+                              style={{ width: "38%", minWidth: "120px", maxWidth: "165px", flexShrink: 0 }}
+                              className="rounded-xl overflow-hidden shadow-xs border border-[#deded6] bg-white cursor-pointer group/art transition hover:scale-[1.01]"
+                              title="Click to test 3D flipbook with this sample catalog"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src="/flipbook-sample-preview.png"
+                                alt="Sample 3D Editorial Lookbook Catalog"
+                                className="w-full h-auto object-cover block"
+                              />
+                            </div>
+
+                            {/* DETAILS LIST */}
+                            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                              <div>
+                                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold text-[#1c201a]">
+                                  <span style={{ backgroundColor: "#3158d5" }} className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full inline-block" />
+                                  <span>3D Flipbook Sample</span>
+                                </div>
+
+                                <div
+                                  onClick={() => {
+                                    const w = window as unknown as Record<string, unknown>;
+                                    if (typeof w["loadSampleCatalog"] === "function") {
+                                      (w["loadSampleCatalog"] as () => void)();
+                                    }
+                                  }}
+                                  style={{ border: "2px solid #3158d5", backgroundColor: "#ffffff" }}
+                                  className="mt-2 sm:mt-3 rounded-xl p-2.5 sm:p-3.5 shadow-xs cursor-pointer"
+                                >
+                                  <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#3158d5]">
+                                    DEMO
+                                  </div>
+                                  <div className="mt-0.5 sm:mt-1 flex items-center justify-between text-[11px] sm:text-xs font-bold text-[#1c201a]">
+                                    <span>Lookbook</span>
+                                    <span className="text-[#3158d5] font-semibold text-[10px]">Open →</span>
+                                  </div>
+                                </div>
+
+                                <div
+                                  style={{ border: "1px solid #deded6", backgroundColor: "#ffffff" }}
+                                  className="mt-2 sm:mt-2.5 rounded-xl p-2.5 sm:p-3.5 shadow-2xs"
+                                >
+                                  <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                    MODES
+                                  </div>
+                                  <div className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs font-bold text-[#1c201a]">
+                                    11 Book Formats
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="mt-3 sm:mt-4 text-[10.5px] sm:text-[11px] leading-relaxed text-[#767a74] text-center">
+                            Click cover to open interactive 3D flipbook
+                          </p>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3 TRUST PILLARS (HOMEPAGE MATCH) */}
+                <ScrollReveal delay={100}>
+                  <div className="mt-10 sm:mt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-12 text-xs sm:text-[13px] font-medium text-[#575a53] mx-auto text-center w-full">
+                    <div className="flex items-center gap-2">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>Free. No signup.</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
+                        <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z"/>
+                      </svg>
+                      <span>Private, in-memory 3D rendering</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                      </svg>
+                      <span>Zero server uploads • Offline HTML</span>
+                    </div>
+                  </div>
+                </ScrollReveal>
+
+
+              </div>
             </div>
 
-            {/* 4 Trust Feature Cards */}
-            <div className="mt-6 w-full">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-                <div className="flex items-center gap-2.5 sm:gap-3.5 p-3 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
-                      <path d="M6 6h10" />
-                      <path d="M6 10h10" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                      11 Display Styles
-                    </div>
-                    <div className="hidden sm:block text-[11px] text-slate-500 mt-0.5 leading-tight">
-                      Page-turn, slider, cards &amp; more
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2.5 sm:gap-3.5 p-3 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                      3D Realistic Board
-                    </div>
-                    <div className="hidden sm:block text-[11px] text-slate-500 mt-0.5 leading-tight">
-                      Page stack &amp; ribbon bookmark
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2.5 sm:gap-3.5 p-3 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                      Offline HTML Export
-                    </div>
-                    <div className="hidden sm:block text-[11px] text-slate-500 mt-0.5 leading-tight">
-                      Standalone file • No signup
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2.5 sm:gap-3.5 p-3 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                      Zero Server Upload
-                    </div>
-                    <div className="hidden sm:block text-[11px] text-slate-500 mt-0.5 leading-tight">
-                      Rendered entirely in browser
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* WORKSPACE CONTAINER */}
-        <div id="fbapp" className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+            {/* WORKSPACE CONTAINER */}
+            <div id="fbapp" className="w-full">
           <input type="file" id="fi" accept="application/pdf,image/*" multiple hidden />
 
           {/* WIDE-PAGE SPREAD DIALOG */}
-          <div className="mx-auto mt-6 max-w-[920px] rounded-2xl border border-amber-200 bg-amber-50/90 p-5 shadow-xs" id="ask" hidden>
+          <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="mx-auto mt-6 max-w-[920px] rounded-2xl border p-5 shadow-xs" id="ask" hidden>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <b className="text-sm font-bold text-amber-900">Wide pages detected.</b>
-                <p className="text-xs text-amber-800 mt-0.5">They look like two-page spreads. How would you like to display them?</p>
+                <b className="text-sm font-bold text-[#1c201a]">Wide pages detected.</b>
+                <p style={{ color: "#70746d" }} className="text-xs mt-0.5">They look like two-page spreads. How would you like to display them?</p>
               </div>
               <div className="flex flex-wrap gap-2.5">
-                <button className="fcta text-xs py-2 px-4" data-m="split">Split into left &amp; right pages</button>
-                <button className="fbtn text-xs py-2 px-4" data-m="single">Keep each as one page</button>
+                <button style={{ backgroundColor: "#3158d5", color: "#ffffff" }} className="fcta text-xs py-2 px-4 rounded-xl font-bold" data-m="split">Split into left &amp; right pages</button>
+                <button style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df", color: "#1c201a" }} className="fbtn text-xs py-2 px-4 rounded-xl border font-bold" data-m="single">Keep each as one page</button>
               </div>
+            </div>
+          </div>
+
+          {/* TOP WORKSPACE ACTION & STATS BAR */}
+          <div
+            id="fb-topbar"
+            style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+            className="mt-8 mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl sm:rounded-3xl border p-3.5 sm:p-4 shadow-xs"
+            hidden
+          >
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+              <button
+                type="button"
+                id="top-add-btn"
+                style={{ borderColor: "#e5e5df", backgroundColor: "#f6f5f3", color: "#1c201a" }}
+                className="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold hover:bg-[#efeee7] transition cursor-pointer"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>Add Pages</span>
+              </button>
+
+              <button
+                type="button"
+                id="top-start-over"
+                style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff", color: "#70746d" }}
+                className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold hover:text-rose-600 hover:border-rose-200 transition cursor-pointer"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <span>Start Over</span>
+              </button>
+
+              <div
+                id="top-stats-pill"
+                style={{ backgroundColor: "#ecfdf5", borderColor: "#a7f3d0", color: "#059669" }}
+                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold shadow-2xs"
+              >
+                <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span id="top-stats-text">8 Pages · 3D Engine Active</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                id="top-download-btn"
+                style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold shadow-xs hover:opacity-95 active:scale-[0.98] transition cursor-pointer"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span>Download Offline HTML</span>
+              </button>
             </div>
           </div>
 
           {/* FLIPBOOK WORKSPACE: PREVIEW + CUSTOMIZE PANEL */}
-          <section id="ed" className="mt-8" hidden>
-            {/* LEFT: INTERACTIVE 3D CANVAS */}
-            <div id="pv" className="rounded-3xl border border-slate-200/80 bg-white/95 p-2 sm:p-3 shadow-xl shadow-slate-900/5 backdrop-blur-xl"></div>
+          <section id="ed" className="mt-2" hidden>
+            {/* LEFT COLUMN: STUDIO PREVIEW BOX */}
+            <div className="flex flex-col gap-4 min-w-0">
+              {/* STUDIO PREVIEW FRAME (MATCHING HOMEPAGE PREVIEW CARD) */}
+              <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="w-full overflow-hidden rounded-2xl sm:rounded-3xl border shadow-xs">
+                {/* PREVIEW FRAME HEADER */}
+                <div style={{ borderBottom: "1px solid #e5e5df", backgroundColor: "#faf9f6" }} className="flex items-center justify-between border-b px-4 py-3.5 sm:px-6">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span style={{ backgroundColor: "#3158d5" }} className="flex h-2.5 w-2.5 rounded-full shrink-0 animate-pulse" />
+                    <div className="min-w-0">
+                      <p id="pv-title-bar" style={{ color: "#1c201a" }} className="text-sm font-bold truncate">
+                        3D Flipbook Studio
+                      </p>
+                      <p id="pv-sub-bar" style={{ color: "#70746d" }} className="text-[11px] truncate">
+                        Interactive 3D Book &amp; Page-Turn Engine
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span style={{ borderColor: "#e5e5df", backgroundColor: "#efeee7" }} className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-bold text-slate-600">
+                      <svg className="h-3 w-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+                      Drag or click corner to turn
+                    </span>
+                    <span
+                      id="pv-badge-count"
+                      style={{ backgroundColor: "#ecfdf5", borderColor: "#a7f3d0", color: "#059669" }}
+                      className="rounded-lg border px-2.5 py-1 text-[11px] font-bold"
+                    >
+                      READY TO PUBLISH
+                    </span>
+                  </div>
+                </div>
+
+                {/* CANVAS MOUNT (#pv) */}
+                <div
+                  id="pv"
+                  style={{ backgroundColor: "#efeee7" }}
+                  className="relative w-full min-h-[460px] overflow-hidden"
+                ></div>
+              </div>
+
+              {/* CROSS-TOOL WORKFLOW BRIDGE */}
+              <div
+                style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3.5 sm:p-4 shadow-xs"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#3158d5]">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-[#1c201a]">Check typos before you publish?</p>
+                    <p className="text-[11px] text-[#70746d]">Scan your PDF or images through our spellchecker</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href="/"
+                    style={{ borderColor: "#e5e5df", backgroundColor: "#f6f5f3", color: "#1c201a" }}
+                    className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold hover:bg-[#efeee7] transition"
+                  >
+                    <span>Run Spellcheck</span>
+                    <span>→</span>
+                  </a>
+                  <a
+                    href="/image-compressor"
+                    style={{ borderColor: "#e5e5df", backgroundColor: "#f6f5f3", color: "#1c201a" }}
+                    className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold hover:bg-[#efeee7] transition"
+                  >
+                    <span>Compress Images</span>
+                    <span>→</span>
+                  </a>
+                </div>
+              </div>
+            </div>
 
             {/* RIGHT: CUSTOMIZER PANEL */}
             <div className="fpn">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <div style={{ borderBottomColor: "#e5e5df" }} className="flex items-center justify-between pb-3 mb-3 border-b">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800">Customizer</span>
+                  <span className="flex h-2 w-2 rounded-full bg-[#3158d5] animate-pulse" />
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#1c201a]">Customizer</span>
                 </div>
-                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">11 Display Styles</span>
+                <span style={{ backgroundColor: "#efeee7", borderColor: "#e5e5df", color: "#3158d5" }} className="text-[11px] font-bold border px-2.5 py-0.5 rounded-full shadow-2xs">
+                  11 Display Styles
+                </span>
               </div>
 
               {/* 5-COL COMPACT SEGMENTED TABS */}
@@ -1171,29 +1531,29 @@ export default function FlipbookClient() {
                 </div>
 
                 {/* Active Style Description Box */}
-                <div id="note" className="rounded-xl border border-blue-100 bg-blue-50/80 p-3 text-xs text-blue-900 leading-relaxed font-medium"></div>
+                <div id="note" style={{ borderColor: "#e5e5df", backgroundColor: "#efeee7", color: "#1c201a" }} className="rounded-xl border p-3 text-xs leading-relaxed font-medium"></div>
 
                 {/* Optional inside-cover image (available for every style) */}
-                <div id="ic-box" className="rounded-2xl border border-slate-200/90 bg-slate-50/90 p-3 shadow-2xs">
-                  <label style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 8, textAlign: "left" }} className="text-xs font-bold text-slate-700 cursor-pointer">
+                <div id="ic-box" style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }} className="rounded-2xl border p-3 shadow-2xs">
+                  <label style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 8, textAlign: "left", color: "#1c201a" }} className="text-xs font-bold cursor-pointer">
                     <input type="checkbox" id="icOn" style={{ width: 16, height: 16, margin: 0, flex: "none" }} />
                     <span>Add an inside-cover image</span>
                   </label>
                   <div id="icPanel" hidden>
                     <div className="flex items-center gap-2 pt-2.5">
-                      <div id="thI" className="h-10 w-8 rounded border border-slate-300 bg-white bg-cover bg-center"></div>
+                      <div id="thI" className="h-10 w-8 rounded border border-[#e5e5df] bg-white bg-cover bg-center"></div>
                       <button type="button" className="fbtn text-xs py-1 px-2.5" id="uI">Upload image</button>
                       <button type="button" className="text-xs text-rose-600 hover:text-rose-800 font-bold px-1.5 hidden" id="uIx">Remove</button>
                     </div>
-                    <span className="block pt-1.5 text-[10px] text-slate-400">Shown on the page just inside the front cover.</span>
+                    <span style={{ color: "#70746d" }} className="block pt-1.5 text-[10px]">Shown on the page just inside the front cover.</span>
                   </div>
                   <input id="fI" type="file" accept="image/*" className="hidden" />
                 </div>
 
                 {/* Custom Cover Studio Panel (Shown when 'Your Own Cover' is selected) */}
-                <div id="cpanel" className="rounded-2xl border border-slate-200/90 bg-slate-50/90 p-3.5 shadow-2xs flex flex-col gap-3" hidden>
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/70">
-                    <span className="text-xs font-bold text-slate-800">Bespoke Hardcover Artwork</span>
+                <div id="cpanel" style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }} className="rounded-2xl border p-3.5 shadow-2xs flex flex-col gap-3" hidden>
+                  <div style={{ borderBottomColor: "#e5e5df" }} className="flex items-center justify-between pb-2 border-b">
+                    <span className="text-xs font-bold text-[#1c201a]">Bespoke Hardcover Artwork</span>
                     <button type="button" className="fcta text-[11px] py-1 px-2.5" id="cpanel-sample">✨ Sample Cover</button>
                   </div>
 
@@ -1266,16 +1626,16 @@ export default function FlipbookClient() {
               <div className="ftp" id="p-br" hidden>
                 {/* Book Title (Embossed on Cover) */}
                 <div>
-                  <label htmlFor="bt" className="text-xs font-bold text-slate-800 block mb-1">
+                  <label htmlFor="bt" className="text-xs font-bold text-[#1c201a] block mb-1">
                     Book Title (Embossed on Cover)
                   </label>
                   <input type="text" id="bt" placeholder="Spellense Catalog" maxLength={45} className="w-full text-xs font-semibold" />
-                  <span className="text-[10px] text-slate-400 mt-1">Rendered in gold foil on Luxury editions and stamped ink on Classic</span>
+                  <span style={{ color: "#70746d" }} className="text-[10px] mt-1 block">Rendered in gold foil on Luxury editions and stamped ink on Classic</span>
                 </div>
 
                 {/* Book Header Subtitle */}
                 <div>
-                  <label htmlFor="ds" className="text-xs font-bold text-slate-800 block mb-1">
+                  <label htmlFor="ds" className="text-xs font-bold text-[#1c201a] block mb-1">
                     Book Header Subtitle
                   </label>
                   <textarea id="ds" rows={2} maxLength={160} placeholder="Spellense Editorial 2026 • Designed for print and digital" className="w-full text-xs font-medium"></textarea>
@@ -1283,8 +1643,8 @@ export default function FlipbookClient() {
 
                 {/* Brand Logo */}
                 <div>
-                  <span className="text-xs font-bold text-slate-800">Brand Logo</span>
-                  <p className="text-[11px] text-slate-500 mb-2">Displayed in header alongside book description</p>
+                  <span className="text-xs font-bold text-[#1c201a]">Brand Logo</span>
+                  <p style={{ color: "#70746d" }} className="text-[11px] mb-2">Displayed in header alongside book description</p>
                   <label htmlFor="lg" className="f-upload-zone group">
                     <input type="file" id="lg" accept="image/*" className="hidden" />
                     <div className="f-upload-icon">
@@ -1294,13 +1654,13 @@ export default function FlipbookClient() {
                         <line x1="12" y1="3" x2="12" y2="15" />
                       </svg>
                     </div>
-                    <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Upload Transparent Logo</span>
-                    <span className="text-[10px] text-slate-400">PNG or SVG recommended</span>
+                    <span className="text-xs font-bold text-[#1c201a] group-hover:text-[#3158d5] transition-colors">Upload Transparent Logo</span>
+                    <span style={{ color: "#70746d" }} className="text-[10px]">PNG or SVG recommended</span>
                   </label>
-                  <div id="lg-status" className="mt-2.5 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-2xs hidden">
+                  <div id="lg-status" style={{ borderColor: "#e5e5df" }} className="mt-2.5 flex items-center justify-between rounded-xl border bg-white px-3 py-2 shadow-2xs hidden">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <img id="lg-thumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" className="h-6 w-auto max-w-[48px] object-contain rounded border border-slate-100 p-0.5" />
-                      <span className="text-xs font-semibold text-slate-700 truncate">Logo active</span>
+                      <img id="lg-thumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" className="h-6 w-auto max-w-[48px] object-contain rounded border border-[#e5e5df] p-0.5" />
+                      <span className="text-xs font-semibold text-[#1c201a] truncate">Logo active</span>
                     </div>
                     <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 px-2 py-0.5 rounded hover:bg-rose-50 transition-colors cursor-pointer" id="lgx">
                       Remove
@@ -1311,8 +1671,8 @@ export default function FlipbookClient() {
                 {/* Option 1: Swap Sides */}
                 <label htmlFor="lr" className="f-toggle-card">
                   <div className="flex flex-col pr-3">
-                    <span className="text-xs font-bold text-slate-800">Swap Header Sides</span>
-                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Logo on right, text on left</span>
+                    <span className="text-xs font-bold text-[#1c201a]">Swap Header Sides</span>
+                    <span style={{ color: "#70746d" }} className="text-[11px] font-normal mt-0.5">Logo on right, text on left</span>
                   </div>
                   <label className="f-toggle-switch">
                     <input type="checkbox" id="lr" />
@@ -1323,8 +1683,8 @@ export default function FlipbookClient() {
                 {/* Option 2: Made with Spellense credit */}
                 <label htmlFor="cr" className="f-toggle-card">
                   <div className="flex flex-col pr-3">
-                    <span className="text-xs font-bold text-slate-800">Brand Watermark</span>
-                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Show subtle &ldquo;Made with Spellense&rdquo; credit</span>
+                    <span className="text-xs font-bold text-[#1c201a]">Brand Watermark</span>
+                    <span style={{ color: "#70746d" }} className="text-[11px] font-normal mt-0.5">Show subtle &ldquo;Made with Spellense&rdquo; credit</span>
                   </div>
                   <label className="f-toggle-switch">
                     <input type="checkbox" id="cr" />
@@ -1382,12 +1742,12 @@ export default function FlipbookClient() {
                   <div className="flex flex-wrap items-center gap-3 mt-2">
                     <div className="flex items-center gap-2">
                       <div className="relative flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xs">
-                        <input type="color" id="c1" aria-label="Color 1" />
-                        <span className="text-[11px] font-bold text-slate-500 uppercase pr-1" id="c1-val">#0D0B1A</span>
+                        <input type="color" id="c1" aria-label="Color 1" defaultValue="#efeee7" />
+                        <span className="text-[11px] font-bold text-slate-500 uppercase pr-1" id="c1-val">#EFEEE7</span>
                       </div>
                       <div className="relative flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xs">
-                        <input type="color" id="c2" aria-label="Color 2" />
-                        <span className="text-[11px] font-bold text-slate-500 uppercase pr-1" id="c2-val">#171233</span>
+                        <input type="color" id="c2" aria-label="Color 2" defaultValue="#e5e5df" />
+                        <span className="text-[11px] font-bold text-slate-500 uppercase pr-1" id="c2-val">#E5E5DF</span>
                       </div>
                     </div>
                     <button type="button" className="feye-btn" id="eye" title="Pick color from screen">
@@ -1519,9 +1879,9 @@ export default function FlipbookClient() {
           </section>
 
           {/* EXPORT ACTION ROW */}
-          <div id="ex" className="mt-8 rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-lg shadow-slate-900/5 backdrop-blur-xl" hidden>
+          <div id="ex" style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="mt-8 rounded-3xl border p-6 shadow-sm" hidden>
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3 w-full">
-              <button className="fcta col-span-2 justify-center" id="dl">
+              <button style={{ backgroundColor: "#3158d5", color: "#ffffff" }} className="fcta col-span-2 justify-center rounded-xl px-5 py-3 text-sm font-bold shadow-xs hover:opacity-95 transition" id="dl">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="7 10 12 15 17 10" />
@@ -1529,30 +1889,31 @@ export default function FlipbookClient() {
                 </svg>
                 Download Offline HTML
               </button>
-              <button className="fbtn justify-center" id="pvw">Preview in New Tab</button>
-              <button className="fbtn sm:ml-auto justify-center text-slate-500 hover:text-red-600" id="nw">Start Over</button>
+              <button style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df", color: "#1c201a" }} className="fbtn justify-center rounded-xl border px-4 py-3 text-xs sm:text-sm font-bold shadow-2xs hover:bg-[#f6f5f3] transition" id="pvw">Preview in New Tab</button>
+              <button style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="fbtn sm:ml-auto justify-center rounded-xl border px-4 py-3 text-xs sm:text-sm font-bold text-slate-500 hover:text-rose-600 transition shadow-2xs" id="nw">Start Over</button>
             </div>
 
             {/* EMBED SNIPPET COLLAPSIBLE */}
-            <details className="mt-5 w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
-              <summary className="text-xs sm:text-sm font-bold text-slate-800 cursor-pointer">
+            <details style={{ backgroundColor: "#efeee7", borderColor: "#e5e5df" }} className="mt-5 w-full rounded-2xl border p-4">
+              <summary className="text-xs sm:text-sm font-bold text-[#1c201a] cursor-pointer">
                 Embed flipbook on your website or blog (Iframe code)
               </summary>
-              <p className="mt-2 text-xs text-slate-500">
+              <p style={{ color: "#70746d" }} className="mt-2 text-xs">
                 Host your exported HTML file on your web hosting or CDN, then enter its URL below to generate the embed code:
               </p>
               <div className="mt-3 grid gap-3">
                 <input
                   id="eu"
                   placeholder="https://yoursite.com/flipbook.html"
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-blue-600"
+                  style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff", color: "#1c201a" }}
+                  className="w-full rounded-xl border px-3.5 py-2 text-xs sm:text-sm font-medium focus:outline-none focus:border-[#3158d5]"
                 />
-                <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-700">
+                <div style={{ color: "#1c201a" }} className="flex flex-wrap items-center gap-4 text-xs font-semibold">
                   <label className="flex items-center gap-1.5">
-                    Width: <input id="ew" defaultValue="100%" size={6} className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs" />
+                    Width: <input id="ew" defaultValue="100%" size={6} style={{ borderColor: "#e5e5df" }} className="rounded-lg border bg-white px-2 py-1 text-xs" />
                   </label>
                   <label className="flex items-center gap-1.5">
-                    Height (px): <input id="eh" defaultValue="600" size={6} className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs" />
+                    Height (px): <input id="eh" defaultValue="600" size={6} style={{ borderColor: "#e5e5df" }} className="rounded-lg border bg-white px-2 py-1 text-xs" />
                   </label>
                   <label className="flex items-center gap-1.5 cursor-pointer">
                     <input type="checkbox" id="ea" /> Start auto-play
@@ -1560,177 +1921,236 @@ export default function FlipbookClient() {
                 </div>
               </div>
               <code id="emb"></code>
-              <button className="fsm mt-3" id="ec">Copy embed code</button>
+              <button style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df", color: "#1c201a" }} className="fsm mt-3 rounded-lg border px-3 py-1.5 text-xs font-bold hover:bg-[#f6f5f3]" id="ec">Copy embed code</button>
             </details>
           </div>
-
-          {/* 3-STEP WORKFLOW CARDS */}
-          <div className="mt-16">
-            <div className="text-center">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
-                Step-by-Step Workflow
-              </span>
-              <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">
-                How Spellense Flipbook Works
-              </h2>
-            </div>
-
-            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-black">
-                  1
-                </div>
-                <h3 className="mt-3 text-sm font-bold text-slate-900">Drop PDF or Images</h3>
-                <p className="mt-1 text-xs text-slate-500 leading-relaxed font-normal">
-                  Upload any brochure, catalog, portfolio, or magazine. All rendering happens safely in-browser with zero upload.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-black">
-                  2
-                </div>
-                <h3 className="mt-3 text-sm font-bold text-slate-900">Pick a Display Style</h3>
-                <p className="mt-1 text-xs text-slate-500 leading-relaxed font-normal">
-                  Choose page-turn, slider, cards, arc and more, or a hardback cover with ribbon &amp; gilded edges.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-black">
-                  3
-                </div>
-                <h3 className="mt-3 text-sm font-bold text-slate-900">Download Offline HTML</h3>
-                <p className="mt-1 text-xs text-slate-500 leading-relaxed font-normal">
-                  Get a single interactive HTML file with realistic 3D flipping engine embedded. Works on Windows, Mac, iOS, or Android without internet.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* FAQ SECTION — 2-Column Clean Figma Layout */}
-          <section className="mx-auto max-w-7xl pt-16 border-t border-slate-200/80">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-              {/* Left 4 Columns */}
-              <div className="md:col-span-4 space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">
-                  FREQUENTLY ASKED QUESTIONS
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-                  Flipbook Maker FAQ
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
-                  Everything you need to know about creating, customizing, and embedding 3D digital flipbooks.
-                </p>
-              </div>
-
-              {/* Right 8 Columns */}
-              <div className="md:col-span-8 space-y-3">
-                {FAQ_ITEMS.map((faq, idx) => {
-                  const isOpen = openFaqIndex === idx;
-                  return (
-                    <div
-                      key={idx}
-                      className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition"
-                    >
-                      <button
-                        type="button"
-                        id={`faq-btn-${idx}`}
-                        aria-expanded={isOpen}
-                        aria-controls={`faq-answer-${idx}`}
-                        onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                        className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
-                      >
-                        <span className="text-sm font-bold text-slate-900 pr-2">
-                          {faq.q}
-                        </span>
-                        <span
-                          className={`ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition-transform duration-200 ${
-                            isOpen ? "rotate-180 text-blue-600" : ""
-                          }`}
-                        >
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <polyline points="6 9 12 15 18 9" />
-                          </svg>
-                        </span>
-                      </button>
-
-                      <div
-                        id={`faq-answer-${idx}`}
-                        role="region"
-                        aria-labelledby={`faq-btn-${idx}`}
-                        className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
-                          isOpen
-                            ? "grid-rows-[1fr] opacity-100"
-                            : "grid-rows-[0fr] opacity-0 pointer-events-none"
-                        }`}
-                      >
-                        <div className="overflow-hidden">
-                          <div className="border-t border-slate-100 px-4 sm:px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal">
-                            {faq.a}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
         </div>
 
-        {/* RELATED CREATIVE TOOLS SECTION */}
-        <section className="border-t border-slate-200/80 bg-white/60 py-14 px-3 sm:px-6 lg:px-8 mt-16">
-          <div className="mx-auto max-w-7xl">
-            <div className="text-center mb-8">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Cross-Tool Workflows</span>
-              <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">Explore More Free Creative Tools</h2>
+        {/* 3-STEP WORKFLOW CARDS (HOMEPAGE MATCH) */}
+        <section style={{ borderTop: "1px solid #e5e5df" }} className="mt-16 pt-16">
+          <ScrollReveal className="text-center max-w-4xl mx-auto">
+            <div style={{ borderColor: "#e5e5df" }} className="inline-flex items-center gap-1.5 rounded-full border bg-[#faf9f6] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#3158d5] shadow-2xs">
+              Fast &amp; Simple
             </div>
+            <h3 className="mt-2.5 text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900 sm:whitespace-nowrap">
+              How Spellense Flipbook Works in 3 easy steps
+            </h3>
+          </ScrollReveal>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Link
-                href="/print-sheet-maker"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
-              >
-                <div className="text-xs font-bold text-blue-600 uppercase mb-1">ID &amp; Photo Layout</div>
-                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">ID Print Maker</div>
-                <p className="mt-1 text-xs text-slate-500">Fit photos and ID cards on one A4 or custom page at exact physical mm.</p>
-              </Link>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            <ScrollReveal delay={0} className="h-full">
+              <div style={{ borderColor: "#e5e5df" }} className="h-full rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md">
+                <span style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df" }} className="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black text-[#3158d5]">
+                  01
+                </span>
+                <h4 className="mt-4 text-base font-bold text-slate-900">
+                  Drop PDF or Images
+                </h4>
+                <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500">
+                  Upload any brochure, catalog, portfolio, or magazine. All rendering happens safely in-browser with zero server uploads.
+                </p>
+              </div>
+            </ScrollReveal>
 
-              <Link
-                href="/image-compressor"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
-              >
-                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Visual Optimization</div>
-                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Image Compressor</div>
-                <p className="mt-1 text-xs text-slate-500">Lossless &amp; lossy image compression with side-by-side comparison slider.</p>
-              </Link>
+            <ScrollReveal delay={120} className="h-full">
+              <div style={{ borderColor: "#e5e5df" }} className="h-full rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md">
+                <span style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df" }} className="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black text-[#3158d5]">
+                  02
+                </span>
+                <h4 className="mt-4 text-base font-bold text-slate-900">
+                  Pick a 3D Style &amp; Custom Cover
+                </h4>
+                <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500">
+                  Choose from 11 display styles, leather, cloth, or your bespoke hardcover with ribbon bookmarks and realistic paper sound.
+                </p>
+              </div>
+            </ScrollReveal>
 
-              <Link
-                href="/qr-code-generator"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
-              >
-                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Print Scannability QA</div>
-                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">QR Code Generator</div>
-                <p className="mt-1 text-xs text-slate-500">Create custom QR codes and verify camera scannability before printing.</p>
-              </Link>
+            <ScrollReveal delay={240} className="h-full">
+              <div style={{ borderColor: "#e5e5df" }} className="h-full rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md">
+                <span style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df" }} className="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black text-[#3158d5]">
+                  03
+                </span>
+                <h4 className="mt-4 text-base font-bold text-slate-900">
+                  Download Offline HTML
+                </h4>
+                <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500">
+                  Get a standalone interactive HTML file with embedded 3D flipping engine. Opens offline on Windows, Mac, iOS, or Android without internet.
+                </p>
+              </div>
+            </ScrollReveal>
+          </div>
+        </section>
+
+        {/* FAQ SECTION (HOMEPAGE MATCH) */}
+        <section style={{ borderTop: "1px solid #e5e5df" }} className="mt-16 pt-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <ScrollReveal className="lg:col-span-4 lg:sticky lg:top-8">
+              <div style={{ borderColor: "#e5e5df" }} className="inline-flex items-center gap-1.5 rounded-full border bg-[#faf9f6] px-3 py-1 shadow-2xs backdrop-blur-md">
+                <span className="flex h-1.5 w-1.5 rounded-full bg-[#3158d5] animate-pulse" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                  Frequently Asked Questions
+                </span>
+              </div>
+              <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                Flipbook Maker FAQ
+              </h3>
+              <p className="mt-2 text-xs text-slate-500 sm:text-sm leading-relaxed">
+                Everything you need to know about creating, customizing, and embedding 3D digital flipbooks.
+              </p>
+            </ScrollReveal>
+
+            <div className="lg:col-span-8 space-y-3.5">
+              {FAQ_ITEMS.map((faq, idx) => (
+                <ScrollReveal key={idx} delay={idx * 60}>
+                  <details
+                    style={{ borderColor: "#e5e5df" }}
+                    className="group rounded-2xl border bg-white p-5 shadow-2xs backdrop-blur-md transition-all open:border-[#3158d5]/40 open:shadow-xs"
+                  >
+                    <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                      <span>{faq.q}</span>
+                      <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f6f5f3] text-slate-600 transition-transform duration-200 group-open:rotate-180 group-open:bg-[#f6f5f3] group-open:text-[#3158d5]">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </span>
+                    </summary>
+                    <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                      {faq.a}
+                    </p>
+                  </details>
+                </ScrollReveal>
+              ))}
             </div>
           </div>
         </section>
-      </main>
 
-      {/* FOOTER */}
-      <Footer currentPath="/flipbook" />
-    </div>
+        {/* RELATED CREATIVE TOOLS SECTION (HOMEPAGE MATCH) */}
+        <section style={{ borderTop: "1px solid #e5e5df" }} className="mt-16 pt-16 pb-20">
+          <ScrollReveal className="text-center max-w-2xl mx-auto">
+            <div style={{ borderColor: "#e5e5df" }} className="inline-flex items-center gap-1.5 rounded-full border bg-[#faf9f6] px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#3158d5] shadow-2xs backdrop-blur-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#3158d5] animate-pulse" />
+              The Spellense Suite
+            </div>
+            <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+              Explore More Free Creative Tools
+            </h3>
+            <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+              Crafted for marketing teams, art directors, graphic designers, and founders who need flawless client deliverables.
+            </p>
+          </ScrollReveal>
+
+          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+            <ScrollReveal delay={0} className="h-full">
+              <Link
+                href="/"
+                style={{ borderColor: "#e5e5df" }}
+                className="group relative flex h-full flex-col justify-between rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md cursor-pointer"
+              >
+                <div>
+                  <div style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df", color: "#3158d5" }} className="flex h-11 w-11 items-center justify-center rounded-2xl">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                      <line x1="8" y1="21" x2="16" y2="21"/>
+                      <line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                  </div>
+                  <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                    Visual Quality Assurance
+                  </div>
+                  <h4 className="mt-1 text-xl font-black text-slate-900 group-hover:text-[#3158d5] transition">
+                    Visual Spell Checker
+                  </h4>
+                  <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+                    Detect typos and spelling errors directly inside images, PDFs, and slide presentations with bounding box highlights.
+                  </p>
+                </div>
+                <div className="mt-5 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">OCR &amp; AI Proofreading</span>
+                  <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
+                    <span>Use tool</span>
+                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                  </span>
+                </div>
+              </Link>
+            </ScrollReveal>
+
+            <ScrollReveal delay={80} className="h-full">
+              <Link
+                href="/image-compressor"
+                style={{ borderColor: "#e5e5df" }}
+                className="group relative flex h-full flex-col justify-between rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md cursor-pointer"
+              >
+                <div>
+                  <div style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df", color: "#3158d5" }} className="flex h-11 w-11 items-center justify-center rounded-2xl">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 14h6m0 0v6m0-6L3 21" />
+                      <path d="M20 10h-6m0 0V4m0 6 7-7" />
+                    </svg>
+                  </div>
+                  <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                    Image Optimizer
+                  </div>
+                  <h4 className="mt-1 text-xl font-black text-slate-900 group-hover:text-[#3158d5] transition">
+                    Image Compressor
+                  </h4>
+                  <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+                    Compress JPG, PNG, WebP &amp; multi-page PDF catalogs with split comparison slider. 100% private in-browser compression.
+                  </p>
+                </div>
+                <div className="mt-5 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">Lossless &amp; Lossy</span>
+                  <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
+                    <span>Use tool</span>
+                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                  </span>
+                </div>
+              </Link>
+            </ScrollReveal>
+
+            <ScrollReveal delay={160} className="h-full">
+              <Link
+                href="/qr-code-generator"
+                style={{ borderColor: "#e5e5df" }}
+                className="group relative flex h-full flex-col justify-between rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md cursor-pointer"
+              >
+                <div>
+                  <div style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df", color: "#3158d5" }} className="flex h-11 w-11 items-center justify-center rounded-2xl">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7"/>
+                      <rect x="14" y="3" width="7" height="7"/>
+                      <rect x="14" y="14" width="7" height="7"/>
+                      <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                  </div>
+                  <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                    Print Scannability QA
+                  </div>
+                  <h4 className="mt-1 text-xl font-black text-slate-900 group-hover:text-[#3158d5] transition">
+                    QR Code Generator
+                  </h4>
+                  <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+                    Create vector SVG &amp; high-res PNG QR codes with customizable color schemes and verify camera scannability before printing.
+                  </p>
+                </div>
+                <div className="mt-5 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">Vector SVG &amp; PNG</span>
+                  <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
+                    <span>Use tool</span>
+                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                  </span>
+                </div>
+              </Link>
+            </ScrollReveal>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  {/* FOOTER */}
+  <Footer currentPath="/flipbook" />
+</div>
   );
 }
 
@@ -2565,12 +2985,13 @@ function initFlipbookApp() {
 
   // ── App State & Settings ───────────────────────────────────────────────────
   const PAL = [
+    ["Spellense", "#efeee7", "#e5e5df"],
+    ["Sand", "#f5efe6", "#d6c7ae"],
     ["Ocean", "#0ea5e9", "#1e3a8a"],
     ["Sunset", "#fb7185", "#f59e0b"],
     ["Forest", "#065f46", "#022c22"],
     ["Mono", "#111827", "#374151"],
     ["Lavender", "#c4b5fd", "#818cf8"],
-    ["Sand", "#f5efe6", "#d6c7ae"],
     ["Rose", "#fecdd3", "#f472b6"],
     ["Midnight", "#0f172a", "#312e81"],
     ["Mint", "#d1fae5", "#6ee7b7"],
@@ -2578,7 +2999,15 @@ function initFlipbookApp() {
   ];
 
   const loadSaved = () => {
-    try { return JSON.parse(localStorage.spFbKit || "{}"); } catch (_) { return {}; }
+    try {
+      const saved = JSON.parse(localStorage.spFbKit || "{}");
+      if (!saved.bg1 || saved.bg1 === "#f8fafc" || saved.bg1 === "#0d0b1a" || saved.bg1 === "#0D0B1A") {
+        saved.bg1 = "#efeee7";
+        saved.bg2 = "#e5e5df";
+        saved.bgType = "color";
+      }
+      return saved;
+    } catch (_) { return {}; }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2592,9 +3021,9 @@ function initFlipbookApp() {
       credit: false,
       clean: true,
       disp: "spread",
-      bgType: "grad",
-      bg1: "#f8fafc",
-      bg2: "#e2e8f0",
+      bgType: "color",
+      bg1: "#efeee7",
+      bg2: "#e5e5df",
       bgImg: "",
       dim: 0.35,
       sound: false,
@@ -2701,6 +3130,8 @@ function initFlipbookApp() {
       if (!RAW.length) throw new Error("Could not extract pages from file");
       const upStage = document.getElementById("upload-stage");
       if (upStage) upStage.hidden = true;
+      const tb = document.getElementById("fb-topbar");
+      if (tb) tb.hidden = false;
       getEl("ed").hidden = false;
       getEl("ex").hidden = false;
       if (await derive()) {
@@ -2758,6 +3189,8 @@ function initFlipbookApp() {
     S.desc = "Spellense Editorial 2026\nDesigned with 3D Flipbook Studio";
     const upStage = document.getElementById("upload-stage");
     if (upStage) upStage.hidden = true;
+    const tb = document.getElementById("fb-topbar");
+    if (tb) tb.hidden = false;
     getEl("ed").hidden = false;
     getEl("ex").hidden = false;
     if (await derive()) {
@@ -2949,6 +3382,15 @@ function initFlipbookApp() {
       if (!pages.length) return;
       Viewer(getEl("pv") as HTMLElement & { _off?: () => void }, Object.assign({}, S, { pages, ratio }));
       try { localStorage.spFbKit = JSON.stringify(S); } catch (_) {}
+      const topStats = document.getElementById("top-stats-text");
+      if (topStats) topStats.textContent = `${pages.length} Pages · 3D Engine Active`;
+      const pvTitle = document.getElementById("pv-title-bar");
+      if (pvTitle) pvTitle.textContent = S.title || "3D Flipbook Studio";
+      const pvSub = document.getElementById("pv-sub-bar");
+      if (pvSub) {
+        const curStyle = BOOK_STYLES[S.theme]?.n || "Interactive 3D Book";
+        pvSub.textContent = `${pages.length} pages · ${curStyle}`;
+      }
     }, 100) as unknown as number;
   }
 
@@ -3145,14 +3587,7 @@ function initFlipbookApp() {
     const b = (e.target as HTMLElement).closest(".ftc") as HTMLButtonElement | null;
     if (!b) return;
     const idx = +b.dataset.t!;
-    const st = BOOK_STYLES[idx];
     S.theme = idx;
-    // Update default backdrop palette to match style if not user touched
-    if (st.c1 && st.c2) {
-      S.bg1 = st.c1;
-      S.bg2 = st.c2;
-      S.bgType = "grad";
-    }
     sync();
     show();
   };
@@ -4007,6 +4442,8 @@ function initFlipbookApp() {
     items = []; hist = []; hi = 0; edited = false; sel.clear(); renderPM();
     const upStage = document.getElementById("upload-stage");
     if (upStage) upStage.hidden = false;
+    const tb = document.getElementById("fb-topbar");
+    if (tb) tb.hidden = true;
     getEl("ed").hidden = true;
     getEl("ex").hidden = true;
     getEl("pv").innerHTML = "";
@@ -4015,6 +4452,14 @@ function initFlipbookApp() {
     (getEl("fi") as HTMLInputElement).value = "";
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  // ── Top Bar Action Bindings ────────────────────────────────────────────────
+  const topDl = document.getElementById("top-download-btn");
+  if (topDl) topDl.onclick = () => getEl("dl").click();
+  const topAdd = document.getElementById("top-add-btn");
+  if (topAdd) topAdd.onclick = () => getEl("fi").click();
+  const topNw = document.getElementById("top-start-over");
+  if (topNw) topNw.onclick = () => getEl("nw").click();
 
   // ── Dropzone & Uploads ─────────────────────────────────────────────────────
   const dz = getEl("drop");
@@ -4042,6 +4487,8 @@ function initFlipbookApp() {
     S.mode = b.dataset.m;
     sync();
     if (await derive()) {
+      const tb = document.getElementById("fb-topbar");
+      if (tb) tb.hidden = false;
       getEl("ed").hidden = false;
       getEl("ex").hidden = false;
       status("Ready. " + pages.length + (pages.length === 1 ? " page" : " pages") + " loaded.");

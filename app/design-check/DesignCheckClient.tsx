@@ -4,6 +4,7 @@ import { useState, useRef, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ScrollReveal from "@/components/ScrollReveal";
 
 interface DesignIssue {
   id: string;
@@ -77,6 +78,33 @@ const ANALYSIS_STEPS = [
   "Preparing design report...",
 ];
 
+const FAQ_ITEMS = [
+  {
+    q: "What types of designs and files can I audit with Design Check?",
+    a: "You can audit graphic image files (PNG, JPG, WebP, SVG) and multi-page PDF documents up to 25 MB. This includes Canva graphics, Figma exports, marketing flyers, posters, promotional banners, brochures, business cards, and print layouts.",
+  },
+  {
+    q: "How does Design Check find spelling errors and typos in graphics?",
+    a: "Design Check extracts all visible typography using high-precision optical character recognition (OCR) and multimodal vision AI. It inspects headlines, body copy, pricing labels, and disclaimers to identify typos, misspelled words, repeated terms, and broken phrasing.",
+  },
+  {
+    q: "What is WCAG contrast checking and why does it matter for creatives?",
+    a: "WCAG (Web Content Accessibility Guidelines) mandates a minimum 4.5:1 luminance contrast ratio between foreground text and underlying background for standard copy. Design Check analyzes pixel luminance across text regions to flag low-contrast text that will look washed out in sunlight or on low-brightness phone screens.",
+  },
+  {
+    q: "How does the Bleed and Safe-Zone margin check protect print and ads?",
+    a: "Physical print trimmers and social media UI overlays (like Instagram, TikTok, or YouTube buttons and captions) can crop elements placed too close to the borders. Design Check flags any critical copy, logos, or discount badges placed within 3.5% to 5% of canvas edges.",
+  },
+  {
+    q: "Can I audit multi-page PDF documents and catalogues?",
+    a: "Yes! Multi-page PDF documents are rendered page-by-page. You can review and audit each page individually, navigate through pages, and export a consolidated multi-page QA pre-flight audit report.",
+  },
+  {
+    q: "Are my uploaded designs and documents kept private?",
+    a: "Yes, completely private. All processing occurs in-memory with zero disk persistence and no AI model training retention. Once your browser session ends, your uploaded artwork is completely cleared.",
+  },
+];
+
 export default function DesignCheckClient() {
   const [file, setFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -92,6 +120,7 @@ export default function DesignCheckClient() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [loadingSample, setLoadingSample] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   // PDF support: renders the requested page to an image, audits it, and caches results
   const [pdfTotalPages, setPdfTotalPages] = useState(0);
@@ -143,14 +172,14 @@ export default function DesignCheckClient() {
     try {
       setLoadingSample(true);
       setError(null);
-      let res = await fetch("/spellense-launch-banner.jpg");
-      let fileName = "sample-ad-creative.jpg";
-      let fileType = "image/jpeg";
+      let res = await fetch("/design-check-poster.png");
+      let fileName = "design-check-poster.png";
+      let fileType = "image/png";
 
       if (!res.ok) {
-        res = await fetch("/sample-document.png");
-        fileName = "sample-document.png";
-        fileType = "image/png";
+        res = await fetch("/spellense-launch-banner.jpg");
+        fileName = "sample-ad-creative.jpg";
+        fileType = "image/jpeg";
       }
 
       if (!res.ok) throw new Error("Sample file not found");
@@ -783,438 +812,1171 @@ export default function DesignCheckClient() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-black font-sans selection:bg-blue-500/10 selection:text-blue-600 relative z-10 overflow-x-hidden">
-      {/* Ambient background glows / mesh across full page */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
-      <div className="pointer-events-none absolute top-40 -left-28 h-[420px] w-[420px] rounded-full bg-blue-200/40 blur-[100px]" />
-      <div className="pointer-events-none absolute top-36 -right-28 h-[440px] w-[440px] rounded-full bg-indigo-200/40 blur-[110px]" />
-      <div className="pointer-events-none absolute top-[700px] left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-blue-100/35 blur-[130px]" />
-      <div className="pointer-events-none absolute top-[1200px] -right-20 h-[500px] w-[500px] rounded-full bg-indigo-100/30 blur-[120px]" />
+    <div
+      style={{ backgroundColor: "#faf9f6" }}
+      className="flex min-h-screen flex-col bg-[#faf9f6] font-sans text-slate-800 antialiased selection:bg-[#bcd5ff] selection:text-black relative z-10 text-[15px]"
+    >
+      <Navbar onUploadClick={() => fileInputRef.current?.click()} />
 
-      <Navbar />
-
-      {/* HERO SECTION — Strictly 1 line, identical styling to homepage / compressor, only black text */}
-      {!result && (
-        <section className="relative overflow-hidden px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-14 lg:pt-20 lg:pb-16">
-          <div className="mx-auto max-w-7xl text-center">
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
-              Catch the mistake before your client does.
-            </h1>
-          </div>
-        </section>
-      )}
-
-      <main className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        {/* Always-mounted hidden file input so "Audit Another Design" works from results view */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf,.pdf"
-          className="hidden"
-          onChange={(e) => {
-            const selected = e.target.files?.[0];
-            if (selected) handleFileSelect(selected);
-            e.target.value = "";
-          }}
-        />
-
-        {/* UPLOAD ZONE (WHEN NO FILE OR WHEN CHANGING) — Identical size & place as Image Compressor */}
-        {!result && !loading && (
-          <div>
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`group relative mx-auto max-w-[920px] cursor-pointer rounded-[28px] border p-8 sm:p-14 text-center transition-all duration-300 overflow-hidden ${
-                isDragging
-                  ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.01]"
-                  : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
-              }`}
-            >
-              {/* Cloud Upload Icon matching Flipbook reference */}
-              <div className="mx-auto flex justify-center items-center">
-                <svg
-                  width="68"
-                  height="68"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#0055fe"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="group-hover:-translate-y-1 transition-transform duration-300"
-                >
-                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-                  <path d="M12 12v9" />
-                  <path d="m16 16-4-4-4 4" />
-                </svg>
-              </div>
-
-              <h2 className="mt-4 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
-                Drop your design here
-              </h2>
-              <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-slate-500 font-medium">
-                or click to choose a design file
-              </p>
-
-              {/* Action Button */}
-              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    fileInputRef.current?.click();
+      <main id="main-content" className="flex-1 pb-16 sm:pb-24">
+        {/* HOMEPAGE-MATCHED HERO */}
+        {!result && (
+          <section className="relative overflow-hidden pt-3 sm:pt-6 pb-2">
+            <div className="relative mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+              <div className="mx-auto max-w-5xl text-center pt-2 sm:pt-4 pb-2">
+                <div
+                  style={{
+                    color: "#3158d5",
+                    letterSpacing: "0.18em",
+                    fontSize: "12px",
+                    fontWeight: 700,
                   }}
-                  className="inline-flex items-center gap-2.5 rounded-xl bg-[#0055fe] hover:bg-[#0047d9] px-8 py-3.5 text-sm sm:text-base font-semibold text-white shadow-md shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                  className="inline-flex items-center uppercase mb-3 sm:mb-4"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 19V5" />
-                    <path d="m5 12 7-7 7 7" />
-                  </svg>
-                  <span>Choose Design File</span>
-                </button>
-              </div>
-
-              {/* Sample link */}
-              <div className="mt-5 flex justify-center">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLoadSample();
+                  VISUAL PRE-FLIGHT QUALITY CHECK
+                </div>
+                <h1
+                  aria-live="polite"
+                  className="text-center tracking-tight text-[#1c201a] flex flex-col items-center justify-center"
+                  style={{ margin: "0 auto" }}
+                >
+                  <span
+                    style={{
+                      fontSize: "clamp(44px, 5.8vw, 72px)",
+                      fontWeight: 900,
+                      lineHeight: 1.04,
+                      letterSpacing: "-0.035em",
+                      color: "#1c201a",
+                      display: "block",
+                      fontFamily:
+                        "var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                    }}
+                  >
+                    Design boldly.
+                  </span>
+                  <span
+                    style={{
+                      fontFamily:
+                        "'ITC Modern No. 216', var(--font-itc-modern), 'Instrument Serif', Georgia, serif",
+                      fontSize: "clamp(38px, 4.8vw, 64px)",
+                      fontWeight: 400,
+                      fontStyle: "italic",
+                      lineHeight: 1.05,
+                      letterSpacing: "-0.01em",
+                      color: "#1c201a",
+                      display: "block",
+                      marginTop: "6px",
+                    }}
+                  >
+                    Publish confidently.
+                  </span>
+                </h1>
+                <p
+                  style={{
+                    color: "#70746d",
+                    fontSize: "15px",
+                    lineHeight: 1.5,
+                    maxWidth: "none",
+                    margin: "12px auto 0",
                   }}
-                  disabled={loadingSample}
-                  className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#0055fe] hover:underline cursor-pointer"
-                  title="Test immediately with a sample design"
+                  className="text-center font-normal sm:whitespace-nowrap"
                 >
-                  {loadingSample ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                      <circle cx="8.5" cy="8.5" r="1.5" />
-                      <polyline points="21 15 16 10 5 21" />
-                    </svg>
-                  )}
-                  <span>Try a sample design</span>
-                </button>
-              </div>
-
-              {/* Workflow Compatibility */}
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-400">
-                <span>Optimized for exports from</span>
-                <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-600">Canva</span>
-                <span className="rounded-md bg-purple-50 px-2 py-0.5 text-[11px] font-bold text-purple-600">Figma</span>
-                <span className="rounded-md bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-600">Adobe PDF</span>
+                  Catch copy, contrast and margin issues before you publish.
+                </p>
               </div>
             </div>
+          </section>
+        )}
 
-            {/* 4 Trust Feature Cards */}
-            <div className="mt-8 max-w-[920px] mx-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-[#0055fe]">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                      <circle cx="8.5" cy="8.5" r="1.5" />
-                      <polyline points="21 15 16 10 5 21" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                      High-Res Pre-Flight
+        <section className={`mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 ${result ? "mt-0 pb-0" : "pb-16 mt-3 sm:mt-5"}`}>
+          <div className="mx-auto max-w-[980px]">
+            {/* Always-mounted hidden file input so "Audit Another Design" works from results view */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf,.pdf"
+              className="hidden"
+              onChange={(e) => {
+                const selected = e.target.files?.[0];
+                if (selected) handleFileSelect(selected);
+                e.target.value = "";
+              }}
+            />
+
+            {/* UPLOAD ZONE (WHEN NO FILE OR WHEN CHANGING) */}
+            {!result && (
+              <div>
+                <div
+                  style={{
+                    borderColor: "#e5e5df",
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    backgroundColor: "#ecebe4",
+                    boxShadow: "none",
+                  }}
+                  className={`relative w-full overflow-hidden rounded-2xl sm:rounded-[24px] transition-all duration-300 ${
+                    isDragging ? "ring-2 ring-[#3158d5]/20" : ""
+                  }`}
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
+                    {/* LEFT COLUMN: TABS, CONTROLS & DROPZONE (1/3 WIDTH) */}
+                    <div
+                      style={{ borderRight: "1px solid #e5e5df" }}
+                      className="flex flex-col justify-between bg-white p-6 sm:p-8 lg:col-span-4 xl:col-span-4"
+                    >
+                      <div>
+                        {/* HEADER */}
+                        <div
+                          style={{ borderBottom: "1px solid #e5e5df" }}
+                          className="flex items-center justify-between pb-3 sm:pb-3.5"
+                        >
+                          <div className="flex items-center gap-2 text-xs font-bold text-[#1c201a]">
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#3158d5"
+                              strokeWidth="2.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                            </svg>
+                            <span className="uppercase text-[11px] tracking-wider text-[#70746d]">
+                              design-check
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#3158d5] bg-[#f0f5ff] border border-[#bcd5ff] px-2 py-0.5 rounded-full">
+                            PRE-FLIGHT QA
+                          </span>
+                        </div>
+
+                        {/* DASHED DROP ZONE */}
+                        <div
+                          onDragEnter={(e) => {
+                            e.preventDefault();
+                            setIsDragging(true);
+                          }}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onDrop={handleDrop}
+                          onClick={() => {
+                            if (!loading) fileInputRef.current?.click();
+                          }}
+                          aria-busy={loading}
+                          style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                          className={`mt-5 rounded-xl border border-dashed p-6 text-center transition-all sm:p-7 ${
+                            loading ? "cursor-progress" : "cursor-pointer"
+                          } ${
+                            isDragging
+                              ? "border-[#3158d5] bg-blue-50/70"
+                              : "hover:border-[#3158d5]/50"
+                          }`}
+                        >
+                          {loading ? (
+                            <div className="mx-auto max-w-sm" aria-live="polite">
+                              <h3 className="text-sm font-bold text-[#1c201a]">
+                                Checking your design...
+                              </h3>
+                              <button
+                                type="button"
+                                disabled
+                                style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-3 text-xs sm:text-sm font-bold shadow-xs disabled:cursor-not-allowed disabled:opacity-75"
+                              >
+                                <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                </svg>
+                                <span>{ANALYSIS_STEPS[currentStepIndex]}</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                          <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg text-[#3158d5]">
+                            <svg
+                              width="26"
+                              height="26"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                              <path d="M12 18v-6" />
+                              <path d="m9 15 3-3 3 3" />
+                            </svg>
+                          </div>
+
+                          <h3 className="mt-2.5 text-sm sm:text-[15px] font-bold text-[#1c201a]">
+                            Drop your artwork here
+                          </h3>
+
+                          <div className="mt-3.5">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                fileInputRef.current?.click();
+                              }}
+                              style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                              className="inline-flex items-center justify-center gap-2 rounded-lg px-7 py-2.5 text-sm font-bold shadow-xs transition hover:opacity-95 active:scale-[0.98] cursor-pointer min-w-[150px]"
+                            >
+                              <span>Choose file</span>
+                              <span className="text-base font-bold">↗</span>
+                            </button>
+                          </div>
+
+                          <p className="mt-2.5 text-[11px] text-[#767a74]">
+                            Images, PDFs &amp; SVG · Up to 25 MB
+                          </p>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="mt-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLoadSample();
+                            }}
+                            disabled={loadingSample}
+                            className="text-xs font-semibold text-[#3158d5] hover:underline inline-flex items-center gap-1 cursor-pointer disabled:opacity-60"
+                          >
+                            <span>{loadingSample ? "Loading sample..." : "Try a sample document"}</span>
+                            <span>→</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                      PNG, JPG, WebP, SVG, PDF
+
+                    {/* RIGHT COLUMN: DESIGN CHECK SAMPLE AUDIT */}
+                    <div
+                      style={{ backgroundColor: "#ecebe4" }}
+                      className="flex flex-col justify-between p-4 lg:col-span-8 lg:p-7 sm:p-6"
+                    >
+                      <div>
+                        <div
+                          style={{ borderBottom: "1px solid #deded6" }}
+                          className="flex items-center justify-between pb-3 sm:pb-3.5"
+                        >
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <svg
+                              width="15"
+                              height="15"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="text-slate-500"
+                            >
+                              <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                              <circle cx="9" cy="9" r="2" />
+                              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                            </svg>
+                            <span>design-check-poster.png</span>
+                          </div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                            DESIGN AUDIT PREVIEW
+                          </span>
+                        </div>
+
+                        {/* DESKTOP DESIGN AUDIT PREVIEW */}
+                        <div className="hidden lg:flex mt-5 flex-row items-start gap-6">
+                          {/* ARTWORK CARD */}
+                          <div
+                            onClick={handleLoadSample}
+                            style={{ width: "240px", minWidth: "220px", maxWidth: "250px", flexShrink: 0 }}
+                            className="rounded-xl overflow-hidden shadow-xs border border-[#deded6] bg-white cursor-pointer group/art transition hover:scale-[1.01]"
+                            title="Click to inspect this sample document"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src="/design-check-poster.png"
+                              alt="Creative QA poster sample with spelling, contrast, and safe-margin findings"
+                              className="w-full h-auto object-cover"
+                            />
+                          </div>
+
+                          {/* ISSUES LIST */}
+                          <div className="flex-1 min-w-0 w-full flex flex-col justify-between self-stretch">
+                            <div>
+                              <div className="flex items-center gap-2 text-xs font-bold text-[#1c201a]">
+                                <span style={{ backgroundColor: "#b85a46" }} className="h-2 w-2 rounded-full inline-block" />
+                                <span>3 design issues detected</span>
+                              </div>
+
+                              {/* ISSUE 1: headline typo */}
+                              <div
+                                style={{ border: "2px solid #365cd6", backgroundColor: "#ffffff" }}
+                                className="mt-3 rounded-xl p-3.5 shadow-xs"
+                              >
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                  TYPOGRAPHY · MISSPELLING
+                                </div>
+                                <div className="mt-1 flex items-center gap-2 text-xs font-bold">
+                                  <span style={{ color: "#b85a46" }} className="line-through">DESGIN</span>
+                                  <span className="text-slate-400 font-normal">→</span>
+                                  <span className="text-[#1c201a]">DESIGN</span>
+                                </div>
+                                <p className="mt-1 text-[11px] text-[#767a74]">
+                                  Misspelled poster headline
+                                </p>
+                              </div>
+
+                              {/* ISSUE 2: low contrast copy */}
+                              <div
+                                style={{ border: "1px solid #deded6", backgroundColor: "#ffffff" }}
+                                className="mt-2.5 rounded-xl p-3.5 shadow-2xs"
+                              >
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                  ACCESSIBILITY · LOW CONTRAST
+                                </div>
+                                <div className="mt-1 flex items-center gap-2 text-xs font-bold">
+                                  <span className="text-[#767a74]">TYPE • CONTRAST • MARGINS</span>
+                                  <span className="text-slate-400 font-normal">→</span>
+                                  <span className="text-[#1c201a]">Increase contrast</span>
+                                </div>
+                                <p className="mt-1 text-[11px] text-[#767a74]">Pale text on a cream background</p>
+                              </div>
+
+                              {/* ISSUE 3: text too close to trim edge */}
+                              <div
+                                style={{ border: "1px solid #deded6", backgroundColor: "#ffffff" }}
+                                className="mt-2.5 rounded-xl p-3.5 shadow-2xs"
+                              >
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                  PRINT · SAFE MARGIN
+                                </div>
+                                <div className="mt-1 flex items-center gap-2 text-xs font-bold">
+                                  <span style={{ color: "#b85a46" }} className="line-through">OCT 28 — 10 AM</span>
+                                  <span className="text-slate-400 font-normal">→</span>
+                                  <span className="text-[#1c201a]">Move inside trim area</span>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+
+                        {/* MOBILE & TABLET DESIGN AUDIT PREVIEW */}
+                        <div className="block lg:hidden mt-3.5 sm:mt-5">
+                          <div className="flex flex-row items-start gap-3 sm:gap-4">
+                            {/* ARTWORK CARD */}
+                            <div
+                              onClick={handleLoadSample}
+                              style={{ width: "38%", minWidth: "120px", maxWidth: "165px", flexShrink: 0 }}
+                              className="rounded-xl overflow-hidden shadow-xs border border-[#deded6] bg-white cursor-pointer group/art transition hover:scale-[1.01]"
+                              title="Click to inspect this sample document"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                              src="/design-check-poster.png"
+                              alt="Creative QA poster sample with spelling, contrast, and safe-margin findings"
+                                className="w-full h-auto object-cover block"
+                              />
+                            </div>
+
+                            {/* ISSUES LIST */}
+                            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                              <div>
+                                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold text-[#1c201a]">
+                                  <span style={{ backgroundColor: "#b85a46" }} className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full inline-block" />
+                                  <span>3 design issues detected</span>
+                                </div>
+
+                                {/* ISSUE 1: headline typo */}
+                                <div
+                                  style={{ border: "2px solid #3158d5", backgroundColor: "#ffffff" }}
+                                  className="mt-2 sm:mt-3 rounded-xl p-2.5 sm:p-3.5 shadow-xs"
+                                >
+                                  <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                    TYPOGRAPHY · MISSPELLING
+                                  </div>
+                                  <div className="mt-0.5 sm:mt-1 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold">
+                                    <span style={{ color: "#b85a46" }} className="line-through">DESGIN</span>
+                                    <span className="text-slate-400 font-normal">→</span>
+                                    <span className="text-[#1c201a]">DESIGN</span>
+                                  </div>
+                                  <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-[#767a74]">
+                                    Misspelled poster headline
+                                  </p>
+                                </div>
+
+                                {/* ISSUE 2: low contrast copy */}
+                                <div
+                                  style={{ border: "1px solid #deded6", backgroundColor: "#ffffff" }}
+                                  className="mt-2 sm:mt-2.5 rounded-xl p-2.5 sm:p-3.5 shadow-2xs"
+                                >
+                                  <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                    ACCESSIBILITY · LOW CONTRAST
+                                  </div>
+                                  <div className="mt-0.5 sm:mt-1 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold">
+                                    <span className="text-[#767a74]">TYPE • CONTRAST • MARGINS</span>
+                                    <span className="text-slate-400 font-normal">→</span>
+                                    <span className="text-[#1c201a]">Increase contrast</span>
+                                  </div>
+                                <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-[#767a74]">Pale text on cream</p>
+                              </div>
+
+                              {/* ISSUE 3: text too close to trim edge */}
+                              <div
+                                style={{ border: "1px solid #deded6", backgroundColor: "#ffffff" }}
+                                className="mt-2 sm:mt-2.5 rounded-xl p-2.5 sm:p-3.5 shadow-2xs"
+                              >
+                                <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                  PRINT · SAFE MARGIN
+                                </div>
+                                <div className="mt-0.5 sm:mt-1 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold">
+                                  <span style={{ color: "#b85a46" }} className="line-through">OCT 28 — 10 AM</span>
+                                  <span className="text-slate-400 font-normal">→</span>
+                                  <span className="text-[#1c201a]">Move inside trim area</span>
+                                </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-4 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs leading-relaxed text-rose-800 sm:text-sm">
+                          <span className="font-bold">Development notice:</span>{" "}
+                          This page is still under development, so results may not be fully accurate.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* 4 Trust Feature Cards */}
+                <div className="mt-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div
+                      style={{
+                        borderColor: "#e5e5df",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        backgroundColor: "#ffffff",
+                      }}
+                      className="flex items-center gap-3 p-3.5 rounded-2xl shadow-2xs"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f0f5ff] text-[#3158d5]">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-[#1c201a]">
+                          High-Res Pre-Flight
+                        </div>
+                        <div className="text-[11px] text-[#70746d] mt-0.5">
+                          PNG, JPG, WebP, SVG, PDF
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        borderColor: "#e5e5df",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        backgroundColor: "#ffffff",
+                      }}
+                      className="flex items-center gap-3 p-3.5 rounded-2xl shadow-2xs"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f0f5ff] text-[#3158d5]">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-[#1c201a]">
+                          Comprehensive QA
+                        </div>
+                        <div className="text-[11px] text-[#70746d] mt-0.5">
+                          Contrast, bleed &amp; layout
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        borderColor: "#e5e5df",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        backgroundColor: "#ffffff",
+                      }}
+                      className="flex items-center gap-3 p-3.5 rounded-2xl shadow-2xs"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f0f5ff] text-[#3158d5]">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
+                          <path d="m9 12 2 2 4-4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-[#1c201a]">
+                          No Signup Required
+                        </div>
+                        <div className="text-[11px] text-[#70746d] mt-0.5">
+                          Instant check • 100% Free
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        borderColor: "#e5e5df",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        backgroundColor: "#ffffff",
+                      }}
+                      className="flex items-center gap-3 p-3.5 rounded-2xl shadow-2xs"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f0f5ff] text-[#3158d5]">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-[#1c201a]">
+                          Strictly Private
+                        </div>
+                        <div className="text-[11px] text-[#70746d] mt-0.5">
+                          In-memory • Zero storage
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100/70 text-purple-600">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                    </svg>
+                {error && (
+                  <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-sm font-medium text-rose-700">
+                    {error}
                   </div>
-                  <div>
-                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                      Comprehensive QA
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                      Contrast, bleed &amp; layout
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100/70 text-emerald-600">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
-                      <path d="m9 12 2 2 4-4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                      No signup required
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                      Instant check • 100% Free
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/70 border border-slate-100/90 shadow-2xs backdrop-blur-sm">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100/70 text-amber-600">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                      Strictly Private
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                      In-memory • Zero storage
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
-            </div>
+            )}
 
-            {error && (
-              <div className="mx-auto mt-4 max-w-4xl rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-sm font-medium text-rose-700">
-                {error}
+            {/* HOW IT WORKS / FEATURE HIGHLIGHTS (WHEN NO FILE UPLOADED) */}
+            {!result && !loading && (
+              <div className="mt-14 sm:mt-16 space-y-8 sm:space-y-12">
+                {/* SECTION 1: INTRO BENTO CARD */}
+                <ScrollReveal>
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#ffffff",
+                    }}
+                    className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs"
+                  >
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#3158d5]">
+                      Automated Creative QA
+                    </span>
+                    <h2 className="mt-1 text-xl sm:text-2xl font-black text-[#1c201a]">
+                      Catch Costly Design Mistakes Before Publishing or Printing
+                    </h2>
+                    <p className="mt-2.5 text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                      Spellense AI Design Check acts as an automated visual pre-flight inspector for Canva graphics, Figma exports, social media ads, flyers, and multi-page PDFs. Combining multimodal vision AI and mathematical pixel analysis, it audits spelling typos, WCAG contrast ratios, and bleed margin safe-zones in seconds.
+                    </p>
+                  </div>
+                </ScrollReveal>
+
+                {/* SECTION 2: 3-STEP PROCESS CARD */}
+                <ScrollReveal delay={50}>
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                    }}
+                    className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs"
+                  >
+                    <div className="text-center mb-8">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#3158d5]">
+                        Step-by-Step Workflow
+                      </span>
+                      <h3 className="mt-1 text-xl sm:text-2xl font-black text-[#1c201a]">
+                        How Design Check Works
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                      <div
+                        style={{
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          backgroundColor: "#ffffff",
+                        }}
+                        className="flex flex-col items-center text-center p-5 rounded-2xl shadow-2xs"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3158d5] text-white font-bold text-sm shadow-xs">
+                          1
+                        </div>
+                        <h4 className="mt-3 text-sm font-bold text-[#1c201a]">Upload Artwork</h4>
+                        <p className="mt-1 text-xs text-[#70746d] leading-relaxed">
+                          Drop high-res PNG, JPG, WebP images, or multi-page PDF documents up to 25 MB.
+                        </p>
+                      </div>
+
+                      <div
+                        style={{
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          backgroundColor: "#ffffff",
+                        }}
+                        className="flex flex-col items-center text-center p-5 rounded-2xl shadow-2xs"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3158d5] text-white font-bold text-sm shadow-xs">
+                          2
+                        </div>
+                        <h4 className="mt-3 text-sm font-bold text-[#1c201a]">Automated Inspection</h4>
+                        <p className="mt-1 text-xs text-[#70746d] leading-relaxed">
+                          Parallel algorithms compute WCAG contrast ratios, bleed safe-zones, and multimodal copy proofreading.
+                        </p>
+                      </div>
+
+                      <div
+                        style={{
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          backgroundColor: "#ffffff",
+                        }}
+                        className="flex flex-col items-center text-center p-5 rounded-2xl shadow-2xs"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3158d5] text-white font-bold text-sm shadow-xs">
+                          3
+                        </div>
+                        <h4 className="mt-3 text-sm font-bold text-[#1c201a]">Interactive Fixes</h4>
+                        <p className="mt-1 text-xs text-[#70746d] leading-relaxed">
+                          Click squiggly markers directly on the canvas to inspect, whitelist, or copy recommended fixes.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollReveal>
+
+                {/* SECTION 3: 6-GRID FEATURE HIGHLIGHTS */}
+                <ScrollReveal delay={100}>
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#ffffff",
+                    }}
+                    className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs"
+                  >
+                    <div className="text-center mb-8">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#3158d5]">
+                        Comprehensive QA Pillars
+                      </span>
+                      <h3 className="mt-1 text-xl sm:text-2xl font-black text-[#1c201a]">
+                        Engineered for Agency &amp; Print Precision
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Card 1 */}
+                      <div
+                        style={{
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          backgroundColor: "#faf9f6",
+                        }}
+                        className="p-5 rounded-2xl shadow-2xs transition hover:bg-white hover:border-[#b8d1fc]"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0f5ff] text-[#3158d5]">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor" />
+                          </svg>
+                        </div>
+                        <h4 className="mt-3.5 text-sm font-bold text-[#1c201a]">WCAG Contrast Math</h4>
+                        <p className="mt-1 text-xs text-[#70746d] leading-relaxed">
+                          Measures pixel luminance ratio between text and its underlying background to guarantee 4.5:1 AA readability under harsh sunlight.
+                        </p>
+                      </div>
+
+                      {/* Card 2 */}
+                      <div
+                        style={{
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          backgroundColor: "#faf9f6",
+                        }}
+                        className="p-5 rounded-2xl shadow-2xs transition hover:bg-white hover:border-[#b8d1fc]"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0f5ff] text-[#3158d5]">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M6 2v14a2 2 0 0 0 2 2h14" />
+                            <path d="M18 22V8a2 2 0 0 0-2-2H2" />
+                          </svg>
+                        </div>
+                        <h4 className="mt-3.5 text-sm font-bold text-[#1c201a]">Margin &amp; Bleed Safe-Zones</h4>
+                        <p className="mt-1 text-xs text-[#70746d] leading-relaxed">
+                          Identifies critical copy, discount codes, or logos placed within 3.5% of canvas borders, preventing print cutting or social app UI cropping.
+                        </p>
+                      </div>
+
+                      {/* Card 3 */}
+                      <div
+                        style={{
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          backgroundColor: "#faf9f6",
+                        }}
+                        className="p-5 rounded-2xl shadow-2xs transition hover:bg-white hover:border-[#b8d1fc]"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0f5ff] text-[#3158d5]">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="m3 16 4.5-9 4.5 9" />
+                            <path d="M5 12h5" />
+                            <path d="m15 11 3 3 5-5" />
+                          </svg>
+                        </div>
+                        <h4 className="mt-3.5 text-sm font-bold text-[#1c201a]">AI Copy &amp; Headline QA</h4>
+                        <p className="mt-1 text-xs text-[#70746d] leading-relaxed">
+                          Multimodal vision AI proofreads visible slogans, body text, and banners to catch grammar errors, typos, and repeated words.
+                        </p>
+                      </div>
+
+                      {/* Card 4 */}
+                      <div
+                        style={{
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          backgroundColor: "#faf9f6",
+                        }}
+                        className="p-5 rounded-2xl shadow-2xs transition hover:bg-white hover:border-[#b8d1fc]"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0f5ff] text-[#3158d5]">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                          </svg>
+                        </div>
+                        <h4 className="mt-3.5 text-sm font-bold text-[#1c201a]">Multi-Page PDF Support</h4>
+                        <p className="mt-1 text-xs text-[#70746d] leading-relaxed">
+                          Render multi-page catalogs, brochures, or slide decks page-by-page with full pagination and consolidated multi-page audit scoring.
+                        </p>
+                      </div>
+
+                      {/* Card 5 */}
+                      <div
+                        style={{
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          backgroundColor: "#faf9f6",
+                        }}
+                        className="p-5 rounded-2xl shadow-2xs transition hover:bg-white hover:border-[#b8d1fc]"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0f5ff] text-[#3158d5]">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                        </div>
+                        <h4 className="mt-3.5 text-sm font-bold text-[#1c201a]">100% In-Memory Privacy</h4>
+                        <p className="mt-1 text-xs text-[#70746d] leading-relaxed">
+                          No disk retention, no permanent database storage, and no AI model training on your artwork. Ephemeral and strictly private.
+                        </p>
+                      </div>
+
+                      {/* Card 6 */}
+                      <div
+                        style={{
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          backgroundColor: "#faf9f6",
+                        }}
+                        className="p-5 rounded-2xl shadow-2xs transition hover:bg-white hover:border-[#b8d1fc]"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0f5ff] text-[#3158d5]">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                        </div>
+                        <h4 className="mt-3.5 text-sm font-bold text-[#1c201a]">Exportable QA Reports</h4>
+                        <p className="mt-1 text-xs text-[#70746d] leading-relaxed">
+                          Download agency-grade pre-flight quality reports formatted with line-by-line findings, severity rankings, and actionable fixes.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollReveal>
+
+                {/* SECTION 4: FAQ SECTION — 2-Column Clean Layout (HOMEPAGE MATCH) */}
+                <div
+                  style={{
+                    borderTop: "1px solid #e5e5df",
+                    paddingTop: "48px",
+                  }}
+                  className="w-full pb-12 sm:pb-16"
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    {/* Left 4 Columns */}
+                    <ScrollReveal className="lg:col-span-4 lg:sticky lg:top-8">
+                      <div
+                        style={{
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          backgroundColor: "#ffffff",
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 shadow-2xs"
+                      >
+                        <span className="flex h-1.5 w-1.5 rounded-full bg-[#3158d5] animate-pulse" />
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                          FREQUENTLY ASKED QUESTIONS
+                        </span>
+                      </div>
+                      <h2 className="mt-3 text-2xl sm:text-3xl font-black tracking-tight text-[#1c201a]">
+                        Design Check FAQ
+                      </h2>
+                      <p className="mt-2 text-xs sm:text-sm text-[#70746d] leading-relaxed font-normal">
+                        Everything you need to know about pre-flight quality checks, Canva &amp; Figma designs, WCAG contrast, and PDF print margins.
+                      </p>
+                    </ScrollReveal>
+
+                    {/* Right 8 Columns */}
+                    <div className="lg:col-span-8 space-y-3.5">
+                      {FAQ_ITEMS.map((faq, index) => {
+                        const isOpen = openFaqIndex === index;
+                        return (
+                          <ScrollReveal key={faq.q} delay={index * 30}>
+                            <div
+                              style={{
+                                borderColor: "#e5e5df",
+                                borderWidth: "1px",
+                                borderStyle: "solid",
+                                backgroundColor: "#ffffff",
+                              }}
+                              className="rounded-2xl overflow-hidden shadow-2xs transition"
+                            >
+                              <button
+                                type="button"
+                                id={`faq-btn-${index}`}
+                                aria-expanded={isOpen}
+                                aria-controls={`faq-answer-${index}`}
+                                onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                                className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition hover:bg-[#faf9f6] cursor-pointer"
+                              >
+                                <span className="text-xs sm:text-sm font-bold text-[#1c201a] pr-4">
+                                  {faq.q}
+                                </span>
+                                <div
+                                  style={{
+                                    borderColor: "#e5e5df",
+                                    borderWidth: "1px",
+                                    borderStyle: "solid",
+                                    backgroundColor: isOpen ? "#f0f5ff" : "#faf9f6",
+                                    color: isOpen ? "#3158d5" : "#70746d",
+                                  }}
+                                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition"
+                                >
+                                  <span
+                                    className={`transform transition-transform duration-200 ${
+                                      isOpen ? "rotate-180" : ""
+                                    }`}
+                                  >
+                                    ↓
+                                  </span>
+                                </div>
+                              </button>
+
+                              <div
+                                id={`faq-answer-${index}`}
+                                role="region"
+                                aria-labelledby={`faq-btn-${index}`}
+                                className={`grid transition-all duration-200 ease-in-out ${
+                                  isOpen
+                                    ? "grid-rows-[1fr] opacity-100"
+                                    : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                                }`}
+                              >
+                                <div className="overflow-hidden">
+                                  <div
+                                    style={{ borderTop: "1px solid #efeee7" }}
+                                    className="px-4 sm:px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-[#555a52] font-normal"
+                                  >
+                                    {faq.a}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </ScrollReveal>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION 5: RELATED CREATIVE TOOLS SECTION — Matching Image to Text Bento Card */}
+                <div className="mt-14 sm:mt-16">
+                  <ScrollReveal delay={150}>
+                    <div
+                      style={{
+                        borderColor: "#e5e5df",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        backgroundColor: "#ffffff",
+                      }}
+                      className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs"
+                    >
+                      <div className="text-center mb-6">
+                        <span className="text-xs font-bold uppercase tracking-wider text-[#3158d5]">
+                          Cross-Tool Workflows
+                        </span>
+                        <h2 className="mt-1 text-xl sm:text-2xl font-black text-[#1c201a]">
+                          Explore More Free Creative Tools
+                        </h2>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <Link
+                          href="/image-to-text"
+                          style={{
+                            borderColor: "#e5e5df",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                            backgroundColor: "#faf9f6",
+                          }}
+                          className="group p-5 rounded-2xl hover:border-[#3158d5] hover:bg-white shadow-2xs transition"
+                        >
+                          <div className="text-xs font-bold text-[#3158d5] uppercase mb-1">
+                            OCR Document Extraction
+                          </div>
+                          <div className="font-bold text-[#1c201a] group-hover:text-[#3158d5] transition">
+                            Image to Text (OCR)
+                          </div>
+                          <p className="mt-1 text-xs text-[#70746d]">
+                            Extract editable text from images, photos, and scanned PDFs instantly with OCR.
+                          </p>
+                        </Link>
+
+                        <Link
+                          href="/qr-code-generator"
+                          style={{
+                            borderColor: "#e5e5df",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                            backgroundColor: "#faf9f6",
+                          }}
+                          className="group p-5 rounded-2xl hover:border-[#3158d5] hover:bg-white shadow-2xs transition"
+                        >
+                          <div className="text-xs font-bold text-[#3158d5] uppercase mb-1">
+                            Print Scannability QA
+                          </div>
+                          <div className="font-bold text-[#1c201a] group-hover:text-[#3158d5] transition">
+                            QR Code Generator
+                          </div>
+                          <p className="mt-1 text-xs text-[#70746d]">
+                            Create custom QR codes and verify camera scannability before printing.
+                          </p>
+                        </Link>
+
+                        <Link
+                          href="/image-compressor"
+                          style={{
+                            borderColor: "#e5e5df",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                            backgroundColor: "#faf9f6",
+                          }}
+                          className="group p-5 rounded-2xl hover:border-[#3158d5] hover:bg-white shadow-2xs transition"
+                        >
+                          <div className="text-xs font-bold text-[#3158d5] uppercase mb-1">
+                            Optimizer
+                          </div>
+                          <div className="font-bold text-[#1c201a] group-hover:text-[#3158d5] transition">
+                            Image Compressor
+                          </div>
+                          <p className="mt-1 text-xs text-[#70746d]">
+                            Compress JPG, PNG &amp; PDFs with live split comparison and no quality loss.
+                          </p>
+                        </Link>
+                      </div>
+                    </div>
+                  </ScrollReveal>
+                </div>
+
+                {/* SECTION 6: FOOTER ACTION LINKS */}
+                <ScrollReveal
+                  delay={180}
+                  style={{ borderTop: "1px solid #e5e5df" }}
+                  className="mt-12 flex flex-wrap items-center justify-between gap-4 pt-8 text-xs text-slate-500"
+                >
+                  <div className="flex flex-wrap items-center gap-5 font-medium">
+                    <Link href="/faq" className="hover:text-[#3158d5] transition">
+                      Frequently Asked Questions →
+                    </Link>
+                    <Link href="/privacy" className="hover:text-[#3158d5] transition">
+                      Privacy Policy →
+                    </Link>
+                    <Link href="/terms" className="hover:text-[#3158d5] transition">
+                      Terms of Service →
+                    </Link>
+                  </div>
+
+                  <div className="text-slate-400">
+                    In-memory Pre-Flight &bull; Zero Disk Storage
+                  </div>
+                </ScrollReveal>
               </div>
             )}
           </div>
-        )}
-
-        {/* HOW IT WORKS / FEATURE HIGHLIGHTS (WHEN NO FILE UPLOADED) */}
-        {!result && !loading && (
-          <div className="mx-auto mt-16 max-w-5xl space-y-16">
-            {/* 3 CORE PRE-FLIGHT CHECKS */}
-            <div>
-              <div className="text-center">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
-                  Pre-Flight Automated QA
-                </span>
-                <h3 className="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">
-                  Catch Costly Design Mistakes Before Publishing
-                </h3>
-                <p className="mx-auto mt-2 max-w-2xl text-xs text-slate-500 sm:text-sm">
-                  Spellense runs visual, mathematical, and AI audits across your graphic creatives to ensure print and social media readiness.
-                </p>
-              </div>
-
-              <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
-                {/* Card 1: WCAG Contrast */}
-                <div className="group rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor" />
-                    </svg>
-                  </div>
-                  <h4 className="mt-4 text-base font-bold text-slate-900">
-                    WCAG Contrast Math
-                  </h4>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                    Measures pixel luminance ratio between text and its underlying background to guarantee readability under harsh sunlight and low-brightness phone screens.
-                  </p>
-                  <div className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold text-blue-600">
-                    <span>4.5:1 AA Standard</span>
-                    <span>•</span>
-                    <span>Instant Math</span>
-                  </div>
-                </div>
-
-                {/* Card 2: Margins & Bleed */}
-                <div className="group rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-md">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 2v14a2 2 0 0 0 2 2h14" />
-                      <path d="M18 22V8a2 2 0 0 0-2-2H2" />
-                    </svg>
-                  </div>
-                  <h4 className="mt-4 text-base font-bold text-slate-900">
-                    Margin &amp; Bleed Safe-Zones
-                  </h4>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                    Identifies critical copy, discount codes, or brand logos placed within 3.5% of canvas borders, preventing accidental cutting or social app UI cropping.
-                  </p>
-                  <div className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold text-amber-700">
-                    <span>Safe-Zone Guard</span>
-                    <span>•</span>
-                    <span>Print Ready</span>
-                  </div>
-                </div>
-
-                {/* Card 3: AI Copy & Grammar */}
-                <div className="group rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m3 16 4.5-9 4.5 9" />
-                      <path d="M5 12h5" />
-                      <path d="m15 11 3 3 5-5" />
-                    </svg>
-                  </div>
-                  <h4 className="mt-4 text-base font-bold text-slate-900">
-                    AI Copy &amp; Headline QA
-                  </h4>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                    Multimodal vision AI proofreads visible slogans, body paragraphs, and promo banners to catch embarrassing grammar errors, typos, and missing articles.
-                  </p>
-                  <div className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
-                    <span>Gemini AI Vision</span>
-                    <span>•</span>
-                    <span>Zero Storage</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* HOW IT WORKS 3-STEP PROCESS */}
-            <div className="rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-50/80 via-white to-blue-50/40 p-8 sm:p-10 shadow-xs">
-              <div className="text-center">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">
-                  Step-by-Step Workflow
-                </span>
-                <h3 className="mt-1 text-xl font-extrabold text-slate-900 sm:text-2xl">
-                  How Design Check Works
-                </h3>
-              </div>
-
-              <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
-                <div className="flex flex-col items-center text-center">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-md shadow-blue-500/20">
-                    1
-                  </div>
-                  <h5 className="mt-3 text-sm font-bold text-slate-900">Upload Your Artwork</h5>
-                  <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                    Drop high-res PNG, JPG, or WebP posters, flyers, or ad creatives.
-                  </p>
-                </div>
-
-                <div className="flex flex-col items-center text-center">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white shadow-md shadow-indigo-500/20">
-                    2
-                  </div>
-                  <h5 className="mt-3 text-sm font-bold text-slate-900">Automated Inspection</h5>
-                  <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                    Parallel algorithms compute WCAG contrast ratios, safe zones, and AI copy analysis.
-                  </p>
-                </div>
-
-                <div className="flex flex-col items-center text-center">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-sm font-bold text-white shadow-md shadow-violet-500/20">
-                    3
-                  </div>
-                  <h5 className="mt-3 text-sm font-bold text-slate-900">Interactive Canvas Fixes</h5>
-                  <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                    Click color-coded markers directly on the design to inspect and copy recommendations.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* LOADING PROGRESS STATE */}
-        {loading && (
-          <div className="relative mx-auto mt-12 max-w-lg overflow-hidden rounded-3xl border border-slate-100 bg-white/95 p-8 text-center shadow-2xl shadow-blue-500/10 backdrop-blur-xl sm:p-10">
-            {/* Ambient background glows */}
-            <div className="pointer-events-none absolute -top-20 -left-20 h-44 w-44 rounded-full bg-blue-500/10 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-20 -right-20 h-44 w-44 rounded-full bg-indigo-500/10 blur-3xl" />
-
-            {/* Glowing multi-ring scanner animation */}
-            <div className="relative mx-auto flex h-24 w-24 items-center justify-center">
-              {/* Soft ambient blur halo */}
-              <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-xl animate-pulse" />
-
-              {/* Outer gradient spinner ring */}
-              <div className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-blue-600 border-r-indigo-500 animate-spin" />
-
-              {/* Inner counter-rotating accent ring */}
-              <div className="absolute inset-2.5 rounded-full border-2 border-transparent border-b-violet-500 border-l-blue-400 animate-[spin_2s_linear_infinite_reverse]" />
-
-              {/* Central icon badge */}
-              <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
-                <svg
-                  className="h-6 w-6 animate-pulse"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <path d="M14 2v6h6" />
-                  <circle cx="11.5" cy="14.5" r="2.5" />
-                  <path d="m13.5 16.5 2 2" />
-                </svg>
-              </div>
-            </div>
-
-            {/* Title & dynamic status */}
-            <h2 className="mt-5 text-xl font-extrabold tracking-tight text-slate-900">
-              Checking your design...
-            </h2>
-            <div className="mt-2 flex items-center justify-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
-              <p className="text-sm font-semibold text-blue-600 transition-all duration-300">
-                {ANALYSIS_STEPS[currentStepIndex]}
-              </p>
-            </div>
-
-            {/* Progress bar & percentage */}
-            <div className="mt-6">
-              <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 mb-2">
-                <span>ANALYSIS IN PROGRESS</span>
-                <span className="text-blue-600 font-extrabold">
-                  {Math.round(((currentStepIndex + 1) / ANALYSIS_STEPS.length) * 100)}%
-                </span>
-              </div>
-              <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 transition-all duration-500 ease-out shadow-xs"
-                  style={{ width: `${((currentStepIndex + 1) / ANALYSIS_STEPS.length) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Clean category pills */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 pt-3 border-t border-slate-100">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600">
-                <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                Typos &amp; Text
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                Contrast
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600">
-                <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
-                Margins &amp; Bleed
-              </span>
-            </div>
-          </div>
-        )}
+        </section>
 
         {/* RESULT DASHBOARD */}
         {result && imageUrl && (
-          <div className="mt-8 space-y-6">
+          <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-20">
+            <div className="mt-3 space-y-6 sm:mt-4">
+            <div className="text-center">
+              <div style={{ borderColor: "#e5e5df" }} className="inline-flex items-center gap-2 rounded-full border bg-white px-4 py-1.5 shadow-2xs">
+                <span className={`h-2 w-2 rounded-full ${result.verdict === "ready" ? "bg-emerald-500" : result.verdict === "critical_issues" ? "bg-rose-500" : "bg-amber-500"}`} />
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${result.verdict === "ready" ? "text-emerald-600" : result.verdict === "critical_issues" ? "text-rose-600" : "text-amber-700"}`}>
+                  DESIGN CHECK COMPLETE · {activeIssues.length} FINDING{activeIssues.length === 1 ? "" : "S"}
+                </span>
+              </div>
+              <h1 className="mt-4 text-3xl font-extrabold tracking-[-1.2px] text-[#1c201a] sm:text-4xl lg:text-[42px]">
+                {result.engine === "local-deterministic"
+                  ? "Design check complete"
+                  : result.verdictTitle || "Your design check is complete"}
+              </h1>
+              <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-[#70746d] sm:text-base">
+                {result.engine === "local-deterministic"
+                  ? "Review the findings below and verify key details manually."
+                  : result.verdictSummary || "Review the findings and marked positions in your artwork below."}
+              </p>
+            </div>
+
             {/* PDF PAGE NAVIGATOR */}
             {pdfTotalPages > 1 && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs sm:px-5">
+              <div style={{ borderColor: "#e5e5df" }} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-3.5 shadow-xs sm:px-5">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-2.5 w-2.5 rounded-full bg-blue-600 animate-pulse" />
-                  <span className="text-xs font-bold text-slate-700 sm:text-sm">
-                    PDF Page <span className="text-blue-600 font-extrabold">{pdfPage}</span> of {pdfTotalPages}
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-[#3158d5] animate-pulse" />
+                  <span className="text-xs font-bold text-[#1c201a] sm:text-sm">
+                    PDF Page <span className="text-[#3158d5] font-extrabold">{pdfPage}</span> of {pdfTotalPages}
                   </span>
-                  <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 hidden sm:inline">
+                  <span className="ml-1 rounded-full bg-[#efeee7] px-2 py-0.5 text-[10px] font-semibold text-[#70746d] hidden sm:inline">
                     Click Next to audit subsequent pages
                   </span>
                 </div>
@@ -1223,7 +1985,8 @@ export default function DesignCheckClient() {
                     type="button"
                     onClick={() => goToPdfPage(pdfPage - 1)}
                     disabled={pdfPage <= 1 || loadingPage}
-                    className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    style={{ borderColor: "#e5e5df" }}
+                    className="flex items-center gap-1 rounded-xl border bg-white px-3 py-1.5 text-xs font-bold text-[#1c201a] transition hover:bg-[#f6f5f3] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <span>‹</span> <span>Previous</span>
                   </button>
@@ -1232,7 +1995,8 @@ export default function DesignCheckClient() {
                     onChange={(e) => goToPdfPage(Number(e.target.value))}
                     disabled={loadingPage}
                     aria-label="Select PDF page"
-                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 cursor-pointer"
+                    style={{ borderColor: "#e5e5df" }}
+                    className="rounded-xl border bg-white px-2.5 py-1.5 text-xs font-bold text-[#1c201a] cursor-pointer"
                   >
                     {Array.from({ length: pdfTotalPages }, (_, i) => i + 1).map((n) => (
                       <option key={n} value={n}>
@@ -1244,7 +2008,7 @@ export default function DesignCheckClient() {
                     type="button"
                     onClick={() => goToPdfPage(pdfPage + 1)}
                     disabled={pdfPage >= pdfTotalPages || loadingPage}
-                    className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex items-center gap-1.5 rounded-xl bg-[#3158d5] px-3.5 py-1.5 text-xs font-bold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <span>Next</span> <span>›</span>
                   </button>
@@ -1267,18 +2031,17 @@ export default function DesignCheckClient() {
                 ? "Contains deal-breaking issues (price mismatch, missing disclaimers, or cutoffs) that must be fixed before going live."
                 : "Overall solid, but contains warnings that should be verified before publication.";
 
-              const verdictTitle = result.verdictTitle || defaultTitle;
-              const verdictSummary = result.verdictSummary || defaultSummary;
+              const verdictTitle = result.engine === "local-deterministic"
+                ? "Manual review recommended"
+                : result.verdictTitle || defaultTitle;
+              const verdictSummary = result.engine === "local-deterministic"
+                ? "Automated checks covered spelling, contrast, margins and image size. Other details need your review."
+                : result.verdictSummary || defaultSummary;
 
               return (
                 <div
-                  className={`flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-4 shadow-sm sm:p-5 transition-all ${
-                    isReady
-                      ? "border-emerald-200 bg-emerald-50/50"
-                      : isCritical
-                      ? "border-rose-200 bg-rose-50/50"
-                      : "border-amber-200 bg-amber-50/50"
-                  }`}
+                  style={{ borderColor: "#e5e5df" }}
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border bg-white p-4 shadow-xs transition-all sm:p-5"
                 >
                   <div className="flex items-center gap-3.5">
                     <div
@@ -1286,7 +2049,7 @@ export default function DesignCheckClient() {
                         isReady
                           ? "bg-emerald-600 text-white"
                           : isCritical
-                          ? "bg-rose-600 text-white"
+                          ? "bg-[#e11d48] text-white"
                           : "bg-amber-500 text-white"
                       }`}
                     >
@@ -1296,52 +2059,55 @@ export default function DesignCheckClient() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <span
+                          style={{
+                            borderColor: isReady ? "#a7f3d0" : isCritical ? "#fecdd3" : "#ece4cb",
+                          }}
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                             isReady
                               ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                               : isCritical
-                              ? "bg-rose-100 text-rose-800 border border-rose-200"
+                              ? "bg-[#fef2f2] text-[#e11d48] border border-[#fecdd3]"
                               : "bg-amber-100 text-amber-900 border border-amber-200"
                           }`}
                         >
                           {isReady ? "Passed" : isCritical ? "Action Required" : "Needs Review"}
                         </span>
-                        <h2 className="text-base font-extrabold text-slate-900">
+                        <h2 className="text-base font-extrabold text-[#1c201a]">
                           {verdictTitle}
                         </h2>
-                        <span className="rounded-full bg-white/90 border border-slate-200/80 px-2 py-0.5 text-[10px] font-bold text-slate-600 uppercase">
+                        <span style={{ borderColor: "#e5e5df" }} className="rounded-full bg-white/90 border px-2 py-0.5 text-[10px] font-bold text-[#70746d] uppercase">
                           {result.engine === "hybrid-gemini" ? "AI + Automated Checks" : "Limited Automated Checks"}
                         </span>
                         {result.ocrEngine && (
-                          <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase flex items-center gap-1 shadow-sm">
+                          <span style={{ borderColor: "#d1fae5" }} className="rounded-full bg-emerald-50 border px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase flex items-center gap-1 shadow-sm">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                             {result.ocrEngine}
                           </span>
                         )}
                       </div>
-                      <p className="mt-1 text-xs text-slate-600 max-w-2xl leading-relaxed">
+                      <p className="mt-1 text-xs text-[#70746d] max-w-2xl leading-relaxed">
                         {verdictSummary}
                       </p>
                       {/* Severity-Weighted Summary Counts */}
                       {result.verdictCounts && (
                         <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
                           {result.verdictCounts.critical > 0 && (
-                            <span className="inline-flex items-center rounded-full bg-rose-50 text-rose-700 px-2.5 py-0.5 border border-rose-200/80">
+                          <span style={{ borderColor: "#fecdd3" }} className="inline-flex items-center rounded-full bg-[#fef2f2] text-[#e11d48] px-2.5 py-0.5 border">
                               {result.verdictCounts.critical} Critical Blockers
                             </span>
                           )}
                           {result.verdictCounts.warning > 0 && (
-                            <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-800 px-2.5 py-0.5 border border-amber-200/80">
+                            <span style={{ borderColor: "#ece4cb" }} className="inline-flex items-center rounded-full bg-[#fff8e6] text-amber-800 px-2.5 py-0.5 border">
                               {result.verdictCounts.warning} Warnings to Verify
                             </span>
                           )}
                           {result.verdictCounts.suggestion > 0 && (
-                            <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5 border border-slate-200/80">
+                          <span style={{ borderColor: "#e5e5df" }} className="inline-flex items-center rounded-full bg-[#efeee7] text-[#3158d5] px-2.5 py-0.5 border">
                               {result.verdictCounts.suggestion} Polish Suggestions
                             </span>
                           )}
                           {result.verdictCounts.total === 0 && (
-                            <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-800 px-2.5 py-0.5 border border-emerald-200/80">
+                            <span style={{ borderColor: "#d1fae5" }} className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-800 px-2.5 py-0.5 border">
                               0 Issues Detected
                             </span>
                           )}
@@ -1355,9 +2121,10 @@ export default function DesignCheckClient() {
                     <button
                       type="button"
                       onClick={handleDownloadReport}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-95"
+                      style={{ borderColor: "#e5e5df" }}
+                      className="inline-flex items-center gap-1.5 rounded-xl border bg-white px-3.5 py-2 text-xs font-semibold text-[#1c201a] shadow-xs transition hover:bg-[#f6f5f3] active:scale-95"
                     >
-                      <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <svg className="h-4 w-4 text-[#70746d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                       </svg>
                       Export QA Audit
@@ -1365,7 +2132,8 @@ export default function DesignCheckClient() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-95"
+                      style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-[#3158d5] px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:opacity-95 active:scale-95"
                     >
                       Audit Another Design
                     </button>
@@ -1375,26 +2143,30 @@ export default function DesignCheckClient() {
             })()}
 
             {result.analysisNotice && (
-              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950" role="status">
-                <p className="font-bold">Manual review required</p>
-                <p className="mt-1 leading-relaxed">{result.analysisNotice}</p>
+              <div style={{ borderColor: "#e5e5df" }} className="rounded-xl border bg-[#fffdf4] p-4 text-sm text-amber-950" role="status">
+                <p className="font-bold">Not checked automatically</p>
+                <p className="mt-1 leading-relaxed">
+                  {result.engine === "local-deterministic"
+                    ? "Prices, dates, contact details, legal requirements and overall design quality."
+                    : result.analysisNotice}
+                </p>
               </div>
             )}
 
             {/* POSITIVE HIGHLIGHTS: WHAT'S WORKING WELL (RULE 5) */}
             {result.positiveHighlights && result.positiveHighlights.length > 0 && (
-              <div className="rounded-2xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-white p-4 sm:p-5 shadow-xs">
+              <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-white p-4 sm:p-5 shadow-xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-[11px] font-bold">✓</span>
                     <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-900">
                       What&apos;s Working Well
                     </h3>
-                    <span className="rounded-full bg-emerald-100/90 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                    <span style={{ borderColor: "#d1fae5" }} className="rounded-full bg-emerald-100/90 border px-2 py-0.5 text-[10px] font-bold text-emerald-800">
                       Creative QA Strengths
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+                  <span className="text-[11px] text-[#888d84] font-medium hidden sm:inline">
                     Pre-Flight Observations
                   </span>
                 </div>
@@ -1402,36 +2174,74 @@ export default function DesignCheckClient() {
                   {result.positiveHighlights.map((highlight, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-2.5 rounded-xl border border-emerald-100/90 bg-white/95 p-3 shadow-2xs transition hover:border-emerald-200"
+                      style={{ borderColor: "#e5e5df" }}
+                      className="flex items-start gap-2.5 rounded-xl border bg-white/95 p-3 shadow-2xs transition hover:border-emerald-200"
                     >
                       <span className="mt-0.5 text-xs text-emerald-600 font-bold">✓</span>
-                      <p className="text-xs font-medium leading-relaxed text-slate-700">{highlight}</p>
+                      <p className="text-xs font-medium leading-relaxed text-[#1c201a]">{highlight}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
+            <section style={{ borderColor: "#e5e5df" }} className="overflow-hidden rounded-2xl border bg-white shadow-xs">
+              <div style={{ borderBottom: "1px solid #e5e5df", backgroundColor: "#faf9f6" }} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 sm:px-6">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-[#3158d5]" />
+                  <h2 className="text-xs font-bold text-[#1c201a] sm:text-sm">Design Check Overview &amp; Insights</h2>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-md bg-[#efeee7] px-2 py-0.5 text-[10px] font-bold text-[#3158d5]">
+                    {result.engine === "hybrid-gemini" ? "AI + Automated Checks" : "Limited Automated Checks"}
+                  </span>
+                  {result.ocrEngine && (
+                    <span style={{ borderColor: "#d1fae5" }} className="rounded-md border bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                      {result.ocrEngine}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 p-5 text-center sm:grid-cols-4 sm:p-6">
+                <div style={{ borderColor: "#e5e5df" }} className="rounded-xl border bg-white p-4">
+                  <p className="text-2xl font-extrabold tracking-tight text-[#1c201a]">{result.categoryScores.dataScore ?? result.categoryScores.copyScore}%</p>
+                  <p className="mt-0.5 text-xs font-semibold text-[#70746d]">Data &amp; Copy</p>
+                </div>
+                <div style={{ borderColor: "#e5e5df" }} className="rounded-xl border bg-white p-4">
+                  <p className="text-2xl font-extrabold tracking-tight text-[#1c201a]">{result.categoryScores.complianceScore ?? result.categoryScores.qualityScore}%</p>
+                  <p className="mt-0.5 text-xs font-semibold text-[#70746d]">Legal &amp; Asterisk</p>
+                </div>
+                <div style={{ borderColor: "#e5e5df" }} className="rounded-xl border bg-white p-4">
+                  <p className="text-2xl font-extrabold tracking-tight text-[#1c201a]">{result.categoryScores.layoutScore ?? result.categoryScores.marginScore}%</p>
+                  <p className="mt-0.5 text-xs font-semibold text-[#70746d]">Layout &amp; Bleed</p>
+                </div>
+                <div style={{ borderColor: "#e5e5df" }} className="rounded-xl border bg-white p-4">
+                  <p className="text-2xl font-extrabold tracking-tight text-[#3158d5]">{result.categoryScores.visualScore ?? result.categoryScores.contrastScore}%</p>
+                  <p className="mt-0.5 text-xs font-semibold text-[#70746d]">Visual &amp; Contrast</p>
+                </div>
+              </div>
+            </section>
+
             {/* TWO COLUMN INSPECTOR */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
               {/* LEFT COLUMN: INTERACTIVE VISUAL CANVAS (7 COLS) */}
-              <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-200/40 lg:col-span-7">
-                <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-3.5">
+              <div style={{ borderColor: "#e5e5df" }} className="overflow-hidden rounded-2xl border bg-white shadow-xs lg:col-span-7">
+                <div style={{ borderBottom: "1px solid #e5e5df", backgroundColor: "#faf9f6" }} className="flex items-center justify-between px-5 py-3.5">
                   <div className="flex items-center gap-2">
-                    <span className="flex h-2.5 w-2.5 rounded-full bg-blue-600 animate-pulse" />
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    <span className="flex h-2.5 w-2.5 rounded-full bg-[#3158d5] animate-pulse" />
+                    <p className="text-xs font-bold uppercase tracking-wider text-[#1c201a]">
                       {isPdfDoc && pdfTotalPages > 1
                         ? `Visual Pre-Flight Canvas (Page ${pdfPage} of ${pdfTotalPages})`
                         : "Visual Pre-Flight Canvas"}
                     </p>
                   </div>
-                  <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-500">
-                    <svg className="h-3 w-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+                  <span style={{ borderColor: "#e5e5df" }} className="hidden sm:inline-flex items-center gap-1.5 rounded-full border bg-[#efeee7] px-2.5 py-1 text-[10px] font-medium text-[#70746d]">
+                    <svg className="h-3 w-3 text-[#888d84]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
                     Drag to pan • Click markers to inspect
                   </span>
                 </div>
 
-                <div className="bg-slate-200 p-4">
+                <div className="bg-[#f6f5f3] p-4">
                   <div
                     ref={viewportRef}
                     className={`relative flex h-[380px] sm:h-[480px] lg:h-[588px] items-start justify-start overflow-auto select-none touch-pan-x touch-pan-y overscroll-contain ${
@@ -1534,22 +2344,22 @@ export default function DesignCheckClient() {
                         if (isFilteredOut) return null;
 
                         // Color theme per category
-                        let color = "#0055fe"; // blue
+                        let color = "#3158d5"; // brand blue
                         let bgTint = "rgba(0, 85, 254, 0.12)";
-                        let borderTint = "rgba(0, 85, 254, 0.4)";
+                        let borderTint = "rgba(49, 88, 213, 0.24)";
 
                         if (isCritical || issue.category === "copy") {
                           color = "#e11d48"; // rose-600 / red
                           bgTint = "rgba(225, 29, 72, 0.14)";
-                          borderTint = "rgba(225, 29, 72, 0.45)";
+                          borderTint = "rgba(225, 29, 72, 0.28)";
                         } else if (issue.category === "contrast" || isWarning) {
                           color = "#d97706"; // amber-600
                           bgTint = "rgba(217, 119, 6, 0.14)";
-                          borderTint = "rgba(217, 119, 6, 0.45)";
+                          borderTint = "rgba(217, 119, 6, 0.28)";
                         } else if (issue.category === "margin" || issue.category === "layout") {
                           color = "#7c3aed"; // violet-600
                           bgTint = "rgba(124, 58, 237, 0.14)";
-                          borderTint = "rgba(124, 58, 237, 0.45)";
+                          borderTint = "rgba(124, 58, 237, 0.28)";
                         }
 
                         return (
@@ -1566,7 +2376,7 @@ export default function DesignCheckClient() {
                             }}
                             className={`group absolute cursor-pointer transition-all duration-150 rounded-[2px] ${
                               isSelected
-                                ? "ring-2 ring-blue-500 shadow-md z-30"
+                                ? "ring-2 ring-[#bcd5ff] shadow-md z-30"
                                 : "hover:z-20 z-10"
                             }`}
                             style={{
@@ -1625,7 +2435,7 @@ export default function DesignCheckClient() {
                       {loadingPage && (
                         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-xs">
                           <div className="flex flex-col items-center gap-2.5 rounded-2xl bg-white px-6 py-5 shadow-2xl border border-slate-100">
-                            <div className="h-8 w-8 animate-spin rounded-full border-3 border-blue-600 border-t-transparent" />
+                          <div className="h-8 w-8 animate-spin rounded-full border-3 border-[#3158d5] border-t-transparent" />
                             <p className="text-sm font-bold text-slate-800">
                               Auditing PDF Page {pdfPage} of {pdfTotalPages}...
                             </p>
@@ -1639,13 +2449,14 @@ export default function DesignCheckClient() {
                   </div>
 
                   {/* BOTTOM CANVAS TOOLBAR */}
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-xs">
+                  <div style={{ borderColor: "#e5e5df" }} className="mt-3 flex flex-nowrap items-center justify-between gap-1 overflow-x-auto rounded-xl border bg-white px-1.5 py-2 text-xs font-semibold text-[#70746d] sm:flex-wrap sm:overflow-visible sm:gap-2 sm:px-3">
                     {/* Horizontal Pan */}
-                    <div className="flex items-center gap-1.5">
+                    <div className="order-1 flex shrink-0 items-center gap-1 sm:order-none sm:gap-1.5">
                       <button
                         type="button"
                         onClick={() => panHorizontal("left")}
-                        className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+                        style={{ borderColor: "#e5e5df" }}
+                        className="flex min-w-[48px] items-center justify-center gap-1 whitespace-nowrap rounded-lg border bg-[#f6f5f3] px-1.5 py-1.5 text-[9px] font-medium text-[#1c201a] transition hover:bg-[#efeee7] active:scale-95 sm:min-w-0 sm:justify-start sm:gap-1 sm:px-2.5 sm:text-[11px]"
                         title="Move Left"
                       >
                         <span>◂</span> <span>Left</span>
@@ -1653,7 +2464,8 @@ export default function DesignCheckClient() {
                       <button
                         type="button"
                         onClick={() => panHorizontal("right")}
-                        className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+                        style={{ borderColor: "#e5e5df" }}
+                        className="flex min-w-[54px] items-center justify-center gap-1 whitespace-nowrap rounded-lg border bg-[#f6f5f3] px-1.5 py-1.5 text-[9px] font-medium text-[#1c201a] transition hover:bg-[#efeee7] active:scale-95 sm:min-w-0 sm:justify-start sm:gap-1 sm:px-2.5 sm:text-[11px]"
                         title="Move Right"
                       >
                         <span>Right</span> <span>▸</span>
@@ -1661,13 +2473,13 @@ export default function DesignCheckClient() {
                     </div>
 
                     {/* Zoom Controls */}
-                    <div className="flex items-center gap-1">
+                    <div className="order-2 flex shrink-0 items-center gap-0 sm:order-none sm:gap-1">
                       <button
                         type="button"
                         aria-label="Zoom out"
                         disabled={zoom <= 0.25}
                         onClick={() => setZoom((v) => Math.max(0.25, Math.round((v - 0.25) * 100) / 100))}
-                        className="rounded-lg px-2.5 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
+                        className="rounded-lg px-1 py-1 text-sm leading-none transition hover:bg-[#efeee7] disabled:opacity-30 sm:px-2.5 sm:text-base"
                       >
                         −
                       </button>
@@ -1675,7 +2487,7 @@ export default function DesignCheckClient() {
                         type="button"
                         aria-label="Reset zoom"
                         onClick={handleResetView}
-                        className="min-w-12 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100"
+                        className="min-w-9 rounded-lg px-1 py-1 text-[9px] font-bold text-[#1c201a] transition hover:bg-[#efeee7] sm:min-w-12 sm:px-2 sm:text-[11px]"
                         title="Reset zoom"
                       >
                         {Math.round(zoom * 100)}%
@@ -1685,18 +2497,19 @@ export default function DesignCheckClient() {
                         aria-label="Zoom in"
                         disabled={zoom >= 3}
                         onClick={() => setZoom((v) => Math.min(3, Math.round((v + 0.25) * 100) / 100))}
-                        className="rounded-lg px-2.5 py-1 text-base leading-none transition hover:bg-slate-100 disabled:opacity-30"
+                        className="rounded-lg px-1 py-1 text-sm leading-none transition hover:bg-[#efeee7] disabled:opacity-30 sm:px-2.5 sm:text-base"
                       >
                         +
                       </button>
                     </div>
 
                     {/* Fit & Reset */}
-                    <div className="flex items-center gap-1.5">
+                    <div className="order-3 flex shrink-0 items-center gap-1 sm:order-none sm:gap-1.5">
                       <button
                         type="button"
                         onClick={handleFitWidth}
-                        className="flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/70 px-2.5 py-1.5 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-100 active:scale-95"
+                        style={{ borderColor: "#dce7ff" }}
+                        className="flex items-center gap-0.5 whitespace-nowrap rounded-lg border bg-[#f0f5ff] px-1 py-1.5 text-[9px] font-medium text-[#3158d5] transition hover:bg-[#e7efff] active:scale-95 sm:gap-1 sm:px-2.5 sm:text-[11px]"
                         title="Fit design width to screen"
                       >
                         <span>⤢</span> <span>Fit Width</span>
@@ -1704,7 +2517,8 @@ export default function DesignCheckClient() {
                       <button
                         type="button"
                         onClick={handleResetView}
-                        className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-600 transition hover:bg-slate-100 active:scale-95"
+                        style={{ borderColor: "#e5e5df" }}
+                        className="whitespace-nowrap rounded-lg border bg-white px-1 py-1.5 text-[9px] text-[#70746d] transition hover:bg-[#f6f5f3] active:scale-95 sm:px-2.5 sm:text-[11px]"
                         title="Reset position"
                       >
                         Reset
@@ -1712,24 +2526,26 @@ export default function DesignCheckClient() {
 
                       {/* Multi-Page Canvas Page Nav */}
                       {pdfTotalPages > 1 && (
-                        <div className="flex items-center gap-1 border-l border-slate-200 pl-2">
+                        <div style={{ borderLeft: "1px solid #e5e5df" }} className="flex items-center gap-1 pl-2">
                           <button
                             type="button"
                             onClick={() => goToPdfPage(pdfPage - 1)}
                             disabled={pdfPage <= 1 || loadingPage}
-                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                            style={{ borderColor: "#e5e5df" }}
+                            className="rounded-lg border bg-white px-2 py-1 text-[11px] font-bold text-[#1c201a] transition hover:bg-[#f6f5f3] disabled:opacity-30 disabled:cursor-not-allowed"
                             title="Previous PDF Page"
                           >
                             ‹ Prev
                           </button>
-                          <span className="text-[11px] font-bold text-slate-700 px-1">
+                          <span className="text-[11px] font-bold text-[#1c201a] px-1">
                             {pdfPage}/{pdfTotalPages}
                           </span>
                           <button
                             type="button"
                             onClick={() => goToPdfPage(pdfPage + 1)}
                             disabled={pdfPage >= pdfTotalPages || loadingPage}
-                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                            style={{ borderColor: "#e5e5df" }}
+                            className="rounded-lg border bg-white px-2 py-1 text-[11px] font-bold text-[#1c201a] transition hover:bg-[#f6f5f3] disabled:opacity-30 disabled:cursor-not-allowed"
                             title="Next PDF Page"
                           >
                             Next ›
@@ -1742,33 +2558,18 @@ export default function DesignCheckClient() {
               </div>
 
               {/* RIGHT COLUMN: PRE-FLIGHT AUDIT INSPECTOR (5 COLS) */}
-              <div className="flex flex-col rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xl shadow-slate-200/40 lg:col-span-5">
-                {/* CATEGORY SCORES PILLS */}
-                <div className="grid grid-cols-2 gap-2 text-xs font-semibold sm:grid-cols-4">
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-2 text-center transition hover:border-slate-200">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Data &amp; Copy</p>
-                    <p className="mt-0.5 text-base font-extrabold text-slate-800">
-                      {result.categoryScores.dataScore ?? result.categoryScores.copyScore}%
-                    </p>
+              <div style={{ borderColor: "#e5e5df" }} className="flex flex-col overflow-hidden rounded-2xl border bg-white p-5 shadow-xs lg:col-span-5">
+                <div style={{ borderBottom: "1px solid #e5e5df" }} className="flex items-center justify-between gap-3 pb-3.5">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-rose-500" />
+                    <div>
+                      <h2 className="text-sm font-bold text-[#1c201a]">Suggested Corrections</h2>
+                      <p className="text-[11px] text-[#70746d]">Click a finding to inspect its location</p>
+                    </div>
                   </div>
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-2 text-center transition hover:border-slate-200">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Legal &amp; Asterisk</p>
-                    <p className="mt-0.5 text-base font-extrabold text-slate-800">
-                      {result.categoryScores.complianceScore ?? result.categoryScores.qualityScore}%
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-2 text-center transition hover:border-slate-200">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Layout &amp; Bleed</p>
-                    <p className="mt-0.5 text-base font-extrabold text-slate-800">
-                      {result.categoryScores.layoutScore ?? result.categoryScores.marginScore}%
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-2 text-center transition hover:border-slate-200">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Visual &amp; Contrast</p>
-                    <p className="mt-0.5 text-base font-extrabold text-slate-800">
-                      {result.categoryScores.visualScore ?? result.categoryScores.contrastScore}%
-                    </p>
-                  </div>
+                  <span style={{ borderColor: "#e5e5df" }} className="rounded-lg border bg-[#efeee7] px-2.5 py-1 text-[11px] font-bold text-[#3158d5]">
+                    {activeIssues.length} TO REVIEW
+                  </span>
                 </div>
 
                 {/* FILTER TABS */}
@@ -1793,12 +2594,12 @@ export default function DesignCheckClient() {
                   const typographyCount = activeIssues.filter((i) => i.category === "typography").length;
 
                   return (
-                    <div className="mt-4 flex flex-wrap gap-1.5 border-b border-slate-100 pb-3 text-xs font-semibold">
+                    <div style={{ borderBottom: "1px solid #e5e5df" }} className="mt-4 flex flex-wrap gap-1.5 pb-3 text-xs font-semibold">
                       <button
                         type="button"
                         onClick={() => setActiveFilter("all")}
                         className={`rounded-lg px-3 py-1.5 transition ${
-                          activeFilter === "all" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          activeFilter === "all" ? "bg-[#3158d5] text-white" : "bg-[#efeee7] text-[#70746d] hover:bg-[#ecebe6]"
                         }`}
                       >
                         All ({activeIssues.length})
@@ -1808,7 +2609,7 @@ export default function DesignCheckClient() {
                           type="button"
                           onClick={() => setActiveFilter("critical")}
                           className={`rounded-lg px-3 py-1.5 transition ${
-                            activeFilter === "critical" ? "bg-rose-600 text-white" : "bg-rose-50 text-rose-700 hover:bg-rose-100"
+                          activeFilter === "critical" ? "bg-[#e11d48] text-white" : "bg-[#fef2f2] text-[#e11d48] hover:bg-[#ffe4e6]"
                           }`}
                         >
                           Critical ({criticalCount})
@@ -1818,7 +2619,7 @@ export default function DesignCheckClient() {
                         type="button"
                         onClick={() => setActiveFilter("data")}
                         className={`rounded-lg px-3 py-1.5 transition ${
-                          activeFilter === "data" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          activeFilter === "data" ? "bg-[#3158d5] text-white" : "bg-[#efeee7] text-[#1c201a] hover:bg-[#ecebe6]"
                         }`}
                       >
                         Data &amp; Legal ({dataCount})
@@ -1827,7 +2628,7 @@ export default function DesignCheckClient() {
                         type="button"
                         onClick={() => setActiveFilter("layout")}
                         className={`rounded-lg px-3 py-1.5 transition ${
-                          activeFilter === "layout" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          activeFilter === "layout" ? "bg-[#3158d5] text-white" : "bg-[#efeee7] text-[#1c201a] hover:bg-[#ecebe6]"
                         }`}
                       >
                         Layout &amp; Bleed ({layoutCount})
@@ -1836,7 +2637,7 @@ export default function DesignCheckClient() {
                         type="button"
                         onClick={() => setActiveFilter("contrast")}
                         className={`rounded-lg px-3 py-1.5 transition ${
-                          activeFilter === "contrast" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          activeFilter === "contrast" ? "bg-[#3158d5] text-white" : "bg-[#efeee7] text-[#1c201a] hover:bg-[#ecebe6]"
                         }`}
                       >
                         Contrast ({contrastCount})
@@ -1846,7 +2647,7 @@ export default function DesignCheckClient() {
                           type="button"
                           onClick={() => setActiveFilter("typography")}
                           className={`rounded-lg px-3 py-1.5 transition ${
-                            activeFilter === "typography" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                            activeFilter === "typography" ? "bg-[#3158d5] text-white" : "bg-[#efeee7] text-[#1c201a] hover:bg-[#ecebe6]"
                           }`}
                         >
                           Typography ({typographyCount})
@@ -1859,9 +2660,9 @@ export default function DesignCheckClient() {
                 {/* ISSUES LIST */}
                 <div className="mt-4 flex-1 space-y-3 overflow-y-auto max-h-[520px] pr-1">
                   {filteredIssues.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
-                      <p className="text-sm font-semibold text-slate-700">No issues in this category</p>
-                      <p className="text-xs text-slate-500 mt-0.5">Your design passed all audit checks in this area cleanly.</p>
+                    <div className="flex flex-col items-center justify-center p-8 text-center text-[#888d84]">
+                      <p className="text-sm font-semibold text-[#1c201a]">No issues in this category</p>
+                      <p className="text-xs text-[#70746d] mt-0.5">Your design passed all audit checks in this area cleanly.</p>
                     </div>
                   ) : (
                     filteredIssues.map((issue) => {
@@ -1872,16 +2673,16 @@ export default function DesignCheckClient() {
                       const isWarning = issue.severity === "warning";
 
                       const borderClass = isSelected
-                        ? "border-blue-500 ring-2 ring-blue-500/20 shadow-xs"
+                        ? "border-l-4 border-l-[#e11d48] border-y-[#fecdd3] border-r-[#fecdd3] bg-[#fff8f8] shadow-2xs"
                         : isCritical
-                        ? "border-rose-200/90 hover:border-rose-300 bg-rose-50/15"
-                        : "border-slate-200/80 hover:border-slate-300 bg-white";
+                        ? "border-[#fecdd3] hover:border-[#fda4af] bg-[#fef2f2]"
+                        : "border-[#ecebe6] hover:border-[#e5e5df] bg-white";
 
                       const sevBadgeClass = isCritical
-                        ? "bg-rose-50 text-rose-700 border border-rose-200/80"
+                        ? "bg-[#fef2f2] text-[#e11d48] border border-[#fecdd3]"
                         : isWarning
-                        ? "bg-amber-50 text-amber-800 border border-amber-200/80"
-                        : "bg-slate-100 text-slate-700 border border-slate-200/80";
+                        ? "bg-[#fff8e6] text-amber-800 border border-[#f7d98b]"
+                        : "bg-[#efeee7] text-[#3158d5] border border-[#ecebe6]";
 
                       const sevLabel = isCritical ? "Critical" : isWarning ? "Warning" : "Suggestion";
 
@@ -1904,14 +2705,21 @@ export default function DesignCheckClient() {
                           key={issue.id}
                           id={`issue-card-${issue.id}`}
                           onClick={() => setSelectedIssueId(issue.id)}
+                          style={{
+                            borderColor: isSelected || isCritical ? "#fecdd3" : "#e5e5df",
+                            backgroundColor: isSelected ? "#fff8f8" : isCritical ? "#fef2f2" : "#ffffff",
+                          }}
                           className={`rounded-xl border p-3.5 sm:p-4 transition-all cursor-pointer ${borderClass}`}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
-                              <span className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold ${sevBadgeClass}`}>
+                              <span
+                                style={{ borderColor: isCritical ? "#fecdd3" : isWarning ? "#ece4cb" : "#e5e5df" }}
+                                className={`inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-bold ${sevBadgeClass}`}
+                              >
                                 {sevLabel}
                               </span>
-                              <span className="text-[11px] font-semibold text-slate-500">
+                              <span className="text-[11px] font-semibold text-[#70746d]">
                                 {catLabel}
                               </span>
                             </div>
@@ -1923,7 +2731,7 @@ export default function DesignCheckClient() {
                                     e.stopPropagation();
                                     handleAddToDictionary(issue.originalText || "");
                                   }}
-                                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition cursor-pointer"
+                                  className="text-[11px] font-semibold text-[#3158d5] hover:opacity-80 transition cursor-pointer"
                                   title="Add word to dictionary whitelist"
                                 >
                                   + Whitelist
@@ -1935,7 +2743,7 @@ export default function DesignCheckClient() {
                                   e.stopPropagation();
                                   handleDismiss(issue.id);
                                 }}
-                                className="text-[11px] font-medium text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                                className="text-[11px] font-medium text-[#888d84] hover:text-[#1c201a] transition cursor-pointer"
                                 title="Dismiss notice"
                               >
                                 Dismiss
@@ -1943,7 +2751,7 @@ export default function DesignCheckClient() {
                             </div>
                           </div>
 
-                          <h3 className="mt-1.5 text-sm font-bold text-slate-900 leading-snug">
+                          <h3 className="mt-1.5 text-sm font-bold text-[#1c201a] leading-snug">
                             {issue.originalText
                               ? issue.category === "copy"
                                 ? `Misspelled: "${issue.originalText}"`
@@ -1952,7 +2760,7 @@ export default function DesignCheckClient() {
                                 : `${issue.title}: "${issue.originalText}"`
                               : issue.title}
                           </h3>
-                          <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
+                          <p className="mt-0.5 text-xs text-[#70746d] leading-relaxed">
                             {issue.description}
                           </p>
 
@@ -1963,9 +2771,9 @@ export default function DesignCheckClient() {
                             const copyValue = typoMatch ? typoMatch[1] : issue.suggestedFix;
 
                             return (
-                              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                                <p className="text-xs text-slate-800 truncate">
-                                  <span className="font-bold text-slate-900">Fix: </span>
+                              <div style={{ borderTop: "1px solid #e5e5df" }} className="mt-2 pt-2 flex items-center justify-between gap-2">
+                                <p className="text-xs text-[#1c201a] truncate">
+                                  <span className="font-bold text-[#1c201a]">Fix: </span>
                                   <span>{cleanFix}</span>
                                 </p>
                                 <button
@@ -1974,7 +2782,7 @@ export default function DesignCheckClient() {
                                     e.stopPropagation();
                                     handleCopyFix(issue.id, copyValue);
                                   }}
-                                  className="shrink-0 text-[11px] font-bold text-blue-600 hover:text-blue-800 transition cursor-pointer"
+                                  className="shrink-0 text-[11px] font-bold text-[#3158d5] hover:opacity-80 transition cursor-pointer"
                                 >
                                   {copiedId === issue.id ? "Copied" : "Copy"}
                                 </button>
@@ -1991,56 +2799,119 @@ export default function DesignCheckClient() {
 
             {/* ADVISORY NOTE FOR PDF RESULTS */}
             {isPdfDoc && (
-              <div className="rounded-xl border border-slate-200/80 bg-slate-50/90 p-4 text-xs text-slate-500 shadow-xs">
+              <div
+                style={{
+                  borderColor: "#ecebe6",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ffffff",
+                }}
+                className="rounded-2xl p-4 text-xs text-[#70746d] shadow-2xs"
+              >
                 <p className="leading-relaxed">
-                  <span className="font-semibold text-slate-700">Checked automatically:</span> spelling and copy, contrast, margins, placeholder text, expired dates, stock watermarks, page size, links.{" "}
-                  <span className="font-semibold text-slate-700">Needs manual review in a PDF:</span> bleed and crop marks, color mode (RGB/CMYK), rich black, image DPI, font embedding.
+                  <span className="font-bold text-[#1c201a]">Checked automatically:</span> spelling and copy, contrast, margins, placeholder text, expired dates, stock watermarks, page size, links.{" "}
+                  <span className="font-bold text-[#1c201a]">Needs manual review in a PDF:</span> bleed and crop marks, color mode (RGB/CMYK), rich black, image DPI, font embedding.
                 </p>
               </div>
             )}
+
+            {/* RELATED CREATIVE TOOLS SECTION WHEN RESULT IS SHOWN */}
+            <div className="mt-14 sm:mt-16">
+              <ScrollReveal delay={150}>
+                <div
+                  style={{
+                    borderColor: "#e5e5df",
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    backgroundColor: "#ffffff",
+                  }}
+                  className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs"
+                >
+                  <div className="text-center mb-6">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#3158d5]">
+                      Cross-Tool Workflows
+                    </span>
+                    <h2 className="mt-1 text-xl sm:text-2xl font-black text-[#1c201a]">
+                      Explore More Free Creative Tools
+                    </h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <Link
+                      href="/image-to-text"
+                      style={{
+                        borderColor: "#e5e5df",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        backgroundColor: "#faf9f6",
+                      }}
+                      className="group p-5 rounded-2xl hover:border-[#3158d5] hover:bg-white shadow-2xs transition"
+                    >
+                      <div className="text-xs font-bold text-[#3158d5] uppercase mb-1">
+                        OCR Document Extraction
+                      </div>
+                      <div className="font-bold text-[#1c201a] group-hover:text-[#3158d5] transition">
+                        Image to Text (OCR)
+                      </div>
+                      <p className="mt-1 text-xs text-[#70746d]">
+                        Extract editable text from images, photos, and scanned PDFs instantly with OCR.
+                      </p>
+                    </Link>
+
+                    <Link
+                      href="/qr-code-generator"
+                      style={{
+                        borderColor: "#e5e5df",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        backgroundColor: "#faf9f6",
+                      }}
+                      className="group p-5 rounded-2xl hover:border-[#3158d5] hover:bg-white shadow-2xs transition"
+                    >
+                      <div className="text-xs font-bold text-[#3158d5] uppercase mb-1">
+                        Print Scannability QA
+                      </div>
+                      <div className="font-bold text-[#1c201a] group-hover:text-[#3158d5] transition">
+                        QR Code Generator
+                      </div>
+                      <p className="mt-1 text-xs text-[#70746d]">
+                        Create custom QR codes and verify camera scannability before printing.
+                      </p>
+                    </Link>
+
+                    <Link
+                      href="/image-compressor"
+                      style={{
+                        borderColor: "#e5e5df",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        backgroundColor: "#faf9f6",
+                      }}
+                      className="group p-5 rounded-2xl hover:border-[#3158d5] hover:bg-white shadow-2xs transition"
+                    >
+                      <div className="text-xs font-bold text-[#3158d5] uppercase mb-1">
+                        Optimizer
+                      </div>
+                      <div className="font-bold text-[#1c201a] group-hover:text-[#3158d5] transition">
+                        Image Compressor
+                      </div>
+                      <p className="mt-1 text-xs text-[#70746d]">
+                        Compress JPG, PNG &amp; PDFs with live split comparison and no quality loss.
+                      </p>
+                    </Link>
+                  </div>
+                </div>
+              </ScrollReveal>
+            </div>
+
           </div>
-        )}
-        {/* RELATED CREATIVE TOOLS SECTION */}
-        <section className="mt-20 border-t border-slate-200/80 pt-14">
-          <div className="text-center mb-8">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Cross-Tool Workflows</span>
-            <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">Explore More Free Creative Tools</h2>
-          </div>
+        </div>
+      )}
+    </main>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Link
-              href="/qr-code-generator"
-              className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
-            >
-              <div className="text-xs font-bold text-blue-600 uppercase mb-1">Print Scannability QA</div>
-              <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">QR Code Generator</div>
-              <p className="mt-1 text-xs text-slate-500">Create custom QR codes and verify camera scannability before printing.</p>
-            </Link>
-
-            <Link
-              href="/image-compressor"
-              className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
-            >
-              <div className="text-xs font-bold text-blue-600 uppercase mb-1">Optimizer</div>
-              <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">Image Compressor</div>
-              <p className="mt-1 text-xs text-slate-500">Compress JPG, PNG &amp; PDFs with live split comparison.</p>
-            </Link>
-
-            <Link
-              href="/flipbook"
-              className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-400/80 hover:shadow-md transition"
-            >
-              <div className="text-xs font-bold text-blue-600 uppercase mb-1">3D Publishing</div>
-              <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">3D Digital Flipbook</div>
-              <p className="mt-1 text-xs text-slate-500">Turn PDFs into interactive 3D books with page-turn effects.</p>
-            </Link>
-          </div>
-        </section>
-      </main>
-
-      {/* FOOTER */}
-      <Footer currentPath="/design-check" />
-    </div>
-  );
+    {/* FOOTER */}
+    <Footer currentPath="/design-check" />
+  </div>
+);
 }
 

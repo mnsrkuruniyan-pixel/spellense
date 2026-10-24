@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: [
+    "192.168.70.119",
+    "192.168.70.119:3000",
+    "localhost",
+    "localhost:3000",
+    "*.local",
+  ],
   outputFileTracingIncludes: {
     "/api/**/*": [
       "./dictionaries/**/*",

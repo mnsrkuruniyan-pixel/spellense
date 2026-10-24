@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ScrollReveal from "@/components/ScrollReveal";
 import {
   PAPER_SIZES,
   planLayout,
@@ -18,7 +19,6 @@ import {
 import { buildPdf, PreparedImage, PrintOptions } from "@/lib/print-sheet/pdf";
 import CardCropEditorModal from "@/components/print-sheet/CardCropEditorModal";
 import IdCardPanel, { IdCardItemData } from "@/components/print-sheet/IdCardPanel";
-import PrintSheetLandingChooser from "@/components/print-sheet/PrintSheetLandingChooser";
 import { cardScanner, CornerPoint } from "@/lib/print-sheet/cardScanner";
 
 export interface PhotoItem {
@@ -275,6 +275,10 @@ interface HistorySnapshot {
   const [historyLength, setHistoryLength] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
+  const idFrontInputRef = useRef<HTMLInputElement>(null);
+  const idBackInputRef = useRef<HTMLInputElement>(null);
+  const idCameraInputRef = useRef<HTMLInputElement>(null);
+  const [isIdDragging, setIsIdDragging] = useState<boolean>(false);
 
   const showToast = useCallback((msg: string) => {
     setNotification(msg);
@@ -1374,6 +1378,147 @@ interface HistorySnapshot {
     }
   };
 
+  const handleLoadSampleIdCard = useCallback(() => {
+    // Generate sample front card canvas (85.6 × 54 mm ratio)
+    const canvasFront = document.createElement("canvas");
+    canvasFront.width = 1012;
+    canvasFront.height = 638;
+    const ctxF = canvasFront.getContext("2d");
+    if (ctxF) {
+      const grad = ctxF.createLinearGradient(0, 0, 1012, 638);
+      grad.addColorStop(0, "#f0f5ff");
+      grad.addColorStop(0.5, "#e6efff");
+      grad.addColorStop(1, "#dce8fc");
+      ctxF.fillStyle = grad;
+      ctxF.fillRect(0, 0, 1012, 638);
+
+      ctxF.strokeStyle = "#bcd5ff";
+      ctxF.lineWidth = 6;
+      ctxF.strokeRect(12, 12, 988, 614);
+
+      ctxF.fillStyle = "#3158d5";
+      ctxF.fillRect(20, 20, 972, 85);
+      ctxF.fillStyle = "#ffffff";
+      ctxF.font = "bold 28px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxF.fillText("NATIONAL IDENTITY CARD", 50, 72);
+      ctxF.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxF.fillText("ISO/IEC 7810 ID-1", 780, 72);
+
+      // Smart chip
+      ctxF.fillStyle = "#e5b95c";
+      ctxF.fillRect(60, 150, 110, 85);
+      ctxF.strokeStyle = "#b5872a";
+      ctxF.lineWidth = 3;
+      ctxF.strokeRect(60, 150, 110, 85);
+
+      // Photo Box
+      ctxF.fillStyle = "#dce4ec";
+      ctxF.fillRect(60, 270, 220, 280);
+      ctxF.strokeStyle = "#94a3b8";
+      ctxF.lineWidth = 3;
+      ctxF.strokeRect(60, 270, 220, 280);
+
+      // Avatar silhouette
+      ctxF.fillStyle = "#64748b";
+      ctxF.beginPath();
+      ctxF.arc(170, 370, 50, 0, Math.PI * 2);
+      ctxF.fill();
+      ctxF.beginPath();
+      ctxF.arc(170, 520, 85, Math.PI, 0, false);
+      ctxF.fill();
+
+      // Details text
+      ctxF.fillStyle = "#1c201a";
+      ctxF.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxF.fillText("FULL NAME", 330, 180);
+      ctxF.font = "bold 32px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxF.fillText("ALEXANDER MORGAN", 330, 225);
+
+      ctxF.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxF.fillText("CARD NUMBER", 330, 290);
+      ctxF.font = "bold 30px 'Courier New', monospace";
+      ctxF.fillStyle = "#3158d5";
+      ctxF.fillText("CR80 8560 5400 9921", 330, 335);
+
+      ctxF.fillStyle = "#1c201a";
+      ctxF.font = "bold 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxF.fillText("DATE OF BIRTH", 330, 400);
+      ctxF.font = "bold 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxF.fillText("14 MAY 1994", 330, 435);
+
+      ctxF.font = "bold 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxF.fillText("EXPIRY DATE", 620, 400);
+      ctxF.font = "bold 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxF.fillText("31 DEC 2032", 620, 435);
+
+      ctxF.font = "bold 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxF.fillText("NATIONALITY", 330, 500);
+      ctxF.font = "bold 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxF.fillText("STANDARD / VERIFIED", 330, 535);
+    }
+
+    // Generate sample back card canvas
+    const canvasBack = document.createElement("canvas");
+    canvasBack.width = 1012;
+    canvasBack.height = 638;
+    const ctxB = canvasBack.getContext("2d");
+    if (ctxB) {
+      ctxB.fillStyle = "#f6f8fc";
+      ctxB.fillRect(0, 0, 1012, 638);
+
+      ctxB.strokeStyle = "#d6e0ea";
+      ctxB.lineWidth = 6;
+      ctxB.strokeRect(12, 12, 988, 614);
+
+      // Magnetic stripe
+      ctxB.fillStyle = "#1e293b";
+      ctxB.fillRect(20, 45, 972, 110);
+
+      // Signature strip
+      ctxB.fillStyle = "#ffffff";
+      ctxB.fillRect(60, 200, 580, 80);
+      ctxB.strokeStyle = "#cbd5e1";
+      ctxB.lineWidth = 2;
+      ctxB.strokeRect(60, 200, 580, 80);
+      ctxB.fillStyle = "#334155";
+      ctxB.font = "italic 26px Georgia, serif";
+      ctxB.fillText("Alexander Morgan", 90, 250);
+
+      // Security code
+      ctxB.fillStyle = "#ffffff";
+      ctxB.fillRect(660, 200, 120, 80);
+      ctxB.strokeRect(660, 200, 120, 80);
+      ctxB.fillStyle = "#0f172a";
+      ctxB.font = "bold 24px monospace";
+      ctxB.fillText("892", 695, 250);
+
+      // Disclaimer
+      ctxB.fillStyle = "#64748b";
+      ctxB.font = "16px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctxB.fillText("This sample card is formatted strictly in compliance with ISO/IEC 7810 ID-1 standard dimensions (85.60 × 53.98 mm).", 60, 340);
+      ctxB.fillText("Keep physical scale set to 100% when printing to maintain exact 1:1 real-world size.", 60, 375);
+
+      // Machine readable zone (MRZ)
+      ctxB.fillStyle = "#0f172a";
+      ctxB.font = "bold 24px 'Courier New', monospace";
+      ctxB.fillText("I<UTO856054009921<<<<<<<<<<<<<<<<", 60, 490);
+      ctxB.fillText("9405148M3212318UTO<<<<<<<<<<<4", 60, 535);
+      ctxB.fillText("MORGAN<<ALEXANDER<<<<<<<<<<<<<<<", 60, 580);
+    }
+
+    const frontUrl = canvasFront.toDataURL("image/jpeg", 0.95);
+    const backUrl = canvasBack.toDataURL("image/jpeg", 0.95);
+
+    setIdCards([
+      {
+        id: "card_1",
+        frontUrl,
+        backUrl,
+      },
+    ]);
+    showToast("Loaded sample ID card with exact 1:1 scale!");
+  }, [showToast]);
+
   // Upload/Camera file selection in ID Mode
   const handleIdFileSelected = async (cardIndex: number, side: "front" | "back", file: File) => {
     const supportedTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -1929,68 +2074,473 @@ interface HistorySnapshot {
     );
   };
 
-  const renderIdSheetPreview = (isMobile: boolean = false) => (
-    <div
-      className={`bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex flex-col ${
-        isMobile ? "w-full min-h-[380px] sm:min-h-[500px]" : "h-full min-h-[580px]"
-      }`}
-    >
+  const renderIdSheetPreview = () => (
+    <div className="w-full h-full flex flex-col min-h-[440px] lg:min-h-[600px] justify-between">
       {/* Header bar of preview */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 flex items-center justify-between gap-2 flex-wrap">
-        <h3 className="text-xs sm:text-sm font-semibold text-slate-900">Print preview</h3>
-        {totalFilledCards === 0 ? (
-          <span className="text-[11px] sm:text-xs text-slate-400 font-normal">Waiting for card image</span>
-        ) : (
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <span className="text-[11px] sm:text-xs text-slate-500 font-medium">
-              {totalFilledCards} card{totalFilledCards === 1 ? "" : "s"} · {idPages.length} pg · {idPaper}
-            </span>
-            <div className="flex items-center gap-0.5 sm:gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setPreviewMode("fit")}
-                className={`h-5.5 sm:h-6 px-2 sm:px-2.5 rounded-md text-[11px] sm:text-xs font-semibold transition cursor-pointer ${
-                  previewMode === "fit" ? "bg-white text-blue-600 shadow-2xs font-bold" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                Fit
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewMode("actual")}
-                className={`h-5.5 sm:h-6 px-2 sm:px-2.5 rounded-md text-[11px] sm:text-xs font-semibold transition cursor-pointer ${
-                  previewMode === "actual" ? "bg-white text-blue-600 shadow-2xs font-bold" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                100%
-              </button>
-            </div>
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+        }}
+        className="px-4 sm:px-6 py-3 flex items-center justify-between gap-2 flex-wrap"
+      >
+        <div className="flex items-center gap-2">
+          <h3 style={{ color: "#1c201a" }} className="text-xs sm:text-sm font-bold">Print preview</h3>
+          <span style={{ color: "#767a74" }} className="text-[11px] sm:text-xs font-normal">
+            {idPaper} · {idOrient === "portrait" ? "Portrait" : "Landscape"} · {Math.round(idScale * 100)}%
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            onClick={handleLoadSampleIdCard}
+            style={{
+              backgroundColor: "#ffffff",
+              borderColor: "#e5e5df",
+              borderWidth: "1px",
+              borderStyle: "solid",
+              color: "#3158d5",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+            }}
+            className="text-[11px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 hover:bg-[#f8f9fc] transition cursor-pointer"
+          >
+            <span>Try sample ID</span>
+            <span>→</span>
+          </button>
+          <div
+            style={{
+              backgroundColor: "#efeee7",
+              borderColor: "#e5e5df",
+              borderWidth: "1px",
+              borderStyle: "solid",
+            }}
+            className="flex items-center gap-0.5 p-0.5 rounded-lg"
+          >
+            <button
+              type="button"
+              onClick={() => setPreviewMode("fit")}
+              style={{
+                backgroundColor: previewMode === "fit" ? "#ffffff" : "transparent",
+                color: previewMode === "fit" ? "#3158d5" : "#575a53",
+                boxShadow: previewMode === "fit" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                border: "none",
+                outline: "none",
+              }}
+              className="h-6.5 px-2.5 rounded-md text-[11px] sm:text-xs font-bold transition cursor-pointer"
+            >
+              Fit
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewMode("actual")}
+              style={{
+                backgroundColor: previewMode === "actual" ? "#ffffff" : "transparent",
+                color: previewMode === "actual" ? "#3158d5" : "#555a52",
+                boxShadow: previewMode === "actual" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                border: "none",
+                outline: "none",
+              }}
+              className="h-6.5 px-2.5 rounded-md text-[11px] sm:text-xs font-bold transition cursor-pointer"
+            >
+              100%
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Canvas container */}
       <div
-        ref={isMobile ? undefined : sheetContainerRef}
-        className="flex-1 bg-[#f8fafc] flex flex-col items-center justify-center p-3 sm:p-6 relative min-h-[320px] sm:min-h-[380px]"
+        ref={sheetContainerRef}
+        className="flex-1 bg-[#ecebe4] flex flex-col items-center justify-center p-3 sm:p-6 relative min-h-[420px] lg:min-h-[500px]"
       >
         {totalFilledCards === 0 ? (
-          <div className="w-full py-10 sm:py-20 px-4 flex flex-col items-center justify-center text-center">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white border border-slate-200/90 flex items-center justify-center text-slate-300 mb-3 sm:mb-4 shadow-2xs">
-              <svg className="w-6 h-6 sm:w-7 sm:h-7 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="2" y="5" width="20" height="14" rx="3" />
-                <circle cx="8" cy="11" r="2.5" />
-                <path d="M4 17a4 4 0 0 1 8 0" />
-                <line x1="14" y1="10" x2="19" y2="10" strokeLinecap="round" />
-                <line x1="14" y1="13" x2="17" y2="13" strokeLinecap="round" />
-              </svg>
+          /* PHYSICAL A4 SHEET MOCKUP MATCHING USER SCREENSHOT */
+          <div className="w-full flex items-center justify-center py-2 sm:py-4 overflow-auto">
+            <div
+              style={{
+                aspectRatio: `${idOrientedPaper[0]} / ${idOrientedPaper[1]}`,
+                flexShrink: 0,
+                width:
+                  previewMode === "actual"
+                    ? `${idOrientedPaper[0]}mm`
+                    : `min(100%, min(380px, calc((100vh - 280px) * ${idOrientedPaper[0] / idOrientedPaper[1]})))`,
+                boxShadow: "0 20px 45px -15px rgba(0, 0, 0, 0.14), 0 0 1px 1px rgba(0, 0, 0, 0.05)",
+              }}
+              className="relative bg-white rounded-xs select-none transition-all overflow-hidden p-4 sm:p-6 flex flex-col justify-between"
+            >
+              {/* Centered top label */}
+              <div className="text-center pt-1 pb-3 sm:pb-4">
+                <span className="text-[11px] sm:text-xs font-bold tracking-[0.16em] text-[#7c8278] uppercase select-none">
+                  PRINT SCALE – {Math.round(idScale * 100)}%
+                </span>
+              </div>
+
+              {/* Dashed Margin Guide Line & Dynamic Slots */}
+              {idLayout === "side_by_side" ? (
+                <div
+                  style={{
+                    borderColor: "#dcdcd6",
+                    borderWidth: "1px",
+                    borderStyle: "dashed",
+                  }}
+                  className={`my-auto relative rounded-none sm:rounded-xs p-2 sm:p-3 flex items-center justify-center flex-1 w-full ${
+                    idTopMargin === 30
+                      ? "items-start pt-4 sm:pt-6"
+                      : idTopMargin === 50
+                      ? "items-start pt-8 sm:pt-12"
+                      : "items-center"
+                  }`}
+                >
+                  <div className="w-full flex flex-row items-center justify-center gap-1.5 sm:gap-2.5">
+                    {/* Front Card Placeholder (Left) */}
+                    <div
+                      onClick={() => idFrontInputRef.current?.click()}
+                      style={{
+                        aspectRatio: "85.6 / 54",
+                        backgroundColor: "#f5f6f8",
+                        borderColor: "#e4e7eb",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        width: `${Math.min(48, Math.round(44 * idScale))}%`,
+                        maxWidth: `${Math.round(180 * idScale)}px`,
+                      }}
+                      className="flex-1 rounded-xl sm:rounded-2xl hover:bg-[#edf0f4] transition-all duration-200 p-2 sm:p-3 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs relative group select-none overflow-hidden"
+                      title="Click to add front photo"
+                    >
+                      <div style={{ backgroundColor: "#ffffff", borderColor: "#eaedf1", borderWidth: "1px", borderStyle: "solid" }} className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-[#6b7280] group-hover:scale-105 group-hover:text-[#3158d5] transition-all mb-1 shadow-2xs z-10">
+                        <svg className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <rect width="20" height="15" x="2" y="4.5" rx="2.5" />
+                          <circle cx="8" cy="11" r="2" />
+                          <path d="M5 16a3 3 0 0 1 6 0" />
+                        </svg>
+                      </div>
+                      <span className="text-[11px] sm:text-xs font-bold text-[#1c201a] group-hover:text-[#3158d5] transition-colors leading-tight z-10">
+                        Card front
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] text-[#717770] font-normal z-10">
+                        {(85.6 * idScale).toFixed(1)} × {(54 * idScale).toFixed(1)} mm
+                      </span>
+
+                      {/* Live Watermark Overlay on Front Placeholder */}
+                      {idWatermarkEnabled && (
+                        <div className="pointer-events-none absolute inset-0 overflow-hidden select-none z-20">
+                          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                            <pattern
+                              id="wm-mockup-sbs-front"
+                              width="120"
+                              height="60"
+                              patternTransform="rotate(-28 0 0)"
+                              patternUnits="userSpaceOnUse"
+                            >
+                              <text
+                                x="0"
+                                y="22"
+                                fill="#3158d5"
+                                opacity="0.28"
+                                fontSize="10"
+                                fontWeight="bold"
+                                fontFamily="sans-serif"
+                              >
+                                {idWatermarkText.toUpperCase() || "FOR VERIFICATION ONLY"}
+                              </text>
+                            </pattern>
+                            <rect width="100%" height="100%" fill="url(#wm-mockup-sbs-front)" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Vertical Dashed Cut Line (Center) */}
+                    <div
+                      style={{ borderLeft: "1px dashed #dcdcd6" }}
+                      className="h-24 sm:h-28 shrink-0 my-auto select-none"
+                    />
+
+                    {/* Back Card Placeholder (Right) */}
+                    <div
+                      onClick={() => idBackInputRef.current?.click()}
+                      style={{
+                        aspectRatio: "85.6 / 54",
+                        backgroundColor: "#f5f6f8",
+                        borderColor: "#e4e7eb",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        width: `${Math.min(48, Math.round(44 * idScale))}%`,
+                        maxWidth: `${Math.round(180 * idScale)}px`,
+                      }}
+                      className="flex-1 rounded-xl sm:rounded-2xl hover:bg-[#edf0f4] transition-all duration-200 p-2 sm:p-3 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs relative group select-none overflow-hidden"
+                      title="Click to add back photo"
+                    >
+                      <div style={{ backgroundColor: "#ffffff", borderColor: "#eaedf1", borderWidth: "1px", borderStyle: "solid" }} className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-[#6b7280] group-hover:scale-105 group-hover:text-[#3158d5] transition-all mb-1 shadow-2xs z-10">
+                        <svg className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <rect width="20" height="15" x="2" y="4.5" rx="2.5" />
+                          <line x1="2" y1="9.5" x2="22" y2="9.5" />
+                          <line x1="6" y1="14" x2="11" y2="14" />
+                        </svg>
+                      </div>
+                      <span className="text-[11px] sm:text-xs font-bold text-[#1c201a] group-hover:text-[#3158d5] transition-colors leading-tight z-10">
+                        Card back
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] text-[#717770] font-normal z-10">
+                        {(85.6 * idScale).toFixed(1)} × {(54 * idScale).toFixed(1)} mm
+                      </span>
+
+                      {/* Live Watermark Overlay on Back Placeholder */}
+                      {idWatermarkEnabled && (
+                        <div className="pointer-events-none absolute inset-0 overflow-hidden select-none z-20">
+                          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                            <pattern
+                              id="wm-mockup-sbs-back"
+                              width="120"
+                              height="60"
+                              patternTransform="rotate(-28 0 0)"
+                              patternUnits="userSpaceOnUse"
+                            >
+                              <text
+                                x="0"
+                                y="22"
+                                fill="#3158d5"
+                                opacity="0.28"
+                                fontSize="10"
+                                fontWeight="bold"
+                                fontFamily="sans-serif"
+                              >
+                                {idWatermarkText.toUpperCase() || "FOR VERIFICATION ONLY"}
+                              </text>
+                            </pattern>
+                            <rect width="100%" height="100%" fill="url(#wm-mockup-sbs-back)" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : idLayout === "two_pages" ? (
+                <div
+                  style={{
+                    borderColor: "#dcdcd6",
+                    borderWidth: "1px",
+                    borderStyle: "dashed",
+                  }}
+                  className={`my-auto relative rounded-none sm:rounded-xs p-3 sm:p-4 flex flex-col items-center gap-3 flex-1 w-full ${
+                    idTopMargin === 30
+                      ? "justify-start pt-4 sm:pt-6"
+                      : idTopMargin === 50
+                      ? "justify-start pt-8 sm:pt-12"
+                      : "justify-center"
+                  }`}
+                >
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#efeee7] text-[10px] sm:text-[11px] font-bold text-[#555a52]">
+                    <span>Sheet 1 of 2 · Front side</span>
+                  </div>
+
+                  {/* Front Slot Placeholder Card */}
+                  <div
+                    onClick={() => idFrontInputRef.current?.click()}
+                    style={{
+                      aspectRatio: "85.6 / 54",
+                      backgroundColor: "#f5f6f8",
+                      borderColor: "#e4e7eb",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      width: `${Math.min(94, Math.round(72 * idScale))}%`,
+                      maxWidth: `${Math.round(290 * idScale)}px`,
+                    }}
+                    className="rounded-2xl hover:bg-[#edf0f4] transition-all duration-200 p-4 sm:p-5 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs relative group select-none overflow-hidden"
+                    title="Click to add front photo"
+                  >
+                    <div style={{ backgroundColor: "#ffffff", borderColor: "#eaedf1", borderWidth: "1px", borderStyle: "solid" }} className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-[#6b7280] group-hover:scale-105 group-hover:text-[#3158d5] transition-all mb-2 shadow-2xs z-10">
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="20" height="15" x="2" y="4.5" rx="2.5" />
+                        <circle cx="8" cy="11" r="2" />
+                        <path d="M5 16a3 3 0 0 1 6 0" />
+                        <line x1="14" y1="9.5" x2="19" y2="9.5" />
+                        <line x1="14" y1="13.5" x2="17" y2="13.5" />
+                      </svg>
+                    </div>
+                    <span className="text-sm sm:text-base font-bold text-[#1c201a] group-hover:text-[#3158d5] transition-colors leading-tight z-10">
+                      Card front
+                    </span>
+                    <span className="text-xs sm:text-[13px] text-[#717770] font-normal mt-0.5 z-10">
+                      {(85.6 * idScale).toFixed(1)} × {(54 * idScale).toFixed(1)} mm
+                    </span>
+
+                    {/* Live Watermark Overlay on Two Pages Front */}
+                    {idWatermarkEnabled && (
+                      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none z-20">
+                        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                          <pattern
+                            id="wm-mockup-twopages-front"
+                            width="140"
+                            height="70"
+                            patternTransform="rotate(-28 0 0)"
+                            patternUnits="userSpaceOnUse"
+                          >
+                            <text
+                              x="0"
+                              y="25"
+                              fill="#3158d5"
+                              opacity="0.28"
+                              fontSize="11"
+                              fontWeight="bold"
+                              fontFamily="sans-serif"
+                            >
+                              {idWatermarkText.toUpperCase() || "FOR VERIFICATION ONLY"}
+                            </text>
+                          </pattern>
+                          <rect width="100%" height="100%" fill="url(#wm-mockup-twopages-front)" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+
+                  <span className="text-[11px] text-[#70746d]">Back side prints on Sheet 2</span>
+                </div>
+              ) : (
+                /* Stacked (Default) */
+                <div
+                  style={{
+                    borderColor: "#dcdcd6",
+                    borderWidth: "1px",
+                    borderStyle: "dashed",
+                  }}
+                  className={`my-auto relative rounded-none sm:rounded-xs p-3 sm:p-4 flex flex-col items-center gap-2.5 sm:gap-3 flex-1 w-full ${
+                    idTopMargin === 30
+                      ? "justify-start pt-3 sm:pt-4"
+                      : idTopMargin === 50
+                      ? "justify-start pt-7 sm:pt-9"
+                      : "justify-center"
+                  }`}
+                >
+                  {/* Front Slot Placeholder Card */}
+                  <div
+                    onClick={() => idFrontInputRef.current?.click()}
+                    style={{
+                      aspectRatio: "85.6 / 54",
+                      backgroundColor: "#f5f6f8",
+                      borderColor: "#e4e7eb",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      width: `${Math.min(94, Math.round(72 * idScale))}%`,
+                      maxWidth: `${Math.round(290 * idScale)}px`,
+                    }}
+                    className="rounded-2xl hover:bg-[#edf0f4] transition-all duration-200 p-3.5 sm:p-4 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs relative group select-none overflow-hidden"
+                    title="Click to add front photo"
+                  >
+                    <div style={{ backgroundColor: "#ffffff", borderColor: "#eaedf1", borderWidth: "1px", borderStyle: "solid" }} className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-[#6b7280] group-hover:scale-105 group-hover:text-[#3158d5] transition-all mb-1.5 shadow-2xs z-10">
+                      <svg className="w-4.5 h-4.5 sm:w-5.5 sm:h-5.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="20" height="15" x="2" y="4.5" rx="2.5" />
+                        <circle cx="8" cy="11" r="2" />
+                        <path d="M5 16a3 3 0 0 1 6 0" />
+                        <line x1="14" y1="9.5" x2="19" y2="9.5" />
+                        <line x1="14" y1="13.5" x2="17" y2="13.5" />
+                      </svg>
+                    </div>
+                    <span className="text-xs sm:text-sm font-bold text-[#1c201a] group-hover:text-[#3158d5] transition-colors leading-tight z-10">
+                      Card front
+                    </span>
+                    <span className="text-[11px] sm:text-xs text-[#717770] font-normal mt-0.5 z-10">
+                      {(85.6 * idScale).toFixed(1)} × {(54 * idScale).toFixed(1)} mm
+                    </span>
+
+                    {/* Live Watermark Overlay on Stacked Front */}
+                    {idWatermarkEnabled && (
+                      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none z-20">
+                        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                          <pattern
+                            id="wm-mockup-stacked-front"
+                            width="140"
+                            height="70"
+                            patternTransform="rotate(-28 0 0)"
+                            patternUnits="userSpaceOnUse"
+                          >
+                            <text
+                              x="0"
+                              y="25"
+                              fill="#3158d5"
+                              opacity="0.28"
+                              fontSize="11"
+                              fontWeight="bold"
+                              fontFamily="sans-serif"
+                            >
+                              {idWatermarkText.toUpperCase() || "FOR VERIFICATION ONLY"}
+                            </text>
+                          </pattern>
+                          <rect width="100%" height="100%" fill="url(#wm-mockup-stacked-front)" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Dashed Cut Line */}
+                  <div
+                    style={{
+                      width: `${Math.min(94, Math.round(72 * idScale))}%`,
+                      maxWidth: `${Math.round(290 * idScale)}px`,
+                      borderBottom: "1px dashed #dcdcd6",
+                    }}
+                    className="select-none my-1 sm:my-1.5"
+                  />
+
+                  {/* Back Slot Placeholder Card */}
+                  <div
+                    onClick={() => idBackInputRef.current?.click()}
+                    style={{
+                      aspectRatio: "85.6 / 54",
+                      backgroundColor: "#f5f6f8",
+                      borderColor: "#e4e7eb",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      width: `${Math.min(94, Math.round(72 * idScale))}%`,
+                      maxWidth: `${Math.round(290 * idScale)}px`,
+                    }}
+                    className="rounded-2xl hover:bg-[#edf0f4] transition-all duration-200 p-3.5 sm:p-4 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs relative group select-none overflow-hidden"
+                    title="Click to add back photo"
+                  >
+                    <div style={{ backgroundColor: "#ffffff", borderColor: "#eaedf1", borderWidth: "1px", borderStyle: "solid" }} className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-[#6b7280] group-hover:scale-105 group-hover:text-[#3158d5] transition-all mb-1.5 shadow-2xs z-10">
+                      <svg className="w-4.5 h-4.5 sm:w-5.5 sm:h-5.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="20" height="15" x="2" y="4.5" rx="2.5" />
+                        <line x1="2" y1="9.5" x2="22" y2="9.5" />
+                        <line x1="6" y1="14" x2="11" y2="14" />
+                      </svg>
+                    </div>
+                    <span className="text-xs sm:text-sm font-bold text-[#1c201a] group-hover:text-[#3158d5] transition-colors leading-tight z-10">
+                      Card back
+                    </span>
+                    <span className="text-[11px] sm:text-xs text-[#717770] font-normal mt-0.5 z-10">
+                      {(85.6 * idScale).toFixed(1)} × {(54 * idScale).toFixed(1)} mm
+                    </span>
+
+                    {/* Live Watermark Overlay on Stacked Back */}
+                    {idWatermarkEnabled && (
+                      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none z-20">
+                        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                          <pattern
+                            id="wm-mockup-stacked-back"
+                            width="140"
+                            height="70"
+                            patternTransform="rotate(-28 0 0)"
+                            patternUnits="userSpaceOnUse"
+                          >
+                            <text
+                              x="0"
+                              y="25"
+                              fill="#3158d5"
+                              opacity="0.28"
+                              fontSize="11"
+                              fontWeight="bold"
+                              fontFamily="sans-serif"
+                            >
+                              {idWatermarkText.toUpperCase() || "FOR VERIFICATION ONLY"}
+                            </text>
+                          </pattern>
+                          <rect width="100%" height="100%" fill="url(#wm-mockup-stacked-back)" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            <h4 className="text-sm sm:text-base font-bold text-slate-900 mb-1">
-              No card image added yet
-            </h4>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-sm mt-1 leading-relaxed">
-              Add the front of your ID card above to preview the print sheet layout and cut guides.
-            </p>
           </div>
         ) : (
           <>
@@ -2004,8 +2554,9 @@ interface HistorySnapshot {
                     previewMode === "actual"
                       ? `${idOrientedPaper[0]}mm`
                       : `min(100%, calc((100vh - 280px) * ${idOrientedPaper[0] / idOrientedPaper[1]}))`,
+                  boxShadow: "0 20px 45px -15px rgba(0, 0, 0, 0.14), 0 0 1px 1px rgba(0, 0, 0, 0.05)",
                 }}
-                className="relative bg-white rounded-xs shadow-2xl shadow-slate-900/10 ring-1 ring-slate-900/5 select-none transition-all overflow-hidden"
+                className="relative bg-white rounded-xs select-none transition-all overflow-hidden"
               >
                 {/* Dashed Margin Guide Line */}
                 <div
@@ -2014,8 +2565,11 @@ interface HistorySnapshot {
                     top: `${((10 / idOrientedPaper[1]) * 100).toFixed(3)}%`,
                     right: `${((10 / idOrientedPaper[0]) * 100).toFixed(3)}%`,
                     bottom: `${((10 / idOrientedPaper[1]) * 100).toFixed(3)}%`,
+                    borderColor: "#dcdcd6",
+                    borderWidth: "1px",
+                    borderStyle: "dashed",
                   }}
-                  className="absolute border border-dashed border-slate-300/80 pointer-events-none z-10"
+                  className="absolute pointer-events-none z-10"
                 />
 
                 {/* Placed Card Items */}
@@ -2031,10 +2585,11 @@ interface HistorySnapshot {
                         top: `${((item.y / idOrientedPaper[1]) * 100).toFixed(3)}%`,
                         width: `${((item.w / idOrientedPaper[0]) * 100).toFixed(3)}%`,
                         height: `${((item.h / idOrientedPaper[1]) * 100).toFixed(3)}%`,
+                        ...(idCutGuide === "lines"
+                          ? { borderColor: "#dcdcd6", borderWidth: "1px", borderStyle: "solid" }
+                          : {}),
                       }}
-                      className={`absolute transition-all overflow-hidden rounded-xs bg-slate-50 ${
-                        idCutGuide === "lines" ? "border border-slate-300" : ""
-                      }`}
+                      className="absolute transition-all overflow-hidden rounded-xs bg-[#f6f5f3]"
                     >
                       {hasImg ? (
                         <img
@@ -2044,18 +2599,37 @@ interface HistorySnapshot {
                           className="w-full h-full object-cover block"
                         />
                       ) : (
-                        <div className="w-full h-full border border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 p-2 text-center">
-                          <span className="text-[11px] font-bold">Card Slot</span>
-                          <span className="text-[9px] text-slate-400">85.6 × 54 mm</span>
+                        <div
+                          onClick={() => {
+                            if (item.i % 2 === 1) {
+                              idBackInputRef.current?.click();
+                            } else {
+                              idFrontInputRef.current?.click();
+                            }
+                          }}
+                          style={{
+                            backgroundColor: "#f5f6f8",
+                            borderColor: "#dcdcd6",
+                            borderWidth: "1px",
+                            borderStyle: "dashed",
+                          }}
+                          className="w-full h-full hover:bg-[#edf0f4] transition-all duration-200 rounded-xs flex flex-col items-center justify-center text-[#70746d] p-2 text-center cursor-pointer group select-none"
+                        >
+                          <span className="text-[10px] sm:text-[11px] font-bold text-[#1c201a] group-hover:text-[#3158d5]">
+                            {item.i % 2 === 1 ? "+ Add Back Side" : "+ Add Front Side"}
+                          </span>
+                          <span className="text-[8px] sm:text-[9px] text-[#70746d]">
+                            {(85.6 * idScale).toFixed(1)} × {(54 * idScale).toFixed(1)} mm
+                          </span>
                         </div>
                       )}
 
                       {/* Live Watermark Overlay if enabled */}
-                      {idWatermarkEnabled && hasImg && (
-                        <div className="pointer-events-none absolute inset-0 overflow-hidden select-none">
+                      {idWatermarkEnabled && (
+                        <div className="pointer-events-none absolute inset-0 overflow-hidden select-none z-10">
                           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
                             <pattern
-                              id={`wm-preview-${isMobile ? "m-" : ""}${item.i}-${idx}`}
+                              id={`wm-preview-id-${item.i}-${idx}`}
                               width="140"
                               height="70"
                               patternTransform="rotate(-30 0 0)"
@@ -2073,7 +2647,7 @@ interface HistorySnapshot {
                                 {idWatermarkText.toUpperCase() || "FOR VERIFICATION ONLY"}
                               </text>
                             </pattern>
-                            <rect width="100%" height="100%" fill={`url(#wm-preview-${isMobile ? "m-" : ""}${item.i}-${idx})`} />
+                            <rect width="100%" height="100%" fill={`url(#wm-preview-id-${item.i}-${idx})`} />
                           </svg>
                         </div>
                       )}
@@ -2081,10 +2655,10 @@ interface HistorySnapshot {
                       {/* Cut Marks */}
                       {idCutGuide === "marks" && (
                         <>
-                          <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-slate-400 pointer-events-none" />
-                          <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-slate-400 pointer-events-none" />
-                          <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-slate-400 pointer-events-none" />
-                          <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-slate-400 pointer-events-none" />
+                          <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-[#70746d] pointer-events-none" />
+                          <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-[#70746d] pointer-events-none" />
+                          <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-[#70746d] pointer-events-none" />
+                          <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-[#70746d] pointer-events-none" />
                         </>
                       )}
                     </div>
@@ -2100,18 +2674,18 @@ interface HistorySnapshot {
                   type="button"
                   disabled={idActivePage === 0}
                   onClick={() => setIdActivePage((p) => Math.max(0, p - 1))}
-                  className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 disabled:opacity-30 transition cursor-pointer shadow-2xs"
+                  className="h-8 px-3 rounded-xl border border-[#e5e5df] bg-white hover:bg-[#faf9f6] text-xs font-bold text-[#1c201a] disabled:opacity-30 transition cursor-pointer shadow-2xs"
                 >
                   ◀ Previous
                 </button>
-                <span className="text-xs font-bold text-slate-700">
+                <span className="text-xs font-bold text-[#1c201a]">
                   Page {idActivePage + 1} of {idPages.length}
                 </span>
                 <button
                   type="button"
                   disabled={idActivePage === idPages.length - 1}
                   onClick={() => setIdActivePage((p) => Math.min(idPages.length - 1, p + 1))}
-                  className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 disabled:opacity-30 transition cursor-pointer shadow-2xs"
+                  className="h-8 px-3 rounded-xl border border-[#e5e5df] bg-white hover:bg-[#faf9f6] text-xs font-bold text-[#1c201a] disabled:opacity-30 transition cursor-pointer shadow-2xs"
                 >
                   Next ▶
                 </button>
@@ -2120,43 +2694,74 @@ interface HistorySnapshot {
           </>
         )}
       </div>
+
+      {/* Bottom status box inside right column */}
+      <div style={{ backgroundColor: "#ffffff" }} className="p-3 sm:p-3.5 text-center">
+        <div className="text-xs font-bold text-[#1c201a]">
+          {totalFilledCards === 0 ? (
+            <>
+              Ready to arrange both sides.{" "}
+              <span className="font-normal text-[#767a74]">
+                Add card photos to create an exact 1:1 scale print sheet.
+              </span>
+            </>
+          ) : (
+            <>
+              {totalFilledCards} card{totalFilledCards === 1 ? "" : "s"} ready for physical print.{" "}
+              <span className="font-normal text-[#767a74]">
+                Exact 1:1 scale layout configured.
+              </span>
+            </>
+          )}
+        </div>
+        <div className="mt-1 flex items-center justify-center gap-1.5 text-[11px] text-[#575a53]">
+          <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+          <span>Photos stay on your device in the production tool. This preview never reads or sends image data.</span>
+        </div>
+      </div>
     </div>
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10 text-[15px]">
+    <div
+      style={{ backgroundColor: "#faf9f6" }}
+      className="flex min-h-screen flex-col font-sans text-[#1c201a] antialiased selection:bg-[#bcd5ff] selection:text-black relative z-10 text-[15px]"
+    >
       {/* NAVBAR */}
       <Navbar />
 
       {/* TOAST NOTIFICATION */}
       {notification && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 rounded-2xl bg-slate-900/95 px-5 py-3 text-sm font-medium text-white shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 rounded-2xl bg-[#1c201a]/95 px-5 py-3 text-sm font-medium text-white shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200">
           {notification}
         </div>
       )}
 
       {/* CLEAR ALL CONFIRMATION MODAL */}
       {showClearConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl border border-slate-200 space-y-4">
-            <h3 className="text-base font-bold text-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1c201a]/40 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-sm rounded-2xl sm:rounded-[24px] bg-white p-6 shadow-2xl border border-[#e5e5df] space-y-4">
+            <h3 className="text-base font-bold text-[#1c201a]">
               Clear all photos?
             </h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm text-[#575a53] leading-relaxed">
               This will remove all uploaded photos from the sheet. You can undo this action if needed.
             </p>
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+            <div style={{ borderTop: "1px solid #e5e5df" }} className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setShowClearConfirm(false)}
-                className="h-11 px-4 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                className="h-11 px-4 rounded-xl text-sm font-bold text-[#575a53] hover:bg-[#f6f5f3] transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmClearAll}
-                className="h-11 px-5 rounded-xl text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 shadow-md transition cursor-pointer"
+                className="h-11 px-5 rounded-xl text-sm font-bold text-white bg-[#1c201a] hover:bg-black shadow-md transition cursor-pointer"
               >
                 Clear
               </button>
@@ -2167,22 +2772,22 @@ interface HistorySnapshot {
 
       {/* MODE SWITCH CONFIRMATION MODAL */}
       {showSwitchConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl border border-slate-200 space-y-4">
-            <h3 className="text-base font-bold text-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1c201a]/40 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-sm rounded-2xl sm:rounded-[24px] bg-white p-6 shadow-2xl border border-[#e5e5df] space-y-4">
+            <h3 className="text-base font-bold text-[#1c201a]">
               Switch to {pendingSwitchMode === "id" ? "ID Card" : "Photos"} mode?
             </h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm text-[#575a53] leading-relaxed">
               Switching will discard your current {toolMode === "id" ? "ID card copies" : "uploaded photos"}. Are you sure you want to proceed?
             </p>
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+            <div style={{ borderTop: "1px solid #e5e5df" }} className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => {
                   setShowSwitchConfirm(false);
                   setPendingSwitchMode(null);
                 }}
-                className="h-11 px-4 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                className="h-11 px-4 rounded-xl text-sm font-bold text-[#575a53] hover:bg-[#f6f5f3] transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -2191,7 +2796,7 @@ interface HistorySnapshot {
                 onClick={() => {
                   if (pendingSwitchMode) executeModeSwitch(pendingSwitchMode);
                 }}
-                className="h-11 px-5 rounded-xl text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 shadow-md transition cursor-pointer"
+                className="h-11 px-5 rounded-xl text-sm font-bold text-white bg-[#3158d5] hover:bg-[#2546b8] shadow-md shadow-[#3158d5]/20 transition cursor-pointer"
               >
                 Switch mode
               </button>
@@ -2217,48 +2822,48 @@ interface HistorySnapshot {
 
       {/* PRINT REMINDER DIALOG */}
       {showPrintReminder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1c201a]/40 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl sm:rounded-[24px] bg-white p-6 shadow-2xl border border-[#e5e5df] space-y-4">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 font-black text-lg">
                 ⚠️
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 className="text-base font-bold text-[#1c201a]">
                   Print Scale Reminder
                 </h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
+                <p className="text-sm text-[#575a53] leading-relaxed">
                   Print at <strong>100% / Actual size</strong>, not &quot;Fit to Page&quot;, or your photo dimensions will be wrong.
                 </p>
               </div>
             </div>
 
-            <label className="flex items-center gap-2.5 text-xs text-slate-600 pt-1 cursor-pointer">
+            <label className="flex items-center gap-2.5 text-xs text-[#575a53] pt-1 cursor-pointer">
               <input
                 type="checkbox"
                 checked={dontShowReminderAgain}
                 onChange={(e) => setDontShowReminderAgain(e.target.checked)}
-                className="h-4 w-4 rounded accent-[#0055fe] cursor-pointer"
+                className="h-4 w-4 rounded accent-[#3158d5] cursor-pointer"
               />
               <span>Don&apos;t show this reminder again</span>
             </label>
 
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+            <div style={{ borderTop: "1px solid #e5e5df" }} className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => {
                   setShowPrintReminder(false);
                   setPendingPrintAction(null);
                 }}
-                className="h-11 px-4 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                className="h-11 px-4 rounded-xl text-sm font-bold text-[#575a53] hover:bg-[#f6f5f3] transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmReminder}
-                style={{ backgroundColor: "#0055fe" }}
-                className="h-11 px-5 rounded-xl text-sm font-bold text-white shadow-md shadow-blue-600/20 hover:brightness-105 active:scale-95 transition cursor-pointer"
+                style={{ backgroundColor: "#3158d5" }}
+                className="h-11 px-5 rounded-xl text-sm font-bold text-white shadow-md shadow-[#3158d5]/20 hover:brightness-105 active:scale-95 transition cursor-pointer"
               >
                 Continue
               </button>
@@ -2286,1455 +2891,207 @@ interface HistorySnapshot {
         hidden
         onChange={handleReplacePhoto}
       />
+      <input
+        ref={idFrontInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+        hidden
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleIdFileSelected(0, "front", file);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={idBackInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+        hidden
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleIdFileSelected(0, "back", file);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={idCameraInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+        capture="environment"
+        hidden
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleIdFileSelected(0, "front", file);
+          e.target.value = "";
+        }}
+      />
 
-      <main id="main-content" className="flex-1">
-        {/* HERO TITLE */}
-        <section className="px-4 max-w-7xl mx-auto pt-3 sm:pt-6 pb-1.5 sm:pb-2.5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-            <div>
-              <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0f172a]">
-                ID Print Maker
+      <main id="main-content" style={{ backgroundColor: "#faf9f6" }} className="flex-1">
+        {/* HERO SECTION */}
+        <section className="relative overflow-hidden">
+          <div className="relative mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-8 pt-6 sm:pt-10">
+            {/* HERO TITLE & BADGES */}
+            <div className="mx-auto max-w-5xl text-center pb-2">
+              {/* H1 Heading */}
+              <h1
+                aria-live="polite"
+                className="text-center tracking-tight text-[#1c201a] flex flex-col items-center justify-center"
+                style={{ margin: "0 auto" }}
+              >
+                <span
+                  style={{
+                    fontSize: "clamp(44px, 5.8vw, 72px)",
+                    fontWeight: 900,
+                    lineHeight: 1.04,
+                    letterSpacing: "-0.035em",
+                    color: "#1c201a",
+                    display: "block",
+                    fontFamily:
+                      "var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                  }}
+                >
+                  Two sides. One page.
+                </span>
+                <span
+                  style={{
+                    fontFamily:
+                      "'ITC Modern No. 216', var(--font-itc-modern), 'Instrument Serif', Georgia, serif",
+                    fontSize: "clamp(38px, 4.8vw, 64px)",
+                    fontWeight: 400,
+                    fontStyle: "italic",
+                    lineHeight: 1.05,
+                    letterSpacing: "-0.01em",
+                    color: "#1c201a",
+                    display: "block",
+                    marginTop: "6px",
+                  }}
+                >
+                  Exact real size.
+                </span>
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1 line-clamp-1 sm:line-clamp-none">
-                Copy ID card front and back onto one page at exact physical dimensions (85.6 × 54 mm). 100% private in-browser printing.
-              </p>
-            </div>
 
-            {/* Privacy Badge: compact on desktop, hidden on small mobile to keep heading compact */}
-            <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 text-xs font-semibold text-emerald-800 self-start sm:self-center shadow-2xs">
-              <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-              <span>Your ID never leaves your device</span>
+              {/* Homepage-style Subtitle */}
+              <p
+                style={{
+                  color: "#70746d",
+                  maxWidth: "920px",
+                  margin: "14px auto 0",
+                }}
+                className="text-center font-normal text-sm sm:text-base leading-relaxed whitespace-normal sm:whitespace-nowrap"
+              >
+                Print two-sided ID cards at true 1:1 scale on a single sheet. Free, private, and instant.
+              </p>
             </div>
           </div>
         </section>
 
         {/* WORKSPACE SECTION */}
-        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-40 sm:pb-36 lg:pb-16 mt-2 sm:mt-4">
+        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 mt-4 sm:mt-6 pb-24 sm:pb-36">
 
-          {/* LANDING CHOOSER (First load with 2 cards) */}
-          {toolMode === "landing" && (
-            <PrintSheetLandingChooser
-              onSelectMode={handleSelectLandingMode}
-              onDropPhotos={addFiles}
-              hasSavedSettings={hasSavedSettings}
-            />
-          )}
-
-          {/* PHOTOS MODE */}
-          {toolMode === "photos" && (
-            <>
-              {photos.length === 0 ? (
-            <div className="mx-auto max-w-2xl py-6 sm:py-10">
+          <div>
               <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setIsDragging(true);
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ffffff",
+                  boxShadow: "none",
                 }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setIsDragging(false);
-                  if (e.dataTransfer.files) addFiles(e.dataTransfer.files);
-                }}
-                onClick={() => fileInputRef.current?.click()}
-                className={`group relative w-full cursor-pointer rounded-3xl border-2 border-dashed py-12 px-6 sm:py-16 sm:px-12 lg:py-20 text-center transition-all duration-200 bg-white shadow-sm ${
-                  isDragging
-                    ? "border-[#0055fe] bg-blue-50/80 scale-[1.01]"
-                    : "border-slate-300 hover:border-[#0055fe] hover:bg-slate-50/50"
-                }`}
+                className="relative w-full rounded-2xl sm:rounded-[24px] overflow-hidden shadow-2xs transition-all duration-300"
               >
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 group-hover:scale-110 transition-transform mb-4">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-                    <path d="M12 12v9" />
-                    <path d="m16 16-4-4-4 4" />
-                  </svg>
-                </div>
-
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-[#0055fe] transition-colors">
-                  Drop photos here or tap to choose
-                </h2>
-                <p className="text-sm text-slate-500 mt-1.5">
-                  Supports JPG, PNG, and WebP • Ctrl+V to paste
-                </p>
-
-                {/* BUTTONS (SIDE BY SIDE WITH BREATHING SPACE) */}
-                <div className="mt-8 sm:mt-10 mb-2 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      fileInputRef.current?.click();
-                    }}
-                    className="group/btn inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-slate-400 group-hover/btn:text-[#0055fe] transition-colors"
-                    >
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                    <span>Upload Now</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLoadSamplePhotos();
-                    }}
-                    className="group/sample inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-blue-400/80 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] transition-all cursor-pointer shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
-                  >
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover/sample:text-[#0055fe] transition-colors">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                      <circle cx="8.5" cy="8.5" r="1.5" />
-                      <polyline points="21 15 16 10 5 21" />
-                    </svg>
-                    <span>Try Sample</span>
-                  </button>
-                </div>
-
-                {hasSavedSettings && (
-                  <div className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 font-medium">
-                    <span>⚙️ Settings remembered from last time</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            /* VIEW 2: UNIFIED 1-SCREEN WORKSPACE */
-            <div className="flex flex-col lg:grid lg:grid-cols-12 gap-5 items-start">
-              {/* ========================================================= */}
-              {/* LEFT COLUMN: SIMPLIFIED PANEL (~400px tall on desktop)   */}
-              {/* ========================================================= */}
-              <div className="order-2 lg:order-1 w-full lg:col-span-5 xl:col-span-4 bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm space-y-4">
-                
-                {/* 1. Panel Header: Only Undo, Clear & Same as last time chip */}
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    {hasSavedSettings && savedSettingsDiffer && !hasAppliedSavedSettings && (
-                      <button
-                        type="button"
-                        onClick={handleApplySavedSettings}
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0055fe] bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-blue-200 transition cursor-pointer"
-                        title="Restore previously saved settings"
-                      >
-                        <span>↺ Same as last time</span>
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      data-keep-popover="true"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUndo();
-                      }}
-                      disabled={historyLength === 0}
-                      className="text-xs font-bold text-slate-600 hover:text-slate-900 disabled:opacity-30 cursor-pointer transition"
-                    >
-                      Undo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowClearConfirm(true)}
-                      className="text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer transition"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-
-                {/* 1. Paper size, Orientation & Copies in ONE clean row */}
-                <div className="flex items-end gap-2.5">
-                  {/* Paper & Orientation */}
-                  <div className="flex-1 min-w-0 space-y-1.5">
-                    <div className="h-5 flex items-center">
-                      <label className="text-xs font-bold text-slate-700">
-                        Paper size
-                      </label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <select
-                          value={paper}
-                          onChange={(e) => setPaper(e.target.value)}
-                          className="w-full h-11 px-3 pr-9 rounded-xl border border-slate-200 bg-white font-bold text-xs sm:text-sm text-slate-900 focus:border-[#0055fe] focus:outline-none appearance-none cursor-pointer"
-                        >
-                          <option value="A4">A4 (210 × 297 mm)</option>
-                          <option value="Letter">Letter (8.5 × 11 in)</option>
-                          <option value="A3">A3 (297 × 420 mm)</option>
-                          <option value="Custom">Custom size...</option>
-                        </select>
-                        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-slate-400">
-                          <svg className="w-4 h-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="6 9 12 15 18 9" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Mini Orientation Toggle inline with dropdown */}
-                      <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/80 shrink-0 h-11">
-                        <button
-                          type="button"
-                          onClick={() => setOrient("portrait")}
-                          className={`h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center ${
-                            orient === "portrait"
-                              ? "bg-white text-[#0055fe] shadow-2xs"
-                              : "text-slate-600 hover:text-slate-900"
-                          }`}
-                          title="Portrait"
-                          aria-label="Portrait orientation"
-                        >
-                          <svg className="w-4.5 h-5 text-current" viewBox="0 0 14 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="1" y="1" width="12" height="16" rx="2" />
-                            <line x1="4" y1="5" x2="10" y2="5" strokeWidth="1.5" />
-                            <line x1="4" y1="8" x2="8" y2="8" strokeWidth="1.5" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setOrient("landscape")}
-                          className={`h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center ${
-                            orient === "landscape"
-                              ? "bg-white text-[#0055fe] shadow-2xs"
-                              : "text-slate-600 hover:text-slate-900"
-                          }`}
-                          title="Landscape"
-                          aria-label="Landscape orientation"
-                        >
-                          <svg className="w-5 h-4.5 text-current" viewBox="0 0 18 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="1" y="1" width="16" height="12" rx="2" />
-                            <line x1="5" y1="4" x2="13" y2="4" strokeWidth="1.5" />
-                            <line x1="5" y1="7" x2="10" y2="7" strokeWidth="1.5" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Copies stepper - compact width */}
-                  <div className="w-24 sm:w-28 shrink-0 space-y-1.5">
-                    <div className="h-5 flex items-center">
-                      <label className="text-xs font-bold text-slate-700">
-                        Copies
-                      </label>
-                    </div>
-                    <div className="flex items-center h-11 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-                      <button
-                        type="button"
-                        onClick={() => handleSetGlobalCopies(globalCopies - 1)}
-                        disabled={globalCopies <= 1}
-                        className="w-7 sm:w-8 h-full flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-30 cursor-pointer text-base"
-                        aria-label="Decrease copies"
-                      >
-                        −
-                      </button>
-                      <div className="flex-1 text-center font-bold text-xs sm:text-sm text-slate-900 tabular-nums">
-                        {globalCopies}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleSetGlobalCopies(globalCopies + 1)}
-                        className="w-7 sm:w-8 h-full flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100 cursor-pointer text-base"
-                        aria-label="Increase copies"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Custom paper dimensions if selected */}
-                {paper === "Custom" && (
-                  <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center gap-2 text-xs">
-                    <div className="flex-1">
-                      <span className="text-[10px] text-slate-500 font-bold block mb-1">Width (mm)</span>
-                      <input
-                        type="number"
-                        value={customPaper[0]}
-                        onChange={(e) => setCustomPaper([Math.max(50, +e.target.value || 100), customPaper[1]])}
-                        className="w-full h-9 px-2 rounded-xl border border-slate-200 bg-white tabular-nums text-xs"
-                      />
-                    </div>
-                    <span className="text-slate-400 font-bold self-end pb-1.5">×</span>
-                    <div className="flex-1">
-                      <span className="text-[10px] text-slate-500 font-bold block mb-1">Height (mm)</span>
-                      <input
-                        type="number"
-                        value={customPaper[1]}
-                        onChange={(e) => setCustomPaper([customPaper[0], Math.max(50, +e.target.value || 100)])}
-                        className="w-full h-9 px-2 rounded-xl border border-slate-200 bg-white tabular-nums text-xs"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Permanent + Add photos button directly under Copies/Paper row */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full min-h-[44px] rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
-                  aria-label="Add more photos"
+                {/* TOP FULL CONTAINER HEADER */}
+                <div
+                  style={{
+                    borderBottom: "1px solid #e5e5df",
+                    backgroundColor: "#faf9f6",
+                  }}
+                  className="flex items-center justify-between px-5 sm:px-8 py-3.5 sm:py-4"
                 >
-                  <span className="text-base font-bold leading-none text-[#0055fe]">+</span>
-                  <span>Add photos</span>
-                </button>
-
-                {/* 2. Photo size: Segmented Control Auto fit / Custom fit */}
-                <div className="space-y-2 pt-1">
-                  <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setFitType("auto")}
-                      className={`min-h-[48px] rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer ${
-                        fitType === "auto"
-                          ? "bg-white text-[#0055fe] shadow-2xs border border-slate-200/60"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                      aria-label="Auto fit mode"
+                  {/* Left: ID Icon + Title + Subtitle */}
+                  <div className="flex items-center gap-3">
+                    <div
+                      style={{ backgroundColor: "#e8effe", color: "#3158d5" }}
+                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl flex items-center justify-center shrink-0 shadow-2xs"
                     >
-                      <svg className="w-4 h-4 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <path d="M3 9h18M9 21V9" />
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#3158d5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <circle cx="8" cy="11" r="2" />
+                        <path d="M4 17a4 4 0 0 1 8 0" />
+                        <line x1="14" y1="10" x2="19" y2="10" />
+                        <line x1="14" y1="13" x2="17" y2="13" />
                       </svg>
-                      <span>Auto fit</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFitType("custom")}
-                      className={`min-h-[48px] rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer ${
-                        fitType === "custom"
-                          ? "bg-white text-[#0055fe] shadow-2xs border border-slate-200/60"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                      aria-label="Custom fit mode"
+                    </div>
+                    <div>
+                      <h2 style={{ color: "#1c201a" }} className="text-base sm:text-[19px] font-bold leading-tight">ID Card Copy</h2>
+                      <span style={{ color: "#767a74" }} className="text-xs sm:text-[13px] block mt-0.5">
+                        {idCards.length} {idCards.length === 1 ? "card" : "cards"} · Standard ID · 85.6 × 54 mm
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <span
+                      style={{
+                        backgroundColor: "#e8effe",
+                        borderColor: "#bcd5ff",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        color: "#3158d5",
+                      }}
+                      className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 py-1 sm:px-3 sm:py-1 text-[11px] sm:text-xs font-bold whitespace-nowrap"
                     >
-                      <svg className="w-4 h-4 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      <svg className="w-3.5 h-3.5 text-[#3158d5] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <path d="m9 12 2 2 4-4" />
                       </svg>
-                      <span>Custom fit</span>
-                    </button>
-                  </div>
-
-                  {/* Custom fit reveals compact block */}
-                  {fitType === "custom" && (
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 animate-in fade-in duration-150">
-                      {/* Rows and Columns steppers (1 to 12) - ALWAYS VISIBLE */}
-                      <div className="space-y-1.5">
-                        <div className="grid grid-cols-2 gap-2.5">
-                          {/* Columns */}
-                          <div className="space-y-1">
-                            <span className="text-[11px] font-bold text-slate-600 block">Columns</span>
-                            <div className="flex items-center h-10 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  pushHistory();
-                                  setExactSize(false);
-                                  setSelectedPresetChip(null);
-                                  setGridCols((prev) => Math.max(1, prev - 1));
-                                }}
-                                disabled={gridCols <= 1}
-                                className="w-8 h-full flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-                                aria-label="Decrease columns"
-                              >
-                                −
-                              </button>
-                              <div className="flex-1 text-center font-bold text-xs text-slate-900 tabular-nums">
-                                {gridCols}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  pushHistory();
-                                  setExactSize(false);
-                                  setSelectedPresetChip(null);
-                                  setGridCols((prev) => Math.min(12, prev + 1));
-                                }}
-                                disabled={gridCols >= 12}
-                                className="w-8 h-full flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-                                aria-label="Increase columns"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Rows */}
-                          <div className="space-y-1">
-                            <span className="text-[11px] font-bold text-slate-600 block">Rows</span>
-                            <div className="flex items-center h-10 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  pushHistory();
-                                  setExactSize(false);
-                                  setSelectedPresetChip(null);
-                                  setGridRows((prev) => Math.max(1, prev - 1));
-                                }}
-                                disabled={gridRows <= 1}
-                                className="w-8 h-full flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-                                aria-label="Decrease rows"
-                              >
-                                −
-                              </button>
-                              <div className="flex-1 text-center font-bold text-xs text-slate-900 tabular-nums">
-                                {gridRows}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  pushHistory();
-                                  setExactSize(false);
-                                  setSelectedPresetChip(null);
-                                  setGridRows((prev) => Math.min(12, prev + 1));
-                                }}
-                                disabled={gridRows >= 12}
-                                className="w-8 h-full flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-                                aria-label="Increase rows"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Divider & Switch "Exact size & Presets" */}
-                      <div className="pt-2 border-t border-slate-200/80">
-                        <div
-                          onClick={() => {
-                            pushHistory();
-                            setExactSize(!exactSize);
-                          }}
-                          className="flex items-center justify-between cursor-pointer select-none py-0.5"
-                        >
-                          <span className="text-xs font-bold text-slate-700">Exact size & Presets</span>
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={exactSize}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              pushHistory();
-                              setExactSize(!exactSize);
-                            }}
-                            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors cursor-pointer p-0.5 ${
-                              exactSize ? "bg-[#0055fe]" : "bg-slate-300"
-                            }`}
-                            aria-label="Toggle exact size"
-                          >
-                            <span
-                              style={{
-                                transform: exactSize ? "translateX(20px)" : "translateX(2px)",
-                              }}
-                              className="inline-block h-4 w-4 rounded-full bg-white shadow-xs transition-transform duration-200"
-                            />
-                          </button>
-                        </div>
-
-                        {exactSize && (
-                          <div className="mt-2.5 space-y-2.5 animate-in fade-in duration-150">
-                            {/* Preset chips - WRAPPED TO PREVENT CUTOFF */}
-                            <div className="flex flex-wrap gap-1.5 pt-0.5">
-                              {PRESET_CHIPS.map((chip) => {
-                                const isSelected = selectedPresetChip === chip.id;
-                                return (
-                                  <button
-                                    key={chip.id}
-                                    type="button"
-                                    onClick={() => {
-                                      pushHistory();
-                                      handleApplyPresetChip(chip);
-                                    }}
-                                    className={`h-7 px-2.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
-                                      isSelected
-                                        ? "bg-[#0055fe] text-white shadow-2xs"
-                                        : "bg-white hover:bg-slate-100 text-slate-700 border border-slate-200"
-                                    }`}
-                                  >
-                                    {chip.label}
-                                  </button>
-                                );
-                              })}
-                            </div>
-
-                            {/* Width x Height fields + lock + unit */}
-                            <div className="flex items-center gap-1.5">
-                              <div className="flex-1 min-w-0">
-                                <span className="text-[10px] text-slate-500 font-bold block mb-1">
-                                  Width ({sizeUnit})
-                                </span>
-                                <input
-                                  type="number"
-                                  step={sizeUnit === "in" ? "0.01" : "0.5"}
-                                  min="1"
-                                  value={customWidth}
-                                  onChange={(e) => {
-                                    handleWidthChange(+e.target.value || 0);
-                                  }}
-                                  className="w-full h-9 px-2 rounded-xl border border-slate-200 bg-white font-bold text-xs tabular-nums text-slate-900 focus:border-[#0055fe] focus:outline-none"
-                                />
-                              </div>
-
-                              {/* Lock button */}
-                              <button
-                                type="button"
-                                onClick={() => setAspectRatioLocked(!aspectRatioLocked)}
-                                className={`self-end mb-1 p-1.5 rounded-lg border transition cursor-pointer shrink-0 ${
-                                  aspectRatioLocked
-                                    ? "bg-blue-50 border-blue-200 text-[#0055fe]"
-                                    : "bg-white border-slate-200 text-slate-400 hover:text-slate-600"
-                                }`}
-                                title={aspectRatioLocked ? "Aspect ratio locked" : "Aspect ratio unlocked"}
-                                aria-label="Toggle aspect ratio lock"
-                              >
-                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  {aspectRatioLocked ? (
-                                    <>
-                                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                    </>
-                                  ) : (
-                                    <>
-                                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
-                                    </>
-                                  )}
-                                </svg>
-                              </button>
-
-                              {/* Swap Dimensions button ⇄ */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  pushHistory();
-                                  const oldW = customWidth;
-                                  setCustomWidth(customHeight);
-                                  setCustomHeight(oldW);
-                                  setSelectedPresetChip(null);
-                                }}
-                                className="self-end mb-1 p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition cursor-pointer shrink-0"
-                                title="Swap width and height (Portrait ⇄ Landscape)"
-                                aria-label="Swap width and height"
-                              >
-                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4" />
-                                </svg>
-                              </button>
-
-                              <div className="flex-1 min-w-0">
-                                <span className="text-[10px] text-slate-500 font-bold block mb-1">
-                                  Height ({sizeUnit})
-                                </span>
-                                <input
-                                  type="number"
-                                  step={sizeUnit === "in" ? "0.01" : "0.5"}
-                                  min="1"
-                                  value={customHeight}
-                                  onChange={(e) => {
-                                    handleHeightChange(+e.target.value || 0);
-                                  }}
-                                  className="w-full h-9 px-2 rounded-xl border border-slate-200 bg-white font-bold text-xs tabular-nums text-slate-900 focus:border-[#0055fe] focus:outline-none"
-                                />
-                              </div>
-
-                              {/* Unit toggle mm / in */}
-                              <div className="w-16 self-end">
-                                <span className="text-[10px] text-slate-500 font-bold block mb-1">Unit</span>
-                                <div className="flex items-center h-9 p-0.5 rounded-xl border border-slate-200 bg-white">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUnitChange("mm")}
-                                    className={`flex-1 h-full rounded-lg text-[10px] font-bold transition cursor-pointer ${
-                                      sizeUnit === "mm" ? "bg-[#0055fe] text-white" : "text-slate-600"
-                                    }`}
-                                  >
-                                    mm
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUnitChange("in")}
-                                    className={`flex-1 h-full rounded-lg text-[10px] font-bold transition cursor-pointer ${
-                                      sizeUnit === "in" ? "bg-[#0055fe] text-white" : "text-slate-600"
-                                    }`}
-                                  >
-                                    in
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Live line "Each photo: 85.6 × 54 mm" */}
-                      <div className="text-[11px] font-bold text-blue-700 text-center tabular-nums pt-0.5">
-                        Each photo: {formatDim(plan.cw)} × {formatDim(plan.ch)} mm
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. Photo display (Always visible) */}
-                <div className="space-y-1.5 pt-1">
-                  <label className="text-xs font-bold text-slate-700 block">Photo display</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFitMode("fill")}
-                      className={`min-h-[40px] rounded-xl border text-xs font-bold transition cursor-pointer ${
-                        fitMode === "fill"
-                          ? "border-2 border-[#0055fe] bg-blue-50 text-[#0055fe]"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                      }`}
+                      <span>100% Private</span>
+                    </span>
+                    <span
+                      style={{
+                        backgroundColor: "#e8effe",
+                        borderColor: "#bcd5ff",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        color: "#3158d5",
+                      }}
+                      className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 py-1 sm:px-3 sm:py-1 text-[11px] sm:text-xs font-bold whitespace-nowrap"
                     >
-                      Fill the box (crop)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFitMode("fit")}
-                      className={`min-h-[40px] rounded-xl border text-xs font-bold transition cursor-pointer ${
-                        fitMode === "fit"
-                          ? "border-2 border-[#0055fe] bg-blue-50 text-[#0055fe]"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                      }`}
+                      <svg className="w-3.5 h-3.5 text-[#3158d5] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                        <line x1="3" y1="9" x2="21" y2="9" />
+                        <line x1="9" y1="21" x2="9" y2="9" />
+                      </svg>
+                      <span>Exact 1:1 Scale</span>
+                    </span>
+                    <span
+                      style={{
+                        backgroundColor: "#e8effe",
+                        borderColor: "#bcd5ff",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        color: "#3158d5",
+                      }}
+                      className="hidden md:inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 py-1 sm:px-3 sm:py-1 text-[11px] sm:text-xs font-bold whitespace-nowrap"
                     >
-                      Show full photo
-                    </button>
+                      <svg className="w-3.5 h-3.5 text-[#3158d5] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9" />
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                        <rect x="6" y="14" width="12" height="8" />
+                      </svg>
+                      <span>Print-Ready PDF</span>
+                    </span>
                   </div>
                 </div>
 
-                {/* 4. Gap and Margins side-by-side on one row */}
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-700">Gap</label>
-                      <span className="text-xs font-bold text-blue-700 tabular-nums">{gap} mm</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="20"
-                      step="0.5"
-                      value={gap}
-                      onChange={(e) => setGap(+e.target.value)}
-                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0055fe]"
-                      aria-label="Gap between photos"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-700">Margin</label>
-                      <span className="text-xs font-bold text-blue-700 tabular-nums">{margin} mm</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="40"
-                      step="1"
-                      value={margin}
-                      onChange={(e) => setMargin(+e.target.value)}
-                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0055fe]"
-                      aria-label="Page margin"
-                    />
-                  </div>
-                </div>
-
-                {/* 5. Cut guides dropdown and Rotate all button */}
-                <div className="grid grid-cols-2 gap-2.5 items-end pt-1">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 block">Cut guides</label>
-                    <div className="relative">
-                      <select
-                        value={cutGuide}
-                        onChange={(e) => setCutGuide(e.target.value as "none" | "marks" | "lines" | "border")}
-                        className="w-full h-10 px-3 pr-8 rounded-xl border border-slate-200 bg-white font-bold text-xs text-slate-800 focus:border-[#0055fe] focus:outline-none appearance-none cursor-pointer"
-                      >
-                        <option value="none">None</option>
-                        <option value="marks">Corner marks</option>
-                        <option value="lines">Thin lines</option>
-                        <option value="border">Sheet border</option>
-                      </select>
-                      <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center text-slate-400">
-                        <svg className="w-4 h-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <button
-                      type="button"
-                      onClick={handleRotateAll}
-                      className="h-10 w-full rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
-                      aria-label="Rotate all photos 90 degrees"
-                    >
-                      <span>↻</span>
-                      <span>Rotate all 90°</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* 6. Desktop primary actions in panel: Download PDF, Print, Share */}
-                <div className="hidden lg:flex flex-col gap-2 pt-2 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={handleDownloadClick}
-                    disabled={!plan.fits || isExporting}
-                    style={{ backgroundColor: "#0055fe" }}
-                    className="min-h-[48px] w-full rounded-2xl text-white text-sm font-bold shadow-lg shadow-blue-600/25 hover:brightness-105 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
-                    aria-label="Download PDF"
-                  >
-                    {isExporting ? (
-                      <span>Building PDF...</span>
-                    ) : (
-                      <>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="7 10 12 15 17 10" />
-                          <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        <span>Download PDF</span>
-                      </>
-                    )}
-                  </button>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handlePrintClick}
-                      disabled={!plan.fits || isExporting}
-                      className="flex-1 min-h-[40px] rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 shadow-2xs"
-                      aria-label="Print PDF"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                      <span>Print</span>
-                    </button>
-
-                    {mounted && canShare && (
-                      <button
-                        type="button"
-                        onClick={handleShareClick}
-                        disabled={!plan.fits || isExporting}
-                        className="flex-1 min-h-[40px] rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 shadow-2xs"
-                        aria-label="Share PDF"
-                      >
-                        <span>Share</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* ========================================================= */}
-              {/* RIGHT COLUMN: LIVE SHEET PREVIEW (60% desktop, top mobile) */}
-              {/* ========================================================= */}
-              <div
-                ref={sheetContainerRef}
-                className="order-1 lg:order-2 w-full lg:col-span-7 xl:col-span-8 flex flex-col items-center bg-[#f1f5f9] rounded-3xl p-4 sm:p-6 border border-slate-200/80 shadow-xs relative"
-              >
-                {/* Header bar of preview */}
-                <div className="w-full flex items-center justify-between mb-3 gap-2 flex-wrap">
-                  {/* Single Page Status badge: "6 photos - 1 page - A4" */}
-                  <span className="text-xs font-black text-slate-800 bg-white px-3.5 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
-                    {photoIndicesPerCopy.length} photos - {pages.length} page{pages.length > 1 ? "s" : ""} - {paper}
-                  </span>
-
-                  {/* Empty-space Suggestion chip (directly above preview when > 15% empty) */}
-                  {emptySpacePercentage > 15 && (
-                    <button
-                      type="button"
-                      onClick={handleFillEmptySlots}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 font-bold text-xs cursor-pointer transition shadow-2xs animate-in fade-in"
-                    >
-                      <span>⚡ Page is {emptySpacePercentage}% empty. Fill with copies?</span>
-                    </button>
-                  )}
-
-                  {/* Real size toggle */}
-                  <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs ml-auto">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewMode("fit")}
-                      style={previewMode === "fit" ? { backgroundColor: "#eff6ff", color: "#0055fe" } : {}}
-                      className="h-7 px-2.5 rounded-lg text-xs font-bold transition cursor-pointer"
-                    >
-                      Fit preview
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewMode("actual")}
-                      style={previewMode === "actual" ? { backgroundColor: "#eff6ff", color: "#0055fe" } : {}}
-                      className="h-7 px-2.5 rounded-lg text-xs font-bold transition cursor-pointer"
-                    >
-                      Real size (100%)
-                    </button>
-                  </div>
-                </div>
-
-                {/* THE PHYSICAL SHEET PREVIEW */}
-                <div className="w-full flex items-center justify-center py-2 overflow-auto">
+                <div className="flex flex-col lg:flex-row items-stretch w-full animate-in fade-in duration-200">
+                  {/* LEFT COLUMN: EXACT ID CARD PANEL */}
                   <div
                     style={{
-                      aspectRatio: `${plan.pw || 210} / ${plan.ph || 297}`,
-                      flexShrink: 0,
-                      width:
-                        previewMode === "actual"
-                          ? `${plan.pw || 210}mm`
-                          : `min(100%, calc((100vh - 280px) * ${(plan.pw || 210) / (plan.ph || 297)}))`,
+                      backgroundColor: "#ffffff",
+                      borderRight: "1px solid #e5e5df",
                     }}
-                    className="relative bg-white rounded-xs shadow-2xl shadow-slate-900/10 ring-1 ring-slate-900/5 select-none transition-all overflow-hidden"
+                    className="w-full lg:w-[48%] xl:w-[46%] p-4 sm:p-6 lg:p-6 flex flex-col justify-between"
                   >
-                    {/* Dashed Margin Guide Line */}
-                    <div
-                      style={{
-                        left: `${((effectiveMargin / (plan.pw || 210)) * 100).toFixed(3)}%`,
-                        top: `${((effectiveMargin / (plan.ph || 297)) * 100).toFixed(3)}%`,
-                        right: `${((effectiveMargin / (plan.pw || 210)) * 100).toFixed(3)}%`,
-                        bottom: `${((effectiveMargin / (plan.ph || 297)) * 100).toFixed(3)}%`,
-                      }}
-                      className="absolute border border-dashed border-slate-300/80 pointer-events-none z-10"
-                    />
-
-                    {/* Placed Photo Cells */}
-                    {pages[activePage]?.map((item, itemIdx) => {
-                      const photo = photos[item.i];
-                      if (!photo) return null;
-                      const isSelected = selectedPhotoId === photo.id;
-                      const scale = (photo.scalePercent || 100) / 100;
-                      const dpi = getPhotoDpi(photo);
-
-                      return (
-                        <div
-                          key={`${item.i}-${itemIdx}`}
-                          id={`photo-cell-${photo.id}`}
-                          data-photo-id={photo.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (isSelected) {
-                              setSelectedPhotoId(null);
-                            } else {
-                              openPopoverForPhoto(photo.id, e.currentTarget);
-                            }
-                          }}
-                          style={{
-                            left: `${((item.cx / (plan.pw || 210)) * 100).toFixed(3)}%`,
-                            top: `${((item.cy / (plan.ph || 297)) * 100).toFixed(3)}%`,
-                            width: `${((item.cw / (plan.pw || 210)) * 100).toFixed(3)}%`,
-                            height: `${((item.ch / (plan.ph || 297)) * 100).toFixed(3)}%`,
-                            ...(isSelected ? { borderColor: "#0055fe" } : {}),
-                          }}
-                          className={`group absolute cursor-pointer transition-shadow overflow-hidden box-border ${
-                            isSelected
-                              ? "border-2 ring-2 ring-blue-500/25 z-20 shadow-md"
-                              : "hover:ring-1 hover:ring-blue-400 z-10"
-                          }`}
-                        >
-                          <div className="w-full h-full flex items-center justify-center overflow-hidden">
-                            <img
-                              data-photo-img={photo.id}
-                              src={photo.url}
-                              alt=""
-                              style={{
-                                transform: `rotate(${photo.rotation}deg) scale(${scale})`,
-                                transformOrigin: "center",
-                              }}
-                              className={`h-full w-full pointer-events-none ${
-                                fitMode === "fill" ? "object-cover" : "object-contain"
-                              }`}
-                            />
-                          </div>
-
-                          {/* Low Quality / Blur warning badge under 150 DPI */}
-                          {dpi < 150 && (
-                            <span
-                              title={
-                                dpi < 100
-                                  ? `Resolution is only ${dpi} DPI. Photo will look blurry in print.`
-                                  : `Resolution is ${dpi} DPI. May look blurry at this size.`
-                              }
-                              className="absolute top-1 left-1 z-30 flex items-center gap-1 rounded bg-amber-500/90 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-xs pointer-events-none"
-                            >
-                              ⚠️ {dpi < 100 ? "Low quality" : "Check sharpness"}
-                            </span>
-                          )}
-
-                          {/* Cut Lines Guide if enabled */}
-                          {cutGuide === "lines" && (
-                            <div className="absolute inset-0 border border-slate-400/60 pointer-events-none z-10" />
-                          )}
-                        </div>
-                      );
-                    })}
-
-                    {/* Empty Slots: Tap to add another photo */}
-                    {plan.fits &&
-                      plan.per > 0 &&
-                      (pages[activePage]?.length || 0) < plan.per && (
-                        <div
-                          onClick={() => fileInputRef.current?.click()}
-                          className="absolute border border-dashed border-slate-300 hover:border-blue-500 bg-slate-50/50 hover:bg-blue-50/40 rounded flex flex-col items-center justify-center cursor-pointer transition z-10"
-                          style={{
-                            left: `${(
-                              (((pages[activePage]?.length || 0) % plan.cols) * (plan.cw + gap) +
-                                (effectiveMargin +
-                                  Math.max(
-                                    0,
-                                    (plan.pw -
-                                      2 * effectiveMargin -
-                                      (plan.cols * plan.cw + (plan.cols - 1) * gap)) /
-                                      2
-                                  ))) /
-                              plan.pw *
-                              100
-                            ).toFixed(3)}%`,
-                            top: `${(
-                              (Math.floor((pages[activePage]?.length || 0) / plan.cols) *
-                                (plan.ch + gap) +
-                                effectiveMargin) /
-                              plan.ph *
-                              100
-                            ).toFixed(3)}%`,
-                            width: `${((plan.cw / plan.pw) * 100).toFixed(3)}%`,
-                            height: `${((plan.ch / plan.ph) * 100).toFixed(3)}%`,
-                          }}
-                          title="Click to add another photo into this slot"
-                        >
-                          <span className="text-xl font-bold text-slate-400 leading-none">+</span>
-                          <span className="text-[10px] font-bold text-slate-500 mt-1">Add photo</span>
-                        </div>
-                      )}
-                  </div>
-                </div>
-
-                {/* Page Navigation Toolbar (Always available to navigate and add/delete pages) */}
-                <div className="flex items-center justify-between gap-1.5 sm:gap-2 mt-3 w-full max-w-xl bg-white p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex-wrap sm:flex-nowrap">
-                  {/* Prev Button */}
-                  <button
-                    type="button"
-                    onClick={() => setActivePage((prev) => Math.max(0, prev - 1))}
-                    disabled={activePage === 0}
-                    className="h-8 px-2.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 bg-slate-50 hover:bg-slate-100 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed border border-slate-200/70"
-                    aria-label="Previous page"
-                  >
-                    <svg className="w-3.5 h-3.5 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <polyline points="15 18 9 12 15 6" />
-                    </svg>
-                    <span className="hidden xs:inline">Prev</span>
-                  </button>
-
-                  {/* Page Pills */}
-                  <div className="flex items-center gap-1 overflow-x-auto py-0.5 px-1 max-w-[180px] sm:max-w-xs scrollbar-none">
-                    {pages.map((_, pIdx) => {
-                      const isHighlighted = highlightedPage === pIdx;
-                      return (
-                        <button
-                          key={pIdx}
-                          type="button"
-                          onClick={() => setActivePage(pIdx)}
-                          className={`h-8 min-w-[32px] px-2.5 rounded-xl text-xs font-bold transition-all duration-300 cursor-pointer shrink-0 tabular-nums ${
-                            isHighlighted
-                              ? "bg-amber-400 text-slate-900 ring-2 ring-amber-300 scale-105 shadow-md"
-                              : activePage === pIdx
-                              ? "bg-[#0055fe] text-white shadow-2xs"
-                              : "bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/70"
-                          }`}
-                        >
-                          {pIdx + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                    {/* Next Button */}
-                    <button
-                      type="button"
-                      onClick={() => setActivePage((prev) => Math.min(pages.length - 1, prev + 1))}
-                      disabled={activePage >= pages.length - 1}
-                      className="h-8 px-2.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 bg-slate-50 hover:bg-slate-100 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed border border-slate-200/70"
-                      aria-label="Next page"
-                    >
-                      <span className="hidden xs:inline">Next</span>
-                      <svg className="w-3.5 h-3.5 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </button>
-
-                    {/* + Add Page Button */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setExtraBlankPages((prev) => prev + 1);
-                        setActivePage(pages.length);
-                        showToast("New page added");
-                      }}
-                      className="h-8 px-2.5 sm:px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-[#0055fe] border border-blue-200 shadow-2xs shrink-0"
-                      title="Add a new page"
-                    >
-                      <span className="text-sm font-bold leading-none">+</span>
-                      <span>Add page</span>
-                    </button>
-
-                    {/* Delete Page Button (available on added pages, never on the first page) */}
-                    {pages.length > 1 && activePage > 0 && (
-                      <button
-                        type="button"
-                        onClick={handleDeleteActivePage}
-                        className="h-8 px-2.5 sm:px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 shadow-2xs shrink-0"
-                        title={`Delete page ${activePage + 1}`}
-                        aria-label="Delete active page"
-                      >
-                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
-                        <span>Delete page</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* ========================================================= */}
-                {/* COMPACT PHOTO POPOVER (~280px wide, non-modal, no freeze) */}
-                {/* ========================================================= */}
-                {selectedPhoto && (
-                  <div
-                    ref={popoverRef}
-                    style={
-                      typeof window !== "undefined" && window.innerWidth >= 640 && popoverCoords
-                        ? {
-                            position: "absolute",
-                            top: `${popoverCoords.top + dragOffset.y}px`,
-                            left: `${popoverCoords.left + dragOffset.x}px`,
-                            width: "280px",
-                          }
-                        : {}
-                    }
-                    className={`${
-                      typeof window !== "undefined" && window.innerWidth < 640
-                        ? "fixed bottom-[68px] left-0 right-0 max-h-[40vh] bg-white rounded-t-3xl shadow-2xl z-40 border-t border-slate-200 p-4 overflow-y-auto"
-                        : "z-40 rounded-2xl bg-white/98 backdrop-blur-md p-3.5 shadow-2xl border border-slate-200 space-y-3"
-                    }`}
-                  >
-                    {/* Header: Draggable on desktop with Prev/Next buttons */}
-                    <div
-                      onPointerDown={handlePointerDownHeader}
-                      onPointerMove={handlePointerMoveHeader}
-                      onPointerUp={handlePointerUpHeader}
-                      className="flex items-center justify-between pb-2 border-b border-slate-100 cursor-move select-none"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        {/* Prev / Next photo buttons */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const prevIdx = (selectedPhotoIndex - 1 + photos.length) % photos.length;
-                            const prevId = photos[prevIdx]?.id;
-                            if (prevId) {
-                              const cellEl = document.getElementById(`photo-cell-${prevId}`);
-                              openPopoverForPhoto(prevId, cellEl);
-                            }
-                          }}
-                          className="h-6 w-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center cursor-pointer"
-                          title="Previous photo"
-                          aria-label="Previous photo"
-                        >
-                          ◀
-                        </button>
-                        <span className="text-xs font-bold text-slate-900">
-                          #{selectedPhotoIndex + 1} of {photos.length}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const nextIdx = (selectedPhotoIndex + 1) % photos.length;
-                            const nextId = photos[nextIdx]?.id;
-                            if (nextId) {
-                              const cellEl = document.getElementById(`photo-cell-${nextId}`);
-                              openPopoverForPhoto(nextId, cellEl);
-                            }
-                          }}
-                          className="h-6 w-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center cursor-pointer"
-                          title="Next photo"
-                          aria-label="Next photo"
-                        >
-                          ▶
-                        </button>
-                      </div>
-
-                      {/* Close button */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedPhotoId(null);
-                        }}
-                        className="h-6 w-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs cursor-pointer"
-                        title="Close (Esc)"
-                        aria-label="Close popover"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    {/* Scale Slider (Throttled with requestAnimationFrame) */}
-                    <div className="space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
-                      <div className="flex justify-between text-xs font-bold text-slate-700">
-                        <span>Scale</span>
-                        <span className="text-blue-700 tabular-nums">{liveSliderScale}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="25"
-                        max="250"
-                        value={liveSliderScale}
-                        onChange={(e) => handleSliderChange(+e.target.value)}
-                        onPointerUp={(e) => handleSliderCommit(+e.currentTarget.value)}
-                        onTouchEnd={(e) => handleSliderCommit(+e.currentTarget.value)}
-                        className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0055fe]"
-                      />
-                    </div>
-
-                    {/* Copies Stepper of this Photo */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700">Copies</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleSetPhotoCopies(selectedPhotoIndex, (selectedPhoto.copies || 1) - 1)}
-                          disabled={(selectedPhoto.copies || 1) <= 1}
-                          className="h-8 w-8 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 flex items-center justify-center disabled:opacity-40 cursor-pointer shadow-2xs"
-                          aria-label="Decrease copies of photo"
-                        >
-                          −
-                        </button>
-                        <span className="font-bold text-sm min-w-5 text-center text-slate-900">
-                          {selectedPhoto.copies || 1}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleSetPhotoCopies(selectedPhotoIndex, (selectedPhoto.copies || 1) + 1)}
-                          className="h-8 w-8 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 flex items-center justify-center cursor-pointer shadow-2xs"
-                          aria-label="Increase copies of photo"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Fit to Page & Undo Buttons side-by-side */}
-                    <div className="grid grid-cols-2 gap-2 pt-0.5">
-                      <button
-                        type="button"
-                        data-keep-popover="true"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          pushHistory();
-                          const fullPageChip = PRESET_CHIPS.find((c) => c.isFullPage);
-                          if (fullPageChip) {
-                            setFitType("custom");
-                            setExactSize(true);
-                            handleApplyPresetChip(fullPageChip);
-                          }
-                          showToast("Fit photo to full page!");
-                        }}
-                        className="h-8 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-bold text-[#0055fe] flex items-center justify-center gap-1 cursor-pointer transition shadow-2xs"
-                        title="Fit to entire page"
-                        aria-label="Fit to full page"
-                      >
-                        <span>⚡ Fit Full Page</span>
-                      </button>
-                      <button
-                        type="button"
-                        data-keep-popover="true"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUndo();
-                        }}
-                        disabled={historyLength === 0}
-                        className="h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-35 disabled:cursor-not-allowed text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 cursor-pointer transition shadow-2xs"
-                        title="Undo last change"
-                        aria-label="Undo"
-                      >
-                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M3 7v6h6" />
-                          <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
-                        </svg>
-                        <span>Undo</span>
-                      </button>
-                    </div>
-
-                    {/* Action Icon Buttons: Rotate, Replace, Delete */}
-                    <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-slate-100">
-                      <button
-                        type="button"
-                        onClick={() => handleRotatePhoto(selectedPhotoIndex)}
-                        className="h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[11px] font-bold text-slate-700 flex items-center justify-center gap-1 cursor-pointer transition shadow-2xs"
-                        title="Rotate photo 90°"
-                        aria-label="Rotate photo 90°"
-                      >
-                        <span>↻</span>
-                        <span>Rotate</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => replaceInputRef.current?.click()}
-                        className="h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[11px] font-bold text-slate-700 flex items-center justify-center gap-1 cursor-pointer transition shadow-2xs"
-                        title="Replace photo file"
-                        aria-label="Replace photo"
-                      >
-                        <span>⇄</span>
-                        <span>Replace</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeletePhoto(selectedPhotoIndex)}
-                        className="h-9 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-[11px] font-bold text-rose-600 flex items-center justify-center gap-1 cursor-pointer transition shadow-2xs"
-                        title="Delete photo"
-                        aria-label="Delete photo"
-                      >
-                        <span>🗑</span>
-                        <span>Delete</span>
-                      </button>
-                    </div>
-
-                    {/* Move order buttons */}
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px] text-slate-500 font-bold">
-                      <span>Order on sheet:</span>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          disabled={selectedPhotoIndex === 0}
-                          onClick={() => handleMovePhoto(selectedPhotoIndex, "prev")}
-                          className="h-6 px-2 rounded border border-slate-200 bg-white text-slate-700 disabled:opacity-30 cursor-pointer"
-                        >
-                          Move ◀
-                        </button>
-                        <button
-                          type="button"
-                          disabled={selectedPhotoIndex === photos.length - 1}
-                          onClick={() => handleMovePhoto(selectedPhotoIndex, "next")}
-                          className="h-6 px-2 rounded border border-slate-200 bg-white text-slate-700 disabled:opacity-30 cursor-pointer"
-                        >
-                          Move ▶
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-            </>
-          )}
-
-          {/* ID CARD MODE */}
-          {toolMode === "id" && (
-            <>
-              {/* DESKTOP TWO-COLUMN LAYOUT (>= 1024px) */}
-              <div className="hidden lg:grid lg:grid-cols-12 gap-5 items-stretch">
-                {/* LEFT COLUMN: ID CARD PANEL */}
-                <div className="lg:col-span-5 xl:col-span-4 bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm h-full flex flex-col">
-                  <IdCardPanel
-                    cards={idCards}
-                    onUpdateCard={handleUpdateIdCard}
-                    onAddCard={handleAddIdCard}
-                    onRemoveCard={handleRemoveIdCard}
-                    onClearAllCards={handleClearAllIdCards}
-                    layout={idLayout}
-                    onChangeLayout={setIdLayout}
-                    scale={idScale}
-                    onChangeScale={setIdScale}
-                    paper={idPaper}
-                    onChangePaper={setIdPaper}
-                    orient={idOrient}
-                    onChangeOrient={setIdOrient}
-                    watermarkEnabled={idWatermarkEnabled}
-                    onChangeWatermarkEnabled={setIdWatermarkEnabled}
-                    watermarkText={idWatermarkText}
-                    onChangeWatermarkText={handleUpdateWatermarkText}
-                    cutGuide={idCutGuide}
-                    onChangeCutGuide={setIdCutGuide}
-                    topMargin={idTopMargin}
-                    onChangeTopMargin={handleUpdateTopMargin}
-                    isExporting={isExporting}
-                    onDownload={handleDownloadIdClick}
-                    onPrint={handlePrintIdClick}
-                    onShare={handleShareIdClick}
-                    canShare={canShare}
-                    onAdjustCard={handleAdjustCard}
-                    onFileSelected={handleIdFileSelected}
-                    isScanning={isScanning}
-                    scanStatusText={scanStatusText}
-                    viewMode="all"
-                  />
-                </div>
-
-                {/* RIGHT COLUMN: ID SHEET PREVIEW */}
-                <div className="lg:col-span-7 xl:col-span-8">
-                  {renderIdSheetPreview(false)}
-                </div>
-              </div>
-
-              {/* MOBILE LAYOUT (< 1024px) */}
-              <div className="block lg:hidden space-y-3">
-                {/* 1. FRONT & BACK UPLOAD CONTROLS (ALWAYS NEAR TOP) */}
-                <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-4 shadow-sm">
-                  <IdCardPanel
-                    cards={idCards}
-                    onUpdateCard={handleUpdateIdCard}
-                    onAddCard={handleAddIdCard}
-                    onRemoveCard={handleRemoveIdCard}
-                    onClearAllCards={handleClearAllIdCards}
-                    layout={idLayout}
-                    onChangeLayout={setIdLayout}
-                    scale={idScale}
-                    onChangeScale={setIdScale}
-                    paper={idPaper}
-                    onChangePaper={setIdPaper}
-                    orient={idOrient}
-                    onChangeOrient={setIdOrient}
-                    watermarkEnabled={idWatermarkEnabled}
-                    onChangeWatermarkEnabled={setIdWatermarkEnabled}
-                    watermarkText={idWatermarkText}
-                    onChangeWatermarkText={handleUpdateWatermarkText}
-                    cutGuide={idCutGuide}
-                    onChangeCutGuide={setIdCutGuide}
-                    topMargin={idTopMargin}
-                    onChangeTopMargin={handleUpdateTopMargin}
-                    isExporting={isExporting}
-                    onDownload={handleDownloadIdClick}
-                    onPrint={handlePrintIdClick}
-                    onShare={handleShareIdClick}
-                    canShare={canShare}
-                    onAdjustCard={handleAdjustCard}
-                    onFileSelected={handleIdFileSelected}
-                    isScanning={isScanning}
-                    scanStatusText={scanStatusText}
-                    viewMode="slots-only"
-                  />
-                </div>
-
-                {/* 2. SEGMENTED TAB SWITCHER (PREVIEW vs EDIT/SETTINGS) */}
-                <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/90 shadow-2xs">
-                  <button
-                    type="button"
-                    onClick={() => setMobileTab("preview")}
-                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                      mobileTab === "preview"
-                        ? "bg-white text-[#0055fe] shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="16" y1="13" x2="8" y2="13" />
-                      <line x1="16" y1="17" x2="8" y2="17" />
-                    </svg>
-                    <span>Print Preview</span>
-                    {totalFilledCards > 0 && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMobileTab("settings")}
-                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                      mobileTab === "settings"
-                        ? "bg-white text-[#0055fe] shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="3" />
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                    </svg>
-                    <span>Print Settings</span>
-                  </button>
-                </div>
-
-                {/* 3. MOBILE VIEW: PREVIEW TAB */}
-                {mobileTab === "preview" && (
-                  <div className="space-y-3">
-                    {/* Quick Layout Switcher on mobile (instant 1-tap stacked vs side-by-side) */}
-                    {totalFilledCards > 0 && (
-                      <div className="flex items-center justify-between gap-1 bg-white p-2 sm:p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-                        <span className="text-[11px] font-bold text-slate-700 ml-1">Card Layout:</span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setIdLayout("stacked")}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                              idLayout === "stacked" ? "bg-[#0055fe] text-white shadow-2xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                            }`}
-                          >
-                            Stacked
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setIdLayout("side_by_side")}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                              idLayout === "side_by_side" ? "bg-[#0055fe] text-white shadow-2xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                            }`}
-                          >
-                            Side by side
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setIdLayout("two_pages")}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                              idLayout === "two_pages" ? "bg-[#0055fe] text-white shadow-2xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                            }`}
-                          >
-                            2 Pages
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* The Print Preview Container */}
-                    {renderIdSheetPreview(true)}
-
-                    {/* Action button to switch to settings */}
-                    <button
-                      type="button"
-                      onClick={() => setMobileTab("settings")}
-                      className="w-full py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer"
-                    >
-                      <svg className="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="3" />
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                      </svg>
-                      <span>Adjust Size, Placement & Watermark</span>
-                      <span>→</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* 4. MOBILE VIEW: SETTINGS TAB */}
-                {mobileTab === "settings" && (
-                  <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">
                     <IdCardPanel
                       cards={idCards}
                       onUpdateCard={handleUpdateIdCard}
@@ -3766,46 +3123,64 @@ interface HistorySnapshot {
                       onFileSelected={handleIdFileSelected}
                       isScanning={isScanning}
                       scanStatusText={scanStatusText}
-                      viewMode="settings-only"
+                      viewMode="all"
                     />
-
-                    <button
-                      type="button"
-                      onClick={() => setMobileTab("preview")}
-                      className="w-full h-11 rounded-xl bg-[#0055fe] hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 transition cursor-pointer"
-                    >
-                      <span>← Back to Print Preview</span>
-                    </button>
                   </div>
-                )}
+
+                  {/* RIGHT COLUMN: PREVIEW CANVAS & STATUS BAR */}
+                  <div
+                    style={{
+                      backgroundColor: "#ecebe4",
+                    }}
+                    className="w-full lg:w-[52%] xl:w-[54%] flex flex-col justify-between"
+                  >
+                    {renderIdSheetPreview()}
+                  </div>
+                </div>
               </div>
-            </>
-          )}
+            </div>
         </section>
 
         {/* STICKY BOTTOM BAR FOR 1-TAP DOWNLOAD & PRINT */}
         {toolMode !== "landing" && (
-          <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3.5 sm:px-6 pt-2.5 sm:pt-3 pb-[max(12px,env(safe-area-inset-bottom))] shadow-lg">
-            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderTop: "1px solid #e5e5df",
+              boxShadow: "0 -6px 25px rgba(0, 0, 0, 0.08)",
+            }}
+            className="fixed bottom-0 left-0 right-0 z-40 px-4 sm:px-8 py-3.5 sm:py-4"
+          >
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
               {/* Explanatory text when disabled */}
               {totalFilledCards === 0 ? (
-                <div className="text-[11px] sm:text-xs text-slate-500 font-medium flex items-center gap-1.5 self-start sm:self-center">
-                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
-                  <span>Add front of ID card to enable download and print</span>
+                <div className="text-xs sm:text-sm text-[#555a52] font-semibold flex items-center gap-2 self-start sm:self-center">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0 shadow-xs"></span>
+                  <span>Add front photo of ID card to enable download and print</span>
                 </div>
               ) : (
-                <div className="hidden sm:block text-xs text-slate-500">
-                  {totalFilledCards} card{totalFilledCards === 1 ? "" : "s"} ready for physical print
+                <div className="text-xs sm:text-sm text-[#1c201a] font-bold flex items-center gap-2 self-start sm:self-center">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 shadow-xs"></span>
+                  <span>{totalFilledCards} card side{totalFilledCards === 1 ? "" : "s"} ready · 100% exact 1:1 scale</span>
                 </div>
               )}
 
-              <div className="w-full sm:w-auto flex items-center justify-end gap-2.5 ml-auto">
+              <div className="w-full sm:w-auto flex items-center justify-end gap-2.5 sm:gap-3 ml-auto">
                 {mounted && canShare && (
                   <button
                     type="button"
                     onClick={handleShareIdClick}
                     disabled={!totalFilledCards || isExporting}
-                    className="min-h-[44px] min-w-[44px] px-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{
+                      backgroundColor: "#ffffff",
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      color: "#1c201a",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+                      minHeight: "46px",
+                    }}
+                    className="min-h-[46px] px-3.5 rounded-xl hover:bg-[#faf9f6] text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                     title="Share PDF"
                     aria-label="Share PDF"
                   >
@@ -3817,7 +3192,16 @@ interface HistorySnapshot {
                   type="button"
                   onClick={handlePrintIdClick}
                   disabled={!totalFilledCards || isExporting}
-                  className="min-h-[44px] px-4 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: "#ffffff",
+                    borderColor: "#e5e5df",
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    color: "#1c201a",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                    minHeight: "46px",
+                  }}
+                  className="min-h-[46px] flex-1 sm:flex-initial px-3 sm:px-6 rounded-xl hover:bg-[#faf9f6] text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap shrink-0"
                   title={
                     totalFilledCards === 0
                       ? "Add front of ID card to enable printing"
@@ -3825,8 +3209,8 @@ interface HistorySnapshot {
                   }
                   aria-label="Print PDF"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                  <span>Print</span>
+                  <svg className="shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  <span className="whitespace-nowrap">Print</span>
                 </button>
 
                 <button
@@ -3834,12 +3218,11 @@ interface HistorySnapshot {
                   onClick={handleDownloadIdClick}
                   disabled={!totalFilledCards || isExporting}
                   style={{
-                    backgroundColor:
-                      totalFilledCards > 0 && !isExporting
-                        ? "#0055fe"
-                        : "#94a3b8",
+                    backgroundColor: "#3158d5",
+                    opacity: totalFilledCards > 0 && !isExporting ? 1 : 0.45,
+                    minHeight: "46px",
                   }}
-                  className="min-h-[48px] flex-1 sm:flex-initial px-6 sm:px-8 rounded-xl text-white text-sm sm:text-base font-bold shadow-lg shadow-blue-600/25 hover:brightness-105 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
+                  className="min-h-[46px] flex-1 sm:flex-initial px-3 sm:px-8 rounded-xl text-white text-xs sm:text-base font-bold shadow-md shadow-[#3158d5]/20 hover:brightness-105 active:scale-95 transition flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer disabled:cursor-not-allowed whitespace-nowrap shrink-0"
                   aria-label="Download PDF"
                   title={
                     totalFilledCards === 0
@@ -3848,15 +3231,15 @@ interface HistorySnapshot {
                   }
                 >
                   {isExporting ? (
-                    <span>Building PDF...</span>
+                    <span className="whitespace-nowrap">Building PDF...</span>
                   ) : (
                     <>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg className="shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="7 10 12 15 17 10" />
                         <line x1="12" y1="15" x2="12" y2="3" />
                       </svg>
-                      <span>Download PDF</span>
+                      <span className="whitespace-nowrap">Download PDF</span>
                     </>
                   )}
                 </button>
@@ -3866,292 +3249,479 @@ interface HistorySnapshot {
         )}
       </main>
 
-      {/* CRAWLABLE SEO & KNOWLEDGE BASE CONTENT */}
-      {/* CRAWLABLE SEO & KNOWLEDGE BASE CONTENT (100% ID PRINT FOCUSED) */}
-      <section className="border-t border-slate-200/80 bg-white/70 backdrop-blur-sm px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl space-y-16 text-slate-700 leading-relaxed">
-          {/* Main ID Print Maker Heading */}
-          <div className="text-center space-y-3">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Copy, Align, and Print Both Sides of Your ID Card on One Sheet
-            </h2>
-            <p className="text-base text-slate-500 max-w-2xl mx-auto font-normal">
-              Create official, print-ready photocopies of your identity card, driver&apos;s license, badge, or membership card at 100% real-world physical scale (85.6 × 54 mm). Completely free, private, and runs locally in your browser.
-            </p>
-          </div>
-
-          {/* 3 Step ID Copy Workflow */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 font-bold text-xs mb-3">
-                1
-              </div>
-              <h3 className="text-sm font-bold text-slate-900 mb-1">
-                Capture or Upload Front &amp; Back
-              </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Take photos with your phone camera or upload existing images. The intelligent corner scanner detects card edges, aligns perspective, and removes background clutter.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 font-bold text-xs mb-3">
-                2
-              </div>
-              <h3 className="text-sm font-bold text-slate-900 mb-1">
-                Choose Layout &amp; Print Scale
-              </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Choose Stacked (top and bottom), Side-by-Side, or 2-Page Duplex layout. Cards are positioned at exact 1:1 real-world size (85.6 × 54 mm) with optional 125% and 150% enlarged sizes.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 font-bold text-xs mb-3">
-                3
-              </div>
-              <h3 className="text-sm font-bold text-slate-900 mb-1">
-                Print or Download PDF
-              </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Download a sharp, vector-rendered A4 or Letter PDF with optional cut lines and anti-fraud security watermark, ready for immediate 100% scale printing.
-              </p>
-            </div>
-          </div>
-
-          {/* Standard ID Formats Table */}
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Standard ID Card Formats &amp; Dimensions
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Most government and corporate identity cards follow the international ISO/IEC 7810 ID-1 standard measuring 85.6 × 54 mm. Spellense preserves these exact real-world dimensions:
-              </p>
-            </div>
-
-            <div className="overflow-x-auto rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-                <thead className="bg-slate-50/80 text-slate-600 text-[11px] font-semibold uppercase tracking-wider">
-                  <tr>
-                    <th className="px-5 py-3.5">Card Format</th>
-                    <th className="px-5 py-3.5">Physical Dimensions</th>
-                    <th className="px-5 py-3.5">Print Scale</th>
-                    <th className="px-5 py-3.5">Common Examples</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 bg-white text-xs">
-                  {ID_CARD_FORMATS_DATA.map((row) => (
-                    <tr key={row.name} className="hover:bg-slate-50/60">
-                      <td className="px-5 py-3.5 font-semibold text-slate-900">
-                        {row.name}
-                      </td>
-                      <td className="px-5 py-3.5 tabular-nums text-slate-600">
-                        {row.dim}
-                      </td>
-                      <td className="px-5 py-3.5 font-bold text-blue-600">
-                        {row.scale}
-                      </td>
-                      <td className="px-5 py-3.5 text-slate-500">
-                        {row.use}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Privacy & Anti-Fraud Features */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs space-y-6">
-            <div>
-              <div className="inline-block rounded-md bg-blue-50 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-blue-600">
-                SECURITY &amp; PRIVACY
-              </div>
-              <h2 className="mt-3 text-xl sm:text-2xl font-bold text-slate-900">
-                Why Use Spellense ID Print Maker?
-              </h2>
-              <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-3xl leading-relaxed">
-                Photocopying identity cards on public office copiers or sending photos to untrusted online servers creates significant privacy risks. Spellense runs completely in your web browser with built-in fraud prevention tools.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-100 text-emerald-700 text-xs">✓</span>
-                  100% In-Browser Privacy
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Your ID card images never leave your computer or phone. All corner detection, image filtering, and PDF generation happen 100% locally using client-side WebAssembly and Canvas APIs. EXIF and GPS tags are purged on load.
+        {/* EXPLANATORY SEO & PRODUCT SECTIONS (HOMEPAGE MATCH - PERFECTLY ALIGNED) */}
+        <section
+          style={{
+            marginTop: "48px",
+            paddingTop: "16px",
+          }}
+          className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 w-full pb-32 sm:pb-28"
+        >
+          <div className="mx-auto w-full space-y-4 sm:space-y-6">
+            <div aria-hidden="true" className="mx-auto h-0.5 w-full bg-[#c9cbc5]" />
+            {/* SECTION 1: INTRO */}
+            <ScrollReveal>
+              <div
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ffffff",
+                }}
+                className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs"
+              >
+                <h2 className="text-xl sm:text-2xl font-black text-[#1c201a] tracking-tight">
+                  Copy, Align, and Print Both Sides of Your ID Card on One Sheet
+                </h2>
+                <p className="mt-2.5 text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                  Create official, print-ready photocopies of your identity card, driver&apos;s license, badge, or membership card at 100% real-world physical scale (85.6 × 54 mm). Completely free, private, and runs locally in your browser.
                 </p>
               </div>
+            </ScrollReveal>
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-100 text-blue-700 text-xs">🛡</span>
-                  Anti-Fraud Security Watermark
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Protect yourself against identity misuse by overlaying a diagonal semi-transparent watermark (such as &quot;FOR VERIFICATION ONLY&quot; or your custom text) directly across your printed cards.
+            {/* SECTION 2: 3-STEP ID COPY WORKFLOW */}
+            <ScrollReveal delay={50}>
+              <div
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ffffff",
+                }}
+                className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs"
+              >
+                <h2 className="text-xl sm:text-2xl font-black text-[#1c201a] tracking-tight mb-2.5">
+                  How to Copy Both Sides of an ID Card
+                </h2>
+                <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed mb-6 font-normal">
+                  Create high-resolution, aligned 1:1 ID card copies in three simple steps without uploading sensitive documents to external servers:
                 </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-purple-100 text-purple-700 text-xs">📐</span>
-                  Guaranteed 1:1 Physical Scale
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Standard photo printers and scanners often distort proportions. Spellense strictly locks the ISO ID-1 physical scale (85.6 × 54 mm) so your printed copy matches your real card down to the millimeter.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-100 text-amber-700 text-xs">✂</span>
-                  Precision Cut Marks &amp; Multi-Card
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Print optional cutting lines or corner marks for effortless trimming with scissors or a paper cutter. Need copies for multiple family members or staff? Add up to 5 cards onto the same sheet in one click.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Print Scale Guide (Amber Warning Box) */}
-          <div className="rounded-2xl border border-amber-200 bg-[#fffbeb] p-5 sm:p-6 flex items-start gap-3.5 shadow-2xs">
-            <svg className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-            <div>
-              <h3 className="text-sm sm:text-base font-bold text-amber-950">
-                How to print at 100% Actual Size (Stop &quot;Fit to Page&quot;)
-              </h3>
-              <p className="text-xs sm:text-sm text-amber-900/90 mt-1 leading-relaxed">
-                When printing your PDF from Adobe Acrobat, Apple Preview, or Google Chrome, ensure your printer dialog is set to <strong>&quot;Actual Size&quot;</strong> or <strong>&quot;100% Scale&quot;</strong>. If your printer defaults to &quot;Fit to Page&quot; or &quot;Shrink Oversized Pages&quot;, it will scale down your ID card by 3% to 7%, throwing off official visa, banking, and government requirements.
-              </p>
-            </div>
-          </div>
-
-          {/* FAQ 2-Column Section */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start pt-4">
-            {/* Left 4 Columns */}
-            <div className="md:col-span-4 space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">
-                FREQUENTLY ASKED QUESTIONS
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-                ID Print Maker FAQ
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                Everything you need to know about copying, aligning, and printing your ID cards at exact physical dimensions.
-              </p>
-            </div>
-
-            {/* Right 8 Columns */}
-            <div className="md:col-span-8 space-y-3">
-              {FAQ_LIST.map((faq, index) => {
-                const isOpen = openFaqIndex === index;
-                return (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+                  {/* Step 1 */}
                   <div
-                    key={faq.q}
-                    className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition"
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "20px",
+                    }}
+                    className="rounded-2xl flex flex-col justify-between"
                   >
-                    <button
-                      type="button"
-                      onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                      className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
-                    >
-                      <span className="text-sm font-bold text-slate-900 pr-2">
-                        {faq.q}
-                      </span>
-                      <span
-                        className={`ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition-transform duration-200 ${
-                          isOpen ? "rotate-180 text-blue-600" : ""
-                        }`}
+                    <div>
+                      <div
+                        style={{
+                          backgroundColor: "#f6f5f3",
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          color: "#3158d5",
+                        }}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl mb-3 shadow-2xs shrink-0 font-black text-sm"
                       >
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </span>
-                    </button>
-
-                    <div
-                      className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
-                        isOpen
-                          ? "grid-rows-[1fr] opacity-100"
-                          : "grid-rows-[0fr] opacity-0 pointer-events-none"
-                      }`}
-                    >
-                      <div className="overflow-hidden">
-                        <div className="border-t border-slate-100 px-4 sm:px-5 pt-3 pb-4 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal">
-                          {faq.a}
-                        </div>
+                        1
                       </div>
+                      <h3 className="text-sm sm:text-base font-bold text-[#1c201a] mb-1.5">
+                        Capture or Upload Front &amp; Back
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                        Take photos with your phone camera or upload existing images. The intelligent corner scanner detects card edges, aligns perspective, and removes background clutter.
+                      </p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* Related Tools */}
-          <div className="pt-8 border-t border-slate-200/80 space-y-4">
-            <h2 className="text-base font-bold text-slate-900">
-              More Free Online Tools by Spellense
-            </h2>
-            <div className="flex flex-wrap gap-2.5">
-              <Link
-                href="/image-compressor"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 flex items-center gap-1.5 transition shadow-2xs"
+                  {/* Step 2 */}
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "20px",
+                    }}
+                    className="rounded-2xl flex flex-col justify-between"
+                  >
+                    <div>
+                      <div
+                        style={{
+                          backgroundColor: "#f6f5f3",
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          color: "#3158d5",
+                        }}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl mb-3 shadow-2xs shrink-0 font-black text-sm"
+                      >
+                        2
+                      </div>
+                      <h3 className="text-sm sm:text-base font-bold text-[#1c201a] mb-1.5">
+                        Choose Layout &amp; Print Scale
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                        Choose Stacked (top and bottom), Side-by-Side, or 2-Page Duplex layout. Cards are positioned at exact 1:1 real-world size (85.6 × 54 mm) with optional 125% and 150% enlarged sizes.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "20px",
+                    }}
+                    className="rounded-2xl flex flex-col justify-between"
+                  >
+                    <div>
+                      <div
+                        style={{
+                          backgroundColor: "#f6f5f3",
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          color: "#3158d5",
+                        }}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl mb-3 shadow-2xs shrink-0 font-black text-sm"
+                      >
+                        3
+                      </div>
+                      <h3 className="text-sm sm:text-base font-bold text-[#1c201a] mb-1.5">
+                        Print or Download PDF
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                        Download a sharp, vector-rendered A4 or Letter PDF with optional cut lines and anti-fraud security watermark, ready for immediate 100% scale printing.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* SECTION 3: STANDARD ID FORMATS TABLE */}
+            <ScrollReveal delay={100}>
+              <div
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ffffff",
+                }}
+                className="rounded-2xl sm:rounded-[24px] shadow-2xs overflow-hidden"
               >
-                <span>Image Compressor</span>
-                <span className="text-xs text-slate-400">↗</span>
-              </Link>
-              <Link
-                href="/image-to-text"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 flex items-center gap-1.5 transition shadow-2xs"
+                <div className="p-6 sm:p-8 pb-5">
+                  <h2 className="text-xl sm:text-2xl font-black text-[#1c201a] tracking-tight mb-2.5">
+                    Standard ID Card Formats &amp; Dimensions
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                    Most government and corporate identity cards follow the international ISO/IEC 7810 ID-1 standard measuring 85.6 × 54 mm. Spellense preserves these exact real-world dimensions:
+                  </p>
+                </div>
+
+                <div style={{ borderTop: "1px solid #efeee7" }} className="overflow-x-auto w-full">
+                  <table className="w-full table-fixed min-w-[640px] text-left text-sm border-collapse">
+                    <colgroup>
+                      <col style={{ width: "28%" }} />
+                      <col style={{ width: "20%" }} />
+                      <col style={{ width: "17%" }} />
+                      <col style={{ width: "35%" }} />
+                    </colgroup>
+                    <thead style={{ backgroundColor: "#f6f5f3" }} className="text-[#70746d] text-[11px] font-bold uppercase tracking-wider">
+                      <tr>
+                        <th style={{ borderBottom: "1px solid #efeee7" }} className="px-5 sm:px-7 py-3.5">Card Format</th>
+                        <th style={{ borderBottom: "1px solid #efeee7" }} className="px-5 sm:px-7 py-3.5">Physical Dimensions</th>
+                        <th style={{ borderBottom: "1px solid #efeee7" }} className="px-5 sm:px-7 py-3.5">Print Scale</th>
+                        <th style={{ borderBottom: "1px solid #efeee7" }} className="px-5 sm:px-7 py-3.5">Common Examples</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white text-xs">
+                      {ID_CARD_FORMATS_DATA.map((row) => (
+                        <tr
+                          key={row.name}
+                          style={{
+                            borderBottom: "1px solid #efeee7",
+                          }}
+                          className="hover:bg-[#faf9f6] transition-colors"
+                        >
+                          <td className="px-5 sm:px-7 py-3.5 font-bold text-[#1c201a]">
+                            {row.name}
+                          </td>
+                          <td className="px-5 sm:px-7 py-3.5 tabular-nums text-[#575a53] font-mono">
+                            {row.dim}
+                          </td>
+                          <td className="px-5 sm:px-7 py-3.5 font-bold text-[#3158d5]">
+                            {row.scale}
+                          </td>
+                          <td className="px-5 sm:px-7 py-3.5 text-[#575a53]">
+                            {row.use}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* SECTION 4: PRIVACY & ANTI-FRAUD FEATURES */}
+            <ScrollReveal delay={150}>
+              <div
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ffffff",
+                }}
+                className="rounded-2xl sm:rounded-[24px] p-6 sm:p-8 shadow-2xs space-y-6"
               >
-                <span>Image to Text OCR</span>
-                <span className="text-xs text-slate-400">↗</span>
-              </Link>
-              <Link
-                href="/qr-code-generator"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 flex items-center gap-1.5 transition shadow-2xs"
-              >
-                <span>QR Code Generator</span>
-                <span className="text-xs text-slate-400">↗</span>
-              </Link>
-              <Link
-                href="/flipbook"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 flex items-center gap-1.5 transition shadow-2xs"
-              >
-                <span>3D Flipbook Viewer</span>
-                <span className="text-xs text-slate-400">↗</span>
-              </Link>
-              <Link
-                href="/case-converter"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 flex items-center gap-1.5 transition shadow-2xs"
-              >
-                <span>Case Converter</span>
-                <span className="text-xs text-slate-400">↗</span>
-              </Link>
+                <div>
+                  <div
+                    style={{
+                      borderColor: "#bcd5ff",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#e8effe",
+                      color: "#3158d5",
+                    }}
+                    className="inline-block rounded-md px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider shadow-2xs"
+                  >
+                    SECURITY &amp; PRIVACY
+                  </div>
+                  <h2 className="mt-3 text-xl sm:text-2xl font-black text-[#1c201a] tracking-tight">
+                    Why Use Spellense ID Print Maker?
+                  </h2>
+                  <p className="mt-2 text-xs sm:text-sm text-[#575a53] max-w-3xl leading-relaxed font-normal">
+                    Photocopying identity cards on public office copiers or sending photos to untrusted online servers creates significant privacy risks. Spellense runs completely in your web browser with built-in fraud prevention tools.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "20px",
+                    }}
+                    className="rounded-2xl space-y-2"
+                  >
+                    <div className="flex items-center gap-2.5 font-bold text-[#1c201a] text-sm sm:text-base">
+                      <div
+                        style={{
+                          backgroundColor: "#f6f5f3",
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          color: "#3158d5",
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl shadow-2xs shrink-0 font-bold"
+                      >
+                        <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>
+                      <span>100% In-Browser Privacy</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                      Your ID card images never leave your computer or phone. All corner detection, image filtering, and PDF generation happen 100% locally using client-side WebAssembly and Canvas APIs. EXIF and GPS tags are purged on load.
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "20px",
+                    }}
+                    className="rounded-2xl space-y-2"
+                  >
+                    <div className="flex items-center gap-2.5 font-bold text-[#1c201a] text-sm sm:text-base">
+                      <div
+                        style={{
+                          backgroundColor: "#f6f5f3",
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          color: "#3158d5",
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl shadow-2xs shrink-0 font-bold"
+                      >
+                        <svg className="w-4 h-4 text-[#3158d5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                      </div>
+                      <span>Anti-Fraud Security Watermark</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                      Protect yourself against identity misuse by overlaying a diagonal semi-transparent watermark (such as &quot;FOR VERIFICATION ONLY&quot; or your custom text) directly across your printed cards.
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "20px",
+                    }}
+                    className="rounded-2xl space-y-2"
+                  >
+                    <div className="flex items-center gap-2.5 font-bold text-[#1c201a] text-sm sm:text-base">
+                      <div
+                        style={{
+                          backgroundColor: "#f6f5f3",
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          color: "#3158d5",
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl shadow-2xs shrink-0 font-bold"
+                      >
+                        <svg className="w-4 h-4 text-[#3158d5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                          <line x1="12" y1="9" x2="12" y2="13" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                      </div>
+                      <span>Guaranteed 1:1 Physical Scale</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                      Standard photo printers and scanners often distort proportions. Spellense strictly locks the ISO ID-1 physical scale (85.6 × 54 mm) so your printed copy matches your real card down to the millimeter.
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#faf9f6",
+                      padding: "20px",
+                    }}
+                    className="rounded-2xl space-y-2"
+                  >
+                    <div className="flex items-center gap-2.5 font-bold text-[#1c201a] text-sm sm:text-base">
+                      <div
+                        style={{
+                          backgroundColor: "#f6f5f3",
+                          borderColor: "#e5e5df",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                          color: "#3158d5",
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl shadow-2xs shrink-0 font-bold"
+                      >
+                        <svg className="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="6" cy="6" r="3" />
+                          <circle cx="6" cy="18" r="3" />
+                          <line x1="20" y1="4" x2="8.12" y2="15.88" />
+                          <line x1="14.47" y1="14.48" x2="20" y2="20" />
+                          <line x1="8.12" y1="8.12" x2="12" y2="12" />
+                        </svg>
+                      </div>
+                      <span>Precision Cut Marks &amp; Multi-Card</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-[#575a53] leading-relaxed font-normal">
+                      Print optional cutting lines or corner marks for effortless trimming with scissors or a paper cutter. Need copies for multiple family members or staff? Add up to 5 cards onto the same sheet in one click.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* SECTION 5: AMBER SCALE WARNING CARD */}
+            <ScrollReveal delay={200}>
+              <div className="rounded-2xl sm:rounded-[24px] border border-amber-200 bg-[#fffbeb] p-5 sm:p-6 flex items-start gap-3.5 shadow-2xs">
+                <svg className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-amber-950">
+                    How to print at 100% Actual Size (Stop &quot;Fit to Page&quot;)
+                  </h3>
+                  <p className="text-xs sm:text-sm text-amber-900/90 mt-1 leading-relaxed font-normal">
+                    When printing your PDF from Adobe Acrobat, Apple Preview, or Google Chrome, ensure your printer dialog is set to <strong>&quot;Actual Size&quot;</strong> or <strong>&quot;100% Scale&quot;</strong>. If your printer defaults to &quot;Fit to Page&quot; or &quot;Shrink Oversized Pages&quot;, it will scale down your ID card by 3% to 7%, throwing off official visa, banking, and government requirements.
+                  </p>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* SECTION 6: FAQ SECTION — 2-Column Clean Layout (HOMEPAGE MATCH) */}
+            <div
+              style={{
+                borderTop: "1px solid #e5e5df",
+                marginTop: "48px",
+                paddingTop: "48px",
+                marginBottom: "48px",
+              }}
+              className="w-full pb-12 sm:pb-20"
+            >
+              <div className="mx-auto w-full">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  {/* Left 4 Columns */}
+                  <ScrollReveal className="lg:col-span-4 lg:sticky lg:top-8">
+                    <div
+                      style={{
+                        borderColor: "#e5e5df",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                        backgroundColor: "#ffffff",
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 shadow-2xs"
+                    >
+                      <span className="flex h-1.5 w-1.5 rounded-full bg-[#3158d5] animate-pulse" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                        FREQUENTLY ASKED QUESTIONS
+                      </span>
+                    </div>
+                    <h2 className="mt-3 text-2xl sm:text-3xl font-black tracking-tight text-[#1c201a]">
+                      ID Print Maker FAQ
+                    </h2>
+                    <p className="mt-2 text-xs sm:text-sm text-[#70746d] leading-relaxed font-normal">
+                      Everything you need to know about copying, aligning, and printing your ID cards at exact physical dimensions.
+                    </p>
+                  </ScrollReveal>
+
+                  {/* Right 8 Columns */}
+                  <div className="lg:col-span-8 space-y-3.5">
+                    {FAQ_LIST.map((faq, index) => (
+                      <ScrollReveal key={faq.q} delay={index * 30}>
+                        <details
+                          style={{
+                            borderColor: "#e5e5df",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                            backgroundColor: "#ffffff",
+                          }}
+                          className="group rounded-2xl p-5 shadow-2xs transition-all open:border-[#3158d5]/40 open:shadow-xs"
+                        >
+                          <summary className="flex cursor-pointer items-center justify-between font-bold text-[#1c201a] text-sm sm:text-base list-none">
+                            <span>{faq.q}</span>
+                            <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f6f5f3] text-[#70746d] transition-transform duration-200 group-open:rotate-180 group-open:bg-[#e8effe] group-open:text-[#3158d5]">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </span>
+                          </summary>
+                          <p className="mt-3 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+                            {faq.a}
+                          </p>
+                        </details>
+                      </ScrollReveal>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
       {/* GLOBAL FOOTER */}
       <Footer currentPath="/print-sheet-maker" />

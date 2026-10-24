@@ -56,6 +56,12 @@ const FEEDBACK_TYPES: { id: FeedbackType; label: string; icon: React.ReactNode }
 
 export default function FeedbackWidget() {
   const pathname = usePathname();
+
+  // Only show feedback widget on the landing page (homepage)
+  if (pathname !== "/") {
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [type, setType] = useState<FeedbackType>("idea");
   const [message, setMessage] = useState("");

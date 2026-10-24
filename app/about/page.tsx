@@ -4,15 +4,15 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "About Us — Visual Spell Checker & Proofreader",
+  title: "About Us — Creative Pre-Flight & Production Utility Suite",
   description:
-    "Learn about Spellense, our privacy-first visual spell checking technology, and our mission to help creators and teams catch typos across images, PDFs, and presentations.",
+    "Learn about Spellense, our privacy-first creative pre-flight suite, and our mission to help designers, marketers, and print professionals deliver flawless visual work.",
   alternates: { canonical: "/about" },
   openGraph: {
     siteName: "Spellense",
-    title: "About Us — Visual Spell Checker & Proofreader",
+    title: "About Us — Creative Pre-Flight & Production Utility Suite",
     description:
-      "Why we built Spellense: a 100% in-memory, privacy-first proofreading engine for graphic designers, marketers, and professionals.",
+      "Why we built Spellense: a 100% in-memory, privacy-first pre-flight and production toolkit for designers, marketers, and teams.",
     url: "/about",
     type: "website",
     images: [
@@ -26,9 +26,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "About Us — Visual Spell Checker & Proofreader",
+    title: "About Us — Creative Pre-Flight & Production Utility Suite",
     description:
-      "Why we built Spellense: a privacy-first proofreading engine for designers, marketers, and professionals.",
+      "Why we built Spellense: a privacy-first pre-flight and production utility suite for creators, marketers, and teams.",
     images: ["/og-image.png"],
   },
 };
@@ -40,7 +40,7 @@ export default function AboutPage() {
     name: "About Spellense",
     url: "https://spellense.com/about",
     description:
-      "Spellense provides in-memory visual spell checking for images, documents, presentations, and spreadsheets with zero data retention.",
+      "Spellense provides privacy-first creative pre-flight tools, visual spell checking, image compression, OCR extraction, print sheet layouts, and 3D digital flipbooks with zero data retention.",
     mainEntity: {
       "@type": "Organization",
       name: "Spellense",
@@ -49,7 +49,7 @@ export default function AboutPage() {
       email: "hello@spellense.com",
       foundingDate: "2026",
       description:
-        "Privacy-first visual proofreader and copywriting utility suite.",
+        "Privacy-first visual pre-flight and creative production utility suite.",
       sameAs: [
         "https://github.com/mnsrkuruniyan-pixel/spellense",
       ],
@@ -57,7 +57,7 @@ export default function AboutPage() {
   };
 
   return (
-    <main id="main-content" className="min-h-screen bg-transparent text-black relative z-10">
+    <main id="main-content" style={{ backgroundColor: "#faf9f6" }} className="relative z-10 min-h-screen bg-[#faf9f6] font-sans text-[15px] text-[#1c201a] antialiased selection:bg-[#bcd5ff] selection:text-black">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutSchema) }}
@@ -67,77 +67,159 @@ export default function AboutPage() {
       <Navbar />
 
       {/* HERO & ABOUT CONTENT */}
-      <section className="relative overflow-hidden pb-24 pt-12 sm:pt-16">
-        {/* Ambient background glows */}
-        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
-        <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
-        <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
-
-        <div className="relative mx-auto max-w-4xl px-5 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden pb-20 pt-3 sm:pb-24 sm:pt-6">
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           {/* HEADER */}
-          <div className="text-center pt-2 pb-2 sm:pt-4 sm:pb-4">
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
+          <div className="pb-2 pt-2 text-center sm:pb-4 sm:pt-6">
+            <div style={{ color: "#3158d5", letterSpacing: "0.18em", fontSize: "12px", fontWeight: 700 }} className="mb-3 inline-flex items-center uppercase sm:mb-4">
+              Our Story &amp; Purpose
+            </div>
+            <h1 className="mx-auto max-w-5xl text-center text-[34px] font-black leading-[1.12] tracking-[-0.035em] text-[#1c201a] sm:text-[56px] md:text-[64px] lg:text-[72px]">
               About Spellense
             </h1>
+            <p style={{ color: "#70746d" }} className="mx-auto mt-4 max-w-2xl text-center text-sm sm:text-base">
+              From a visual typo detector to a complete creative pre-flight suite — built by designers and developers to catch costly errors before artwork goes live.
+            </p>
           </div>
 
           {/* MISSION & ORIGIN STORY */}
-          <div className="mt-12 space-y-8">
-            <div className="rounded-3xl border border-white/90 bg-white/85 p-7 sm:p-9 shadow-xs backdrop-blur-md">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-2">
+          <div className="mt-8 space-y-6 sm:mt-10 sm:space-y-8">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-[24px] border bg-white p-6 shadow-2xs sm:p-9">
+              <div style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="mb-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider">
                 The Origin Story
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-black">
+              <h2 className="text-2xl font-bold tracking-tight text-[#1c201a] sm:text-3xl">
                 Born From a Real Workplace Problem
               </h2>
-              <div className="mt-4 space-y-4 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
+              <div className="mt-4 space-y-4 text-sm leading-relaxed text-[#70746d] sm:text-[15px]">
                 <p>
-                  In my daily professional work, nearly <strong className="text-slate-900 font-bold">30% of all quality review issues and revision cycles</strong> were caused by subtle English spelling mistakes hidden across creative banners, presentation decks, and exported documents.
+                  In our daily professional work across marketing and creative production, nearly <strong className="font-bold text-[#1c201a]">30% of all quality review issues and revision cycles</strong> were caused by subtle English spelling mistakes hidden across creative banners, presentation decks, and exported documents.
                 </p>
                 <p>
                   Designers and marketing teammates spend hours perfecting visual hierarchies in Figma, Photoshop, and Canva. But once artwork is exported as a PNG, JPG, or PDF, words become locked into pixels. Traditional spell checkers and browser extensions only inspect plain text input fields—they cannot read pixels or slide layouts. Even a single overlooked typo on a promotional banner, contract, or investor deck meant costly reprint delays, client embarrassment, and hours wasted on re-exports.
                 </p>
                 <p>
-                  Frustrated by the lack of a modern tool that could actually read words inside visual files, I built <strong className="text-slate-900 font-semibold">Spellense</strong>. It was created from the ground up to solve this exact problem: an intelligent, in-memory OCR proofreading engine that reads text directly off graphics and multi-page documents, draws visual red highlights over typos in place, and suggests corrections without forcing you to re-type a single word.
+                  Frustrated by the lack of a modern tool that could read words inside visual files, we built <strong className="font-semibold text-[#1c201a]">Spellense</strong>. We created it from the ground up to solve this exact bottleneck: an intelligent, in-memory OCR proofreading engine that reads text directly off graphics and multi-page documents, draws visual red highlights over typos in place, and suggests corrections without forcing you to re-type a single word.
                 </p>
               </div>
             </div>
 
+            {/* WHY WE EXPANDED INTO A FULL SUITE */}
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-[24px] border bg-white p-6 shadow-2xs sm:p-9">
+              <div style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="mb-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider">
+                Beyond Spell Checking
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight text-[#1c201a] sm:text-3xl">
+                Why We Built the Entire Tool Suite
+              </h2>
+              <div className="mt-4 space-y-4 text-sm leading-relaxed text-[#70746d] sm:text-[15px]">
+                <p>
+                  Once our proofreading engine was active, we observed something crucial: <strong className="font-semibold text-[#1c201a]">a typo is never the only obstacle standing between a finished design and final delivery.</strong>
+                </p>
+                <p>
+                  Real creative production involves an entire chain of repetitive friction points that slow teams down right before client sign-off or print dispatch. We built each additional Spellense tool to solve one specific, high-friction production headache:
+                </p>
+              </div>
+
+              {/* TOOLS GRID EXPLANATION */}
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 sm:gap-5">
+                <div style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }} className="rounded-2xl border p-5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#3158d5] uppercase tracking-wider">
+                    <span>Pre-Flight Quality Assurance</span>
+                  </div>
+                  <h3 className="mt-1 font-bold text-[#1c201a]">Design Check (QA)</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-[#70746d]">
+                    Print shops often reject artwork for trimmer bleed violations or safe-zone cuts, while accessibility laws require strict WCAG contrast ratios. Design Check audits typography, bleed safety margins, and luminance contrast before physical printing or ad publishing.
+                  </p>
+                </div>
+
+                <div style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }} className="rounded-2xl border p-5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#3158d5] uppercase tracking-wider">
+                    <span>Asset Delivery &amp; Speed</span>
+                  </div>
+                  <h3 className="mt-1 font-bold text-[#1c201a]">Image Compressor</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-[#70746d]">
+                    Raw exports from design apps often exceed email attachment limits and slow down web page load speeds. We built a client-side lossless optimizer with a live split slider to shrink file sizes by up to 85% without sacrificing pixel sharpness.
+                  </p>
+                </div>
+
+                <div style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }} className="rounded-2xl border p-5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#3158d5] uppercase tracking-wider">
+                    <span>Asset Recovery &amp; Copy Re-use</span>
+                  </div>
+                  <h3 className="mt-1 font-bold text-[#1c201a]">Image to Text (OCR)</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-[#70746d]">
+                    Clients frequently send flat JPG screenshots or scanned PDFs instead of editable copy documents. Our high-precision OCR extracts all visible body text and tables in seconds, eliminating tedious manual retyping.
+                  </p>
+                </div>
+
+                <div style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }} className="rounded-2xl border p-5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#3158d5] uppercase tracking-wider">
+                    <span>Interactive Presentation</span>
+                  </div>
+                  <h3 className="mt-1 font-bold text-[#1c201a]">3D Digital Flipbook Studio</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-[#70746d]">
+                    Sending static PDF brochures and lookbooks feels flat and uninspired. We created an in-browser WebGL 3D flipbook that turns any multi-page PDF into an engaging, page-turning digital publication with realistic physics and sound.
+                  </p>
+                </div>
+
+                <div style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }} className="rounded-2xl border p-5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#3158d5] uppercase tracking-wider">
+                    <span>Physical Print Production</span>
+                  </div>
+                  <h3 className="mt-1 font-bold text-[#1c201a]">Print Sheet Maker</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-[#70746d]">
+                    Print operators and studio teams spend hours manually tiling ID cards, passport photos, and badges onto A4 or custom sheets. Our sheet maker automatically lays out items at exact physical millimeter scales with cut marks and trimmer margins.
+                  </p>
+                </div>
+
+                <div style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }} className="rounded-2xl border p-5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#3158d5] uppercase tracking-wider">
+                    <span>Global Copy &amp; Scannability</span>
+                  </div>
+                  <h3 className="mt-1 font-bold text-[#1c201a]">US/UK Translator &amp; QR Scannability</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-[#70746d]">
+                    Cross-border marketing requires seamless dialect translation between American and British English. Along with custom QR codes tested for physical camera scannability, every asset is verified ready for deployment.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* THREE PILLARS */}
-            <div className="grid gap-6 sm:grid-cols-3">
-              <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+            <div className="grid gap-4 sm:grid-cols-3 sm:gap-5">
+              <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs">
+                <div style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="flex h-10 w-10 items-center justify-center rounded-xl">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
                 </div>
-                <h3 className="mt-4 text-base font-bold text-slate-900">
-                  Visual OCR Precision
+                <h3 className="mt-4 text-base font-bold text-[#1c201a]">
+                  Visual Precision First
                 </h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                  We map precise pixel coordinates to every detected word token, drawing red bounding boxes over suspected typos directly on your original design.
+                <p className="mt-2 text-xs leading-relaxed text-[#70746d]">
+                  We map pixel coordinates to detected issues, overlaying visual highlights on original canvas designs rather than detaching copy into sterile text boxes.
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+              <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs">
+                <div style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="flex h-10 w-10 items-center justify-center rounded-xl">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
                     <path d="m9 12 2 2 4-4" />
                   </svg>
                 </div>
-                <h3 className="mt-4 text-base font-bold text-slate-900">
+                <h3 className="mt-4 text-base font-bold text-[#1c201a]">
                   100% In-Memory Privacy
                 </h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                  Your confidential pitch decks, resumes, and legal contracts are processed ephemerally in RAM and wiped immediately. We never store files or train AI models on your data.
+                <p className="mt-2 text-xs leading-relaxed text-[#70746d]">
+                  Confidential client pitch decks, financial audits, and contracts are processed in temporary RAM and wiped immediately. We never store files or train AI models on user data.
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-white/90 bg-white/80 p-6 shadow-xs backdrop-blur-md">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+              <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs">
+                <div style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="flex h-10 w-10 items-center justify-center rounded-xl">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" />
                     <path d="m4.93 4.93 4.24 4.24" />
@@ -146,55 +228,56 @@ export default function AboutPage() {
                     <path d="m9.17 14.83-4.24 4.24" />
                   </svg>
                 </div>
-                <h3 className="mt-4 text-base font-bold text-slate-900">
-                  Multi-Format Freedom
+                <h3 className="mt-4 text-base font-bold text-[#1c201a]">
+                  Zero Friction Utility
                 </h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                  Support for PNG, JPG, WebP, multi-page PDFs, Microsoft Word (DOCX), PowerPoint (PPTX), and Excel (XLSX) with zero installation or account required.
+                <p className="mt-2 text-xs leading-relaxed text-[#70746d]">
+                  No paywalls, no forced registrations, no cookies, and no credit card gates. Open, upload, verify, and export immediately.
                 </p>
               </div>
             </div>
 
             {/* EDITORIAL PRINCIPLES & VALUES */}
-            <div className="rounded-3xl border border-white/90 bg-white/85 p-7 sm:p-9 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold tracking-tight text-slate-900">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-[24px] border bg-white p-6 shadow-2xs sm:p-9">
+              <h2 className="text-xl font-bold tracking-tight text-[#1c201a]">
                 Our Core Principles
               </h2>
-              <ul className="mt-4 space-y-3 text-sm text-slate-600 sm:text-[15px]">
+              <ul className="mt-4 space-y-3 text-sm text-[#70746d] sm:text-[15px]">
                 <li className="flex items-start gap-3">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-xs font-bold mt-0.5">✓</span>
-                  <span><strong className="text-slate-800">Zero Friction:</strong> No paywalls, no forced account registration, and no credit card required. Anyone can upload and verify in seconds.</span>
+                  <span style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold">✓</span>
+                  <span><strong className="text-[#1c201a]">Built for Speed:</strong> No paywalls, no software installation, and no account hurdles. Designed to save creators time before critical deadlines.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-xs font-bold mt-0.5">✓</span>
-                  <span><strong className="text-slate-800">Dialect Inclusivity:</strong> Full support for both American English (en-US) and British English (en-GB) spelling standards.</span>
+                  <span style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold">✓</span>
+                  <span><strong className="text-[#1c201a]">Dialect Inclusivity:</strong> Full support for both American English (en-US) and British English (en-GB) standards across spelling and vocabulary.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-xs font-bold mt-0.5">✓</span>
-                  <span><strong className="text-slate-800">Creator Privacy:</strong> We believe utility tools should respect user sovereignty. Your content is strictly yours.</span>
+                  <span style={{ backgroundColor: "#efeee7", color: "#3158d5" }} className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold">✓</span>
+                  <span><strong className="text-[#1c201a]">Creator Sovereignty:</strong> We believe utility tools should respect user privacy above all else. Your designs and documents belong strictly to you.</span>
                 </li>
               </ul>
             </div>
 
             {/* CONTACT & GET IN TOUCH */}
-            <div className="rounded-3xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-white p-7 sm:p-9 shadow-xs backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div style={{ borderColor: "#e5e5df", backgroundColor: "#efeee7" }} className="flex flex-col items-center justify-between gap-6 rounded-[24px] border p-6 shadow-2xs sm:flex-row sm:p-9">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">
+                <h3 className="text-lg font-bold text-[#1c201a]">
                   Have feedback, questions, or ideas?
                 </h3>
-                <p className="mt-1 text-xs sm:text-sm text-slate-600">
+                <p className="mt-1 text-xs text-[#70746d] sm:text-sm">
                   We would love to hear from you. Reach out to our team directly.
                 </p>
-                <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-blue-700">
+                <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#3158d5]">
                   <span>Email:</span>
-                  <a href="mailto:hello@spellense.com" className="underline hover:text-blue-900">
+                  <a href="mailto:hello@spellense.com" className="underline underline-offset-2 hover:text-[#1c201a]">
                     hello@spellense.com
                   </a>
                 </div>
               </div>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3.5 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/35 shrink-0"
+                style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                className="inline-flex shrink-0 items-center gap-2 rounded-xl px-6 py-3.5 text-xs font-bold text-white shadow-xs shadow-[#3158d5]/20 transition hover:-translate-y-0.5 hover:opacity-90"
               >
                 <span>Try Spellense Now</span>
                 <span>→</span>

@@ -123,7 +123,7 @@ export default function CardCropEditorModal({
     );
 
     // Crosshair in loupe
-    ctx.strokeStyle = "#0055fe";
+    ctx.strokeStyle = "#3158d5";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(loupeSize / 2 - 12, loupeSize / 2);
@@ -313,26 +313,58 @@ export default function CardCropEditorModal({
       role="dialog"
       aria-modal="true"
       aria-label="Adjust Card Corners"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/75 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#1c201a]/40 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto"
     >
-      <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[92vh]">
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderColor: "#e5e5df",
+          borderWidth: "1px",
+          borderStyle: "solid",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+        }}
+        className="relative w-full max-w-4xl rounded-2xl sm:rounded-[24px] overflow-hidden flex flex-col my-auto max-h-[92vh]"
+      >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/70">
+        <div
+          style={{
+            backgroundColor: "#fafaf8",
+            borderBottom: "1px solid #efeee7",
+          }}
+          className="px-5 py-4 flex items-center justify-between shrink-0"
+        >
           <div>
-            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-[#1c201a] flex items-center gap-2">
               <span>Adjust Card Corners</span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+              <span
+                style={{
+                  backgroundColor: "#e8effe",
+                  color: "#3158d5",
+                  borderColor: "#bcd5ff",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                }}
+                className="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
+              >
                 85.6 × 54 mm
               </span>
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[#70746d] mt-0.5">
               Drag the 4 corner handles to align with the edges of your card.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer text-sm"
+            style={{
+              backgroundColor: "#ffffff",
+              borderColor: "#e5e5df",
+              borderWidth: "1px",
+              borderStyle: "solid",
+              color: "#555a52",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+            }}
+            className="h-8.5 w-8.5 rounded-xl hover:bg-[#efeee7] flex items-center justify-center transition cursor-pointer text-xs font-bold"
             aria-label="Close corner adjustment modal"
           >
             ✕
@@ -438,8 +470,8 @@ export default function CardCropEditorModal({
                 >
                   <polygon
                     points={`${corners[0].x},${corners[0].y} ${corners[1].x},${corners[1].y} ${corners[2].x},${corners[2].y} ${corners[3].x},${corners[3].y}`}
-                    fill="rgba(0, 85, 254, 0.22)"
-                    stroke="#0055fe"
+                    fill="rgba(49, 88, 213, 0.22)"
+                    stroke="#3158d5"
                     strokeWidth={Math.max(3, Math.round(imageDimensions.w / 350))}
                     strokeLinejoin="round"
                   />
@@ -511,10 +543,10 @@ export default function CardCropEditorModal({
                           fontSize: "11px",
                           fontWeight: "900",
                           color: "#ffffff",
-                          backgroundColor: isActive ? "#0055fe" : "#2563eb",
+                          backgroundColor: isActive ? "#3158d5" : "#2546b8",
                           border: "2px solid #ffffff",
                           boxShadow: isActive
-                            ? "0 0 0 4px rgba(0, 85, 254, 0.45), 0 10px 15px -3px rgba(0, 0, 0, 0.3)"
+                            ? "0 0 0 4px rgba(49, 88, 213, 0.45), 0 10px 15px -3px rgba(0, 0, 0, 0.3)"
                             : "0 4px 6px -1px rgba(0, 0, 0, 0.25)",
                         }}
                       >
@@ -546,12 +578,20 @@ export default function CardCropEditorModal({
 
           {/* Side / Bottom Live Straightened Preview */}
           <div className="w-full lg:w-72 shrink-0 flex flex-col items-center lg:items-start gap-3">
-            <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <div className="text-xs font-bold text-[#1c201a] flex items-center gap-1.5">
               <span>Straightened Preview</span>
-              <span className="text-[10px] text-slate-400 font-normal">(Live)</span>
+              <span className="text-[10px] text-[#70746d] font-normal">(Live)</span>
             </div>
 
-            <div className="w-full max-w-[280px] lg:max-w-none rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shadow-xs flex items-center justify-center aspect-[85.6/54]">
+            <div
+              style={{
+                borderColor: "#e5e5df",
+                borderWidth: "1px",
+                borderStyle: "solid",
+                backgroundColor: "#fafaf8",
+              }}
+              className="w-full max-w-[280px] lg:max-w-none rounded-xl overflow-hidden shadow-2xs flex items-center justify-center aspect-[85.6/54]"
+            >
               <canvas
                 ref={previewCanvasRef}
                 className="w-full h-full object-cover block"
@@ -559,51 +599,87 @@ export default function CardCropEditorModal({
               />
             </div>
 
-            <div className="text-[11px] text-slate-500 leading-tight">
+            <div className="text-[11px] text-[#70746d] leading-tight">
               Tip: Drag corners until the card is square and text is horizontal.
             </div>
           </div>
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/70 flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2">
+        <div
+          style={{
+            borderTop: "1px solid #efeee7",
+            backgroundColor: "#fafaf8",
+          }}
+          className="modal-mobile-single-line px-2 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-center sm:justify-between gap-1 sm:gap-3 shrink-0 w-full"
+        >
+          <div className="flex items-center justify-center gap-1 sm:gap-2 shrink-0">
             <button
               type="button"
               onClick={handleAutoDetect}
               disabled={isProcessing}
-              className="h-9 px-3 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700 transition cursor-pointer flex items-center gap-1.5 shadow-2xs disabled:opacity-50"
+              style={{
+                backgroundColor: "#ffffff",
+                borderColor: "#e5e5df",
+                borderWidth: "1px",
+                borderStyle: "solid",
+                color: "#1c201a",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+              }}
+              className="modal-mobile-btn h-9 px-3.5 rounded-xl text-xs font-bold hover:bg-[#efeee7] transition cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 disabled:opacity-50"
               aria-label="Re-run automatic card detection"
             >
-              <span>⚡</span>
+              <span className="text-amber-600 text-xs sm:text-sm">⚡</span>
               <span>Auto</span>
             </button>
 
             <button
               type="button"
               onClick={handleRotate90}
-              className="h-9 px-3 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700 transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
+              style={{
+                backgroundColor: "#ffffff",
+                borderColor: "#e5e5df",
+                borderWidth: "1px",
+                borderStyle: "solid",
+                color: "#1c201a",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+              }}
+              className="modal-mobile-btn h-9 px-3.5 rounded-xl text-xs font-bold hover:bg-[#efeee7] transition cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5"
               aria-label="Rotate card 90 degrees"
             >
-              <span>↻</span>
+              <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#70746d]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                <polyline points="21 3 21 8 16 8" />
+              </svg>
               <span>Rotate 90°</span>
             </button>
 
             <button
               type="button"
               onClick={handleReset}
-              className="h-9 px-3 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700 transition cursor-pointer shadow-2xs"
+              style={{
+                backgroundColor: "#ffffff",
+                borderColor: "#e5e5df",
+                borderWidth: "1px",
+                borderStyle: "solid",
+                color: "#1c201a",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+              }}
+              className="modal-mobile-btn h-9 px-3.5 rounded-xl text-xs font-bold hover:bg-[#efeee7] transition cursor-pointer flex items-center justify-center"
               aria-label="Reset corners to default rectangle"
             >
               Reset
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="h-9.5 px-3.5 rounded-md text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-200/70 transition cursor-pointer"
+              style={{
+                color: "#555a52",
+              }}
+              className="modal-mobile-btn h-9 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold hover:bg-[#efeee7] transition cursor-pointer flex items-center justify-center"
             >
               Cancel
             </button>
@@ -612,8 +688,14 @@ export default function CardCropEditorModal({
               type="button"
               onClick={handleDone}
               disabled={isProcessing}
-              style={{ backgroundColor: "#0055fe" }}
-              className="h-9.5 px-5 rounded-md text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-600/20 hover:brightness-105 active:scale-95 transition cursor-pointer flex items-center gap-2 disabled:opacity-50"
+              style={{
+                backgroundColor: "#3158d5",
+                color: "#ffffff",
+                boxShadow: "0 2px 10px rgba(49, 88, 213, 0.3)",
+                border: "none",
+                outline: "none",
+              }}
+              className="modal-mobile-btn-done h-10 px-7 rounded-full text-xs sm:text-sm font-bold hover:bg-[#2546b8] active:scale-95 transition cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isProcessing ? "Processing..." : "Done"}
             </button>

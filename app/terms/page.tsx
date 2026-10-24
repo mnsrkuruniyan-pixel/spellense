@@ -35,66 +35,64 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-transparent text-black relative z-10">
+    <main style={{ backgroundColor: "#faf9f6" }} className="relative z-10 min-h-screen bg-[#faf9f6] font-sans text-[15px] text-[#1c201a] antialiased selection:bg-[#bcd5ff] selection:text-black">
 
       {/* NAVBAR */}
       <Navbar />
 
       {/* HERO & CONTENT SECTION */}
-      <section className="relative overflow-hidden pb-24 pt-12 sm:pt-16">
-        {/* Ambient background glows */}
-        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[560px] w-[920px] rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-400/20 to-purple-400/15 blur-[120px] opacity-80 animate-pulse-glow" />
-        <div className="pointer-events-none absolute top-40 -left-28 h-[400px] w-[400px] rounded-full bg-blue-200/40 blur-[100px]" />
-        <div className="pointer-events-none absolute top-36 -right-28 h-[420px] w-[420px] rounded-full bg-indigo-200/40 blur-[110px]" />
-
-        <div className="relative mx-auto max-w-4xl px-5 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden pb-20 pt-3 sm:pb-24 sm:pt-6">
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
 
           {/* PAGE HEADER */}
-          <div className="text-center pt-2 pb-2 sm:pt-4 sm:pb-4">
-            <h1 className="text-[34px] xs:text-[44px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-black leading-[1.12] tracking-[-1.5px] sm:tracking-[-2.5px] text-[#0f172a] text-center max-w-5xl mx-auto">
+          <div className="pb-2 pt-2 text-center sm:pb-4 sm:pt-6">
+            <div style={{ color: "#3158d5", letterSpacing: "0.18em", fontSize: "12px", fontWeight: 700 }} className="mb-3 inline-flex items-center uppercase sm:mb-4">
+              Legal
+            </div>
+            <h1 className="mx-auto max-w-5xl text-center text-[34px] font-black leading-[1.12] tracking-[-0.035em] text-[#1c201a] sm:text-[56px] md:text-[64px] lg:text-[72px]">
               Terms of Use
             </h1>
           </div>
 
           {/* CLAUSES */}
-          <div className="mt-12 space-y-6">
+          <div className="mt-8 space-y-4 sm:mt-10 sm:space-y-5">
 
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-black">1. Acceptance of Terms &amp; Permitted Use</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">1. Acceptance of Terms &amp; Permitted Use</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 By accessing Spellense and submitting files for spell checking, you agree to comply with these Terms of Use. You warrant that you hold all rights, permissions, and authorizations necessary to submit your documents, graphics, and spreadsheets for processing. You may not use the service for any unlawful purpose or to process malicious content.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">2. Nature of Automated Suggestions</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">2. Nature of Automated Suggestions</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 Spellense provides algorithmic and OCR-assisted spelling suggestions for informational and assistive purposes only. While our engines strive for high accuracy, automated spell checking is not a substitute for human editorial proofreading. Proper nouns, branded typography, technical formulas, and stylized graphics may generate false positives or missed errors.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">3. User Responsibility &amp; Backups</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">3. User Responsibility &amp; Backups</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 You retain sole responsibility for verifying detected mistakes, making editorial decisions, and maintaining independent backups of your master files. Spellense does not store user files and cannot recover uploaded documents.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">4. Service Availability &amp; Modifications</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">4. Service Availability &amp; Modifications</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 Spellense is provided on an &ldquo;as is&rdquo; and &ldquo;as available&rdquo; basis. We reserve the right to modify, refine, or temporarily suspend features, dictionary lexicons, or supported file formats without prior notice.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-white/90 bg-white/80 p-7 sm:p-8 shadow-xs backdrop-blur-md">
-              <h2 className="text-xl font-bold text-slate-900">5. Privacy &amp; Data Inquiries</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div style={{ borderColor: "#e5e5df" }} className="rounded-2xl border bg-white p-6 shadow-2xs sm:p-8">
+              <h2 className="text-xl font-bold text-[#1c201a]">5. Privacy &amp; Data Inquiries</h2>
+              <p className="mt-3 text-sm leading-7 text-[#70746d]">
                 Our handling of files and in-memory processing is governed by our{" "}
-                <Link href="/privacy" className="font-semibold text-blue-600 hover:underline">
+                <Link href="/privacy" className="font-semibold text-[#3158d5] underline-offset-2 hover:underline">
                   Privacy Policy
                 </Link>. For any legal or operational questions, please reach out to{" "}
-                <a className="font-semibold text-blue-600 hover:underline" href="mailto:hello@spellense.com">
+                <a className="font-semibold text-[#3158d5] underline-offset-2 hover:underline" href="mailto:hello@spellense.com">
                   hello@spellense.com
                 </a>.
               </p>

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import FeedbackWidget from "@/components/FeedbackWidget";
@@ -18,6 +19,40 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   display: "swap",
   weight: ["300", "400", "500", "600", "700", "800"],
+});
+
+const instrumentSerif = localFont({
+  src: [
+    {
+      path: "../public/fonts/InstrumentSerif-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/InstrumentSerif-Italic.woff2",
+      weight: "400",
+      style: "italic",
+    },
+  ],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
+
+const itcModern216 = localFont({
+  src: [
+    {
+      path: "../public/fonts/ITCModernNo216-Italic.woff2",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../public/fonts/ITCModernNo216-BoldItalic.woff2",
+      weight: "700",
+      style: "italic",
+    },
+  ],
+  variable: "--font-itc-modern",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -111,7 +146,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${plusJakartaSans.variable} h-full antialiased`}
+      className={`${plusJakartaSans.variable} ${instrumentSerif.variable} ${itcModern216.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#f8fafc]">
         <a

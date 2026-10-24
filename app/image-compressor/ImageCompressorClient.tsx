@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ScrollReveal from "@/components/ScrollReveal";
 import JSZip from "jszip";
 import {
   trackFileUpload,
@@ -131,10 +132,22 @@ export default function ImageCompressorClient() {
   const [zoomLevel, setZoomLevel] = useState<number>(1); // 1, 1.5, 2
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState<boolean>(false);
+  const [isBatchQueueOpen, setIsBatchQueueOpen] = useState<boolean>(true);
   const panStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const compareContainerRef = useRef<HTMLDivElement | null>(null);
+  const imageWrapperRef = useRef<HTMLDivElement | null>(null);
+  const filmstripRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollFilmstrip = useCallback((direction: "left" | "right") => {
+    if (filmstripRef.current) {
+      filmstripRef.current.scrollBy({
+        left: direction === "left" ? -240 : 240,
+        behavior: "smooth",
+      });
+    }
+  }, []);
 
   // Active item
   const activeItem = useMemo(() => {
@@ -714,8 +727,9 @@ export default function ImageCompressorClient() {
 
   // Squoosh split-screen slider pointer events
   const handleSliderMove = useCallback((clientX: number) => {
-    if (!compareContainerRef.current) return;
-    const rect = compareContainerRef.current.getBoundingClientRect();
+    const target = imageWrapperRef.current || compareContainerRef.current;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
     const x = clientX - rect.left;
     const pct = Math.max(0, Math.min(100, (x / rect.width) * 100));
     setSliderPos(pct);
@@ -911,251 +925,456 @@ export default function ImageCompressorClient() {
   }, [items]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative z-10 text-[15px]">
+    <div style={{ backgroundColor: "#faf9f6" }} className="flex min-h-screen flex-col bg-[#faf9f6] font-sans text-[#1c201a] antialiased selection:bg-[#bcd5ff] selection:text-black relative z-10 text-[15px]">
       <Navbar />
 
       <main className="flex-1">
-        {/* HERO TITLE — Matching Figma Layout Style */}
-        <section className="px-4 max-w-7xl mx-auto pt-3 sm:pt-6 pb-1.5 sm:pb-2.5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-            <div>
-              <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0f172a]">
-                Image Compressor
+        {/* Responsive CSS guards ensuring desktop and mobile never leak into each other */}
+        <style>{`
+          @media (max-width: 639px) {
+            .spellense-desktop-only {
+              display: none !important;
+            }
+          }
+          @media (min-width: 640px) {
+            .spellense-mobile-only {
+              display: none !important;
+            }
+          }
+        `}</style>
+
+        <section className="relative overflow-hidden">
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16 pt-3 sm:pt-6">
+            {/* HERO TITLE — Matching Home Page Layout Style */}
+            <div className="mx-auto max-w-5xl text-center pt-2 sm:pt-6 pb-2">
+              {/* Eyebrow */}
+              <div
+                style={{
+                  color: "#3158d5",
+                  letterSpacing: "0.18em",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                }}
+                className="inline-flex items-center uppercase mb-3 sm:mb-4"
+              >
+                SMART IMAGE COMPRESSOR
+              </div>
+
+              {/* H1 Heading */}
+              <h1
+                aria-live="polite"
+                className="text-center tracking-tight text-[#1c201a] flex flex-col items-center justify-center"
+                style={{ margin: "0 auto" }}
+              >
+                <span
+                  style={{
+                    fontSize: "clamp(44px, 5.8vw, 72px)",
+                    fontWeight: 900,
+                    lineHeight: 1.04,
+                    letterSpacing: "-0.035em",
+                    color: "#1c201a",
+                    display: "block",
+                    fontFamily:
+                      "var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                  }}
+                >
+                  Smaller images.
+                </span>
+                <span
+                  style={{
+                    fontFamily:
+                      "'ITC Modern No. 216', var(--font-itc-modern), 'Instrument Serif', Georgia, serif",
+                    fontSize: "clamp(38px, 4.8vw, 64px)",
+                    fontWeight: 400,
+                    fontStyle: "italic",
+                    lineHeight: 1.05,
+                    letterSpacing: "-0.01em",
+                    color: "#1c201a",
+                    display: "block",
+                    marginTop: "6px",
+                  }}
+                >
+                  Without the blur.
+                </span>
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1 line-clamp-1 sm:line-clamp-none">
-                Compress JPG, PNG, WebP, AVIF, and multi-page PDFs with zero loss in visual quality.
+
+              {/* Subtitle */}
+              <p
+                style={{
+                  color: "#70746d",
+                  fontSize: "16px",
+                  lineHeight: 1.55,
+                  margin: "18px auto 0",
+                }}
+                className="text-center font-normal px-4 max-w-[540px] mx-auto"
+              >
+                Compress JPG, PNG, WebP, and multi-page PDFs with zero visual loss.
               </p>
             </div>
 
-            {/* Privacy Badge: compact on desktop */}
-            <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 text-xs font-semibold text-emerald-800 self-start sm:self-center shadow-2xs">
-              <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-              <span>Your images never leave your device</span>
-            </div>
-          </div>
-        </section>
+            {/* WORKSPACE & UPLOAD SECTION */}
+            <div className="mt-2 sm:mt-4">
+              {items.length === 0 ? (
+                /* UPLOAD STAGE: SPLIT HERO CARD (EXACT MATCH TO HOME PAGE) */
+                <div className="mx-auto mt-6 sm:mt-8 max-w-[980px]">
+                  {uploadError && (
+                    <div className="mx-auto mb-4 flex items-center justify-between rounded-2xl border border-rose-200/90 bg-rose-50/95 px-5 py-3.5 text-sm font-semibold text-rose-700 shadow-sm backdrop-blur-md">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                        </div>
+                        <p>{uploadError}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setUploadError(null)}
+                        aria-label="Dismiss error message"
+                        className="ml-3 rounded-lg p-1.5 text-rose-400 transition hover:bg-rose-100 hover:text-rose-700 cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
 
-        {/* WORKSPACE SECTION */}
-        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pb-20 mt-2 sm:mt-4">
-          {items.length === 0 ? (
-            /* UPLOAD DROPZONE */
-            <div>
               <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`group relative w-full cursor-pointer rounded-2xl sm:rounded-3xl border py-12 px-6 sm:py-16 sm:px-12 lg:py-20 text-center transition-all duration-300 overflow-hidden ${
-                  isDragging
-                    ? "border-[#0055fe] bg-blue-50/95 shadow-[0_0_60px_rgba(0,85,254,0.25)] scale-[1.01]"
-                    : "border-slate-200/90 hover:border-blue-400/80 bg-white shadow-[0_15px_50px_-15px_rgba(0,85,254,0.07)] hover:shadow-[0_20px_60px_-15px_rgba(0,85,254,0.12)]"
-                }`}
+                style={{
+                  borderColor: "#e5e5df",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  backgroundColor: "#ecebe4",
+                  boxShadow: "none",
+                }}
+                className="relative w-full rounded-2xl sm:rounded-[24px] overflow-hidden transition-all duration-300"
               >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept="image/*,.pdf"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      processIncomingFiles(Array.from(e.target.files));
-                    }
-                  }}
-                />
-
-                {/* Cloud Upload Icon */}
-                <div className="mx-auto flex justify-center items-center">
-                  <svg
-                    width="68"
-                    height="68"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-slate-400 group-hover:text-slate-500 group-hover:-translate-y-1 transition-all duration-300"
+                <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
+                  {/* LEFT COLUMN: UPLOAD BOX & CONTROLS (4/12 or 5/12) */}
+                  <div
+                    style={{ borderRight: "1px solid #e5e5df" }}
+                    className="lg:col-span-5 xl:col-span-4 p-5 sm:p-7 flex flex-col justify-between bg-white"
                   >
-                    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-                    <path d="M12 12v9" />
-                    <path d="m16 16-4-4-4 4" />
-                  </svg>
+                    <div>
+                      {/* HEADER */}
+                      <div
+                        style={{ borderBottom: "1px solid #e5e5df" }}
+                        className="flex items-center justify-between pb-3"
+                      >
+                        <span
+                          style={{
+                            backgroundColor: "#efeee7",
+                            color: "#3158d5",
+                            border: "1px solid #e5e5df",
+                          }}
+                          className="text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                            <circle cx="9" cy="9" r="2"/>
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                          </svg>
+                          <span>Images &amp; PDF</span>
+                        </span>
+
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                          UP TO 90% SAVINGS
+                        </span>
+                      </div>
+
+                      {/* DASHED DROPZONE */}
+                      <div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          borderColor: isDragging ? "#3158d5" : "#deded6",
+                          backgroundColor: isDragging ? "#eff6ff" : "#f6f5f3",
+                        }}
+                        className={`mt-4 rounded-2xl border-2 border-dashed p-5 sm:p-6 text-center transition-all cursor-pointer ${
+                          isDragging
+                            ? "border-[#3158d5] bg-blue-50/70"
+                            : "hover:border-[#3158d5]/50"
+                        }`}
+                      >
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              processIncomingFiles(Array.from(e.target.files));
+                            }
+                          }}
+                        />
+
+                        <div
+                          style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                          className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border shadow-2xs text-[#3158d5] transition-transform duration-200 group-hover:scale-105"
+                        >
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                            <path d="M12 12v9" />
+                            <path d="m16 16-4-4-4 4" />
+                          </svg>
+                        </div>
+
+                        <h3 className="mt-3 text-sm sm:text-[15px] font-bold text-[#1c201a]">
+                          Drop your images here
+                        </h3>
+
+                        <div className="mt-3.5">
+                          <span
+                            style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg px-7 py-2.5 text-sm font-bold shadow-xs transition hover:opacity-95 active:scale-[0.98] cursor-pointer min-w-[150px]"
+                          >
+                            <span>Choose file</span>
+                            <span className="text-base font-bold">↗</span>
+                          </span>
+                        </div>
+
+                        <p className="mt-2.5 text-[11px] text-[#767a74]">
+                          JPG, PNG, WebP &amp; PDF · Up to 50+ files
+                        </p>
+                      </div>
+
+                      <div className="mt-3.5 text-center">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLoadSample();
+                          }}
+                          disabled={loadingSample}
+                          className="text-xs font-semibold text-[#3158d5] hover:underline inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                        >
+                          <span>Try a sample image</span>
+                          <span>→</span>
+                        </button>
+                      </div>
+
+                      {isProcessingPdf && (
+                        <div className="mt-3 flex items-center justify-center gap-2 text-xs font-semibold text-[#3158d5]">
+                          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#3158d5] border-t-transparent" />
+                          {pdfProgressText}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* RIGHT COLUMN: SAMPLE PREVIEW (7/12 or 8/12) */}
+                  <div
+                    style={{ backgroundColor: "#ecebe4" }}
+                    className="lg:col-span-7 xl:col-span-8 p-3.5 sm:p-5 lg:p-7 flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* HEADER */}
+                      <div
+                        style={{ borderBottom: "1px solid #deded6" }}
+                        className="flex items-center justify-between pb-3 sm:pb-3.5"
+                      >
+                        <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                            <circle cx="9" cy="9" r="2"/>
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                          </svg>
+                          <span>editorial-photo.jpg</span>
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                          SAMPLE PREVIEW
+                        </span>
+                      </div>
+
+                      {/* DESKTOP LAYOUT (>= 1024px) */}
+                      <div className="hidden lg:flex mt-5 flex-row items-start gap-6">
+                        {/* ARTWORK CARD */}
+                        <div
+                          onClick={handleLoadSample}
+                          style={{ width: "240px", minWidth: "220px", maxWidth: "250px", flexShrink: 0 }}
+                          className="rounded-xl overflow-hidden shadow-xs border border-[#deded6] bg-white cursor-pointer group/art transition hover:scale-[1.01]"
+                          title="Click to test compression with this sample banner"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src="/compressor-sample-preview.png"
+                            alt="Sample High-Res Catalog Image"
+                            className="w-full h-auto object-cover block"
+                          />
+                        </div>
+
+                        {/* DETAILS & FEATURES LIST */}
+                        <div className="flex-1 min-w-0 w-full flex flex-col justify-between self-stretch">
+                          <div>
+                            <div className="flex items-center gap-2 text-xs font-bold text-[#1c201a]">
+                              <span style={{ backgroundColor: "#10b981" }} className="h-2 w-2 rounded-full inline-block" />
+                              <span>Lossless Compression Preview</span>
+                            </div>
+
+                            {/* INTERACTIVE SAMPLE CARD 1 */}
+                            <div
+                              onClick={handleLoadSample}
+                              style={{ border: "2px solid #365cd6", backgroundColor: "#ffffff" }}
+                              className="mt-3 rounded-xl p-3.5 shadow-xs cursor-pointer hover:border-[#2546b8] transition"
+                            >
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-[#3158d5]">
+                                SPLIT COMPARISON
+                              </div>
+                              <div className="mt-1 flex items-center justify-between text-xs font-bold text-[#1c201a]">
+                                <span>4.2 MB → 680 KB</span>
+                                <span className="text-[#10b981] font-bold text-xs">-84%</span>
+                              </div>
+                              <p className="mt-1 text-[11px] text-[#767a74]">
+                                Zero visual quality loss
+                              </p>
+                            </div>
+
+                            {/* SAMPLE CARD 2 */}
+                            <div
+                              style={{ border: "1px solid #deded6", backgroundColor: "#ffffff" }}
+                              className="mt-2.5 rounded-xl p-3.5 shadow-2xs"
+                            >
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                PIXEL FIDELITY
+                              </div>
+                              <div className="mt-1 flex items-center justify-between text-xs font-bold text-[#1c201a]">
+                                <span>100% Original Sharpness</span>
+                                <span className="text-slate-400 font-normal text-[11px]">Lossless WebP</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="mt-4 text-[11px] leading-relaxed text-[#767a74] text-center">
+                            Click image to test live split comparison slider
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* MOBILE & TABLET LAYOUT (< 1024px) */}
+                      <div className="block lg:hidden mt-3.5 sm:mt-5">
+                        <div className="flex flex-row items-start gap-3 sm:gap-4">
+                          {/* ARTWORK CARD */}
+                          <div
+                            onClick={handleLoadSample}
+                            style={{ width: "38%", minWidth: "120px", maxWidth: "165px", flexShrink: 0 }}
+                            className="rounded-xl overflow-hidden shadow-xs border border-[#deded6] bg-white cursor-pointer group/art transition hover:scale-[1.01]"
+                            title="Click to test compression with this sample banner"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src="/compressor-sample-preview.png"
+                              alt="Sample High-Res Catalog Image"
+                              className="w-full h-auto object-cover block"
+                            />
+                          </div>
+
+                          {/* DETAILS LIST */}
+                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                            <div>
+                              <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold text-[#1c201a]">
+                                <span style={{ backgroundColor: "#10b981" }} className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full inline-block" />
+                                <span>Lossless Compression</span>
+                              </div>
+
+                              <div
+                                onClick={handleLoadSample}
+                                style={{ border: "2px solid #3158d5", backgroundColor: "#ffffff" }}
+                                className="mt-2 sm:mt-3 rounded-xl p-2.5 sm:p-3.5 shadow-xs cursor-pointer"
+                              >
+                                <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#3158d5]">
+                                  SPLIT PREVIEW
+                                </div>
+                                <div className="mt-0.5 sm:mt-1 flex items-center justify-between text-[11px] sm:text-xs font-bold text-[#1c201a]">
+                                  <span>4.2 MB → 680 KB</span>
+                                  <span className="text-[#10b981] font-bold text-[11px]">-84%</span>
+                                </div>
+                              </div>
+
+                              <div
+                                style={{ border: "1px solid #deded6", backgroundColor: "#ffffff" }}
+                                className="mt-2 sm:mt-2.5 rounded-xl p-2.5 sm:p-3.5 shadow-2xs"
+                              >
+                                <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                                  FIDELITY
+                                </div>
+                                <div className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs font-bold text-[#1c201a]">
+                                  100% Original Sharpness
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="mt-3 sm:mt-4 text-[10.5px] sm:text-[11px] leading-relaxed text-[#767a74] text-center">
+                          Click image to test live split comparison slider
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
 
-                <h2 className="mt-5 text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight text-slate-900 group-hover:text-blue-900 transition-colors">
-                  Drop your images or multi-page catalogs here
-                </h2>
-
-                {/* BUTTONS (SIDE BY SIDE WITH BREATHING SPACE) */}
-                <div className="mt-8 sm:mt-10 mb-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      fileInputRef.current?.click();
-                    }}
-                    className="group/btn inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-blue-400 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] shadow-2xs hover:shadow-xs transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-slate-400 group-hover/btn:text-[#0055fe] transition-colors"
-                    >
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
+              {/* 3 TRUST PILLARS (HOMEPAGE MATCH) */}
+              <ScrollReveal delay={100}>
+                <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-6 sm:gap-12 text-xs sm:text-[13px] font-medium text-[#575a53] mx-auto text-center w-full">
+                  <div className="flex items-center gap-2">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
+                      <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    <span>Upload Now</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLoadSample();
-                    }}
-                    disabled={loadingSample}
-                    className="group/sample inline-flex min-w-[185px] sm:min-w-[210px] items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-blue-400/80 px-8 sm:px-10 py-4 sm:py-4.5 text-sm sm:text-base font-semibold text-slate-700 hover:text-[#0055fe] transition-all cursor-pointer shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
-                    title="Test immediately with a sample image"
-                  >
-                    {loadingSample ? (
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-                    ) : (
-                      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover/sample:text-[#0055fe] transition-colors">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                        <circle cx="8.5" cy="8.5" r="1.5" />
-                        <polyline points="21 15 16 10 5 21" />
-                      </svg>
-                    )}
-                    <span>Try Sample</span>
-                  </button>
-                </div>
-
-                {uploadError && (
-                  <div className="mt-4 text-xs font-semibold text-rose-600">
-                    {uploadError}
+                    <span>Free. No signup.</span>
                   </div>
-                )}
-
-                {isProcessingPdf && (
-                  <div className="mt-6 flex items-center justify-center gap-2 text-xs font-semibold text-blue-600">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-                    {pdfProgressText}
+                  <div className="flex items-center gap-2">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
+                      <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z"/>
+                    </svg>
+                    <span>Private, in-memory compression</span>
                   </div>
-                )}
-              </div>
-
-              {/* 4 Trust Feature Cards */}
-              <div className="mt-6 sm:mt-8 w-full">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                        <polyline points="21 15 16 10 5 21" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                        Lossless &amp; Lossy
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                        Up to 90% size reduction
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                        Ultra Fast
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                        Zero server latency
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z" />
-                        <path d="m9 12 2 2 4-4" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                        No signup required
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                        100% Free • Batch export
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
-                        Never leaves device
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                        100% In-browser processing
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
+                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    <span>Zero server uploads • Offline engine</span>
                   </div>
                 </div>
-              </div>
+              </ScrollReveal>
             </div>
           ) : (
             /* EDITOR WORKSPACE */
             <div className="space-y-6">
               {/* TOP ACTION & BATCH STATS BAR */}
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/80 bg-white/80 p-4 sm:p-5 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,.pdf"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    processIncomingFiles(Array.from(e.target.files));
+                  }
+                }}
+              />
+
+              {/* Desktop Bar (>= 640px): EXACT PREVIOUS WORKING CODE (100% UNTOUCHED) */}
+              <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="spellense-desktop-only flex flex-wrap items-center justify-between gap-4 rounded-2xl sm:rounded-3xl border p-4 sm:p-5 shadow-xs">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 cursor-pointer"
+                    style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                    className="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold text-[#1c201a] shadow-2xs transition hover:bg-[#efeee7] cursor-pointer"
                   >
                     <span>+ Add More Files</span>
                   </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*,.pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        processIncomingFiles(Array.from(e.target.files));
-                      }
-                    }}
-                  />
                   <button
                     type="button"
                     onClick={handleClearAll}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-rose-500 hover:text-rose-700 transition cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 transition cursor-pointer"
                   >
                     Clear All
                   </button>
@@ -1163,9 +1382,9 @@ export default function ImageCompressorClient() {
 
                 {/* Overall Batch Savings Badge */}
                 <div className="flex flex-wrap items-center gap-3 text-xs">
-                  <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-3.5 py-1.5 font-bold text-emerald-700 border border-emerald-200/80">
+                  <div style={{ backgroundColor: "#edf7ed", borderColor: "#c8e6c9", color: "#1b5e20" }} className="flex items-center gap-2 rounded-2xl px-3.5 py-1.5 font-bold border">
                     <span>Total Saved: {totalStats.saved}%</span>
-                    <span className="font-normal text-emerald-600">
+                    <span className="font-normal text-emerald-800">
                       ({formatBytes(totalStats.orig)} → {formatBytes(totalStats.comp)})
                     </span>
                   </div>
@@ -1175,7 +1394,8 @@ export default function ImageCompressorClient() {
                       type="button"
                       disabled={isZipping || isBatchCompressing}
                       onClick={handleDownloadAllZip}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-5 py-2 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition hover:shadow-lg hover:shadow-blue-600/35 disabled:opacity-50 cursor-pointer"
+                      style={{ backgroundColor: "#3158d5" }}
+                      className="inline-flex items-center gap-2 rounded-2xl px-5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-[#2546b8] disabled:opacity-50 cursor-pointer"
                     >
                       {isZipping ? (
                         <>
@@ -1204,172 +1424,263 @@ export default function ImageCompressorClient() {
                 </div>
               </div>
 
+              {/* Mobile Bar (< 640px): + Add More on Left, Clear All on Right (No Saved % badge) */}
+              <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="spellense-mobile-only flex items-center justify-between gap-2 rounded-2xl border px-3.5 py-2.5 shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                  className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold text-[#1c201a] shadow-2xs active:bg-[#efeee7] cursor-pointer whitespace-nowrap"
+                >
+                  <span>+ Add More</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="text-xs font-semibold text-rose-600 active:text-rose-700 transition cursor-pointer whitespace-nowrap px-1 py-1"
+                >
+                  Clear All
+                </button>
+              </div>
+
               {/* MAIN LAYOUT: PREVIEW ON LEFT (7-8 COLS), COMPRESSION SETTINGS ON RIGHT (4-5 COLS) */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* LEFT: PREVIEW BOX WITH INTERNAL MULTI-IMAGE THUMBNAIL REEL */}
                 <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
-                  {/* SQUOOSH-STYLE INTERACTIVE BEFORE/AFTER SLIDER */}
-                  <div className="relative rounded-3xl border border-slate-200/80 bg-slate-900/95 overflow-hidden shadow-2xl backdrop-blur-xl">
-                    {/* Viewport Top Toolbar */}
-                    <div className="absolute top-3 left-3 right-3 sm:top-3.5 sm:left-3.5 sm:right-3.5 z-30 flex items-center justify-between gap-1.5 pointer-events-none">
-                      {/* Left Badge: Original */}
-                      <div className="pointer-events-auto rounded-xl bg-slate-900/85 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-white backdrop-blur-md border border-white/10 shadow-xs whitespace-nowrap">
-                        ORIGINAL <span className="hidden sm:inline">• {activeItem?.width}×{activeItem?.height}</span> •{" "}
-                        {activeItem ? formatBytes(activeItem.originalSize) : "0 KB"}
+                  {/* SQUOOSH-STYLE INTERACTIVE BEFORE/AFTER SLIDER STUDIO FRAME */}
+                  <div
+                    style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                    className="w-full overflow-hidden rounded-2xl sm:rounded-3xl border shadow-xs flex flex-col"
+                  >
+                    {/* 1. STUDIO PREVIEW HEADER (HOMEPAGE MATCH) */}
+                    <div
+                      style={{ borderBottom: "1px solid #e5e5df", backgroundColor: "#faf9f6" }}
+                      className="flex items-center justify-between border-b px-4 py-3.5 sm:px-6"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span style={{ backgroundColor: "#3158d5" }} className="flex h-2.5 w-2.5 rounded-full shrink-0 animate-pulse" />
+                        <div className="min-w-0">
+                          <p style={{ color: "#1c201a" }} className="text-sm font-bold truncate">
+                            Image Quality Inspector
+                          </p>
+                          <p style={{ color: "#70746d" }} className="text-[11px] truncate">
+                            Interactive Squoosh-Style Split Comparison
+                          </p>
+                        </div>
                       </div>
 
-                      {/* Right Badge: Compressed */}
-                      <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 rounded-xl bg-blue-600/90 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-white backdrop-blur-md border border-blue-400/30 shadow-xs whitespace-nowrap">
-                        <span>
-                          {activeItem?.format.toUpperCase()} •{" "}
-                          {activeItem ? formatBytes(activeItem.compressedSize) : "..."}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          style={{ borderColor: "#e5e5df", backgroundColor: "#efeee7" }}
+                          className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-bold text-slate-600"
+                        >
+                          <svg className="h-3 w-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+                            <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/>
+                            <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/>
+                            <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
+                          </svg>
+                          Drag line to compare
                         </span>
-                        {activeItem && activeItem.compressedSize > 0 && (
-                          <span className="rounded-full bg-emerald-400/30 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-emerald-200">
+                        {activeItem && activeItem.originalSize > 0 && activeItem.compressedSize > 0 ? (
+                          <span
+                            style={{ backgroundColor: "#ecfdf5", borderColor: "#a7f3d0", color: "#059669" }}
+                            className="rounded-lg border px-2.5 py-1 text-[11px] font-bold"
+                          >
                             -
                             {Math.round(
                               ((activeItem.originalSize - activeItem.compressedSize) /
                                 activeItem.originalSize) *
                                 100
                             )}
-                            %
+                            % SAVED
+                          </span>
+                        ) : (
+                          <span
+                            style={{ backgroundColor: "#eff6ff", borderColor: "#bfdbfe", color: "#2563eb" }}
+                            className="rounded-lg border px-2.5 py-1 text-[11px] font-bold"
+                          >
+                            READY
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Zoom / Pan Controls (Bottom Left of Canvas) */}
-                    <div className="absolute bottom-3.5 left-3.5 z-30 flex items-center gap-1 rounded-xl bg-slate-900/85 p-1 border border-white/10 backdrop-blur-md">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setZoomLevel(1);
-                          setPanOffset({ x: 0, y: 0 });
-                        }}
-                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
-                          zoomLevel === 1
-                            ? "bg-blue-600 text-white"
-                            : "text-slate-300 hover:text-white"
-                        }`}
-                      >
-                        Fit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setZoomLevel(1.5)}
-                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
-                          zoomLevel === 1.5
-                            ? "bg-blue-600 text-white"
-                            : "text-slate-300 hover:text-white"
-                        }`}
-                      >
-                        1.5×
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setZoomLevel(2)}
-                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
-                          zoomLevel === 2
-                            ? "bg-blue-600 text-white"
-                            : "text-slate-300 hover:text-white"
-                        }`}
-                      >
-                        2×
-                      </button>
-                    </div>
-
-                    {/* MULTI-IMAGE THUMBNAIL REEL — Inside Preview Box on Right, Going Downwards */}
-                    {items.length > 1 && (
-                      <div className="absolute top-14 bottom-14 right-3 z-30 flex flex-col items-center pointer-events-auto">
-                        <div className="rounded-t-xl bg-slate-900/90 border border-white/10 px-2.5 py-1 text-[10px] font-bold text-slate-300 uppercase tracking-wider backdrop-blur-md shadow-xs">
-                          {items.length} Files
+                    {/* 2. SUB-BAR: REAL-TIME BEFORE & AFTER STATS + ZOOM DOCK */}
+                    {/* Desktop Sub-Bar (sm and up): EXACT PREVIOUS WORKING CODE (100% UNTOUCHED) */}
+                    <div
+                      style={{ borderBottom: "1px solid #e5e5df", backgroundColor: "#fdfdfb" }}
+                      className="spellense-desktop-only flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6 text-xs"
+                    >
+                      {/* Left: Original File Stats */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div
+                          style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                          className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-bold text-[#1c201a] shadow-2xs"
+                        >
+                          <span className="text-slate-400 font-semibold uppercase text-[10px]">Orig:</span>
+                          <span>{activeItem ? formatBytes(activeItem.originalSize) : "0 KB"}</span>
+                          {activeItem?.width && activeItem?.height && (
+                            <>
+                              <span className="text-slate-300">•</span>
+                              <span className="text-[#70746d] font-normal">{activeItem.width}×{activeItem.height}px</span>
+                            </>
+                          )}
                         </div>
 
-                        <div className="flex flex-col gap-2.5 overflow-y-auto max-h-[380px] sm:max-h-[420px] p-2 bg-slate-950/80 backdrop-blur-md rounded-b-xl border-x border-b border-white/10 shadow-2xl">
-                          {items.map((it, idx) => {
-                            const isSelected = it.id === (activeItem?.id || "");
-                            const savings =
-                              it.originalSize > 0 && it.compressedSize > 0
-                                ? Math.round(
-                                    ((it.originalSize - it.compressedSize) /
-                                      it.originalSize) *
-                                      100
-                                  )
-                                : 0;
+                        <span className="text-slate-400 font-bold">→</span>
 
-                            return (
-                              <div key={it.id} className="group relative">
-                                <button
-                                  type="button"
-                                  onClick={() => handleSelectActiveItem(it.id)}
-                                  title={`${it.name} • ${formatBytes(it.originalSize)} → ${
-                                    it.compressedSize > 0
-                                      ? formatBytes(it.compressedSize)
-                                      : "..."
-                                  }`}
-                                  className={`relative flex flex-col items-center rounded-xl p-0.5 transition-all cursor-pointer ${
-                                    isSelected
-                                      ? "ring-2 ring-blue-500 bg-blue-600/30 scale-105 shadow-lg shadow-blue-500/40"
-                                      : "opacity-60 hover:opacity-100 hover:scale-102"
-                                  }`}
-                                >
-                                  <div className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-lg overflow-hidden border border-white/20 bg-slate-800">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={it.compressedUrl || it.originalUrl}
-                                      alt={it.name}
-                                      className="h-full w-full object-cover"
-                                    />
-                                    <span className="absolute bottom-0.5 left-0.5 rounded bg-black/75 px-1 py-0.2 text-[9px] font-mono font-bold text-white leading-none">
-                                      #{idx + 1}
-                                    </span>
-                                    {savings > 0 && (
-                                      <span className="absolute top-0.5 right-0.5 rounded bg-emerald-500 px-1 py-0.2 text-[8px] font-bold text-white leading-none">
-                                        -{savings}%
-                                      </span>
-                                    )}
-                                  </div>
-                                </button>
-
-                                {/* Quick delete button on hover */}
-                                <button
-                                  type="button"
-                                  title="Remove"
-                                  onClick={(e) => handleRemoveItem(it.id, e)}
-                                  className="absolute -top-1 -right-1 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-white shadow-xs hover:bg-rose-700 text-[10px] cursor-pointer"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            );
-                          })}
+                        {/* Right: Compressed File Stats */}
+                        <div
+                          style={{ borderColor: "#bfdbfe", backgroundColor: "#eff6ff" }}
+                          className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-bold text-[#3158d5] shadow-2xs"
+                        >
+                          <span className="uppercase text-[10px]">{activeItem?.format || "WebP"}:</span>
+                          <span>{activeItem && activeItem.compressedSize > 0 ? formatBytes(activeItem.compressedSize) : "..."}</span>
                         </div>
                       </div>
-                    )}
 
-                    {/* SQUOOSH SPLIT SLIDER CANVAS */}
+                      {/* Right: Zoom Level Dock */}
+                      <div
+                        style={{ backgroundColor: "#f6f5f3", borderColor: "#e5e5df" }}
+                        className="inline-flex items-center gap-1 rounded-xl p-1 border shadow-xs"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setZoomLevel(1);
+                            setPanOffset({ x: 0, y: 0 });
+                          }}
+                          style={{
+                            backgroundColor: zoomLevel === 1 ? "#3158d5" : "transparent",
+                            color: zoomLevel === 1 ? "#ffffff" : "#575a53",
+                          }}
+                          className="px-3 py-1 text-xs font-bold rounded-lg transition hover:text-[#1c201a] cursor-pointer"
+                        >
+                          Fit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setZoomLevel(1.5)}
+                          style={{
+                            backgroundColor: zoomLevel === 1.5 ? "#3158d5" : "transparent",
+                            color: zoomLevel === 1.5 ? "#ffffff" : "#575a53",
+                          }}
+                          className="px-3 py-1 text-xs font-bold rounded-lg transition hover:text-[#1c201a] cursor-pointer"
+                        >
+                          1.5×
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setZoomLevel(2)}
+                          style={{
+                            backgroundColor: zoomLevel === 2 ? "#3158d5" : "transparent",
+                            color: zoomLevel === 2 ? "#ffffff" : "#575a53",
+                          }}
+                          className="px-3 py-1 text-xs font-bold rounded-lg transition hover:text-[#1c201a] cursor-pointer"
+                        >
+                          2×
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Mobile Sub-Bar (< sm): All in one line */}
+                    <div
+                      style={{ borderBottom: "1px solid #e5e5df", backgroundColor: "#fdfdfb" }}
+                      className="spellense-mobile-only flex items-center justify-between gap-1.5 px-3 py-2 text-xs overflow-x-auto"
+                    >
+                      <div className="flex items-center gap-1 shrink-0">
+                        <div
+                          style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                          className="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold text-[#1c201a] shadow-2xs whitespace-nowrap"
+                        >
+                          <span className="text-slate-400 font-semibold uppercase text-[9px]">Orig:</span>
+                          <span>{activeItem ? formatBytes(activeItem.originalSize) : "0 KB"}</span>
+                        </div>
+
+                        <span className="text-slate-400 font-bold text-[10px]">→</span>
+
+                        <div
+                          style={{ borderColor: "#bfdbfe", backgroundColor: "#eff6ff" }}
+                          className="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold text-[#3158d5] shadow-2xs whitespace-nowrap"
+                        >
+                          <span className="uppercase text-[9px]">{activeItem?.format || "WebP"}:</span>
+                          <span>{activeItem && activeItem.compressedSize > 0 ? formatBytes(activeItem.compressedSize) : "..."}</span>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{ backgroundColor: "#f6f5f3", borderColor: "#e5e5df" }}
+                        className="inline-flex items-center gap-0.5 rounded-xl p-0.5 border shadow-xs shrink-0"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setZoomLevel(1);
+                            setPanOffset({ x: 0, y: 0 });
+                          }}
+                          style={{
+                            backgroundColor: zoomLevel === 1 ? "#3158d5" : "transparent",
+                            color: zoomLevel === 1 ? "#ffffff" : "#575a53",
+                          }}
+                          className="px-2 py-0.5 text-[10px] font-bold rounded-lg transition hover:text-[#1c201a] cursor-pointer whitespace-nowrap"
+                        >
+                          Fit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setZoomLevel(1.5)}
+                          style={{
+                            backgroundColor: zoomLevel === 1.5 ? "#3158d5" : "transparent",
+                            color: zoomLevel === 1.5 ? "#ffffff" : "#575a53",
+                          }}
+                          className="px-2 py-0.5 text-[10px] font-bold rounded-lg transition hover:text-[#1c201a] cursor-pointer whitespace-nowrap"
+                        >
+                          1.5×
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setZoomLevel(2)}
+                          style={{
+                            backgroundColor: zoomLevel === 2 ? "#3158d5" : "transparent",
+                            color: zoomLevel === 2 ? "#ffffff" : "#575a53",
+                          }}
+                          className="px-2 py-0.5 text-[10px] font-bold rounded-lg transition hover:text-[#1c201a] cursor-pointer whitespace-nowrap"
+                        >
+                          2×
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 3. SQUOOSH SPLIT SLIDER CANVAS VIEWPORT */}
                     <div
                       ref={compareContainerRef}
-                      className="relative min-h-[460px] sm:min-h-[520px] flex items-center justify-center overflow-hidden cursor-crosshair select-none"
+                      className="relative min-h-[460px] sm:min-h-[520px] flex items-center justify-center overflow-hidden cursor-ew-resize select-none"
                       style={{
-                        background:
-                          "repeating-conic-gradient(#1e293b 0% 25%, #0f172a 0% 50%) 50% / 20px 20px",
+                        backgroundColor: "#efeee7",
+                        backgroundImage:
+                          "repeating-conic-gradient(#e5e5df 0% 25%, #efeee7 0% 50%)",
+                        backgroundSize: "20px 20px",
                       }}
                       onMouseDown={(e) => {
-                        if (zoomLevel > 1) {
+                        if (zoomLevel > 1 && (e.ctrlKey || e.metaKey || e.altKey)) {
                           setIsPanning(true);
                           panStartRef.current = {
                             x: e.clientX - panOffset.x,
                             y: e.clientY - panOffset.y,
                           };
+                        } else {
+                          handleSliderMove(e.clientX);
+                          setIsDraggingHandle(true);
                         }
                       }}
                     >
+                      {/* The Interactive Image & Split Line */}
                       {activeItem ? (
                         <div
-                          className={`relative flex items-center justify-center transition-transform duration-75 ${
-                            items.length > 1 ? "pr-14 sm:pr-18" : ""
-                          }`}
+                          ref={imageWrapperRef}
+                          className="relative inline-block max-w-full transition-transform duration-75 select-none"
                           style={{
                             transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
                             transformOrigin: "center center",
@@ -1380,10 +1691,10 @@ export default function ImageCompressorClient() {
                           <img
                             src={activeItem.compressedUrl || activeItem.originalUrl}
                             alt="Compressed preview"
-                            className="max-h-[480px] sm:max-h-[520px] w-auto object-contain pointer-events-none block"
+                            className="max-h-[460px] sm:max-h-[500px] w-auto max-w-full object-contain pointer-events-none block rounded-sm shadow-md"
                           />
 
-                          {/* 2. Original Image (Clipped to Slider Left) */}
+                          {/* 2. Original Image (Clipped overlay) */}
                           <div
                             className="absolute inset-0 overflow-hidden pointer-events-none"
                             style={{
@@ -1394,14 +1705,17 @@ export default function ImageCompressorClient() {
                             <img
                               src={activeItem.originalUrl}
                               alt="Original preview"
-                              className="max-h-[480px] sm:max-h-[520px] w-auto object-contain block"
+                              className="h-full w-full object-contain pointer-events-none block rounded-sm"
                             />
                           </div>
 
-                          {/* 3. Draggable Divider Handle Line */}
+                          {/* 3. High-Contrast Draggable Divider Handle Line */}
                           <div
-                            className="absolute top-0 bottom-0 z-20 w-0.5 bg-blue-400 cursor-ew-resize pointer-events-auto shadow-[0_0_12px_rgba(37,99,235,0.8)]"
-                            style={{ left: `${sliderPos}%` }}
+                            className="absolute top-0 bottom-0 z-20 cursor-ew-resize pointer-events-auto select-none"
+                            style={{
+                              left: `${sliderPos}%`,
+                              transform: "translateX(-50%)",
+                            }}
                             onMouseDown={(e) => {
                               e.stopPropagation();
                               handleMouseDownSlider();
@@ -1411,39 +1725,259 @@ export default function ImageCompressorClient() {
                               setIsDraggingHandle(true);
                             }}
                           >
-                            {/* BLUE Circular Handle with White Left/Right Arrows */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl shadow-blue-600/50 border-2 border-white transition-transform hover:scale-110 active:scale-95 cursor-ew-resize">
+                            {/* THE SEPARATION LINE: 3px Crisp Pure White Line with Deep Double Shadow */}
+                            <div
+                              style={{
+                                width: "3px",
+                                backgroundColor: "#ffffff",
+                                boxShadow:
+                                  "0 0 8px rgba(0,0,0,0.75), 0 0 2px rgba(0,0,0,0.95), inset 0 0 1px rgba(0,0,0,0.5)",
+                              }}
+                              className="h-full mx-auto"
+                            />
+
+                            {/* CIRCULAR DRAG HANDLE WITH AUTHENTIC LEFT & RIGHT ARROWS */}
+                            <div
+                              style={{
+                                backgroundColor: "#3158d5",
+                                borderColor: "#ffffff",
+                                boxShadow:
+                                  "0 4px 14px rgba(0,0,0,0.4), 0 0 0 1.5px rgba(49,88,213,0.35)",
+                              }}
+                              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full text-white border-2 transition-transform hover:scale-110 active:scale-95 cursor-ew-resize"
+                            >
                               <svg
                                 width="16"
                                 height="16"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
-                                strokeWidth="2.5"
+                                strokeWidth="2.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                               >
-                                <polyline points="15 18 9 12 15 6" />
-                                <polyline points="9 18 3 12 9 6" />
+                                <polyline points="8 17 3 12 8 7" />
+                                <polyline points="16 7 21 12 16 17" />
+                                <line x1="12" y1="5" x2="12" y2="19" strokeWidth="1.5" stroke="rgba(255,255,255,0.7)" />
                               </svg>
                             </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="text-slate-500 text-sm">No image selected</div>
+                        <div className="text-[#70746d] text-sm font-semibold">No image selected</div>
                       )}
                     </div>
+
+                    {/* 4. MULTI-IMAGE FILMSTRIP REEL (Clean Horizontal Carousel at bottom of Studio Frame) */}
+                    {items.length > 1 && (
+                      isBatchQueueOpen ? (
+                        <div
+                          style={{ borderTop: "1px solid #e5e5df", backgroundColor: "#fdfdfb" }}
+                          className="p-3 sm:p-3.5"
+                        >
+                          <div className="flex items-center justify-between gap-2 pb-2.5 px-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-[#1c201a]">
+                                Batch Queue
+                              </span>
+                              <span
+                                style={{ backgroundColor: "#edf7ed", color: "#1b5e20", borderColor: "#c8e6c9" }}
+                                className="rounded-full border px-2 py-0.5 text-[10px] font-bold"
+                              >
+                                {items.length} Images
+                              </span>
+                              <span className="hidden sm:inline text-[11px] text-[#70746d]">
+                                • Select to preview & fine-tune
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => scrollFilmstrip("left")}
+                                style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                                className="h-7 w-7 rounded-lg border flex items-center justify-center text-[#575a53] hover:text-[#1c201a] hover:bg-[#efeee7] transition cursor-pointer shadow-2xs text-xs font-bold"
+                                title="Previous images"
+                              >
+                                ‹
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => scrollFilmstrip("right")}
+                                style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                                className="h-7 w-7 rounded-lg border flex items-center justify-center text-[#575a53] hover:text-[#1c201a] hover:bg-[#efeee7] transition cursor-pointer shadow-2xs text-xs font-bold"
+                                title="Next images"
+                              >
+                                ›
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setIsBatchQueueOpen(false)}
+                                style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                                className="h-7 w-7 rounded-lg border flex items-center justify-center text-[#575a53] hover:text-rose-600 hover:bg-[#fee2e2] transition cursor-pointer shadow-2xs text-sm font-bold ml-0.5"
+                                title="Close Batch Queue"
+                                aria-label="Close Batch Queue"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Horizontal Scrollable Thumbnails Track */}
+                          <div
+                            ref={filmstripRef}
+                            className="flex items-center gap-2.5 overflow-x-auto py-1 scroll-smooth"
+                            style={{ scrollbarWidth: "thin" }}
+                          >
+                            {items.map((it, idx) => {
+                              const isSelected = it.id === (activeItem?.id || "");
+                              const savings =
+                                it.originalSize > 0 && it.compressedSize > 0
+                                  ? Math.round(
+                                      ((it.originalSize - it.compressedSize) /
+                                        it.originalSize) *
+                                        100
+                                    )
+                                  : 0;
+                              return (
+                                <div
+                                  key={it.id}
+                                  className="relative shrink-0 pt-1 pr-1"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      handleSelectActiveItem(it.id);
+                                      e.currentTarget.scrollIntoView({
+                                        behavior: "smooth",
+                                        block: "nearest",
+                                        inline: "center",
+                                      });
+                                    }}
+                                    title={`${it.name} • ${formatBytes(it.originalSize)} → ${
+                                      it.compressedSize > 0
+                                        ? formatBytes(it.compressedSize)
+                                        : "..."
+                                    }`}
+                                    style={{
+                                      borderColor: isSelected ? "#3158d5" : "#e5e5df",
+                                      backgroundColor: isSelected ? "#e8effe" : "#ffffff",
+                                    }}
+                                    className={`relative flex flex-col items-center rounded-2xl p-1 transition-all cursor-pointer ${
+                                      isSelected
+                                        ? "ring-2 ring-[#3158d5] shadow-xs scale-[1.02]"
+                                        : "border hover:border-slate-400 hover:shadow-2xs opacity-85 hover:opacity-100"
+                                    }`}
+                                  >
+                                    <div
+                                      style={{ borderColor: "#deded6", backgroundColor: "#efeee7" }}
+                                      className="relative h-14 w-14 sm:h-16 sm:w-16 rounded-xl overflow-hidden border"
+                                    >
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={it.compressedUrl || it.originalUrl}
+                                        alt={it.name}
+                                        className="h-full w-full object-cover"
+                                      />
+                                      {/* Image Index Pill (Bottom-Left) */}
+                                      <span className="absolute bottom-1 left-1 rounded bg-black/75 px-1 py-0.2 text-[8px] font-mono font-bold text-white leading-none">
+                                        #{idx + 1}
+                                      </span>
+                                      {/* Savings Pill (Bottom-Right) */}
+                                      {savings > 0 && (
+                                        <span className="absolute bottom-1 right-1 rounded-full bg-emerald-600 px-1.5 py-0.2 text-[8px] font-bold text-white leading-none shadow-xs">
+                                          -{savings}%
+                                        </span>
+                                      )}
+                                    </div>
+                                  </button>
+
+                                  {/* Delete / Close Button (Always visible on top-right corner of each image) */}
+                                  <button
+                                    type="button"
+                                    title={`Remove ${it.name}`}
+                                    aria-label={`Remove ${it.name}`}
+                                    onClick={(e) => handleRemoveItem(it.id, e)}
+                                    onTouchEnd={(e) => e.stopPropagation()}
+                                    style={{
+                                      backgroundColor: "#ef4444",
+                                      borderColor: "#ffffff",
+                                    }}
+                                    className="absolute top-0 right-0 h-5 w-5 rounded-full border-2 text-white shadow-md flex items-center justify-center hover:bg-rose-700 active:scale-90 transition cursor-pointer z-20"
+                                  >
+                                    <svg
+                                      width="9"
+                                      height="9"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="3.2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <line x1="18" y1="6" x2="6" y2="18" />
+                                      <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              );
+                            })}
+
+                            {/* Quick "+ Add More" Button Card */}
+                            <div className="shrink-0 pt-1 pr-1">
+                              <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                style={{ borderColor: "#deded6", backgroundColor: "#ffffff" }}
+                                className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-0.5 text-[#70746d] hover:border-[#3158d5] hover:text-[#3158d5] hover:bg-[#eff6ff] transition cursor-pointer shadow-2xs group"
+                                title="Add more files"
+                              >
+                                <span className="text-base font-bold leading-none group-hover:scale-110 transition-transform">+</span>
+                                <span className="text-[9px] font-bold">Add</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          style={{ borderTop: "1px solid #e5e5df", backgroundColor: "#fdfdfb" }}
+                          className="px-3.5 py-2 flex items-center justify-between"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setIsBatchQueueOpen(true)}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#3158d5] hover:text-[#2546b8] transition cursor-pointer"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                              <circle cx="8.5" cy="8.5" r="1.5"/>
+                              <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            <span>Show Batch Queue ({items.length} images)</span>
+                          </button>
+                          <span className="text-[11px] text-[#70746d] font-medium">
+                            Viewing #{items.findIndex((it) => it.id === activeItem?.id) + 1} of {items.length}
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
 
-                  {/* CROSS-TOOL WORKFLOW BRIDGES */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-200/80 bg-white/90 p-3.5 shadow-xs backdrop-blur-md">
-                    <div className="text-xs text-slate-600 font-normal">
-                      <span className="font-bold text-slate-900">Compressed your image?</span>{" "}
+                  {/* CROSS-TOOL WORKFLOW BRIDGES (DESKTOP: Under preview canvas) */}
+                  <div
+                    style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                    className="spellense-desktop-only flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3.5 shadow-xs"
+                  >
+                    <div className="text-xs text-[#575a53] font-normal">
+                      <span className="font-bold text-[#1c201a]">Compressed your image?</span>{" "}
                       Check the text inside it for typos too →
                     </div>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={handleSendToSpellcheck}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 transition hover:bg-blue-100 cursor-pointer"
+                        style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                        className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition hover:bg-[#2546b8] cursor-pointer shadow-xs"
                       >
                         <span>Run Spellcheck</span>
                         <span>→</span>
@@ -1451,7 +1985,8 @@ export default function ImageCompressorClient() {
                       <button
                         type="button"
                         onClick={handleSendToImageToText}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 cursor-pointer"
+                        style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df", color: "#1c201a" }}
+                        className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition hover:bg-[#efeee7] cursor-pointer"
                       >
                         <span>Extract Text (OCR)</span>
                         <span>→</span>
@@ -1462,43 +1997,49 @@ export default function ImageCompressorClient() {
 
                 {/* RIGHT: COMPRESSION SETTINGS CARD DIRECTLY ON RIGHT OF PREVIEW BOX */}
                 <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
-                  <div className="rounded-3xl border border-white/90 bg-white/90 p-5 sm:p-6 shadow-xl shadow-blue-500/5 backdrop-blur-xl">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div
+                    style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                    className="rounded-2xl sm:rounded-3xl border p-5 sm:p-6 shadow-xs"
+                  >
+                    <div style={{ borderBottom: "1px solid #e5e5df" }} className="flex items-center justify-between pb-3">
                       <div>
-                        <h3 className="text-base font-bold text-slate-900">
+                        <h3 className="text-base font-bold text-[#1c201a]">
                           Compression Settings
                         </h3>
-                        <p className="text-xs text-slate-500 mt-0.5 font-normal">
+                        <p className="text-xs text-[#70746d] mt-0.5 font-normal">
                           Fine-tune quality, format, and size for optimal clarity.
                         </p>
                       </div>
                       {isBatchCompressing && (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600">
-                          <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#3158d5]">
+                          <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-[#3158d5] border-t-transparent" />
                           Optimizing...
                         </span>
                       )}
                     </div>
 
-                    {/* ACTIVE IMAGE INFO & DOWNLOAD */}
+                    {/* ACTIVE IMAGE INFO & DOWNLOAD (Desktop only; on mobile, frozen bottom download bar is used) */}
                     {activeItem && (
-                      <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5">
+                      <div
+                        style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df" }}
+                        className="spellense-desktop-only mt-4 rounded-2xl border p-3.5"
+                      >
                         <div className="flex items-center justify-between gap-2">
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-slate-900 truncate">
+                            <div className="text-xs font-bold text-[#1c201a] truncate">
                               {activeItem.name}
                             </div>
-                            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5 font-normal">
+                            <div className="text-[11px] text-[#70746d] flex items-center gap-1.5 mt-0.5 font-normal">
                               <span>{formatBytes(activeItem.originalSize)}</span>
                               <span>→</span>
-                              <span className="font-bold text-blue-700">
+                              <span className="font-bold text-[#3158d5]">
                                 {activeItem.compressedSize > 0
                                   ? formatBytes(activeItem.compressedSize)
                                   : "..."}
                               </span>
                               {activeItem.originalSize > 0 &&
                                 activeItem.compressedSize > 0 && (
-                                  <span className="rounded bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-700">
+                                  <span className="rounded bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-800">
                                     -
                                     {Math.round(
                                       ((activeItem.originalSize -
@@ -1514,7 +2055,8 @@ export default function ImageCompressorClient() {
                           <button
                             type="button"
                             onClick={() => handleDownloadItem(activeItem)}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+                            style={{ backgroundColor: "#3158d5" }}
+                            className="inline-flex items-center gap-1.5 rounded-xl text-white px-3.5 py-2 text-xs font-bold shadow-xs transition hover:bg-[#2546b8] active:scale-95 cursor-pointer shrink-0"
                           >
                             <svg
                               width="13"
@@ -1536,53 +2078,109 @@ export default function ImageCompressorClient() {
 
                     {/* FORMAT SELECTION */}
                     <div className="mt-5">
-                      <label className="text-sm font-bold text-slate-800 block">
+                      <label className="text-sm font-bold text-[#1c201a] block">
                         Output Format
                       </label>
-                      <div className="mt-2 grid grid-cols-2 gap-2">
-                        {FORMAT_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => {
-                              setGlobalFormat(opt.value);
+
+                      {/* Mobile Only (< sm): Output Format Dropdown Menu */}
+                      <div className="spellense-mobile-only mt-2">
+                        <div className="relative">
+                          <select
+                            value={globalFormat}
+                            onChange={(e) => setGlobalFormat(e.target.value as OutputFormat)}
+                            style={{
+                              backgroundColor: "#f8fafd",
+                              borderColor: "#3158d5",
+                              borderWidth: "1.5px",
+                              borderStyle: "solid",
+                              color: "#1c201a",
                             }}
-                            className={`rounded-2xl border p-2.5 text-left transition cursor-pointer ${
-                              globalFormat === opt.value
-                                ? "border-blue-600 bg-blue-50/80 text-blue-900 shadow-2xs"
-                                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                            }`}
+                            className="w-full appearance-none rounded-xl px-3.5 py-2.5 pr-10 text-xs font-bold shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#3158d5]/20 cursor-pointer"
                           >
-                            <div className="text-sm font-bold text-slate-900 truncate">
-                              {opt.label.split(" ")[0]}
-                            </div>
-                            <div className="text-[11px] text-slate-500 mt-0.5 truncate font-normal">
-                              {opt.value === "webp"
-                                ? "Best for Web"
-                                : opt.value === "jpeg"
-                                ? "Photos & Print"
-                                : opt.value === "png"
-                                ? "Transparency"
-                                : opt.value === "avif"
-                                ? "Next-gen"
-                                : "Keep Original"}
-                            </div>
-                          </button>
-                        ))}
+                            {FORMAT_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label} — {opt.value === "webp" ? "Best for Web" : opt.value === "jpeg" ? "Photos & Print" : opt.value === "png" ? "Transparency" : opt.value === "avif" ? "Next-gen" : "Keep Original"}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#3158d5]">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Desktop Only (sm and up): EXACT PREVIOUS 2-Column Grid Cards */}
+                      <div className="spellense-desktop-only grid grid-cols-2 gap-2.5 mt-2.5">
+                        {FORMAT_OPTIONS.map((opt) => {
+                          const isSelected = globalFormat === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => {
+                                setGlobalFormat(opt.value);
+                              }}
+                              style={{
+                                backgroundColor: isSelected ? "#e8effe" : "#ffffff",
+                                borderColor: isSelected ? "#3158d5" : "#e5e5df",
+                                borderWidth: "1px",
+                                borderStyle: "solid",
+                              }}
+                              className={`rounded-2xl p-2.5 sm:p-3 text-left transition-all cursor-pointer relative ${
+                                isSelected
+                                  ? "shadow-xs"
+                                  : "hover:bg-[#f6f5f3] hover:border-[#deded6]"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <div
+                                  style={{ color: isSelected ? "#3158d5" : "#1c201a" }}
+                                  className="text-sm font-bold truncate"
+                                >
+                                  {opt.label.split(" ")[0]}
+                                </div>
+                                {isSelected && (
+                                  <span
+                                    style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold"
+                                  >
+                                    ✓
+                                  </span>
+                                )}
+                              </div>
+                              <div
+                                style={{ color: isSelected ? "#3158d5" : "#70746d" }}
+                                className="text-[11px] mt-0.5 truncate font-medium"
+                              >
+                                {opt.value === "webp"
+                                  ? "Best for Web"
+                                  : opt.value === "jpeg"
+                                  ? "Photos & Print"
+                                  : opt.value === "png"
+                                  ? "Transparency"
+                                  : opt.value === "avif"
+                                  ? "Next-gen"
+                                  : "Keep Original"}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
                     {/* QUALITY SLIDER */}
                     <div className="mt-5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold text-slate-800">
+                        <label className="text-sm font-bold text-[#1c201a]">
                           Quality Level
                         </label>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-base font-mono font-bold text-blue-600">
+                          <span className="text-base font-mono font-bold text-[#3158d5]">
                             {globalQuality}%
                           </span>
-                          <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
+                          <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-[#3158d5]">
                             {globalQuality >= 85
                               ? "High Fidelity"
                               : globalQuality >= 70
@@ -1597,51 +2195,116 @@ export default function ImageCompressorClient() {
                         max="98"
                         value={globalQuality}
                         onChange={(e) => setGlobalQuality(Number(e.target.value))}
-                        className="mt-3 w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                        className="mt-3 w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#3158d5]"
                       />
-                      <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
+                      <div className="mt-1.5 flex justify-between text-[11px] font-medium text-[#70746d]">
                         <span>Smallest (10%)</span>
                         <span>80% (Default)</span>
                         <span>Lossless (98%)</span>
                       </div>
                     </div>
 
-                    {/* PRESETS */}
-                    <div className="mt-3.5 flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-bold text-slate-500">Presets:</span>
-                      {PRESETS.map((p) => (
-                        <button
-                          key={p.name}
-                          type="button"
-                          onClick={() => {
-                            setGlobalQuality(p.quality);
-                            setGlobalFormat(p.format);
+                    {/* PRESETS (DESKTOP: BUTTONS) */}
+                    <div className="spellense-desktop-only mt-3.5 flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-bold text-[#70746d]">Presets:</span>
+                      {PRESETS.map((p) => {
+                        const isSelected = globalQuality === p.quality && globalFormat === p.format;
+                        return (
+                          <button
+                            key={p.name}
+                            type="button"
+                            onClick={() => {
+                              setGlobalQuality(p.quality);
+                              setGlobalFormat(p.format);
+                            }}
+                            style={{
+                              backgroundColor: isSelected ? "#e8effe" : "#ffffff",
+                              borderColor: isSelected ? "#3158d5" : "#e5e5df",
+                              borderWidth: "1px",
+                              borderStyle: "solid",
+                              color: isSelected ? "#3158d5" : "#575a53",
+                            }}
+                            className="rounded-xl px-2.5 py-1 text-xs font-semibold transition cursor-pointer hover:border-[#3158d5] hover:text-[#3158d5]"
+                          >
+                            {p.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* PRESETS (MOBILE ONLY: DROPDOWN MENU) */}
+                    <div className="spellense-mobile-only mt-3.5">
+                      <label className="text-xs font-bold text-[#70746d] block mb-1.5">
+                        Presets
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={
+                            PRESETS.find((p) => p.quality === globalQuality && p.format === globalFormat)?.name || "custom"
+                          }
+                          onChange={(e) => {
+                            const found = PRESETS.find((p) => p.name === e.target.value);
+                            if (found) {
+                              setGlobalQuality(found.quality);
+                              setGlobalFormat(found.format);
+                            }
                           }}
-                          className="rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-white hover:text-blue-600 transition cursor-pointer"
+                          style={{
+                            backgroundColor: "#f8fafd",
+                            borderColor: "#3158d5",
+                            borderWidth: "1.5px",
+                            borderStyle: "solid",
+                            color: "#1c201a",
+                          }}
+                          className="w-full appearance-none rounded-xl px-3.5 py-2.5 pr-10 text-xs font-bold shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#3158d5]/20 cursor-pointer"
                         >
-                          {p.name}
-                        </button>
-                      ))}
+                          <option value="custom" disabled hidden>
+                            Custom Quality ({globalQuality}%)
+                          </option>
+                          {PRESETS.map((p) => (
+                            <option key={p.name} value={p.name}>
+                              {p.name} ({p.quality}%)
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#3158d5]">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
 
                     {/* DIMENSION & RESIZE CONTROLS (With % Presets and Width x Height Lock) */}
-                    <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
+                    <div
+                      style={{
+                        borderColor: enableResize ? "#bfdbfe" : "#e5e5df",
+                        backgroundColor: enableResize ? "#f8fafd" : "#faf9f6",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                      }}
+                      className="mt-4 rounded-2xl p-3.5 shadow-2xs transition-colors"
+                    >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                           <div
-                            className={`flex h-7 w-7 items-center justify-center rounded-lg ${
-                              enableResize
-                                ? "bg-blue-600 text-white"
-                                : "bg-blue-50 text-blue-600"
-                            }`}
+                            style={{
+                              backgroundColor: enableResize ? "#3158d5" : "#e8effe",
+                              color: enableResize ? "#ffffff" : "#3158d5",
+                              border: "1px solid",
+                              borderColor: enableResize ? "#3158d5" : "#bfdbfe",
+                            }}
+                            className="flex h-8 w-8 items-center justify-center rounded-xl shrink-0 shadow-2xs transition-colors"
                           >
                             <svg
-                              width="14"
-                              height="14"
+                              width="16"
+                              height="16"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
-                              strokeWidth="2.5"
+                              strokeWidth="2.4"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
                             >
                               <polyline points="15 3 21 3 21 9" />
                               <polyline points="9 21 3 21 3 15" />
@@ -1650,10 +2313,10 @@ export default function ImageCompressorClient() {
                             </svg>
                           </div>
                           <div>
-                            <div className="text-xs font-bold text-slate-900">
+                            <div className="text-xs font-bold text-[#1c201a]">
                               Resize Dimensions
                             </div>
-                            <div className="text-[11px] text-slate-500 font-normal">
+                            <div className="text-[11px] text-[#70746d] font-normal">
                               {enableResize
                                 ? `${activeItem?.width || 0}×${activeItem?.height || 0}px (${customScalePercent}%)`
                                 : `100% Original Locked (${activeItem?.width || 0}×${activeItem?.height || 0}px)`}
@@ -1661,13 +2324,17 @@ export default function ImageCompressorClient() {
                           </div>
                         </div>
 
-                        {/* Toggle Switch */}
+                        {/* High-Contrast Modern Toggle Switch */}
                         <button
                           type="button"
+                          role="switch"
+                          aria-checked={enableResize}
                           onClick={() => handleToggleResize(!enableResize)}
-                          className={`h-5 w-9 rounded-full transition-colors cursor-pointer relative shrink-0 ${
-                            enableResize ? "bg-blue-600" : "bg-slate-300"
-                          }`}
+                          style={{
+                            backgroundColor: enableResize ? "#3158d5" : "#cbd5e1",
+                            borderColor: enableResize ? "#3158d5" : "#94a3b8",
+                          }}
+                          className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ease-in-out focus:outline-none shadow-inner"
                           title={
                             enableResize
                               ? "Disable resize (Lock 100%)"
@@ -1675,51 +2342,65 @@ export default function ImageCompressorClient() {
                           }
                         >
                           <span
-                            className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-transform ${
-                              enableResize ? "translate-x-4" : "translate-x-0"
-                            }`}
+                            style={{
+                              transform: enableResize ? "translateX(20px)" : "translateX(0px)",
+                              backgroundColor: "#ffffff",
+                              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.25)",
+                            }}
+                            className="pointer-events-none inline-block h-5 w-5 transform rounded-full ring-0 transition duration-200 ease-in-out"
                           />
                         </button>
                       </div>
 
                       {/* EXPANDED RESIZE CONTROLS */}
                       {enableResize && (
-                        <div className="mt-3.5 pt-3 border-t border-slate-100 space-y-3">
+                        <div style={{ borderTop: "1px solid #e5e5df" }} className="mt-3.5 pt-3 space-y-3">
                           {/* QUICK PERCENTAGE PRESETS */}
                           <div>
-                            <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                            <div className="flex items-center justify-between text-xs font-bold text-[#575a53]">
                               <span>Scale Percentage</span>
-                              <span className="font-mono text-blue-600">
+                              <span className="font-mono text-[#3158d5] font-bold">
                                 {customScalePercent}%
                               </span>
                             </div>
-                            <div className="mt-1.5 grid grid-cols-4 gap-1.5">
-                              {[100, 75, 50, 25].map((pct) => (
-                                <button
-                                  key={pct}
-                                  type="button"
-                                  onClick={() => handlePercentChange(pct)}
-                                  className={`rounded-xl py-1.5 text-xs font-bold transition cursor-pointer ${
-                                    customScalePercent === pct
-                                      ? "bg-blue-600 text-white shadow-2xs"
-                                      : "bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-600"
-                                  }`}
-                                >
-                                  {pct === 100 ? "100% (Orig)" : `${pct}%`}
-                                </button>
-                              ))}
+                            <div className="mt-2 grid grid-cols-4 gap-2">
+                              {[100, 75, 50, 25].map((pct) => {
+                                const isSelected = customScalePercent === pct;
+                                return (
+                                  <button
+                                    key={pct}
+                                    type="button"
+                                    onClick={() => handlePercentChange(pct)}
+                                    style={{
+                                      backgroundColor: isSelected ? "#3158d5" : "#ffffff",
+                                      borderColor: isSelected ? "#3158d5" : "#e5e5df",
+                                      borderWidth: "1.5px",
+                                      borderStyle: "solid",
+                                      color: isSelected ? "#ffffff" : "#1c201a",
+                                    }}
+                                    className="rounded-xl py-2 px-1 text-xs font-bold transition cursor-pointer text-center shadow-2xs hover:border-[#3158d5]"
+                                  >
+                                    {pct}%
+                                  </button>
+                                );
+                              })}
                             </div>
+                            <p className="mt-1.5 text-[11px] text-[#70746d]">
+                              {customScalePercent === 100
+                                ? "100% maintains original image dimensions."
+                                : `Scale image to ${customScalePercent}% of original dimensions.`}
+                            </p>
                           </div>
 
                           {/* CUSTOM WIDTH × HEIGHT WITH ASPECT RATIO LOCK */}
                           <div>
-                            <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5">
-                              <span>Exact Pixels (W × H)</span>
+                            <div className="flex items-center justify-between text-xs font-bold text-[#575a53] mb-1.5">
+                              <span>Exact Pixels (Width × Height)</span>
                               {customScalePercent !== 100 && (
                                 <button
                                   type="button"
                                   onClick={handleResetDimensions}
-                                  className="text-[11px] font-semibold text-blue-600 hover:underline cursor-pointer"
+                                  className="text-[11px] font-semibold text-[#3158d5] hover:underline cursor-pointer"
                                 >
                                   Reset (100%)
                                 </button>
@@ -1728,7 +2409,7 @@ export default function ImageCompressorClient() {
 
                             <div className="flex items-center gap-2">
                               {/* Width Input */}
-                              <div className="relative flex-1">
+                              <div className="flex-1">
                                 <input
                                   type="number"
                                   min="10"
@@ -1737,12 +2418,17 @@ export default function ImageCompressorClient() {
                                   onChange={(e) =>
                                     handleWidthChange(e.target.value)
                                   }
-                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
+                                  style={{
+                                    backgroundColor: "#ffffff",
+                                    borderColor: "#e5e5df",
+                                    borderWidth: "1.5px",
+                                    borderStyle: "solid",
+                                    color: "#1c201a",
+                                  }}
+                                  className="w-full rounded-xl px-3 py-2 text-xs font-bold text-[#1c201a] focus:border-[#3158d5] focus:outline-none focus:ring-2 focus:ring-[#3158d5]/20 text-center shadow-2xs transition"
                                   placeholder="Width"
+                                  title="Width in pixels"
                                 />
-                                <span className="absolute right-2 top-2 text-[10px] font-medium text-slate-400 pointer-events-none">
-                                  W
-                                </span>
                               </div>
 
                               {/* Aspect Ratio Lock Toggle */}
@@ -1756,11 +2442,14 @@ export default function ImageCompressorClient() {
                                     ? "Aspect ratio locked (proportional)"
                                     : "Aspect ratio unlocked (free resize)"
                                 }
-                                className={`p-1.5 rounded-xl border transition cursor-pointer shrink-0 ${
-                                  lockAspectRatio
-                                    ? "border-blue-300 bg-blue-50 text-blue-600 shadow-2xs"
-                                    : "border-slate-200 bg-slate-100 text-slate-400 hover:text-slate-600"
-                                }`}
+                                style={{
+                                  backgroundColor: lockAspectRatio ? "#e8effe" : "#ffffff",
+                                  borderColor: lockAspectRatio ? "#3158d5" : "#e5e5df",
+                                  borderWidth: "1.5px",
+                                  borderStyle: "solid",
+                                  color: lockAspectRatio ? "#3158d5" : "#70746d",
+                                }}
+                                className="p-2 rounded-xl transition cursor-pointer shrink-0 shadow-2xs hover:border-[#3158d5]"
                               >
                                 {lockAspectRatio ? (
                                   <svg
@@ -1797,7 +2486,7 @@ export default function ImageCompressorClient() {
                               </button>
 
                               {/* Height Input */}
-                              <div className="relative flex-1">
+                              <div className="flex-1">
                                 <input
                                   type="number"
                                   min="10"
@@ -1806,12 +2495,17 @@ export default function ImageCompressorClient() {
                                   onChange={(e) =>
                                     handleHeightChange(e.target.value)
                                   }
-                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
+                                  style={{
+                                    backgroundColor: "#ffffff",
+                                    borderColor: "#e5e5df",
+                                    borderWidth: "1.5px",
+                                    borderStyle: "solid",
+                                    color: "#1c201a",
+                                  }}
+                                  className="w-full rounded-xl px-3 py-2 text-xs font-bold text-[#1c201a] focus:border-[#3158d5] focus:outline-none focus:ring-2 focus:ring-[#3158d5]/20 text-center shadow-2xs transition"
                                   placeholder="Height"
+                                  title="Height in pixels"
                                 />
-                                <span className="absolute right-2 top-2 text-[10px] font-medium text-slate-400 pointer-events-none">
-                                  H
-                                </span>
                               </div>
                             </div>
 
@@ -1834,38 +2528,46 @@ export default function ImageCompressorClient() {
                     </div>
 
                     {/* STRIP METADATA */}
-                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
+                    <div style={{ borderTop: "1px solid #e5e5df" }} className="mt-4 flex items-center justify-between pt-3">
                       <div>
-                        <div className="text-xs font-bold text-slate-800">
+                        <div className="text-xs font-bold text-[#1c201a]">
                           Strip EXIF &amp; Metadata
                         </div>
-                        <div className="text-[11px] text-slate-500 font-normal">
+                        <div className="text-[11px] text-[#70746d] font-normal">
                           Removes GPS &amp; camera metadata.
                         </div>
                       </div>
                       <button
                         type="button"
+                        role="switch"
+                        aria-checked={stripMetadata}
                         onClick={() => setStripMetadata(!stripMetadata)}
-                        className={`h-6 w-11 rounded-full transition-colors cursor-pointer relative shrink-0 ${
-                          stripMetadata ? "bg-blue-600" : "bg-slate-300"
-                        }`}
+                        style={{
+                          backgroundColor: stripMetadata ? "#3158d5" : "#cbd5e1",
+                          borderColor: stripMetadata ? "#3158d5" : "#94a3b8",
+                        }}
+                        className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ease-in-out focus:outline-none shadow-inner"
                       >
                         <span
-                          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                            stripMetadata ? "translate-x-5" : "translate-x-0"
-                          }`}
+                          style={{
+                            transform: stripMetadata ? "translateX(20px)" : "translateX(0px)",
+                            backgroundColor: "#ffffff",
+                            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.25)",
+                          }}
+                          className="pointer-events-none inline-block h-5 w-5 transform rounded-full ring-0 transition duration-200 ease-in-out"
                         />
                       </button>
                     </div>
 
                     {/* APPLY TO ALL BUTTON */}
                     {items.length > 1 && (
-                      <div className="mt-5 pt-3 border-t border-slate-100">
+                      <div style={{ borderTop: "1px solid #e5e5df" }} className="mt-5 pt-3">
                         <button
                           type="button"
                           onClick={handleApplyToAll}
                           disabled={isBatchCompressing}
-                          className="w-full rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-4 text-xs sm:text-sm shadow-md shadow-blue-600/25 hover:shadow-lg hover:shadow-blue-600/35 transition cursor-pointer"
+                          style={{ backgroundColor: "#3158d5" }}
+                          className="w-full rounded-2xl text-white font-bold py-3 px-4 text-xs sm:text-sm shadow-xs hover:bg-[#2546b8] transition cursor-pointer"
                         >
                           Apply Settings to All ({items.length}) Images
                         </button>
@@ -1875,213 +2577,341 @@ export default function ImageCompressorClient() {
                 </div>
               </div>
 
-              {/* POST-COMPRESSION SPELLCHECK CALLOUT BANNER (FIX 4) */}
-              <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-3xl border border-blue-200/90 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-blue-50/90 p-4 sm:p-5 shadow-xs">
-                <div className="flex items-center gap-3.5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white font-bold shadow-md shadow-blue-600/20">
-                    ✍️
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-slate-900">
-                      Compressed your image? Check the text inside it for typos too →
-                    </div>
-                    <div className="text-xs text-slate-600 font-normal mt-0.5">
-                      Ensure your marketing copy, client catalog, and posters have zero spelling errors before publishing.
-                    </div>
-                  </div>
+              {/* MOBILE ONLY (< sm): CROSS-TOOL WORKFLOW BRIDGES (At bottom before Fast & Simple) */}
+              <div
+                style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                className="spellense-mobile-only flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3.5 shadow-xs"
+              >
+                <div className="text-xs text-[#575a53] font-normal">
+                  <span className="font-bold text-[#1c201a]">Compressed your image?</span>{" "}
+                  Check the text inside it for typos too →
                 </div>
-                <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
+                <div className="flex items-center justify-between w-full gap-2">
                   <button
                     type="button"
                     onClick={handleSendToSpellcheck}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/25 hover:bg-blue-700 transition cursor-pointer"
+                    style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition hover:bg-[#2546b8] cursor-pointer shadow-xs"
                   >
-                    <span>Check Spelling Now</span>
+                    <span>Run Spellcheck</span>
+                    <span>→</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendToImageToText}
+                    style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df", color: "#1c201a" }}
+                    className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition hover:bg-[#efeee7] cursor-pointer"
+                  >
+                    <span>Extract Text (OCR)</span>
                     <span>→</span>
                   </button>
                 </div>
               </div>
             </div>
           )}
-        </section>
+        </div>
 
-        {/* BENTO GRID: WHY USE SPELLENSE IMAGE COMPRESSOR */}
-        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pt-14 pb-16 border-t border-slate-200/80">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-              High-Fidelity Visual Optimization Built for Creators
-            </h2>
-            <p className="mt-2 text-xs sm:text-sm text-slate-500 font-normal">
-              Everything you love about Google Squoosh, tailored for design catalogs, marketing decks, and high-res print files.
-            </p>
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 mb-4">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 3H3v18h18V3z" />
-                  <path d="M9 3v18" />
-                  <path d="M15 3v18" />
-                  <path d="M3 9h18" />
-                  <path d="M3 15h18" />
-                </svg>
-              </div>
-              <h3 className="font-bold text-slate-900 text-base">Locked Dimensions</h3>
-              <p className="mt-2 text-xs leading-relaxed text-slate-500 font-normal">
-                1200×1200 stays exactly 1200×1200. Only unneeded color bloat and invisible metadata are removed so your design layout remains crisp.
-              </p>
+        {/* 3-STEP WORKFLOW CARDS (HOMEPAGE MATCH) */}
+        <section style={{ borderTop: "1px solid #e5e5df" }} className="mt-12 sm:mt-16 pt-12 sm:pt-16">
+          <ScrollReveal className="text-center max-w-4xl mx-auto">
+            <div style={{ borderColor: "#e5e5df" }} className="inline-flex items-center gap-1.5 rounded-full border bg-[#faf9f6] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#3158d5] shadow-2xs">
+              Fast &amp; Simple
             </div>
+            <h3 className="mt-2.5 text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-[#1c201a] sm:whitespace-nowrap">
+              How Spellense Compressor Works in 3 easy steps
+            </h3>
+          </ScrollReveal>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 mb-4">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <line x1="12" y1="3" x2="12" y2="21" />
-                  <path d="m8 10-2 2 2 2" />
-                  <path d="m16 10 2 2-2 2" />
-                </svg>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            <ScrollReveal delay={0} className="h-full">
+              <div style={{ borderColor: "#e5e5df" }} className="h-full rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md">
+                <span style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df" }} className="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black text-[#3158d5]">
+                  01
+                </span>
+                <h4 className="mt-4 text-base font-bold text-[#1c201a]">
+                  Drop Images or PDF Catalogs
+                </h4>
+                <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+                  Upload JPG, PNG, WebP, AVIF, or multi-page PDF catalogs. All compression happens safely in-memory with zero server uploads.
+                </p>
               </div>
-              <h3 className="font-bold text-slate-900 text-base">Squoosh Split Screen</h3>
-              <p className="mt-2 text-xs leading-relaxed text-slate-500 font-normal">
-                Inspect before and after side-by-side with an interactive drag divider and up to 2× zoom to guarantee no text or line blur.
-              </p>
-            </div>
+            </ScrollReveal>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 mb-4">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
-                  <path d="M6 6h10" />
-                  <path d="M6 10h10" />
-                </svg>
+            <ScrollReveal delay={120} className="h-full">
+              <div style={{ borderColor: "#e5e5df" }} className="h-full rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md">
+                <span style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df" }} className="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black text-[#3158d5]">
+                  02
+                </span>
+                <h4 className="mt-4 text-base font-bold text-[#1c201a]">
+                  Realtime Squoosh Split Slider
+                </h4>
+                <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+                  Slide to visually inspect original vs compressed side-by-side. Zoom up to 2× to guarantee crisp logos, text, and edges.
+                </p>
               </div>
-              <h3 className="font-bold text-slate-900 text-base">Multi-Page &amp; ZIP Export</h3>
-              <p className="mt-2 text-xs leading-relaxed text-slate-500 font-normal">
-                Drop entire product catalogs or 50 images at once. Compress them simultaneously and download a single tidy ZIP archive.
-              </p>
-            </div>
+            </ScrollReveal>
+
+            <ScrollReveal delay={240} className="h-full">
+              <div style={{ borderColor: "#e5e5df" }} className="h-full rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md">
+                <span style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df" }} className="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black text-[#3158d5]">
+                  03
+                </span>
+                <h4 className="mt-4 text-base font-bold text-[#1c201a]">
+                  Download Single or Batch ZIP
+                </h4>
+                <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+                  Save single optimized images instantly, or export 50+ compressed images and catalog pages in a neat, organized ZIP archive.
+                </p>
+              </div>
+            </ScrollReveal>
           </div>
         </section>
 
-        {/* FAQ 2-COLUMN SECTION — Matching ID Print Maker layout */}
-        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-16 border-t border-slate-200/80">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-            {/* Left 4 Columns */}
-            <div className="md:col-span-4 space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">
-                FREQUENTLY ASKED QUESTIONS
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+        {/* FAQ SECTION (HOMEPAGE MATCH) */}
+        <section style={{ borderTop: "1px solid #e5e5df" }} className="mt-12 sm:mt-16 pt-12 sm:pt-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <ScrollReveal className="lg:col-span-4 lg:sticky lg:top-8">
+              <div style={{ borderColor: "#e5e5df" }} className="inline-flex items-center gap-1.5 rounded-full border bg-[#faf9f6] px-3 py-1 shadow-2xs backdrop-blur-md">
+                <span className="flex h-1.5 w-1.5 rounded-full bg-[#3158d5] animate-pulse" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                  Frequently Asked Questions
+                </span>
+              </div>
+              <h3 className="mt-3 text-2xl font-black tracking-tight text-[#1c201a] sm:text-3xl">
                 Image Compressor FAQ
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+              </h3>
+              <p className="mt-2 text-xs text-[#575a53] sm:text-sm leading-relaxed">
                 Everything you need to know about compressing images and multi-page catalogs without losing quality.
               </p>
-            </div>
+            </ScrollReveal>
 
-            {/* Right 8 Columns */}
-            <div className="md:col-span-8 space-y-3">
-              {FAQ_ITEMS.map((faq, index) => {
-                const isOpen = openFaqIndex === index;
-                return (
-                  <div
-                    key={faq.q}
-                    className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition"
+            <div className="lg:col-span-8 space-y-3.5">
+              {FAQ_ITEMS.map((faq, idx) => (
+                <ScrollReveal key={idx} delay={idx * 60}>
+                  <details
+                    style={{ borderColor: "#e5e5df" }}
+                    className="group rounded-2xl border bg-white p-5 shadow-2xs backdrop-blur-md transition-all open:border-[#3158d5]/40 open:shadow-xs"
                   >
-                    <button
-                      type="button"
-                      id={`faq-btn-${index}`}
-                      aria-expanded={isOpen}
-                      aria-controls={`faq-answer-${index}`}
-                      onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                      className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition hover:bg-slate-50/60 cursor-pointer"
-                    >
-                      <span className="text-sm font-bold text-slate-900 pr-2">
-                        {faq.q}
-                      </span>
-                      <span
-                        className={`ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition-transform duration-200 ${
-                          isOpen ? "rotate-180 text-blue-600" : ""
-                        }`}
-                      >
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
+                    <summary className="flex cursor-pointer items-center justify-between font-bold text-[#1c201a] text-sm sm:text-base list-none">
+                      <span>{faq.q}</span>
+                      <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f6f5f3] text-slate-600 transition-transform duration-200 group-open:rotate-180 group-open:bg-[#f6f5f3] group-open:text-[#3158d5]">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="6 9 12 15 18 9" />
                         </svg>
                       </span>
-                    </button>
-
-                    <div
-                      id={`faq-answer-${index}`}
-                      role="region"
-                      aria-labelledby={`faq-btn-${index}`}
-                      className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
-                        isOpen
-                          ? "grid-rows-[1fr] opacity-100"
-                          : "grid-rows-[0fr] opacity-0 pointer-events-none"
-                      }`}
-                    >
-                      <div className="overflow-hidden">
-                        <div className="border-t border-slate-100 px-4 sm:px-5 pt-3 pb-5 text-xs sm:text-sm leading-relaxed text-slate-600 font-normal">
-                          {faq.a}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    </summary>
+                    <p className="mt-3 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+                      {faq.a}
+                    </p>
+                  </details>
+                </ScrollReveal>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* RELATED CREATIVE TOOLS SECTION */}
-        <section className="border-t border-slate-200/80 bg-white/60 py-14 px-3 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="text-center mb-8">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Cross-Tool Workflows</span>
-              <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900">Explore More Free Creative Tools</h2>
+        {/* RELATED CREATIVE TOOLS SECTION (HOMEPAGE MATCH) */}
+        <section style={{ borderTop: "1px solid #e5e5df" }} className="mt-12 sm:mt-16 pt-12 sm:pt-16 pb-20">
+          <ScrollReveal className="text-center max-w-2xl mx-auto">
+            <div style={{ borderColor: "#e5e5df" }} className="inline-flex items-center gap-1.5 rounded-full border bg-[#faf9f6] px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#3158d5] shadow-2xs backdrop-blur-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#3158d5] animate-pulse" />
+              The Spellense Suite
             </div>
+            <h3 className="mt-3 text-2xl font-black tracking-tight text-[#1c201a] sm:text-3xl">
+              Explore More Free Creative Tools
+            </h3>
+            <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+              Crafted for marketing teams, art directors, graphic designers, and founders who need flawless client deliverables.
+            </p>
+          </ScrollReveal>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+            <ScrollReveal delay={0} className="h-full">
               <Link
-                href="/qr-code-generator"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+                href="/"
+                style={{ borderColor: "#e5e5df" }}
+                className="group relative flex h-full flex-col justify-between rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md cursor-pointer"
               >
-                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Print Scannability QA</div>
-                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">QR Code Generator</div>
-                <p className="mt-1 text-xs text-slate-500">Create custom QR codes and verify camera scannability before printing.</p>
+                <div>
+                  <div style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df", color: "#3158d5" }} className="flex h-11 w-11 items-center justify-center rounded-2xl">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                      <line x1="8" y1="21" x2="16" y2="21"/>
+                      <line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                  </div>
+                  <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                    Visual Quality Assurance
+                  </div>
+                  <h4 className="mt-1 text-xl font-black text-[#1c201a] group-hover:text-[#3158d5] transition">
+                    Visual Spell Checker
+                  </h4>
+                  <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+                    Detect typos and spelling errors directly inside images, PDFs, and slide presentations with bounding box highlights.
+                  </p>
+                </div>
+                <div className="mt-5 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">OCR &amp; AI Proofreading</span>
+                  <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
+                    <span>Use tool</span>
+                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                  </span>
+                </div>
               </Link>
+            </ScrollReveal>
 
-              <Link
-                href="/print-sheet-maker"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
-              >
-                <div className="text-xs font-bold text-blue-600 uppercase mb-1">ID &amp; Photo Layout</div>
-                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">ID Print Maker</div>
-                <p className="mt-1 text-xs text-slate-500">Fit photos and ID cards on one A4 or custom page at exact physical mm.</p>
-              </Link>
-
+            <ScrollReveal delay={80} className="h-full">
               <Link
                 href="/flipbook"
-                className="group p-5 rounded-2xl border border-slate-200/80 bg-white hover:border-[#0055fe] hover:shadow-xs transition"
+                style={{ borderColor: "#e5e5df" }}
+                className="group relative flex h-full flex-col justify-between rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md cursor-pointer"
               >
-                <div className="text-xs font-bold text-blue-600 uppercase mb-1">3D Publishing</div>
-                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">3D Digital Flipbook</div>
-                <p className="mt-1 text-xs text-slate-500">Turn compressed PDFs and catalogs into interactive 3D books.</p>
+                <div>
+                  <div style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df", color: "#3158d5" }} className="flex h-11 w-11 items-center justify-center rounded-2xl">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                      <path d="M6 6h10" />
+                      <path d="M6 10h10" />
+                    </svg>
+                  </div>
+                  <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                    3D Publishing
+                  </div>
+                  <h4 className="mt-1 text-xl font-black text-[#1c201a] group-hover:text-[#3158d5] transition">
+                    3D Digital Flipbook
+                  </h4>
+                  <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+                    Turn PDF catalogs, portfolios, and magazines into interactive 3D books with realistic page turns.
+                  </p>
+                </div>
+                <div className="mt-5 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">Offline HTML &amp; Embed</span>
+                  <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
+                    <span>Use tool</span>
+                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                  </span>
+                </div>
               </Link>
-            </div>
+            </ScrollReveal>
+
+            <ScrollReveal delay={160} className="h-full">
+              <Link
+                href="/qr-code-generator"
+                style={{ borderColor: "#e5e5df" }}
+                className="group relative flex h-full flex-col justify-between rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md cursor-pointer"
+              >
+                <div>
+                  <div style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df", color: "#3158d5" }} className="flex h-11 w-11 items-center justify-center rounded-2xl">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7"/>
+                      <rect x="14" y="3" width="7" height="7"/>
+                      <rect x="14" y="14" width="7" height="7"/>
+                      <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                  </div>
+                  <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                    Print Scannability QA
+                  </div>
+                  <h4 className="mt-1 text-xl font-black text-[#1c201a] group-hover:text-[#3158d5] transition">
+                    QR Code Generator
+                  </h4>
+                  <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+                    Create vector SVG &amp; high-res PNG QR codes with customizable color schemes and verify camera scannability before printing.
+                  </p>
+                </div>
+                <div className="mt-5 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400">Vector SVG &amp; PNG</span>
+                  <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
+                    <span>Use tool</span>
+                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                  </span>
+                </div>
+              </Link>
+            </ScrollReveal>
           </div>
         </section>
-      </main>
+      </div>
+    </section>
+
+    {/* MOBILE ONLY (< sm): FLOATING STICKY DOWNLOAD BAR (FREEZE IN BOTTOM ALWAYS) */}
+    {items.length > 0 && (
+      <>
+        <div className="spellense-mobile-only h-28" />
+        <div
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.98)",
+            borderColor: "#e5e5df",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            boxShadow: "0 -4px 24px rgba(0, 0, 0, 0.12)",
+            minHeight: "82px",
+            paddingTop: "16px",
+            paddingBottom: "max(18px, env(safe-area-inset-bottom))",
+          }}
+          className="spellense-mobile-only fixed bottom-0 left-0 right-0 z-50 border-t px-4 flex items-center"
+        >
+          <div className="flex items-center justify-between gap-3 max-w-lg mx-auto w-full">
+            {/* Left: Active File Info */}
+            <div className="min-w-0 flex-1 flex flex-col justify-center">
+              <div className="text-xs font-bold text-[#1c201a] truncate">
+                {activeItem?.name || "Image"}
+              </div>
+              <div className="text-[11px] text-[#70746d] flex items-center gap-1.5 mt-0.5">
+                <span className="font-bold text-[#3158d5]">
+                  {activeItem && activeItem.compressedSize > 0
+                    ? formatBytes(activeItem.compressedSize)
+                    : "..."}
+                </span>
+                {activeItem && activeItem.originalSize > 0 && activeItem.compressedSize > 0 && (
+                  <span className="rounded bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800">
+                    -{Math.round(((activeItem.originalSize - activeItem.compressedSize) / activeItem.originalSize) * 100)}%
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Download Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              {items.length > 1 && (
+                <button
+                  type="button"
+                  disabled={isZipping || isBatchCompressing}
+                  onClick={handleDownloadAllZip}
+                  style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }}
+                  className="h-10 inline-flex items-center justify-center gap-1 rounded-xl border px-3.5 text-xs font-bold text-[#1c201a] shadow-xs active:scale-95 cursor-pointer whitespace-nowrap"
+                >
+                  <span>ZIP ({items.length})</span>
+                </button>
+              )}
+
+              {activeItem && (
+                <button
+                  type="button"
+                  onClick={() => handleDownloadItem(activeItem)}
+                  style={{ backgroundColor: "#3158d5" }}
+                  className="h-10 inline-flex items-center justify-center gap-2 rounded-xl text-white px-4 text-xs font-bold shadow-md active:scale-95 cursor-pointer whitespace-nowrap"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  <span>Download</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </>
+    )}
+  </main>
 
       {/* FOOTER */}
       <Footer currentPath="/image-compressor" />
