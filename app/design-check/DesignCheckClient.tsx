@@ -919,10 +919,10 @@ export default function DesignCheckClient() {
                   }`}
                 >
                   <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-                    {/* LEFT COLUMN: TABS, CONTROLS & DROPZONE (1/3 WIDTH) */}
+                    {/* LEFT COLUMN: TABS, CONTROLS & DROPZONE */}
                     <div
                       style={{ borderRight: "1px solid #e5e5df" }}
-                      className="flex flex-col justify-between bg-white p-6 sm:p-8 lg:col-span-4 xl:col-span-4"
+                      className="flex flex-col justify-between bg-white p-5 sm:p-7 lg:col-span-5"
                     >
                       <div>
                         {/* HEADER */}
@@ -1059,7 +1059,7 @@ export default function DesignCheckClient() {
                     {/* RIGHT COLUMN: DESIGN CHECK SAMPLE AUDIT */}
                     <div
                       style={{ backgroundColor: "#ecebe4" }}
-                      className="flex flex-col justify-between p-4 lg:col-span-8 lg:p-7 sm:p-6"
+                      className="flex flex-col justify-between p-3.5 sm:p-5 lg:p-7 lg:col-span-7"
                     >
                       <div>
                         <div

@@ -3872,7 +3872,7 @@ export default function Home() {
             ) : (
             <div
               style={{ borderColor: "#e5e5df", borderWidth: "1px", borderStyle: "solid", backgroundColor: "#ecebe4", boxShadow: "none" }}
-              className={`relative w-full lg:h-[377px] overflow-hidden rounded-2xl transition-all duration-300 ${
+              className={`relative w-full overflow-hidden rounded-2xl sm:rounded-[24px] transition-all duration-300 ${
                 dragging
                   ? "ring-2 ring-[#3158d5]/20"
                   : ""
@@ -3880,10 +3880,10 @@ export default function Home() {
             >
               {/* BEFORE UPLOAD */}
               <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-                  {/* LEFT COLUMN: TABS, CONTROLS & DROPZONE (1/3 WIDTH) */}
+                  {/* LEFT COLUMN: TABS, CONTROLS & DROPZONE */}
                   <div
                     style={{ borderRight: "1px solid #e5e5df" }}
-                    className="flex flex-col justify-between bg-white p-6 sm:p-8 lg:col-span-4 xl:col-span-4"
+                    className="flex flex-col justify-between bg-white p-5 sm:p-7 lg:col-span-5"
                   >
                     <div>
                       {/* HEADER: PASTE TEXT ACTION */}
@@ -4179,10 +4179,10 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* RIGHT COLUMN: SAMPLE PREVIEW (2/3 WIDTH) */}
+                  {/* RIGHT COLUMN: SAMPLE PREVIEW */}
                   <div
                     style={{ backgroundColor: "#ecebe4" }}
-                    className="flex flex-col justify-between p-4 lg:col-span-8 lg:p-7 sm:p-6"
+                    className="flex flex-col justify-between p-3.5 sm:p-5 lg:p-7 lg:col-span-7"
                   >
                     <div>
                       <div

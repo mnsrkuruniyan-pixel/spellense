@@ -1051,10 +1051,10 @@ export default function ImageCompressorClient() {
                 className="relative w-full rounded-2xl sm:rounded-[24px] overflow-hidden transition-all duration-300"
               >
                 <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-                  {/* LEFT COLUMN: UPLOAD BOX & CONTROLS (4/12 or 5/12) */}
+                  {/* LEFT COLUMN: UPLOAD BOX & CONTROLS */}
                   <div
                     style={{ borderRight: "1px solid #e5e5df" }}
-                    className="lg:col-span-5 xl:col-span-4 p-5 sm:p-7 flex flex-col justify-between bg-white"
+                    className="lg:col-span-5 p-5 sm:p-7 flex flex-col justify-between bg-white"
                   >
                     <div>
                       {/* HEADER */}
@@ -1166,10 +1166,10 @@ export default function ImageCompressorClient() {
                     </div>
                   </div>
 
-                  {/* RIGHT COLUMN: SAMPLE PREVIEW (7/12 or 8/12) */}
+                  {/* RIGHT COLUMN: SAMPLE PREVIEW */}
                   <div
                     style={{ backgroundColor: "#ecebe4" }}
-                    className="lg:col-span-7 xl:col-span-8 p-3.5 sm:p-5 lg:p-7 flex flex-col justify-between"
+                    className="lg:col-span-7 p-3.5 sm:p-5 lg:p-7 flex flex-col justify-between"
                   >
                     <div>
                       {/* HEADER */}

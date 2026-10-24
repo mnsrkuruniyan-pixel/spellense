@@ -747,10 +747,10 @@ export default function ImageToTextClient() {
                 className="relative w-full rounded-2xl sm:rounded-[24px] overflow-hidden"
               >
                 <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-                  {/* LEFT COLUMN: CONTROLS & DROPZONE (4/12) */}
+                  {/* LEFT COLUMN: CONTROLS & DROPZONE */}
                   <div
                     style={{ borderRight: "1px solid #e5e5df" }}
-                    className="lg:col-span-4 xl:col-span-4 p-6 sm:p-7 flex flex-col justify-between bg-white"
+                    className="lg:col-span-5 p-5 sm:p-7 flex flex-col justify-between bg-white"
                   >
                     <div>
                       {/* HEADER */}
@@ -876,10 +876,10 @@ export default function ImageToTextClient() {
                     </div>
                   </div>
 
-                  {/* RIGHT COLUMN: SAMPLE OCR PREVIEW (8/12 - EXACT HOMEPAGE MATCH) */}
+                  {/* RIGHT COLUMN: SAMPLE OCR PREVIEW */}
                   <div
                     style={{ backgroundColor: "#ecebe4" }}
-                    className="lg:col-span-8 xl:col-span-8 p-3.5 sm:p-5 lg:p-7 flex flex-col justify-between"
+                    className="lg:col-span-7 p-3.5 sm:p-5 lg:p-7 flex flex-col justify-between"
                   >
                     <div>
                       <div
