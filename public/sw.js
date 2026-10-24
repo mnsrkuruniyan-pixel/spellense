@@ -1,11 +1,6 @@
 // Lightweight PWA Service Worker for Spellense
-const CACHE_NAME = "spellense-v9";
+const CACHE_NAME = "spellense-v10";
 const STATIC_ASSETS = [
-  "/",
-  "/about",
-  "/case-converter",
-  "/us-uk-converter",
-  "/faq",
   "/manifest.webmanifest",
   "/icon-48.png",
   "/icon-96.png",
@@ -42,7 +37,7 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Only cache GET requests, bypass API routes and workers to prevent stale responses
+  // Only handle GET requests, bypass API routes and workers
   if (
     event.request.method !== "GET" ||
     event.request.url.includes("/api/") ||
@@ -51,8 +46,37 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Network-first strategy for navigation and HTML documents:
+  // Always fetch fresh HTML from the network so users always see the latest deployment
+  if (event.request.mode === "navigate" || event.request.headers.get("accept")?.includes("text/html")) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Network-first for next static CSS and JS chunks to ensure layout is never stale
+  if (event.request.url.includes("/_next/")) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache fallback for icons and static media
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    caches.match(event.request).then((cached) => {
+      return (
+        cached ||
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return networkResponse;
+        })
+      );
+    })
   );
 });
 

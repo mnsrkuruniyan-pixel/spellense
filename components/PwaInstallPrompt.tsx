@@ -18,12 +18,17 @@ export default function PwaInstallPrompt() {
   const [showIosInstructions, setShowIosInstructions] = useState(false);
 
   useEffect(() => {
-    // 1. Register Service Worker
+    // 1. Register and update Service Worker
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js").catch((err) => {
-          console.warn("ServiceWorker registration failed:", err);
-        });
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((reg) => {
+            reg.update();
+          })
+          .catch((err) => {
+            console.warn("ServiceWorker registration failed:", err);
+          });
       });
     }
 
