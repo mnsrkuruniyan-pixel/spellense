@@ -4006,15 +4006,21 @@ export default function Home() {
                               handleFiles(e.dataTransfer.files);
                             }}
                             onClick={openFilePicker}
-                            style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
-                            className={`mt-5 rounded-xl border border-dashed p-6 text-center transition-all cursor-pointer sm:p-7 ${
+                            style={{
+                              borderColor: dragging ? "#3158d5" : "#deded6",
+                              backgroundColor: dragging ? "#eff6ff" : "#f6f5f3",
+                            }}
+                            className={`mt-5 rounded-2xl border-2 border-dashed p-6 text-center transition-all cursor-pointer sm:p-7 ${
                               dragging
                                 ? "border-[#3158d5] bg-blue-50/70"
                                 : "hover:border-[#3158d5]/50"
                             }`}
                           >
-                            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg text-[#3158d5]">
-                              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <div
+                              style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                              className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border shadow-2xs text-[#3158d5] transition-transform duration-200 group-hover:scale-105"
+                            >
+                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                                 <polyline points="14 2 14 8 20 8" />
                                 <path d="M12 18v-6" />
