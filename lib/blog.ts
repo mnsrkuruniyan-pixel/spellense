@@ -17,9 +17,11 @@ export interface BlogPost {
     avatar?: string;
   };
   readingTime: string;
-  category: "OCR Spell Checking" | "Document Proofreading" | "US vs UK Dialect" | "Design Pre-Flight";
+  category: "OCR Spell Checking" | "Document Proofreading" | "US vs UK Dialect" | "Design Pre-Flight" | "OCR & Text Extraction";
   cluster: string;
   tags: string[];
+  image?: string;
+  imageAlt?: string;
   tableOfContents: TableOfContentsItem[];
   content: string; // Markdown / semantic HTML content
   relatedSlugs: string[];
@@ -36,6 +38,178 @@ export interface BlogPost {
 }
 
 export const BLOG_POSTS: BlogPost[] = [
+  {
+    slug: "how-to-convert-photo-to-text",
+    title: "How to Convert a Photo to Text (Free, No Retyping)",
+    metaTitle: "Photo to Text: How to Convert an Image to Text Free",
+    subtitle: "By the Spellense team · Updated October 2026",
+    description: "Convert a photo, image or picture to editable text in seconds. Simple steps, phone shortcuts and fixes for blurry or tilted photos.",
+    publishedAt: "2026-10-24",
+    updatedAt: "2026-10-24",
+    author: {
+      name: "Spellense team",
+      role: "Document QA & OCR Specialists",
+    },
+    readingTime: "4 min read",
+    category: "OCR & Text Extraction",
+    cluster: "Cluster A — OCR & Text Extraction",
+    tags: ["Photo to Text", "Image to Text", "Picture to Text", "OCR", "Extract Text from Photo"],
+    image: "/photo-to-text-tool.webp",
+    imageAlt: "Uploading a photo to the Spellense image to text tool",
+    tableOfContents: [
+      { id: "convert-in-3-steps", title: "Convert an Image to Text in 3 Steps" },
+      { id: "other-ways", title: "Other Ways to Convert a Picture to Text" },
+      { id: "why-results-look-wrong", title: "Why Your Photo to Text Result Looks Wrong (and How to Fix It)" },
+      { id: "how-to-take-clean-photo", title: "How to Take a Photo That Converts Cleanly" },
+      { id: "fix-mistakes", title: "Fix the Mistakes Text Recognition Leaves Behind" },
+      { id: "safety-privacy", title: "Is It Safe to Convert Photos with Personal Details?" },
+      { id: "faq", title: "Frequently Asked Questions" },
+      { id: "try-it-now", title: "Try It Now" },
+    ],
+    ctaTool: {
+      title: "Have a Photo to Convert Right Now?",
+      description: "Upload your picture to Spellense. Extract clean, copyable text in seconds without retyping.",
+      buttonText: "Convert Photo to Text Free",
+      href: "/image-to-text",
+    },
+    relatedSlugs: [
+      "how-to-find-spelling-mistakes-in-scanned-pdf",
+      "why-normal-spell-checkers-miss-typos-in-images",
+    ],
+    content: `
+<p class="lead text-lg text-slate-700 leading-relaxed font-medium">
+You took a photo of a printed page, a sign, a whiteboard or a screenshot, and now you need the words inside it. Typing them out by hand is slow and easy to get wrong. The better way is photo to text conversion, which is also called image to text or picture to text. A tool reads the letters in your picture and hands them back as text you can copy, edit and paste anywhere.
+</p>
+
+<p>
+The quick answer: upload the picture to a free <a href="/image-to-text" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">image to text tool</a>, copy the result, then proofread it for small errors. The steps are below, along with phone shortcuts and fixes for photos that come out wrong.
+</p>
+
+<hr style="border: 0; border-top: 1px solid #e5e5df;" class="my-8" />
+
+<h2 id="convert-in-3-steps" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">Convert an image to text in 3 steps</h2>
+
+<ol class="list-decimal pl-6 space-y-3 my-4 text-slate-700">
+  <li><strong>Open the tool.</strong> Go to the <a href="/image-to-text" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">Spellense Image to Text tool</a>.</li>
+  <li><strong>Add your picture.</strong> Upload the photo or drop it onto the page. Common image types such as JPG and PNG work well.</li>
+  <li><strong>Copy the text.</strong> Paste it into Word, Google Docs, an email or your notes app.</li>
+</ol>
+
+<p>
+Then take one more minute to proofread. Text pulled from a picture almost always has a few small mistakes, and you can catch them quickly with the free <a href="/" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">Spellense spell checker</a>.
+</p>
+
+<figure class="my-8">
+  <img
+    src="/photo-to-text-tool.webp"
+    alt="Uploading a photo to the Spellense image to text tool"
+    width="1200"
+    height="675"
+    loading="lazy"
+    decoding="async"
+    style="border: 1px solid #e5e5df;"
+    class="w-full h-auto rounded-2xl shadow-xs"
+  />
+  <figcaption class="mt-2.5 text-center text-xs text-[#70746d]">
+    Uploading a photo to the Spellense image to text tool
+  </figcaption>
+</figure>
+
+<h2 id="other-ways" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">Other ways to convert a picture to text</h2>
+
+<p>
+Your phone and computer may already do this for a few lines of text:
+</p>
+
+<ul class="list-disc pl-6 space-y-2.5 my-4 text-slate-700">
+  <li><strong>iPhone, iPad and Mac (Live Text):</strong> Open the photo in Photos, touch and hold the words until they highlight, then tap Copy.</li>
+  <li><strong>Android (Google Lens):</strong> Open the photo in Google Photos or the Google app, tap Lens, choose Text, then tap Copy text.</li>
+  <li><strong>Windows 11 (Snipping Tool):</strong> Take a screenshot of the picture, then use Text actions to copy all the text.</li>
+</ul>
+
+<p>
+Built-in tools are handy for a sentence or two. A web tool is easier when you have a full page, many photos, or you work across different devices.
+</p>
+
+<h2 id="why-results-look-wrong" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">Why your photo to text result looks wrong (and how to fix it)</h2>
+
+<p>
+Most bad results come from the photo, not the tool. These are the common problems:
+</p>
+
+<ul class="list-disc pl-6 space-y-2.5 my-4 text-slate-700">
+  <li><strong>Blurry photo.</strong> The letters melt together. Retake it holding the phone steady, and tap the screen to focus on the text.</li>
+  <li><strong>Glare and shadows.</strong> A bright reflection or your own shadow hides letters. Move to even light and avoid the flash on glossy paper.</li>
+  <li><strong>Tilted or curved page.</strong> Letters at an angle get misread. Shoot straight on, and press curled pages flat.</li>
+  <li><strong>Low resolution or tiny text.</strong> Move closer or crop to the text area so the words fill the frame.</li>
+  <li><strong>Columns and tables.</strong> Text may come out in a jumbled order. Convert one column or one section at a time.</li>
+  <li><strong>Handwriting and fancy fonts.</strong> Printed text works best. Neat handwriting sometimes works, while messy handwriting and decorative fonts often do not.</li>
+  <li><strong>Low contrast.</strong> Light grey text on a white background is hard to read. Increase the contrast in your photo editor before converting.</li>
+</ul>
+
+<h2 id="how-to-take-clean-photo" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">How to take a photo that converts cleanly</h2>
+
+<ul class="list-disc pl-6 space-y-2.5 my-4 text-slate-700">
+  <li>Use daylight or a bright, even light.</li>
+  <li>Hold the phone parallel to the page, not at an angle.</li>
+  <li>Fill the frame with the text, leaving a small margin.</li>
+  <li>Keep the phone still and let the camera focus first.</li>
+  <li>Convert the full-quality photo, not a heavily compressed copy.</li>
+</ul>
+
+<h2 id="fix-mistakes" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">Fix the mistakes text recognition leaves behind</h2>
+
+<p>
+No OCR tool is 100% accurate, even on a good photo, so a few slips are normal. Common errors include the letters “rn” read as “m”, the number 0 mixed up with the letter O, a lowercase “l” confused with the number 1, and words that run together or break apart. Always read the result once, and run it through a spell checker. If you work with scanned documents, our guide on <a href="/blog/how-to-find-spelling-mistakes-in-scanned-pdf" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">finding spelling mistakes in a scanned PDF</a> covers the same problem for full PDFs.
+</p>
+
+<h2 id="safety-privacy" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">Is it safe to convert photos with personal details?</h2>
+
+<p>
+Be careful with anything sensitive, such as ID cards, bank statements or medical papers. Spellense processes files in memory and does not store them permanently. Whichever tool you use, check how it handles your files, and crop out the parts you do not need before you upload.
+</p>
+
+<h2 id="faq" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">Frequently asked questions</h2>
+
+<div class="space-y-4 my-6">
+  <div style="border: 1px solid #e5e5df;" class="rounded-2xl bg-[#faf9f6] p-4 sm:p-5">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base">Are image to text, photo to text and picture to text the same thing?</p>
+    <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">Yes. They all mean turning the words in a picture into editable text. The technology behind them is called OCR, short for optical character recognition.</p>
+  </div>
+
+  <div style="border: 1px solid #e5e5df;" class="rounded-2xl bg-[#faf9f6] p-4 sm:p-5">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base">Can I convert an image to text for free?</p>
+    <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">Yes. The <a href="/image-to-text" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">Spellense Image to Text tool</a> is free to use, and your phone has free built-in options too.</p>
+  </div>
+
+  <div style="border: 1px solid #e5e5df;" class="rounded-2xl bg-[#faf9f6] p-4 sm:p-5">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base">Can I convert a photo to text on my phone?</p>
+    <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">Yes. Open the tool in your phone’s browser, or use Live Text on iPhone or Google Lens on Android.</p>
+  </div>
+
+  <div style="border: 1px solid #e5e5df;" class="rounded-2xl bg-[#faf9f6] p-4 sm:p-5">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base">Can it read handwriting?</p>
+    <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">Neat, printed-style handwriting sometimes works. Messy handwriting usually needs manual correction.</p>
+  </div>
+
+  <div style="border: 1px solid #e5e5df;" class="rounded-2xl bg-[#faf9f6] p-4 sm:p-5">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base">Can I convert a screenshot to text?</p>
+    <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">Yes. A screenshot is just an image, and its clean digital text usually converts very accurately.</p>
+  </div>
+
+  <div style="border: 1px solid #e5e5df;" class="rounded-2xl bg-[#faf9f6] p-4 sm:p-5">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base">How accurate is it?</p>
+    <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">With a sharp, well-lit photo of printed text, results are usually very good, but no OCR tool is ever 100% accurate. Accuracy drops with blur, glare and unusual fonts, so always proofread.</p>
+  </div>
+</div>
+
+<h2 id="try-it-now" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">Try it now</h2>
+
+<p>
+Have a photo with words you do not want to retype? Open the <a href="/image-to-text" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">Image to Text tool</a>, upload your picture, copy the text, and check it with the <a href="/" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">spell checker</a>.
+</p>
+`,
+  },
   {
     slug: "how-to-find-spelling-mistakes-in-scanned-pdf",
     title: "How to Find Spelling Mistakes in a Scanned PDF (Without Retyping)",
@@ -67,6 +241,7 @@ export const BLOG_POSTS: BlogPost[] = [
       href: "/",
     },
     relatedSlugs: [
+      "how-to-convert-photo-to-text",
       "why-normal-spell-checkers-miss-typos-in-images",
       "how-to-check-spelling-in-canva-before-publishing",
     ],
@@ -187,6 +362,10 @@ To ensure the highest accuracy when scanning physical documents for proofreading
   <li><strong>Avoid Skew & Heavy Shadows:</strong> Keep pages straight on the scanner glass. Curvature near the binding of thick books can distort font baselines.</li>
   <li><strong>High Contrast Lighting:</strong> If using a smartphone scanner app, ensure even daylight without cast shadows across the text blocks.</li>
 </ul>
+
+<p class="mt-6 text-sm text-slate-600">
+  Looking to pull editable text from an individual photo or smartphone picture instead of a multi-page PDF? Read our guide on <a href="/blog/how-to-convert-photo-to-text" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">how to convert a photo to text</a> for phone shortcuts, scanning tips, and step-by-step conversion.
+</p>
 `,
   },
   {

@@ -2341,7 +2341,7 @@ async function extractPdfOcrText(
 
     try {
       const paddleRes = await runPaddleOcr(pageBuffer, canvas.width, canvas.height);
-      if (paddleRes.lines.length > 0 || paddleRes.words.length > 0) {
+      if (paddleRes.words.length >= 5 || paddleRes.lines.length >= 2) {
         paddlePageSuccess = true;
         const pageText = paddleRes.lines.map((l) => l.text).join("\n").trim();
 
@@ -2558,8 +2558,14 @@ function filterOcrBlocks(
         const validWordsInLine = line.words.filter((w) => {
           const clean = normalizeWord(w.text);
           if (!clean) return false;
-          // In OCR, words <= 3 chars must have high confidence (>= 80)
-          const minConf = clean.length <= 3 ? 80 : 72;
+          const isKnown =
+            isValidEnglishWord(clean, dialect) ||
+            KNOWN_VALID_WORDS.has(clean) ||
+            KNOWN_ACRONYMS.has(clean) ||
+            Boolean(COMMON_TYPO_MAP[clean]);
+          // For known English words, allow lower confidence (>= 32) so faint/handwritten notes pass
+          // For unknown words, require reasonable confidence to suppress background texture noise
+          const minConf = isKnown ? 32 : (clean.length <= 2 ? 75 : 52);
           if (w.confidence < minConf) return false;
           // Check reasonable word heuristics
           return isReasonableWord(w.text, false, w.text);
@@ -2720,6 +2726,58 @@ Return ONLY a pure JSON object matching this schema:
   }
 
   return errors;
+}
+
+/* =========================================================
+   IMAGE PREPROCESSING FOR NOISY / SCANNED / PHOTO OCR
+   Normalizes contrast, scales small text, and suppresses shadows.
+   ========================================================= */
+
+function enhanceImageForOcr(
+  image: Awaited<ReturnType<typeof loadImage>>
+): { buffer: Buffer; scale: number; width: number; height: number } {
+  let scale = 1;
+  const maxDim = Math.max(image.width, image.height);
+  if (maxDim < 1400) {
+    scale = Math.min(2.5, 2000 / Math.max(1, maxDim));
+  }
+  const w = Math.round(image.width * scale);
+  const h = Math.round(image.height * scale);
+
+  const canvas = createCanvas(w, h);
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(image, 0, 0, w, h);
+
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const d = imgData.data;
+
+  let minLum = 255;
+  let maxLum = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    if (lum < minLum) minLum = lum;
+    if (lum > maxLum) maxLum = lum;
+  }
+
+  const lumRange = Math.max(1, maxLum - minLum);
+
+  for (let i = 0; i < d.length; i += 4) {
+    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    let norm = ((lum - minLum) / lumRange) * 255;
+    norm =
+      norm < 128
+        ? Math.pow(norm / 128, 1.35) * 128
+        : 255 - Math.pow((255 - norm) / 128, 1.35) * 128;
+    norm = Math.max(0, Math.min(255, norm));
+    d[i] = norm;
+    d[i + 1] = norm;
+    d[i + 2] = norm;
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  const enhancedBuf = canvas.toBuffer("image/png");
+  return { buffer: enhancedBuf, scale, width: w, height: h };
 }
 
 /* =========================================================
@@ -2903,24 +2961,31 @@ export async function POST(
         pdfOcrWords = pdfText.ocrWords ?? [];
       } else {
         const image = await loadImage(buffer);
-        let paddleSuccess = false;
+        let bestText = "";
+        let bestBlocks: OcrBlock = null;
+        let bestMarks: ImageMark[] = [];
+        let bestWordCount = 0;
+        let bestEngine = "Tesseract.js";
 
+        // Pass 1: Try PaddleOCR (PP-OCRv6)
         try {
           const paddleRes = await runPaddleOcr(buffer, image.width, image.height);
-          if (paddleRes.lines.length > 0 || paddleRes.words.length > 0) {
-            ocrEngine = paddleRes.engine;
-            paddleSuccess = true;
+          const paddleLines = paddleRes.lines || [];
+          const paddleWords = paddleRes.words || [];
+          const paddleText = paddleLines.map((l) => l.text).join("\n").trim();
+          const wordCount = paddleWords.length;
 
-            const paddleText = paddleRes.lines.map((l) => l.text).join("\n");
-            text = paddleText;
+          if (wordCount > 0) {
+            bestText = paddleText;
+            bestWordCount = wordCount;
+            bestEngine = paddleRes.engine;
 
-            // Form synthetic blocks for compatibility with downstream spell checks
-            blocks = [
+            bestBlocks = [
               {
                 paragraphs: [
                   {
-                    lines: paddleRes.lines.map((l) => ({
-                      words: paddleRes.words
+                    lines: paddleLines.map((l) => ({
+                      words: paddleWords
                         .filter(
                           (w) =>
                             w.top >= l.top - 0.01 &&
@@ -2942,7 +3007,7 @@ export async function POST(
               },
             ];
 
-            imageMarks = paddleRes.words.map((w) => ({
+            bestMarks = paddleWords.map((w) => ({
               word: w.text,
               left: w.left,
               top: w.top,
@@ -2954,37 +3019,87 @@ export async function POST(
           console.warn("[Spellense] PaddleOCR failed, falling back to Tesseract.js:", paddleErr);
         }
 
-        if (!paddleSuccess) {
-          ocrEngine = "Tesseract.js (Fallback)";
-          worker = await getOcrWorker();
+        // Pass 2 & 3: If Paddle returned very few words (e.g. < 5 words), or if we need richer text:
+        // Run Tesseract and automatic contrast enhancement!
+        if (bestWordCount < 5) {
+          try {
+            worker = await getOcrWorker();
 
-          const result = await worker.recognize(
-            buffer,
-            {},
-            { blocks: true }
-          );
+            // Run Tesseract on original image
+            const result = await worker.recognize(
+              buffer,
+              {},
+              { blocks: true }
+            );
 
-          const rawBlocks = result.data.blocks as OcrBlock;
-          const filtered = filterOcrBlocks(rawBlocks, dialect);
+            const rawBlocks = result.data.blocks as OcrBlock;
+            const filtered = filterOcrBlocks(rawBlocks, dialect);
+            const tessText = filtered.cleanText.trim();
+            const tessWords = (filtered.filteredBlocks ?? []).flatMap((block) =>
+              block.paragraphs.flatMap((paragraph) =>
+                paragraph.lines.flatMap((line) => line.words)
+              )
+            );
 
-          text = filtered.cleanText;
-          blocks = filtered.filteredBlocks;
+            if (tessWords.length > bestWordCount) {
+              bestText = tessText;
+              bestWordCount = tessWords.length;
+              bestBlocks = filtered.filteredBlocks;
+              bestEngine = "Tesseract.js";
+              bestMarks = tessWords
+                .filter((word) => word.bbox)
+                .map((word) => ({
+                  word: word.text,
+                  left: word.bbox!.x0 / image.width,
+                  top: word.bbox!.y0 / image.height,
+                  width: (word.bbox!.x1 - word.bbox!.x0) / image.width,
+                  height: (word.bbox!.y1 - word.bbox!.y0) / image.height,
+                }));
+            }
 
-          const ocrWords = (filtered.filteredBlocks ?? []).flatMap((block) =>
-            block.paragraphs.flatMap((paragraph) =>
-              paragraph.lines.flatMap((line) => line.words)
-            )
-          );
-          imageMarks = ocrWords
-            .filter((word) => word.bbox)
-            .map((word) => ({
-              word: word.text,
-              left: word.bbox!.x0 / image.width,
-              top: word.bbox!.y0 / image.height,
-              width: (word.bbox!.x1 - word.bbox!.x0) / image.width,
-              height: (word.bbox!.y1 - word.bbox!.y0) / image.height,
-            }));
+            // If still under 5 words, run contrast-enhanced & upscaled pass!
+            if (bestWordCount < 5) {
+              const enhanced = enhanceImageForOcr(image);
+              const enhResult = await worker.recognize(
+                enhanced.buffer,
+                {},
+                { blocks: true }
+              );
+
+              const enhRawBlocks = enhResult.data.blocks as OcrBlock;
+              const enhFiltered = filterOcrBlocks(enhRawBlocks, dialect);
+              const enhText = enhFiltered.cleanText.trim();
+              const enhWords = (enhFiltered.filteredBlocks ?? []).flatMap((block) =>
+                block.paragraphs.flatMap((paragraph) =>
+                  paragraph.lines.flatMap((line) => line.words)
+                )
+              );
+
+              if (enhWords.length > bestWordCount) {
+                bestText = enhText;
+                bestWordCount = enhWords.length;
+                bestBlocks = enhFiltered.filteredBlocks;
+                bestEngine = "Tesseract.js (Enhanced)";
+                bestMarks = enhWords
+                  .filter((word) => word.bbox)
+                  .map((word) => ({
+                    word: word.text,
+                    left: word.bbox!.x0 / enhanced.width,
+                    top: word.bbox!.y0 / enhanced.height,
+                    width: (word.bbox!.x1 - word.bbox!.x0) / enhanced.width,
+                    height: (word.bbox!.y1 - word.bbox!.y0) / enhanced.height,
+                  }));
+              }
+            }
+          } catch (tessErr) {
+            console.warn("[Spellense] Tesseract fallback failed:", tessErr);
+          }
         }
+
+        text = bestText;
+        blocks = bestBlocks;
+        imageMarks = bestMarks;
+        ocrEngine = bestEngine;
       }
     }
 

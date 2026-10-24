@@ -30,14 +30,14 @@ export async function generateMetadata({
   const url = `${baseUrl}/blog/${post.slug}`;
 
   return {
-    title: post.metaTitle || post.title,
+    title: post.metaTitle ? { absolute: post.metaTitle } : post.title,
     description: post.description,
     alternates: {
       canonical: url,
     },
     openGraph: {
       siteName: "Spellense",
-      title: post.title,
+      title: post.metaTitle || post.title,
       description: post.description,
       url,
       type: "article",
@@ -47,18 +47,18 @@ export async function generateMetadata({
       tags: post.tags,
       images: [
         {
-          url: "/og-image.png",
+          url: post.image || "/og-image.png",
           width: 1200,
-          height: 630,
-          alt: post.title,
+          height: post.image ? 675 : 630,
+          alt: post.imageAlt || post.title,
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title: post.title,
+      title: post.metaTitle || post.title,
       description: post.description,
-      images: ["/og-image.png"],
+      images: [post.image || "/og-image.png"],
     },
   };
 }
@@ -79,12 +79,13 @@ export default async function BlogPostPage({
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://spellense.com";
   const pageUrl = `${baseUrl}/blog/${post.slug}`;
 
-  // Article JSON-LD Schema
+  // Article / BlogPosting JSON-LD Schema
   const articleSchema = {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     headline: post.title,
     description: post.description,
+    image: post.image ? `${baseUrl}${post.image}` : `${baseUrl}/og-image.png`,
     datePublished: post.publishedAt,
     dateModified: post.updatedAt,
     mainEntityOfPage: {
@@ -181,7 +182,7 @@ export default async function BlogPostPage({
         </nav>
 
         {/* ARTICLE HEADER HERO */}
-        <header style={{ borderColor: "#e5e5df" }} className="mx-auto max-w-4xl border-b pb-8 text-center">
+        <header style={{ borderBottom: "1px solid #e5e5df" }} className="mx-auto max-w-4xl pb-8 text-center">
           <div style={{ borderColor: "#e5e5df", backgroundColor: "#efeee7", color: "#3158d5" }} className="inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5">
             <span className="flex h-2 w-2 rounded-full bg-[#3158d5]" />
             <span className="text-[11px] font-bold uppercase tracking-wider">
@@ -294,7 +295,7 @@ export default async function BlogPostPage({
 
               {/* FAQ SECTION */}
               {post.faqs && post.faqs.length > 0 && (
-                <section id="faq" style={{ borderColor: "#e5e5df" }} className="mt-12 rounded-2xl border bg-[#faf9f6] p-6 shadow-2xs sm:p-8">
+                <section id="faq" style={{ border: "1px solid #e5e5df" }} className="mt-12 rounded-2xl bg-[#faf9f6] p-6 shadow-2xs sm:p-8">
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className="flex h-2.5 w-2.5 rounded-full bg-[#3158d5]" />
                     <span className="text-xs font-bold uppercase tracking-wider text-[#3158d5]">

@@ -1714,6 +1714,34 @@ export default function ImageToTextClient() {
                   <p className="mt-2 text-xs sm:text-sm text-[#70746d] leading-relaxed font-normal">
                     Everything you need to know about extracting text from images, photos, and scanned documents with Spellense.
                   </p>
+
+                  {/* READ MORE GUIDE CARD */}
+                  <div
+                    style={{
+                      borderColor: "#e5e5df",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      backgroundColor: "#ffffff",
+                    }}
+                    className="mt-6 rounded-2xl p-4 shadow-2xs"
+                  >
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                      Helpful Guide
+                    </span>
+                    <h3 className="mt-1 text-xs sm:text-sm font-bold text-[#1c201a]">
+                      Photo to Text: How to Convert an Image to Text Free
+                    </h3>
+                    <p className="mt-1 text-[11px] text-[#70746d] leading-relaxed">
+                      Simple steps, phone shortcuts (Live Text &amp; Google Lens), and fixes for blurry photos.
+                    </p>
+                    <Link
+                      href="/blog/how-to-convert-photo-to-text"
+                      className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#3158d5] hover:underline"
+                    >
+                      <span>Read guide</span>
+                      <span>→</span>
+                    </Link>
+                  </div>
                 </ScrollReveal>
 
                 {/* Right 8 Columns */}

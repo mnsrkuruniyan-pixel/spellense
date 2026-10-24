@@ -5,7 +5,7 @@
 @source "../lib";
 
 :root {
-  --background: #f0f6fe;
+  --background: #faf9f6;
   --foreground: #000000;
 }
 
@@ -402,6 +402,21 @@ summary::-webkit-details-marker {
 }
 summary::marker {
   display: none;
+}
+
+/* Set site-wide base background: clean warm paper cream #faf9f6 */
+html,
+body {
+  background-color: #faf9f6 !important;
+}
+
+/* Ensure blog prose dividers and borders match light theme #e5e5df */
+.prose hr {
+  border-top-color: #e5e5df !important;
+}
+.prose figure img,
+.prose img {
+  border-color: #e5e5df !important;
 }
 
 
