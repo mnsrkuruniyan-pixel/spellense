@@ -101,7 +101,7 @@ const VCSS = `
 
 /* StPageFlip Engine Styles */
 .stf__parent{position:relative;display:block;box-sizing:border-box;transform:translateZ(0);-ms-touch-action:pan-y;touch-action:pan-y;margin:auto}
-.sft__wrapper{position:relative;width:100%;box-sizing:border-box}
+.stf__wrapper{position:relative;width:100%;box-sizing:border-box}
 .stf__parent canvas{position:absolute;width:100%;height:100%;left:0;top:0}
 .stf__block{position:absolute;width:100%;height:100%;box-sizing:border-box;perspective:2600px}
 .stf__item{display:none;position:absolute;transform-style:preserve-3d}
@@ -191,6 +191,10 @@ const VCSS = `
 .th img{height:72px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .18s;box-shadow:0 4px 10px rgba(0,0,0,.15)}.th img:hover{border-color:#3b82f6;transform:scale(1.06)}
 .cr{z-index:10;font-size:.75rem;color:inherit;opacity:.75;font-weight:600;text-decoration:none;transition:opacity .15s}
 .cr:hover{opacity:1;text-decoration:underline}
+.alt-carousel .astg,.alt-calendar .astg{perspective:1700px;-webkit-perspective:1700px;transform-style:preserve-3d}
+.alt-carousel .ai{transform-style:preserve-3d}
+.alt-calendar .ai{transform-origin:50% 0}
+.alt-fade .ai{transition:opacity .8s ease,transform 1.4s ease}
 `;
 
 // ── App Specific CSS for Customizer & Workspace ───────────────────────────────
@@ -239,6 +243,8 @@ const APP_CSS = `
 .dpc:hover{border-color:#3158d5;background:#faf9f6}
 .dpc:focus-visible{outline:2px solid #3158d5;outline-offset:2px}
 .dpc.fon{border-color:#3158d5;background:#eff6ff;color:#3158d5}
+.dpc small{display:none}
+.dpnote{margin:8px 0 0;font-size:11px;line-height:1.35;color:#70746d}
 @media (max-width: 640px) {
   .ftb {
     display: flex;
@@ -597,6 +603,16 @@ const APP_CSS = `
     max-height: none;
   }
 }
+.ftp .f-toggle-card{flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;text-align:left}
+.fpn{padding:16px;border-radius:20px}
+.fpn .font-bold,.fpn .font-extrabold,.fpn .font-black{font-weight:600}
+.ftb button{font-size:.72rem;text-overflow:clip}
+.ftb button:focus{outline:none}
+.ftb button:focus-visible{outline:2px solid rgba(49,88,213,.35);outline-offset:1px}
+.dpc{font-weight:600}
+.ftc{font-weight:600}
+#xq{-webkit-appearance:none!important;-moz-appearance:none!important;appearance:none!important;background-image:none!important}
+#xq::-ms-expand{display:none}
 `;
 
 const FAQ_ITEMS = [
@@ -610,7 +626,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What styles are included?",
-    a: "Spellense includes 12 authentic physical book editions: 7 Classic styles (Leather, Linen Cloth, Walnut Wood, Spiral Notebook, Elastic Notebook, Glossy Magazine, Ledger), 4 Luxury styles (Black & Gold, Emerald Velvet, Crocodile Cognac, Carrara Marble), plus 'Your Own Cover' with custom front & back artwork on real hard boards.",
+    a: "Spellense has 14 display styles: 4 page-turn styles (Spread, Folio, Hardback, Classic) and 10 browse styles (Glide, Deck, Arc, Single, Scroll, Wall, Fan, Carousel, Calendar, Fade). Hardback offers 12 book editions: 7 Classic, 4 Luxury and Your Own Cover.",
   },
   {
     q: "Can I use my own logo and remove Spellense branding?",
@@ -618,12 +634,16 @@ const FAQ_ITEMS = [
   },
   {
     q: "Does the downloaded flipbook work offline without internet?",
-    a: "Yes! When you click 'Download offline HTML', you receive a self-contained single HTML file with the realistic 3D flipping engine, zoom, sound, and all your pages embedded. Double-click it on Windows, Mac, iPad, or Android and it opens anywhere without internet.",
+    a: "Yes! When you click 'Download offline HTML', you receive a self-contained single HTML file with the realistic 3D flipping engine, zoom, sound, and all your pages embedded. Open it in a modern browser (Chrome, Edge, Safari or Firefox) on a computer. On phones it depends on the app that opens the file, so for phones the most reliable way is to host the file online and share the link.",
+  },
+  {
+    q: "How do I share my flipbook?",
+    a: "Download the offline HTML and send it by email, WhatsApp or Drive, show it with Preview in New Tab, or upload the file to a free host such as Netlify Drop or GitHub Pages and share the link. Choose “Small file” in the export quality menu for books with many pages.",
   },
 ];
 
 // Browse display modes. Self-contained on purpose: its source is also embedded in the exported HTML.
-const ALT_MODES = ["glide", "deck", "arc", "single", "scroll", "wall", "fan"];
+const ALT_MODES = ["glide", "deck", "arc", "single", "scroll", "wall", "fan", "carousel", "calendar", "fade"];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) => string): void {
   if (root._off) root._off();
@@ -691,14 +711,14 @@ function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) =
   }
   var html = "";
   for (var i = 0; i < N; i++) {
-    html += '<div class="ai" data-i="' + i + '"><img src="' + P[i] + '" alt="Page ' + (i + 1) + '" draggable="false"></div>';
+    html += '<div class="ai" data-i="' + i + '"><img src="' + P[i] + '" alt="Page ' + (i + 1) + '" draggable="false" loading="lazy" decoding="async"></div>';
   }
   box.innerHTML = html;
   var nodes = box.querySelectorAll(".ai");
   for (var k = 0; k < nodes.length; k++) items.push(nodes[k] as HTMLElement);
 
   var thHtml = "";
-  for (var t = 0; t < N; t++) thHtml += '<img src="' + P[t] + '" alt="Page ' + (t + 1) + '" data-i="' + t + '">';
+  for (var t = 0; t < N; t++) thHtml += '<img src="' + P[t] + '" alt="Page ' + (t + 1) + '" data-i="' + t + '" loading="lazy" decoding="async">';
   thEl.innerHTML = thHtml;
 
   function size() {
@@ -741,6 +761,16 @@ function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) =
         tr = "translateX(" + d * 24 + "%) rotate(" + d * 7 + "deg) translateY(" + (a ? a * 5 : -5) + "%)" + (a ? "" : " scale(1.04)");
         zi = a ? 10 - a : 20;
       }
+    } else if (mode === "carousel") {
+      var R = Math.round((parseFloat(root.style.getPropertyValue("--iw")) || 300) * 1.1);
+      tr = "translateZ(" + -R + "px) rotateY(" + d * 38 + "deg) translateZ(" + R + "px)";
+      op = a > 2 ? 0 : 1 - a * 0.25; zi = 20 - a;
+    } else if (mode === "calendar") {
+      if (d < 0) { tr = "rotateX(-100deg)"; op = 0; zi = 30 - d; }
+      else if (d <= 2) { tr = "translateY(" + d * 10 + "px) scale(" + (1 - d * 0.04) + ")"; op = 1 - d * 0.3; zi = 20 - d; }
+      else { tr = "none"; op = 0; zi = 0; }
+    } else if (mode === "fade") {
+      tr = a === 0 ? "scale(1)" : "scale(1.05)"; op = a === 0 ? 1 : 0;
     }
     it.style.transform = tr;
     it.style.opacity = String(op);
@@ -840,7 +870,7 @@ function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) =
     if (!it) return;
     var i = Number(it.getAttribute("data-i"));
     if (mode === "wall") { openLb(i); return; }
-    if (mode === "deck") { if (i === cur) next(); return; }
+    if (mode === "deck" || mode === "calendar" || mode === "fade") { if (i === cur) next(); return; }
     if (i !== cur) go(i);
   });
   root.addEventListener("click", function (e: any) {
@@ -920,9 +950,68 @@ function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) =
   ui();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function playSnd(ctx: any, kind: string, vol: number): void {
+  var sr = ctx.sampleRate, t0 = ctx.currentTime;
+  function noise(sec: number, p: number, at: number, type: string, f0: number, f1: number, g: number, q: number) {
+    var n = Math.floor(sr * sec), b = ctx.createBuffer(1, n, sr), d = b.getChannelData(0);
+    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, p);
+    var s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), o = ctx.createGain();
+    s.buffer = b; f.type = type; f.Q.value = q;
+    f.frequency.setValueAtTime(f0, t0 + at);
+    if (f1 !== f0) f.frequency.exponentialRampToValueAtTime(f1, t0 + at + sec);
+    o.gain.value = g * vol;
+    s.connect(f); f.connect(o); o.connect(ctx.destination); s.start(t0 + at);
+  }
+  if (kind === "crisp") noise(0.09, 4, 0, "bandpass", 3500, 3500, 0.9, 1);
+  else if (kind === "soft") noise(0.3, 1, 0, "bandpass", 500, 2200, 0.7, 0.6);
+  else if (kind === "flick") { noise(0.05, 2, 0, "bandpass", 5200, 5200, 0.8, 0.8); noise(0.05, 2, 0.07, "bandpass", 4200, 4200, 0.6, 0.8); }
+  else if (kind === "thump") {
+    noise(0.07, 2, 0, "lowpass", 700, 700, 0.8, 0.7);
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(110, t0);
+    o.frequency.exponentialRampToValueAtTime(45, t0 + 0.18);
+    g.gain.setValueAtTime(0.9 * vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.2);
+    o.connect(g); g.connect(ctx.destination); o.start(t0); o.stop(t0 + 0.22);
+  }
+  else noise(0.16, 3, 0, "lowpass", 1600, 1600, 0.4, 0.7);
+}
+
 export default function FlipbookClient() {
   const initDone = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [exportQ, setExportQ] = useState<"small" | "balanced" | "high">("balanced");
+  const [isXqOpen, setIsXqOpen] = useState(false);
+  const xqRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (xqRef.current && !xqRef.current.contains(event.target as Node)) {
+        setIsXqOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    (window as unknown as Record<string, unknown>)["onFlipbookSyncExportQ"] = (q: string) => {
+      if (q === "small" || q === "balanced" || q === "high") {
+        setExportQ(q);
+      }
+    };
+  }, []);
+
+  const selectExportQuality = (val: "small" | "balanced" | "high") => {
+    setExportQ(val);
+    setIsXqOpen(false);
+    const w = window as unknown as Record<string, unknown>;
+    if (typeof w["setFlipbookExportQ"] === "function") {
+      (w["setFlipbookExportQ"] as (q: string) => void)(val);
+    }
+  };
 
   useEffect(() => {
     if (!initDone.current) {
@@ -1046,99 +1135,146 @@ export default function FlipbookClient() {
                           </span>
 
                           <span className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
-                            11 STYLES · 3D
+                            14 STYLES · 3D
                           </span>
                         </div>
 
-                        {/* DASHED DROPZONE */}
-                        <div
-                          id="drop"
-                          tabIndex={0}
-                          role="button"
-                          aria-label="Upload PDF or images"
-                          onDragEnter={(e) => {
-                            e.preventDefault();
-                            setIsDragging(true);
-                          }}
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            setIsDragging(true);
-                          }}
-                          onDragLeave={(e) => {
-                            e.preventDefault();
-                            setIsDragging(false);
-                          }}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            setIsDragging(false);
-                          }}
-                          style={{
-                            borderColor: isDragging ? "#3158d5" : "#deded6",
-                            backgroundColor: isDragging ? "#eff6ff" : "#f6f5f3",
-                          }}
-                          className={`mt-4 rounded-2xl border-2 border-dashed p-5 sm:p-6 text-center transition-all cursor-pointer ${
-                            isDragging
-                              ? "border-[#3158d5] bg-blue-50/70"
-                              : "hover:border-[#3158d5]/50"
-                          }`}
-                        >
+                        {/* IDLE DROPZONE BOX */}
+                        <div id="drop-box">
+                          {/* DASHED DROPZONE */}
                           <div
-                            style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
-                            className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border shadow-2xs text-[#3158d5] transition-transform duration-200 group-hover:scale-105"
+                            id="drop"
+                            tabIndex={0}
+                            role="button"
+                            aria-label="Upload PDF or images"
+                            onDragEnter={(e) => {
+                              e.preventDefault();
+                              setIsDragging(true);
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setIsDragging(true);
+                            }}
+                            onDragLeave={(e) => {
+                              e.preventDefault();
+                              setIsDragging(false);
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              setIsDragging(false);
+                            }}
+                            style={{
+                              borderColor: isDragging ? "#3158d5" : "#deded6",
+                              backgroundColor: isDragging ? "#eff6ff" : "#f6f5f3",
+                            }}
+                            className={`mt-4 rounded-2xl border-2 border-dashed p-5 sm:p-6 text-center transition-all cursor-pointer ${
+                              isDragging
+                                ? "border-[#3158d5] bg-blue-50/70"
+                                : "hover:border-[#3158d5]/50"
+                            }`}
                           >
-                            <svg
-                              width="22"
-                              height="22"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
+                            <div
+                              style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                              className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border shadow-2xs text-[#3158d5] transition-transform duration-200 group-hover:scale-105"
                             >
-                              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
-                              <path d="M6 6h10" />
-                              <path d="M6 10h10" />
-                              <path d="m14 16 3 3 3-3" />
-                              <path d="M17 19v-6" />
-                            </svg>
+                              <svg
+                                width="22"
+                                height="22"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                                <path d="M6 6h10" />
+                                <path d="M6 10h10" />
+                                <path d="m14 16 3 3 3-3" />
+                                <path d="M17 19v-6" />
+                              </svg>
+                            </div>
+
+                            <h3 className="mt-3 text-sm sm:text-[15px] font-bold text-[#1c201a]">
+                              Drop your work here
+                            </h3>
+
+                            <div className="mt-3.5">
+                              <span
+                                style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                                className="inline-flex items-center justify-center gap-2 rounded-lg px-7 py-2.5 text-sm font-bold shadow-xs transition hover:opacity-95 active:scale-[0.98] cursor-pointer min-w-[150px]"
+                              >
+                                <span>Choose file</span>
+                                <span className="text-base font-bold">↗</span>
+                              </span>
+                            </div>
+
+                            <p className="mt-2.5 text-[11px] text-[#767a74]">
+                              PDF, JPG, PNG &amp; WebP · Up to 50+ pages
+                            </p>
                           </div>
 
-                          <h3 className="mt-3 text-sm sm:text-[15px] font-bold text-[#1c201a]">
-                            Drop your work here
-                          </h3>
-
-                          <div className="mt-3.5">
-                            <span
-                              style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
-                              className="inline-flex items-center justify-center gap-2 rounded-lg px-7 py-2.5 text-sm font-bold shadow-xs transition hover:opacity-95 active:scale-[0.98] cursor-pointer min-w-[150px]"
+                          <div className="mt-3.5 text-center">
+                            <button
+                              type="button"
+                              id="btn-sample"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const w = window as unknown as Record<string, unknown>;
+                                if (typeof w["loadSampleCatalog"] === "function") {
+                                  (w["loadSampleCatalog"] as () => void)();
+                                }
+                              }}
+                              className="text-xs font-semibold text-[#3158d5] hover:underline inline-flex items-center gap-1 cursor-pointer"
                             >
-                              <span>Choose file</span>
-                              <span className="text-base font-bold">↗</span>
-                            </span>
+                              <span>Try a sample catalog</span>
+                              <span>→</span>
+                            </button>
                           </div>
-
-                          <p className="mt-2.5 text-[11px] text-[#767a74]">
-                            PDF, JPG, PNG &amp; WebP · Up to 50+ pages
-                          </p>
                         </div>
 
-                        <div className="mt-3.5 text-center">
-                          <button
-                            type="button"
-                            id="btn-sample"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const w = window as unknown as Record<string, unknown>;
-                              if (typeof w["loadSampleCatalog"] === "function") {
-                                (w["loadSampleCatalog"] as () => void)();
-                              }
-                            }}
-                            className="text-xs font-semibold text-[#3158d5] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        {/* PROGRESSING ANIMATION BOX (MATCHING HOME PAGE & COMPRESSOR STYLE) */}
+                        <div
+                          id="progress-box"
+                          style={{
+                            display: "none",
+                            borderColor: "#3158d5",
+                            backgroundColor: "#f8fafd",
+                          }}
+                          className="mt-4 rounded-2xl border-2 border-dashed p-6 sm:p-7 text-center animate-in fade-in duration-200"
+                        >
+                          <div className="relative mx-auto flex h-14 w-14 items-center justify-center">
+                            <div className="absolute inset-0 rounded-full bg-[#3158d5]/15 blur-lg animate-pulse" />
+                            <div
+                              style={{ backgroundColor: "#3158d5" }}
+                              className="relative flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-md shadow-[#3158d5]/30"
+                            >
+                              <svg className="h-6 w-6 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                              </svg>
+                            </div>
+                          </div>
+
+                          <h3 id="progress-title" className="mt-3.5 text-sm sm:text-[15px] font-bold text-[#1c201a]">
+                            Generating 3D Flipbook...
+                          </h3>
+                          <p id="progress-desc" className="mt-1 text-xs text-[#70746d] font-medium min-h-[18px]">
+                            Converting pages with crisp vector precision...
+                          </p>
+                          <div
+                            style={{ backgroundColor: "#e5e5df" }}
+                            className="mx-auto mt-4 max-w-[200px] h-1.5 w-full rounded-full overflow-hidden"
                           >
-                            <span>Try a sample catalog</span>
-                            <span>→</span>
-                          </button>
+                            <div
+                              id="progress-bar-fill"
+                              style={{ backgroundColor: "#3158d5", width: "0%" }}
+                              className="h-full rounded-full transition-all duration-300"
+                            />
+                          </div>
+                          <div id="progress-percent" className="mt-2 text-[11px] font-semibold text-[#3158d5]">
+                            0%
+                          </div>
                         </div>
 
                         <div id="st" aria-live="polite" className="mt-2 text-center text-xs font-semibold text-[#3158d5] min-h-[1.2em]"></div>
@@ -1231,7 +1367,7 @@ export default function FlipbookClient() {
                                   MODES
                                 </div>
                                 <div className="mt-1 flex items-center justify-between text-xs font-bold text-[#1c201a]">
-                                  <span>11 Book Formats</span>
+                                  <span>14 Book Formats</span>
                                   <span className="text-slate-400 font-normal text-[11px]">Hardcover, Magazine</span>
                                 </div>
                               </div>
@@ -1301,7 +1437,7 @@ export default function FlipbookClient() {
                                     MODES
                                   </div>
                                   <div className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs font-bold text-[#1c201a]">
-                                    11 Book Formats
+                                    14 Book Formats
                                   </div>
                                 </div>
                               </div>
@@ -1404,6 +1540,84 @@ export default function FlipbookClient() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* CUSTOM QUALITY POPOVER MENU (OPTION 2) */}
+              <div id="xq-popover-wrap" ref={xqRef} className="relative inline-flex items-center">
+                {/* Hidden select to preserve backward compatibility */}
+                <select id="xq" value={exportQ} onChange={() => {}} className="hidden" aria-hidden="true">
+                  <option value="small">Small file (email &amp; WhatsApp)</option>
+                  <option value="balanced">Balanced (recommended)</option>
+                  <option value="high">High quality</option>
+                </select>
+
+                {/* Popover trigger button */}
+                <button
+                  type="button"
+                  id="xq-btn"
+                  aria-haspopup="listbox"
+                  aria-expanded={isXqOpen}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsXqOpen((prev) => !prev);
+                  }}
+                  style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff", color: "#1c201a" }}
+                  className="inline-flex items-center justify-between gap-3 rounded-xl border px-3.5 py-2 text-xs font-semibold shadow-2xs hover:bg-[#faf9f6] transition cursor-pointer min-w-[175px]"
+                >
+                  <span id="xq-btn-label" className="truncate text-[#1c201a]">
+                    {exportQ === "small" && "Small file (email & WhatsApp)"}
+                    {exportQ === "balanced" && "Balanced (recommended)"}
+                    {exportQ === "high" && "High quality"}
+                  </span>
+                  <svg
+                    id="xq-chevron"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`text-slate-500 shrink-0 transition-transform duration-200 ${isXqOpen ? "rotate-180" : ""}`}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {/* Popover floating menu */}
+                {isXqOpen && (
+                  <div
+                    id="xq-menu"
+                    role="listbox"
+                    style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                    className="absolute right-0 top-full mt-1.5 w-64 rounded-xl border p-1.5 shadow-xl z-50 flex flex-col gap-1"
+                  >
+                    {[
+                      { val: "small" as const, label: "Small file (email & WhatsApp)" },
+                      { val: "balanced" as const, label: "Balanced (recommended)" },
+                      { val: "high" as const, label: "High quality" },
+                    ].map((opt) => {
+                      const isSelected = exportQ === opt.val;
+                      return (
+                        <button
+                          key={opt.val}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => selectExportQuality(opt.val)}
+                          className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold text-left transition cursor-pointer ${
+                            isSelected
+                              ? "bg-[#eff6ff] text-[#3158d5]"
+                              : "text-[#1c201a] hover:bg-[#f6f5f3]"
+                          }`}
+                        >
+                          <span>{opt.label}</span>
+                          {isSelected && <span className="text-[#3158d5] font-bold">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
                 id="top-download-btn"
@@ -1508,7 +1722,7 @@ export default function FlipbookClient() {
                   <span className="text-xs font-extrabold uppercase tracking-wider text-[#1c201a]">Customizer</span>
                 </div>
                 <span style={{ backgroundColor: "#efeee7", borderColor: "#e5e5df", color: "#3158d5" }} className="text-[11px] font-bold border px-2.5 py-0.5 rounded-full shadow-2xs">
-                  11 Display Styles
+                  14 Display Styles
                 </span>
               </div>
 
@@ -1517,7 +1731,7 @@ export default function FlipbookClient() {
                 <button className="fon" data-p="st">Style</button>
                 <button data-p="pm">Pages</button>
                 <button data-p="br">Brand</button>
-                <button data-p="bg">Backdrop</button>
+                <button data-p="bg">Color</button>
                 <button data-p="ly">Layout</button>
                 <button data-p="kt">Kit</button>
               </div>
@@ -1528,6 +1742,7 @@ export default function FlipbookClient() {
                 <div>
                   <span className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Display style</span>
                   <div id="dsp" className="dsp"></div>
+                  <p id="dnote" className="dpnote"></p>
                 </div>
 
                 {/* Active Style Description Box */}
@@ -1674,10 +1889,10 @@ export default function FlipbookClient() {
                     <span className="text-xs font-bold text-[#1c201a]">Swap Header Sides</span>
                     <span style={{ color: "#70746d" }} className="text-[11px] font-normal mt-0.5">Logo on right, text on left</span>
                   </div>
-                  <label className="f-toggle-switch">
+                  <span className="f-toggle-switch">
                     <input type="checkbox" id="lr" />
                     <span className="f-toggle-slider"></span>
-                  </label>
+                  </span>
                 </label>
 
                 {/* Option 2: Made with Spellense credit */}
@@ -1686,10 +1901,10 @@ export default function FlipbookClient() {
                     <span className="text-xs font-bold text-[#1c201a]">Brand Watermark</span>
                     <span style={{ color: "#70746d" }} className="text-[11px] font-normal mt-0.5">Show subtle &ldquo;Made with Spellense&rdquo; credit</span>
                   </div>
-                  <label className="f-toggle-switch">
+                  <span className="f-toggle-switch">
                     <input type="checkbox" id="cr" />
                     <span className="f-toggle-slider"></span>
-                  </label>
+                  </span>
                 </label>
               </div>
 
@@ -1767,10 +1982,10 @@ export default function FlipbookClient() {
                     <span className="text-xs font-bold text-slate-800">Gradient Backdrop</span>
                     <span className="text-[11px] text-slate-500 font-normal mt-0.5">Smooth diagonal dual-tone transition</span>
                   </div>
-                  <label className="f-toggle-switch">
+                  <span className="f-toggle-switch">
                     <input type="checkbox" id="gr" defaultChecked />
                     <span className="f-toggle-slider"></span>
-                  </label>
+                  </span>
                 </label>
 
                 {/* Backdrop photo */}
@@ -1841,10 +2056,10 @@ export default function FlipbookClient() {
                     <span className="text-xs font-bold text-slate-800">Clean minimal toolbar</span>
                     <span className="text-[11px] text-slate-500 font-normal mt-0.5">Flat white toolbar with simple line icons</span>
                   </div>
-                  <label className="f-toggle-switch">
+                  <span className="f-toggle-switch">
                     <input type="checkbox" id="cl" />
                     <span className="f-toggle-slider"></span>
-                  </label>
+                  </span>
                 </label>
 
                 {/* Sound Effects */}
@@ -1853,11 +2068,30 @@ export default function FlipbookClient() {
                     <span className="text-xs font-bold text-slate-800">Realistic Sound Effects</span>
                     <span className="text-[11px] text-slate-500 font-normal mt-0.5">Physical paper rustle on corner turn</span>
                   </div>
-                  <label className="f-toggle-switch">
+                  <span className="f-toggle-switch">
                     <input type="checkbox" id="sn" />
                     <span className="f-toggle-slider"></span>
-                  </label>
+                  </span>
                 </label>
+
+                <div id="snd-opts" className="flex flex-col gap-2.5">
+                  <label htmlFor="sk" className="text-xs font-bold text-slate-800">
+                    Sound style
+                    <select id="sk" defaultValue="paper">
+                      <option value="paper">Paper rustle</option>
+                      <option value="crisp">Crisp page</option>
+                      <option value="soft">Soft whoosh</option>
+                      <option value="thump">Hardcover thump</option>
+                      <option value="flick">Quick double flick</option>
+                    </select>
+                  </label>
+                  <label htmlFor="sv" className="text-xs font-bold text-slate-800">
+                    Volume
+                    <input type="range" id="sv" min="0.3" max="2" step="0.1" defaultValue="1" className="w-full accent-blue-600" />
+                  </label>
+                  <button type="button" id="sndTest" className="fbtn text-xs py-1.5 px-3 self-start">▶ Test sound</button>
+                  <p className="text-[11px] text-slate-500">Plays in the page-turn styles: Spread, Folio, Hardback, Classic.</p>
+                </div>
               </div>
 
               {/* 5. Brand kit panel */}
@@ -1893,10 +2127,27 @@ export default function FlipbookClient() {
               <button style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="fbtn sm:ml-auto justify-center rounded-xl border px-4 py-3 text-xs sm:text-sm font-bold text-slate-500 hover:text-rose-600 transition shadow-2xs" id="nw">Start Over</button>
             </div>
 
+            {/* HOW TO SHARE BOX */}
+            <div style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }} className="mt-5 rounded-2xl border p-4">
+              <p className="text-sm font-bold text-[#1c201a]">How to share your flipbook</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                {[
+                  ["1. Send the file", "Download the offline HTML and send it by email, WhatsApp or Google Drive. For books with many pages, choose “Small file” first."],
+                  ["2. Show it live", "Use “Preview in New Tab” for meetings and screen sharing. No upload needed."],
+                  ["3. Put it online", "Upload the HTML file to a free host such as Netlify Drop or GitHub Pages (check their current free limits), then share the link."],
+                ].map(([t, d]) => (
+                  <div key={t} style={{ borderColor: "#e5e5df" }} className="rounded-xl border bg-white p-3">
+                    <p className="text-xs font-bold text-[#3158d5]">{t}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-[#70746d]">{d}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* EMBED SNIPPET COLLAPSIBLE */}
             <details style={{ backgroundColor: "#efeee7", borderColor: "#e5e5df" }} className="mt-5 w-full rounded-2xl border p-4">
               <summary className="text-xs sm:text-sm font-bold text-[#1c201a] cursor-pointer">
-                Embed flipbook on your website or blog (Iframe code)
+                Have a website? Get the embed code
               </summary>
               <p style={{ color: "#70746d" }} className="mt-2 text-xs">
                 Host your exported HTML file on your web hosting or CDN, then enter its URL below to generate the embed code:
@@ -1961,7 +2212,7 @@ export default function FlipbookClient() {
                   Pick a 3D Style &amp; Custom Cover
                 </h4>
                 <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500">
-                  Choose from 11 display styles, leather, cloth, or your bespoke hardcover with ribbon bookmarks and realistic paper sound.
+                  Choose from 14 display styles, leather, cloth, or your bespoke hardcover with ribbon bookmarks and realistic paper sound.
                 </p>
               </div>
             </ScrollReveal>
@@ -2448,24 +2699,12 @@ function initFlipbookApp() {
 
   // ── Global Audio Context for Page Turns ────────────────────────────────────
   let globalAudioCtx: AudioContext | null = null;
-  const playPageSound = () => {
+  const playPageSound = (kind?: string, vol?: number) => {
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!globalAudioCtx) globalAudioCtx = new AudioCtx();
       if (globalAudioCtx.state === "suspended") globalAudioCtx.resume();
-      const b = globalAudioCtx.createBuffer(1, Math.floor(globalAudioCtx.sampleRate * 0.14), globalAudioCtx.sampleRate);
-      const d = b.getChannelData(0);
-      for (let i = 0; i < d.length; i++) {
-        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3) * 0.35;
-      }
-      const r = globalAudioCtx.createBufferSource();
-      const f = globalAudioCtx.createBiquadFilter();
-      r.buffer = b;
-      f.type = "lowpass";
-      f.frequency.value = 1600;
-      r.connect(f);
-      f.connect(globalAudioCtx.destination);
-      r.start();
+      playSnd(globalAudioCtx, kind || "paper", vol == null ? 1 : vol);
     } catch (_) {}
   };
 
@@ -2820,7 +3059,7 @@ function initFlipbookApp() {
         }
 
         flip.on("flip", () => {
-          if (snd) playPageSound();
+          if (snd) playPageSound(c.sndKind as string, c.sndVol as number);
           setTimeout(fit, 80);
         });
 
@@ -2886,12 +3125,14 @@ function initFlipbookApp() {
 
     window.addEventListener("resize", onResize);
     addEventListener("keydown", key);
-    document.addEventListener("fullscreenchange", () => setTimeout(build, 100));
+    const onFs = () => setTimeout(build, 100);
+    document.addEventListener("fullscreenchange", onFs);
 
     root._off = () => {
       ro.disconnect();
       window.removeEventListener("resize", onResize);
       removeEventListener("keydown", key);
+      document.removeEventListener("fullscreenchange", onFs);
       clearInterval(au as number);
       if (flip) {
         try { flip.destroy(); } catch (_) {}
@@ -2934,7 +3175,7 @@ function initFlipbookApp() {
         b.innerHTML = ic(snd ? "s1" : "s0");
         const snEl = document.getElementById("sn") as HTMLInputElement | null;
         if (snEl) snEl.checked = snd;
-        if (snd) playPageSound();
+        if (snd) playPageSound(c.sndKind as string, c.sndVol as number);
       }
       if (a === "f") {
         document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen && root.requestFullscreen();
@@ -2963,7 +3204,7 @@ function initFlipbookApp() {
       if (a === "t") {
         const thEl = root.querySelector(".th") as HTMLElement;
         if (!thEl.innerHTML) {
-          thEl.innerHTML = P.map((u, idx) => `<img data-i="${idx}" src="${u}" alt="Page ${idx + 1}">`).join("");
+          thEl.innerHTML = P.map((u, idx) => `<img data-i="${idx}" src="${u}" alt="Page ${idx + 1}" loading="lazy" decoding="async">`).join("");
         }
         thEl.hidden = !thEl.hidden;
       }
@@ -3000,13 +3241,14 @@ function initFlipbookApp() {
 
   const loadSaved = () => {
     try {
-      const saved = JSON.parse(localStorage.spFbKit || "{}");
-      if (!saved.bg1 || saved.bg1 === "#f8fafc" || saved.bg1 === "#0d0b1a" || saved.bg1 === "#0D0B1A") {
-        saved.bg1 = "#efeee7";
-        saved.bg2 = "#e5e5df";
-        saved.bgType = "color";
+      const raw = JSON.parse(localStorage.spFbKit || "{}");
+      if (raw.v !== 2) return {};
+      if (!raw.bg1 || raw.bg1 === "#f8fafc" || raw.bg1 === "#0d0b1a" || raw.bg1 === "#0D0B1A") {
+        raw.bg1 = "#efeee7";
+        raw.bg2 = "#e5e5df";
+        raw.bgType = "color";
       }
-      return saved;
+      return raw;
     } catch (_) { return {}; }
   };
 
@@ -3021,12 +3263,15 @@ function initFlipbookApp() {
       credit: false,
       clean: true,
       disp: "spread",
-      bgType: "color",
-      bg1: "#efeee7",
-      bg2: "#e5e5df",
+      bgType: "grad",
+      bg1: "#1e2433",
+      bg2: "#0b0e16",
       bgImg: "",
       dim: 0.35,
       sound: false,
+      sndKind: "paper",
+      sndVol: 1,
+      exportQ: "balanced",
       mode: "keep",
       cust: { front: null, back: null, col: "#2a2545", auto: true, gloss: false },
     },
@@ -3049,13 +3294,21 @@ function initFlipbookApp() {
     new Promise((r, j) => { const i = new Image(); i.onload = () => r(i); i.onerror = j; i.src = u; });
 
   async function f2u(f: File, max: number, type: string, q: number): Promise<string> {
-    const i = await li(URL.createObjectURL(f));
-    const k = Math.min(1, max / Math.max(i.width, i.height));
-    const c = document.createElement("canvas");
-    c.width = Math.round(i.width * k);
-    c.height = Math.round(i.height * k);
-    c.getContext("2d")!.drawImage(i, 0, 0, c.width, c.height);
-    return c.toDataURL(type, q);
+    const blobUrl = URL.createObjectURL(f);
+    try {
+      const i = await li(blobUrl);
+      const k = Math.min(1, max / Math.max(i.width, i.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(i.width * k);
+      c.height = Math.round(i.height * k);
+      c.getContext("2d")!.drawImage(i, 0, 0, c.width, c.height);
+      const res = c.toDataURL(type, q);
+      c.width = 0;
+      c.height = 0;
+      return res;
+    } finally {
+      URL.revokeObjectURL(blobUrl);
+    }
   }
 
   async function coverFrom(file: File): Promise<{ u: string; col: string }> {
@@ -3070,64 +3323,190 @@ function initFlipbookApp() {
     const x = s.getContext("2d")!;
     x.drawImage(im, 0, 0, 1, 1);
     const d = x.getImageData(0, 0, 1, 1).data;
-    return { u: c.toDataURL("image/jpeg", 0.9), col: hex(d[0], d[1], d[2]) };
+    const res = { u: c.toDataURL("image/jpeg", 0.9), col: hex(d[0], d[1], d[2]) };
+    c.width = 0;
+    c.height = 0;
+    s.width = 0;
+    s.height = 0;
+    return res;
   }
 
   const readURL = (f: File): Promise<string> =>
     new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(f); });
 
-  const status = (t: string) => { const el = document.getElementById("st"); if (el) el.textContent = t; };
+  function setProgress(opts: { show: boolean; title?: string; desc?: string; percent?: number }) {
+    const pBox = document.getElementById("progress-box");
+    const dBox = document.getElementById("drop-box");
+    const pTitle = document.getElementById("progress-title");
+    const pDesc = document.getElementById("progress-desc");
+    const pFill = document.getElementById("progress-bar-fill");
+    const pPct = document.getElementById("progress-percent");
+
+    if (opts.show) {
+      if (pBox) pBox.style.display = "block";
+      if (dBox) dBox.style.display = "none";
+      if (opts.title && pTitle) pTitle.textContent = opts.title;
+      if (opts.desc && pDesc) pDesc.textContent = opts.desc;
+      if (typeof opts.percent === "number") {
+        const pct = Math.min(100, Math.max(0, Math.round(opts.percent)));
+        if (pFill) pFill.style.width = pct + "%";
+        if (pPct) pPct.textContent = `${pct}%`;
+      }
+    } else {
+      if (pBox) pBox.style.display = "none";
+      if (dBox) dBox.style.display = "block";
+      if (pFill) pFill.style.width = "0%";
+      if (pPct) pPct.textContent = "0%";
+    }
+  }
+
+  const status = (t: string, pct?: number) => {
+    const el = document.getElementById("st");
+    if (el) el.textContent = t;
+    const pmEl = document.getElementById("pmInfo");
+    if (pmEl) pmEl.textContent = t;
+    if (typeof pct === "number") {
+      setProgress({ show: true, desc: t, percent: pct });
+    } else {
+      const pDesc = document.getElementById("progress-desc");
+      if (pDesc) pDesc.textContent = t;
+    }
+  };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getEl = (id: string): any => document.getElementById(id);
 
   async function extractPages(list: File[], out: string[], setTitle: boolean) {
-      for (const f of list) {
-        if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) {
-          status("Loading PDF engine…");
-          const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-          pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-          const arrayBuffer = await f.arrayBuffer();
-          const loadingTask = pdfjs.getDocument({
-            data: new Uint8Array(arrayBuffer),
-            cMapUrl: "/cmaps/",
-            cMapPacked: true,
-            standardFontDataUrl: "/standard_fonts/",
+    for (const f of list) {
+      if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) {
+        status("Loading PDF engine…", 5);
+        setProgress({
+          show: true,
+          title: "Loading PDF Engine...",
+          desc: "Reading document and analyzing pages…",
+          percent: 5,
+        });
+        await new Promise((r) => setTimeout(r, 20));
+
+        const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+        pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+        const arrayBuffer = await f.arrayBuffer();
+        const loadingTask = pdfjs.getDocument({
+          data: new Uint8Array(arrayBuffer),
+          cMapUrl: "/cmaps/",
+          cMapPacked: true,
+          standardFontDataUrl: "/standard_fonts/",
+        });
+        const pdf = await loadingTask.promise;
+        const total = pdf.numPages;
+        const isLarge = total > 15;
+        if (setTitle) {
+          S.title = f.name
+            .replace(/\.[^.]+$/, "")
+            .replace(/[_]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 36);
+        }
+
+        setProgress({
+          show: true,
+          title: "Generating 3D Flipbook...",
+          desc: `Converting page 1 of ${total}…`,
+          percent: 8,
+        });
+
+        for (let i = 1; i <= total; i++) {
+          const pct = Math.round(8 + (i / total) * 82);
+          status(`Converting page ${i} of ${total}…`, pct);
+          setProgress({
+            show: true,
+            title: "Generating 3D Flipbook...",
+            desc: `Converting page ${i} of ${total}…`,
+            percent: pct,
           });
-          const pdf = await loadingTask.promise;
-          if (setTitle) S.title = f.name.replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 36);
-          for (let i = 1; i <= pdf.numPages; i++) {
-            status(`Converting page ${i} of ${pdf.numPages}…`);
-            try {
-              const p = await pdf.getPage(i);
-              const v1 = p.getViewport({ scale: 1 });
-              const w = v1.width / v1.height > 1.15 ? 1800 : 1000;
-              const vp = p.getViewport({ scale: w / v1.width });
-              const c = document.createElement("canvas");
-              c.width = vp.width;
-              c.height = vp.height;
-              const ctx = c.getContext("2d");
-              if (ctx) {
-                await p.render({ canvas: c, canvasContext: ctx, viewport: vp }).promise;
-                out.push(c.toDataURL("image/jpeg", 0.85));
-              }
-            } catch (pageErr) {
-              console.warn("Failed rendering page " + i, pageErr);
+
+          // Yield execution to the browser so the progress bar, text, and spinner render cleanly
+          await new Promise((r) => setTimeout(r, 20));
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let p: any = null;
+          let c: HTMLCanvasElement | null = null;
+          try {
+            p = await pdf.getPage(i);
+            const v1 = p.getViewport({ scale: 1 });
+            const isWide = v1.width / v1.height > 1.15;
+            const targetW = isWide ? (isLarge ? 1400 : 1600) : (isLarge ? 850 : 1000);
+            const vp = p.getViewport({ scale: targetW / v1.width });
+            c = document.createElement("canvas");
+            c.width = vp.width;
+            c.height = vp.height;
+            const ctx = c.getContext("2d");
+            if (ctx) {
+              await p.render({ canvas: c, canvasContext: ctx, viewport: vp }).promise;
+              out.push(c.toDataURL("image/jpeg", isLarge ? 0.78 : 0.85));
+            }
+          } catch (pageErr) {
+            console.warn("Failed rendering page " + i, pageErr);
+          } finally {
+            if (c) {
+              c.width = 0;
+              c.height = 0;
+              c = null;
+            }
+            if (p && typeof p.cleanup === "function") {
+              p.cleanup();
             }
           }
-        } else if (f.type.startsWith("image/")) {
-          if (setTitle) S.title = f.name.replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 36);
-          out.push(await f2u(f, 1600, "image/jpeg", 0.88));
         }
+
+        try {
+          await pdf.cleanup();
+          await loadingTask.destroy();
+        } catch (_) {}
+      } else if (f.type.startsWith("image/")) {
+        if (setTitle) {
+          S.title = f.name
+            .replace(/\.[^.]+$/, "")
+            .replace(/[_]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 36);
+        }
+        setProgress({
+          show: true,
+          title: "Processing Image...",
+          desc: `Optimizing ${f.name}…`,
+          percent: 50,
+        });
+        out.push(await f2u(f, 1600, "image/jpeg", 0.88));
+        setProgress({
+          show: true,
+          percent: 90,
+        });
       }
+    }
   }
 
   async function loadFiles(files: FileList | null) {
     if (!files || !files.length) return;
-    status("Reading files…");
+    setProgress({
+      show: true,
+      title: "Reading document...",
+      desc: "Loading files…",
+      percent: 5,
+    });
     RAW = [];
     try {
       await extractPages(Array.from(files), RAW, true);
       if (!RAW.length) throw new Error("Could not extract pages from file");
+      setProgress({
+        show: true,
+        title: "Assembling 3D book...",
+        desc: "Preparing flipbook layout and textures…",
+        percent: 95,
+      });
+      await new Promise((r) => setTimeout(r, 20));
+
       const upStage = document.getElementById("upload-stage");
       if (upStage) upStage.hidden = true;
       const tb = document.getElementById("fb-topbar");
@@ -3141,6 +3520,7 @@ function initFlipbookApp() {
       }
     } catch (err) {
       console.error("Flipbook loadFiles error:", err);
+      setProgress({ show: false });
       const msg = err instanceof Error ? err.message : String(err);
       status("Could not read file (" + msg + "). Use a valid PDF, JPG, PNG or WebP.");
     }
@@ -3148,7 +3528,14 @@ function initFlipbookApp() {
 
   // ── Demo Catalog Generator ─────────────────────────────────────────────────
   async function loadSampleCatalog() {
-    status("Generating demo catalog pages…");
+    setProgress({
+      show: true,
+      title: "Generating Demo Catalog...",
+      desc: "Creating high-definition demo catalog pages…",
+      percent: 30,
+    });
+    await new Promise((r) => setTimeout(r, 20));
+
     const W = 600, H = 840;
     const cols = [
       ["#5b4bff", "#ff7ac6"],
@@ -3182,11 +3569,20 @@ function initFlipbookApp() {
       x.font = "20px system-ui";
       x.globalAlpha = 0.6;
       x.fillText("Spellense Demo Catalog", 40, H - 48);
-      return c.toDataURL("image/jpeg", 0.9);
+      const res = c.toDataURL("image/jpeg", 0.9);
+      c.width = 0; c.height = 0;
+      return res;
     });
 
+    setProgress({
+      show: true,
+      title: "Generating Demo Catalog...",
+      desc: "Loading into 3D viewer…",
+      percent: 90,
+    });
+    await new Promise((r) => setTimeout(r, 20));
+
     S.title = "Demo Catalog";
-    S.desc = "Spellense Editorial 2026\nDesigned with 3D Flipbook Studio";
     const upStage = document.getElementById("upload-stage");
     if (upStage) upStage.hidden = true;
     const tb = document.getElementById("fb-topbar");
@@ -3203,19 +3599,12 @@ function initFlipbookApp() {
 
   async function derive(): Promise<boolean> {
     let wide = false;
-    for (const u of RAW) {
-      const i = await li(u);
-      if (i.width / i.height > 1.15) wide = true;
-    }
-    if (wide && S.mode === "ask") {
-      getEl("ask").hidden = false;
-    } else {
-      getEl("ask").hidden = true;
-    }
     const out: string[] = [];
-    for (const u of RAW) {
+    for (let idx = 0; idx < RAW.length; idx++) {
+      const u = RAW[idx];
       const i = await li(u);
       const isWide = i.width / i.height > 1.15;
+      if (isWide) wide = true;
       if (S.mode === "split" && isWide) {
         for (const k of [0, 1]) {
           const c = document.createElement("canvas");
@@ -3223,10 +3612,19 @@ function initFlipbookApp() {
           c.width = w; c.height = i.height;
           c.getContext("2d")!.drawImage(i, k * w, 0, w, i.height, 0, 0, w, i.height);
           out.push(c.toDataURL("image/jpeg", 0.85));
+          c.width = 0; c.height = 0;
         }
       } else {
         out.push(u);
       }
+      if (RAW.length > 15 && idx % 4 === 0) {
+        await new Promise((r) => setTimeout(r, 10));
+      }
+    }
+    if (wide && S.mode === "ask") {
+      getEl("ask").hidden = false;
+    } else {
+      getEl("ask").hidden = true;
     }
     pages = out;
     items = out.map(pmMk);
@@ -3306,7 +3704,7 @@ function initFlipbookApp() {
     grid.innerHTML = items.map((it, i) =>
       '<div class="pm-item' + (sel.has(it.id) ? " sel" : "") + '" draggable="true" data-i="' + i + '" data-id="' + it.id + '">' +
         '<input type="checkbox" class="pm-chk" data-a="sel" aria-label="Select page ' + (i + 1) + '"' + (sel.has(it.id) ? " checked" : "") + ">" +
-        '<img src="' + (it.th || EMPTY) + '" alt="Page ' + (i + 1) + '">' +
+        '<img src="' + (it.th || EMPTY) + '" alt="Page ' + (i + 1) + '" loading="lazy" decoding="async">' +
         '<span class="pm-n">' + (i + 1) + "</span>" +
         '<div class="pm-acts">' +
           '<button type="button" data-a="L" title="Move earlier" aria-label="Move page ' + (i + 1) + ' earlier">←</button>' +
@@ -3381,7 +3779,10 @@ function initFlipbookApp() {
     tmr = setTimeout(() => {
       if (!pages.length) return;
       Viewer(getEl("pv") as HTMLElement & { _off?: () => void }, Object.assign({}, S, { pages, ratio }));
-      try { localStorage.spFbKit = JSON.stringify(S); } catch (_) {}
+      const KEEP = ["theme", "disp", "clean", "sound", "sndKind", "sndVol", "exportQ", "mode", "credit", "logoRight", "bg1", "bg2", "dim"];
+      const slim: Record<string, unknown> = { v: 2, bgType: S.bgType === "img" ? "grad" : S.bgType };
+      KEEP.forEach((k) => { slim[k] = S[k]; });
+      try { localStorage.spFbKit = JSON.stringify(slim); } catch (_) {}
       const topStats = document.getElementById("top-stats-text");
       if (topStats) topStats.textContent = `${pages.length} Pages · 3D Engine Active`;
       const pvTitle = document.getElementById("pv-title-bar");
@@ -3391,7 +3792,7 @@ function initFlipbookApp() {
         const curStyle = BOOK_STYLES[S.theme]?.n || "Interactive 3D Book";
         pvSub.textContent = `${pages.length} pages · ${curStyle}`;
       }
-    }, 100) as unknown as number;
+    }, 250) as unknown as number;
   }
 
   function sync() {
@@ -3411,6 +3812,16 @@ function initFlipbookApp() {
     (getEl("md") as HTMLSelectElement).value = S.mode;
     (getEl("sn") as HTMLInputElement).checked = S.sound;
     (getEl("cl") as HTMLInputElement).checked = S.clean !== false;
+    (getEl("sk") as HTMLSelectElement).value = S.sndKind || "paper";
+    (getEl("sv") as HTMLInputElement).value = String(S.sndVol == null ? 1 : S.sndVol);
+    const xq = getEl("xq") as HTMLSelectElement | null;
+    if (xq) xq.value = S.exportQ || "balanced";
+    if (S.exportQ) {
+      const w = window as unknown as Record<string, unknown>;
+      if (typeof w["onFlipbookSyncExportQ"] === "function") {
+        (w["onFlipbookSyncExportQ"] as (q: string) => void)(S.exportQ);
+      }
+    }
 
     // Update style buttons state
     document.querySelectorAll(".ftc").forEach((b) => {
@@ -3428,6 +3839,9 @@ function initFlipbookApp() {
       el.classList.toggle("on", on);
     });
     document.querySelectorAll(".dpc").forEach((b) => (b as HTMLElement).classList.toggle("fon", (b as HTMLElement).dataset.d === S.disp));
+    const dn = document.getElementById("dnote");
+    const cd = DISPLAYS.find((x) => x.id === S.disp);
+    if (dn) dn.textContent = cd ? cd.t : "";
     ["tg", "note", "ic-box"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.style.display = hb ? "" : "none";
@@ -3542,18 +3956,21 @@ function initFlipbookApp() {
   renderStyleCards();
 
   // ── Display style picker ───────────────────────────────────────────────────
-  const DISPLAYS: { id: string; n: string; g: string; svg: string }[] = [
-    { id: "spread", n: "Spread", g: "Page-turn", svg: '<rect x="3" y="4" width="13" height="18" rx="1.5"/><rect x="18" y="4" width="13" height="18" rx="1.5"/>' },
-    { id: "folio", n: "Folio", g: "Page-turn", svg: '<rect x="3" y="4" width="13" height="18" rx="1.5" fill="currentColor" fill-opacity=".22"/><rect x="18" y="4" width="13" height="18" rx="1.5" fill="currentColor" fill-opacity=".22"/>' },
-    { id: "hardback", n: "Hardback", g: "Page-turn", svg: '<rect x="2" y="3" width="30" height="20" rx="2.5"/><path d="M17 3v20"/><path d="M21 3v9l2-1.6 2 1.6V3"/>' },
-    { id: "classic", n: "Classic", g: "Page-turn", svg: '<rect x="7" y="3" width="21" height="20" rx="2"/><path d="M12 3v20"/><path d="M17 9h7M17 13h7"/>' },
-    { id: "glide", n: "Glide", g: "Browse", svg: '<rect x="1" y="7" width="8" height="12" rx="1.5"/><rect x="11" y="4" width="12" height="18" rx="1.5"/><rect x="25" y="7" width="8" height="12" rx="1.5"/>' },
-    { id: "deck", n: "Deck", g: "Browse", svg: '<rect x="10" y="3" width="14" height="15" rx="1.5" opacity=".4"/><rect x="8" y="6" width="18" height="15" rx="1.5" opacity=".7"/><rect x="6" y="9" width="22" height="15" rx="1.5"/>' },
-    { id: "arc", n: "Arc", g: "Browse", svg: '<path d="M2 7l8 2.5v7L2 19z"/><path d="M32 7l-8 2.5v7L32 19z"/><rect x="11" y="4" width="12" height="18" rx="1.5"/>' },
-    { id: "single", n: "Single", g: "Browse", svg: '<rect x="10" y="3" width="14" height="20" rx="1.5"/>' },
-    { id: "scroll", n: "Scroll", g: "More", svg: '<rect x="9" y="2" width="16" height="10" rx="1.5"/><rect x="9" y="14" width="16" height="10" rx="1.5"/>' },
-    { id: "wall", n: "Wall", g: "More", svg: '<rect x="3" y="3" width="8" height="9" rx="1"/><rect x="13" y="3" width="8" height="9" rx="1"/><rect x="23" y="3" width="8" height="9" rx="1"/><rect x="3" y="14" width="8" height="9" rx="1"/><rect x="13" y="14" width="8" height="9" rx="1"/><rect x="23" y="14" width="8" height="9" rx="1"/>' },
-    { id: "fan", n: "Fan", g: "More", svg: '<rect x="12" y="5" width="10" height="17" rx="1.5" transform="rotate(-26 17 24)"/><rect x="12" y="5" width="10" height="17" rx="1.5" transform="rotate(26 17 24)"/><rect x="12" y="3" width="10" height="17" rx="1.5" fill="currentColor" fill-opacity=".15"/>' }
+  const DISPLAYS: { id: string; n: string; g: string; svg: string; t: string }[] = [
+    { id: "spread", n: "Spread", g: "Page-turn", svg: '<rect x="3" y="4" width="13" height="18" rx="1.5"/><rect x="18" y="4" width="13" height="18" rx="1.5"/>', t: "Open book, flat pages" },
+    { id: "folio", n: "Folio", g: "Page-turn", svg: '<rect x="3" y="4" width="13" height="18" rx="1.5" fill="currentColor" fill-opacity=".22"/><rect x="18" y="4" width="13" height="18" rx="1.5" fill="currentColor" fill-opacity=".22"/>', t: "Dark folio, no cover" },
+    { id: "hardback", n: "Hardback", g: "Page-turn", svg: '<rect x="2" y="3" width="30" height="20" rx="2.5"/><path d="M17 3v20"/><path d="M21 3v9l2-1.6 2 1.6V3"/>', t: "Real book with cover" },
+    { id: "classic", n: "Classic", g: "Page-turn", svg: '<rect x="7" y="3" width="21" height="20" rx="2"/><path d="M12 3v20"/><path d="M17 9h7M17 13h7"/>', t: "Cloth hardback" },
+    { id: "glide", n: "Glide", g: "Browse", svg: '<rect x="1" y="7" width="8" height="12" rx="1.5"/><rect x="11" y="4" width="12" height="18" rx="1.5"/><rect x="25" y="7" width="8" height="12" rx="1.5"/>', t: "Swipe through pages" },
+    { id: "deck", n: "Deck", g: "Browse", svg: '<rect x="10" y="3" width="14" height="15" rx="1.5" opacity=".4"/><rect x="8" y="6" width="18" height="15" rx="1.5" opacity=".7"/><rect x="6" y="9" width="22" height="15" rx="1.5"/>', t: "Card stack" },
+    { id: "arc", n: "Arc", g: "Browse", svg: '<path d="M2 7l8 2.5v7L2 19z"/><path d="M32 7l-8 2.5v7L32 19z"/><rect x="11" y="4" width="12" height="18" rx="1.5"/>', t: "Curved gallery" },
+    { id: "single", n: "Single", g: "Browse", svg: '<rect x="10" y="3" width="14" height="20" rx="1.5"/>', t: "One page at a time" },
+    { id: "scroll", n: "Scroll", g: "More", svg: '<rect x="9" y="2" width="16" height="10" rx="1.5"/><rect x="9" y="14" width="16" height="10" rx="1.5"/>', t: "Read top to bottom" },
+    { id: "wall", n: "Wall", g: "More", svg: '<rect x="3" y="3" width="8" height="9" rx="1"/><rect x="13" y="3" width="8" height="9" rx="1"/><rect x="23" y="3" width="8" height="9" rx="1"/><rect x="3" y="14" width="8" height="9" rx="1"/><rect x="13" y="14" width="8" height="9" rx="1"/><rect x="23" y="14" width="8" height="9" rx="1"/>', t: "All pages in a grid" },
+    { id: "fan", n: "Fan", g: "More", svg: '<rect x="12" y="5" width="10" height="17" rx="1.5" transform="rotate(-26 17 24)"/><rect x="12" y="5" width="10" height="17" rx="1.5" transform="rotate(26 17 24)"/><rect x="12" y="3" width="10" height="17" rx="1.5" fill="currentColor" fill-opacity=".15"/>', t: "Hand of cards" },
+    { id: "carousel", n: "Carousel", g: "More", svg: '<ellipse cx="17" cy="20" rx="14" ry="4" opacity=".45"/><rect x="11" y="3" width="12" height="15" rx="1.5"/>', t: "3D ring" },
+    { id: "calendar", n: "Calendar", g: "More", svg: '<rect x="8" y="9" width="18" height="14" rx="1.5"/><path d="M8 9l2-6h14l2 6"/>', t: "Flips up like a desk calendar" },
+    { id: "fade", n: "Fade", g: "More", svg: '<rect x="6" y="4" width="14" height="18" rx="1.5" opacity=".4"/><rect x="14" y="4" width="14" height="18" rx="1.5"/>', t: "Slideshow crossfade" }
   ];
   function renderDisplayGrid() {
     const el = getEl("dsp");
@@ -3561,7 +3978,7 @@ function initFlipbookApp() {
     let html = "", g = "";
     DISPLAYS.forEach((d) => {
       if (d.g !== g) { g = d.g; html += '<div class="dpg">' + g + "</div>"; }
-      html += '<button type="button" class="dpc" data-d="' + d.id + '"><svg viewBox="0 0 34 26" aria-hidden="true">' + d.svg + "</svg><span>" + d.n + "</span></button>";
+      html += '<button type="button" class="dpc" data-d="' + d.id + '"><svg viewBox="0 0 34 26" aria-hidden="true">' + d.svg + '</svg><div><span>' + d.n + '</span><small>' + d.t + '</small></div></button>';
     });
     el.innerHTML = html;
   }
@@ -3698,6 +4115,15 @@ function initFlipbookApp() {
   bind("lr", (e) => { S.logoRight = (e as HTMLInputElement).checked; }, "change");
   bind("cr", (e) => { S.credit = (e as HTMLInputElement).checked; }, "change");
   bind("sn", (e) => { S.sound = (e as HTMLInputElement).checked; }, "change");
+  getEl("sk").addEventListener("change", (e: Event) => {
+    S.sndKind = (e.target as HTMLSelectElement).value;
+    S.sound = true;
+    sync(); show();
+    playPageSound(S.sndKind, S.sndVol);
+  });
+  getEl("sv").addEventListener("input", (e: Event) => { S.sndVol = +(e.target as HTMLInputElement).value; });
+  getEl("sv").addEventListener("change", () => { S.sound = true; sync(); show(); playPageSound(S.sndKind, S.sndVol); });
+  getEl("sndTest").onclick = () => playPageSound(S.sndKind, S.sndVol);
   bind("cl", (e) => { S.clean = (e as HTMLInputElement).checked; }, "change");
   bind("dm", (e) => { S.dim = +(e as HTMLInputElement).value; });
   bind("c1", (e) => {
@@ -3712,6 +4138,12 @@ function initFlipbookApp() {
     if (c2Val) c2Val.textContent = S.bg2.toUpperCase();
   });
   bind("gr", (e) => { S.bgType = (e as HTMLInputElement).checked ? "grad" : "color"; }, "change");
+
+  (window as unknown as Record<string, unknown>)["setFlipbookExportQ"] = (q: string) => {
+    S.exportQ = q;
+    const xqEl = getEl("xq") as HTMLSelectElement | null;
+    if (xqEl) xqEl.value = q;
+  };
 
   getEl("md").addEventListener("change", (e: Event) => {
     if (edited && !window.confirm("Changing spread handling rebuilds the pages and resets your page edits (deleted, added, reordered pages). Continue?")) {
@@ -3975,9 +4407,28 @@ function initFlipbookApp() {
     }, 4000);
   }
 
+  async function exportPages(q: string): Promise<string[]> {
+    if (q === "high") return pages;
+    const max = q === "small" ? 900 : 1400;
+    const qual = q === "small" ? 0.6 : 0.78;
+    const out: string[] = [];
+    for (const u of pages) {
+      const im = await li(u);
+      const wide = im.width / im.height > 1.15;
+      const k = Math.min(1, (wide ? max * 1.6 : max) / Math.max(im.width, im.height));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(im.width * k));
+      c.height = Math.max(1, Math.round(im.height * k));
+      c.getContext("2d")!.drawImage(im, 0, 0, c.width, c.height);
+      out.push(c.toDataURL("image/jpeg", qual));
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    return out;
+  }
+
   // ── Standalone Offline HTML Generator ──────────────────────────────────────
-  function buildHTML(): string {
-    const cfg = JSON.stringify(Object.assign({}, S, { pages, ratio, full: true })).replace(/</g, "\\u003c");
+  function buildHTML(pg?: string[]): string {
+    const cfg = JSON.stringify(Object.assign({}, S, { pages: pg || pages, ratio, full: true })).replace(/</g, "\\u003c");
     const t = (S.title || S.desc || "Flipbook").split("\n")[0].slice(0, 60);
 
     const standaloneViewerCode = `
@@ -4052,25 +4503,14 @@ function initFlipbookApp() {
         return a;
       }
 
+      var playSnd = ${playSnd.toString()};
       var globalAudioCtx = null;
-      function playPageSound() {
+      function playPageSound(kind, vol) {
         try {
           var AudioCtx = window.AudioContext || window.webkitAudioContext;
           if (!globalAudioCtx) globalAudioCtx = new AudioCtx();
           if (globalAudioCtx.state === "suspended") globalAudioCtx.resume();
-          var b = globalAudioCtx.createBuffer(1, Math.floor(globalAudioCtx.sampleRate * 0.14), globalAudioCtx.sampleRate);
-          var d = b.getChannelData(0);
-          for (var i = 0; i < d.length; i++) {
-            d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3) * 0.35;
-          }
-          var r = globalAudioCtx.createBufferSource();
-          var f = globalAudioCtx.createBiquadFilter();
-          r.buffer = b;
-          f.type = "lowpass";
-          f.frequency.value = 1600;
-          r.connect(f);
-          f.connect(globalAudioCtx.destination);
-          r.start();
+          playSnd(globalAudioCtx, kind || "paper", vol == null ? 1 : vol);
         } catch (_) {}
       }
 
@@ -4265,7 +4705,7 @@ function initFlipbookApp() {
           flip.loadFromHTML(els);
           if (keepIdx > 0) { try { flip.turnToPage(Math.min(keepIdx, els.length - 1)); } catch (_) {} }
           flip.on("flip", function() {
-            if (snd) playPageSound();
+            if (snd) playPageSound(c.sndKind, c.sndVol);
             setTimeout(fit, 80);
           });
           flip.on("changeState", function(e) {
@@ -4308,7 +4748,7 @@ function initFlipbookApp() {
           }
           if (a === "z") { z = z >= 1.6 ? 1 : z + 0.3; build(); }
           if (a === "v") { vm = port ? "spread" : "single"; build(); }
-          if (a === "s") { snd = !snd; b.innerHTML = ic(snd ? 's1' : 's0'); if (snd) playPageSound(); }
+          if (a === "s") { snd = !snd; b.innerHTML = ic(snd ? 's1' : 's0'); if (snd) playPageSound(c.sndKind, c.sndVol); }
           if (a === "f") { document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen && root.requestFullscreen(); }
           if (a === "a") {
             if (au) { clearInterval(au); au = 0; b.innerHTML = ic('a0'); }
@@ -4327,7 +4767,7 @@ function initFlipbookApp() {
           if (a === "t") {
             var thEl = root.querySelector(".th");
             if (!thEl.innerHTML) {
-              thEl.innerHTML = P.map(function(u, idx) { return '<img data-i="' + idx + '" src="' + u + '" alt="Page ' + (idx + 1) + '">'; }).join("");
+              thEl.innerHTML = P.map(function(u, idx) { return '<img data-i="' + idx + '" src="' + u + '" alt="Page ' + (idx + 1) + '" loading="lazy" decoding="async">'; }).join("");
             }
             thEl.hidden = !thEl.hidden;
           }
@@ -4383,10 +4823,12 @@ function initFlipbookApp() {
           if (res.ok) pfSourceCache = await res.text();
         } catch (_) {}
       }
-      const html = buildHTML();
+      const outPages = await exportPages((S.exportQ as string) || "balanced");
+      const html = buildHTML(outPages);
+      const mb = (html.length / 1048576).toFixed(1);
       const docName = (S.title || "flipbook").trim().replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase() || "flipbook";
       dl(`${docName}.html`, html, "text/html");
-      dlBtn.textContent = "✓ Downloaded!";
+      dlBtn.textContent = "✓ Downloaded (" + mb + " MB)";
       setTimeout(() => {
         dlBtn.innerHTML = origHtml;
         (dlBtn as HTMLButtonElement).disabled = false;

@@ -4,7 +4,7 @@ import FlipbookClient from "./FlipbookClient";
 export const metadata: Metadata = {
   title: "Free 3D Flipbook Maker — Convert PDF & Images",
   description:
-    "Convert multi-page PDFs and images into interactive 3D digital flipbooks. Realistic page turn animations, offline HTML download, ZIP export, and embed code. 100% private in-browser processing.",
+    "Convert multi-page PDFs and images into interactive 3D digital flipbooks. Realistic page turn animations, offline HTML download, and embed code. 100% private in-browser processing.",
   alternates: {
     canonical: "/flipbook",
   },
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     siteName: "Spellense",
     title: "Free 3D Flipbook Maker — Turn PDFs into Interactive Flipbooks",
     description:
-      "Transform PDFs, magazines, portfolios, and brochures into realistic 3D page-turning digital books. Download as standalone offline HTML or ZIP. 100% free & client-side.",
+      "Transform PDFs, magazines, portfolios, and brochures into realistic 3D page-turning digital books. Download as standalone offline HTML. 100% free & client-side.",
     url: "/flipbook",
     type: "website",
     images: [
@@ -52,8 +52,7 @@ const jsonLd = {
     "Interactive 3D page curl and flip animations",
     "Multi-page PDF to digital flipbook in seconds",
     "Download standalone offline HTML flipbook (no internet needed)",
-    "Full ZIP package export for web hosting",
-    "Embed code for WordPress, Webflow, and custom websites",
+    "Embed with an iframe after hosting the exported HTML file",
     "100% private client-side processing — zero server uploads",
   ],
 };
@@ -67,7 +66,15 @@ const faqJsonLd = {
       name: "How do visitors view or download the flipbook offline?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "You can click 'Download Offline Flipbook (.html)' to get a single, self-contained HTML file. Anyone can double-click that file on Mac, Windows, iPhone, or Android to open and read the flipbook like a real book with zero internet connection required.",
+        text: "You can click 'Download Offline Flipbook (.html)' to get a single, self-contained HTML file. Open it in a modern browser (Chrome, Edge, Safari or Firefox) on a computer. On phones it depends on the app that opens the file, so for phones the most reliable way is to host the file online and share the link.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How do I share my flipbook?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Download the offline HTML and send it by email, WhatsApp or Drive, show it with Preview in New Tab, or upload the file to a free host such as Netlify Drop or GitHub Pages and share the link. Choose “Small file” in the export quality menu for books with many pages.",
       },
     },
     {
@@ -83,7 +90,7 @@ const faqJsonLd = {
       name: "Can I embed the 3D flipbook on my own website or WordPress?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Click the 'Embed Code' button to copy an iframe snippet that you can paste directly into any website, blog, or CMS like WordPress, Webflow, or Squarespace.",
+        text: "Yes. Host the exported HTML file on your own website, then paste its URL in the 'Embed flipbook on your website' box to copy an iframe snippet for WordPress, Webflow or Squarespace.",
       },
     },
     {
