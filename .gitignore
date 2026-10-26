@@ -42,3 +42,4 @@ next-env.d.ts
 /design-check/
 *.ses
 test-results/
+flipbook-bundle.txt

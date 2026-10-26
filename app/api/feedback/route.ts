@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
 
     const feedbackPayload = {
       id: "fb_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
+      name: "Spellense Feedback",
+      _from: "Spellense",
       _subject: `[Spellense Feedback: ${(type || "General").toUpperCase()}] from ${pagePath || "/"}`,
       feedbackType: type || "General",
       message: message.trim(),
@@ -41,6 +43,7 @@ export async function POST(req: NextRequest) {
       userAgent: userAgent || "Unknown",
       timestamp: new Date().toISOString(),
       _template: "table",
+      _captcha: "false",
     };
 
     console.log("[SPELLENSE FEEDBACK RECEIVED]", feedbackPayload);
@@ -74,7 +77,15 @@ export async function POST(req: NextRequest) {
         const { Resend } = await import("resend");
         const resend = new Resend(resendApiKey);
 
-        const fromAddress = process.env.FEEDBACK_FROM_EMAIL || "Spellense Feedback <onboarding@resend.dev>";
+        let fromAddress = (process.env.FEEDBACK_FROM_EMAIL || "Spellense Feedback <feedback@spellense.com>").trim();
+        // Sanitize any missing 'S' / accidental typo in env variable
+        if (/pellense/i.test(fromAddress) && !/spellense/i.test(fromAddress)) {
+          fromAddress = fromAddress.replace(/pellense/gi, "Spellense");
+        }
+        if (!fromAddress.includes("<") && fromAddress.includes("@")) {
+          fromAddress = `Spellense Feedback <${fromAddress}>`;
+        }
+
         const toAddress = process.env.FEEDBACK_TO_EMAIL || "hello@spellense.com";
 
         await resend.emails.send({

@@ -35,31 +35,45 @@ interface CompressedItem {
   blob: Blob | null;
 }
 
-const FORMAT_OPTIONS: { label: string; value: OutputFormat; desc: string }[] = [
+type FormatOption = {
+  label: string;
+  value: OutputFormat;
+  desc: string;
+  helper: string;
+  recommended?: boolean;
+};
+
+const FORMAT_OPTIONS: FormatOption[] = [
   {
-    label: "WebP (Recommended)",
+    label: "WebP",
     value: "webp",
-    desc: "Smallest size, 90%+ savings, supported in all modern browsers",
+    desc: "Smallest size, works everywhere",
+    helper: "WebP delivers up to 90% file size reduction with crisp sharpness across all modern browsers and websites.",
+    recommended: true,
   },
   {
-    label: "MozJPEG / JPG",
+    label: "MozJPEG",
     value: "jpeg",
-    desc: "Universal standard for print, photos & legacy systems",
+    desc: "Best for photos & print",
+    helper: "MozJPEG provides universal compatibility for photo prints, portfolio sharing, and older software.",
   },
   {
-    label: "PNG (Lossless)",
+    label: "PNG",
     value: "png",
-    desc: "Preserves transparent backgrounds and crisp sharp lines",
+    desc: "Keeps transparency",
+    helper: "PNG retains transparent backgrounds and pixel-sharp raster details for logos, icons, and UI mockups.",
   },
   {
-    label: "AVIF (Next-Gen)",
+    label: "AVIF",
     value: "avif",
-    desc: "Cutting-edge extreme compression for modern web",
+    desc: "Tiniest files, newer browsers",
+    helper: "AVIF provides cutting-edge next-gen compression with maximum savings on newer web browsers.",
   },
   {
-    label: "Original Format",
+    label: "Original",
     value: "original",
-    desc: "Keeps identical extension as your uploaded file",
+    desc: "Same format as uploaded",
+    helper: "Keeps your file in its original uploaded format while optimizing byte efficiency without changing extensions.",
   },
 ];
 
@@ -113,6 +127,19 @@ export default function ImageCompressorClient() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [loadingSample, setLoadingSample] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Desktop Initial Upload & Compression Progress States (strictly desktop hero card experience)
+  const [isInitialCompressing, setIsInitialCompressing] = useState<boolean>(false);
+  const [initialCompressProgress, setInitialCompressProgress] = useState<string>("");
+  const [initialCompressCount, setInitialCompressCount] = useState<number>(1);
+  const [isDesktop, setIsDesktop] = useState<boolean>(false);
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Global Settings for active or batch
   const [globalFormat, setGlobalFormat] = useState<OutputFormat>("webp");
@@ -487,12 +514,172 @@ export default function ImageCompressorClient() {
         type: blob.type || fileType,
       });
 
-      await processIncomingFiles([sampleFile]);
+      if (isDesktop && items.length === 0) {
+        await runInitialCompression([sampleFile]);
+      } else {
+        await processIncomingFiles([sampleFile]);
+      }
     } catch (err) {
       console.error("Error loading sample image:", err);
       setUploadError("Could not load sample image. Please select an image from your device.");
     } finally {
       setLoadingSample(false);
+    }
+  };
+
+  // Perform compression directly with in-box progressing animation, then open preview window (Desktop)
+  const runInitialCompression = async (fileList: File[]) => {
+    if (fileList.length === 0) return;
+    setIsInitialCompressing(true);
+    setInitialCompressCount(fileList.length);
+    setInitialCompressProgress(
+      fileList.length > 1
+        ? `Preparing ${fileList.length} files...`
+        : "Preparing image..."
+    );
+
+    try {
+      const newItems: CompressedItem[] = [];
+
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        const isPdf =
+          file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+
+        if (isPdf) {
+          try {
+            setInitialCompressProgress(`Reading PDF: ${file.name}...`);
+            const pdfjsLib = await import("pdfjs-dist");
+            pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+
+            const arrayBuffer = await file.arrayBuffer();
+            const loadingTask = pdfjsLib.getDocument({
+              data: arrayBuffer,
+              disableRange: true,
+              disableStream: true,
+            });
+
+            const pdf = await loadingTask.promise;
+            const totalPages = pdf.numPages;
+
+            for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+              setInitialCompressProgress(
+                `Rendering page ${pageNum} of ${totalPages}...`
+              );
+              const page = await pdf.getPage(pageNum);
+              const viewport = page.getViewport({ scale: 2.0 });
+
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d");
+              if (!ctx) continue;
+
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+
+              // @ts-expect-error pdfjs typing
+              await page.render({ canvasContext: ctx, viewport }).promise;
+
+              const pageBlob: Blob | null = await new Promise((res) =>
+                canvas.toBlob((b) => res(b), "image/jpeg", 0.95)
+              );
+
+              if (pageBlob) {
+                const baseDocName = file.name.replace(/\.[^/.]+$/, "");
+                const pageFile = new File(
+                  [pageBlob],
+                  `${baseDocName}-page-${pageNum}.jpg`,
+                  { type: "image/jpeg" }
+                );
+
+                const itemUrl = URL.createObjectURL(pageFile);
+                newItems.push({
+                  id: `pdf-${Date.now()}-${pageNum}-${Math.random().toString(36).substring(2, 7)}`,
+                  file: pageFile,
+                  name: `${baseDocName}-page-${pageNum}.jpg`,
+                  originalUrl: itemUrl,
+                  compressedUrl: null,
+                  originalSize: pageBlob.size,
+                  compressedSize: 0,
+                  width: Math.round(viewport.width),
+                  height: Math.round(viewport.height),
+                  origWidth: Math.round(viewport.width),
+                  origHeight: Math.round(viewport.height),
+                  format: globalFormat,
+                  quality: globalQuality,
+                  scalePercent: 100,
+                  status: "idle",
+                  blob: null,
+                });
+              }
+            }
+
+            await pdf.cleanup();
+            await loadingTask.destroy();
+          } catch (pdfErr) {
+            console.error("PDF extraction error:", pdfErr);
+          }
+        } else if (file.type.startsWith("image/") || /\.(png|jpe?g|webp|avif|svg)$/i.test(file.name)) {
+          const objectUrl = URL.createObjectURL(file);
+          const dims: { w: number; h: number } = await new Promise((res) => {
+            const tempImg = new Image();
+            tempImg.onload = () =>
+              res({ w: tempImg.naturalWidth, h: tempImg.naturalHeight });
+            tempImg.onerror = () => res({ w: 1200, h: 1200 });
+            tempImg.src = objectUrl;
+          });
+
+          newItems.push({
+            id: `img-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+            file,
+            name: file.name,
+            originalUrl: objectUrl,
+            compressedUrl: null,
+            originalSize: file.size,
+            compressedSize: 0,
+            width: dims.w,
+            height: dims.h,
+            origWidth: dims.w,
+            origHeight: dims.h,
+            format: globalFormat,
+            quality: globalQuality,
+            scalePercent: 100,
+            status: "idle",
+            blob: null,
+          });
+
+          trackFileUpload("image_compressor", file);
+        }
+      }
+
+      if (newItems.length > 0) {
+        setInitialCompressProgress(
+          newItems.length > 1
+            ? `Compressing ${newItems.length} images...`
+            : "Compressing image..."
+        );
+
+        // Perform compression while STILL in upload box
+        const compressedResults = await Promise.all(
+          newItems.map((item) =>
+            compressSingleItem(item, globalQuality, globalFormat, 100)
+          )
+        );
+
+        const finalItems = newItems.map((item) => {
+          const found = compressedResults.find((c) => c.id === item.id);
+          return found || item;
+        });
+
+        // Now update items to smoothly open the preview window!
+        setItems(finalItems);
+        setActiveId(finalItems[0].id);
+      }
+    } catch (err) {
+      console.error("Initial compression error:", err);
+      setUploadError("Could not compress file. Please try again.");
+    } finally {
+      setIsInitialCompressing(false);
+      setInitialCompressProgress("");
     }
   };
 
@@ -706,6 +893,38 @@ export default function ImageCompressorClient() {
     setIsBatchCompressing(false);
   };
 
+  // Keyboard navigation for accessible Output Format radio group
+  const handleFormatKeyDown = (
+    e: React.KeyboardEvent,
+    currentIndex: number
+  ) => {
+    const count = FORMAT_OPTIONS.length;
+    let nextIndex = -1;
+
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      nextIndex = (currentIndex + 1) % count;
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      nextIndex = (currentIndex - 1 + count) % count;
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      nextIndex = 0;
+    } else if (e.key === "End") {
+      e.preventDefault();
+      nextIndex = count - 1;
+    }
+
+    if (nextIndex >= 0) {
+      const nextFormat = FORMAT_OPTIONS[nextIndex].value;
+      setGlobalFormat(nextFormat);
+      const buttons = document.querySelectorAll<HTMLButtonElement>(
+        '[role="radio"][data-format-radio="true"]'
+      );
+      buttons[nextIndex]?.focus();
+    }
+  };
+
   // Drag & drop handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -721,7 +940,12 @@ export default function ImageCompressorClient() {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processIncomingFiles(Array.from(e.dataTransfer.files));
+      const droppedFiles = Array.from(e.dataTransfer.files);
+      if (isDesktop && items.length === 0) {
+        runInitialCompression(droppedFiles);
+      } else {
+        processIncomingFiles(droppedFiles);
+      }
     }
   };
 
@@ -1083,79 +1307,127 @@ export default function ImageCompressorClient() {
                         </span>
                       </div>
 
-                      {/* DASHED DROPZONE */}
-                      <div
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{
-                          borderColor: isDragging ? "#3158d5" : "#deded6",
-                          backgroundColor: isDragging ? "#eff6ff" : "#f6f5f3",
-                        }}
-                        className={`mt-4 rounded-2xl border-2 border-dashed p-5 sm:p-6 text-center transition-all cursor-pointer ${
-                          isDragging
-                            ? "border-[#3158d5] bg-blue-50/70"
-                            : "hover:border-[#3158d5]/50"
-                        }`}
-                      >
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          multiple
-                          accept="image/*,.pdf"
-                          className="hidden"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files.length > 0) {
-                              processIncomingFiles(Array.from(e.target.files));
-                            }
-                          }}
-                        />
-
+                      {isInitialCompressing ? (
+                        /* PROGRESSING ANIMATION INSIDE UPLOAD BOX (MATCHING HOME PAGE & OCR STYLE) */
                         <div
-                          style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
-                          className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border shadow-2xs text-[#3158d5] transition-transform duration-200 group-hover:scale-105"
-                        >
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-                            <path d="M12 12v9" />
-                            <path d="m16 16-4-4-4 4" />
-                          </svg>
-                        </div>
-
-                        <h3 className="mt-3 text-sm sm:text-[15px] font-bold text-[#1c201a]">
-                          Drop your images here
-                        </h3>
-
-                        <div className="mt-3.5">
-                          <span
-                            style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg px-7 py-2.5 text-sm font-bold shadow-xs transition hover:opacity-95 active:scale-[0.98] cursor-pointer min-w-[150px]"
-                          >
-                            <span>Choose file</span>
-                            <span className="text-base font-bold">↗</span>
-                          </span>
-                        </div>
-
-                        <p className="mt-2.5 text-[11px] text-[#767a74]">
-                          JPG, PNG, WebP &amp; PDF · Up to 50+ files
-                        </p>
-                      </div>
-
-                      <div className="mt-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleLoadSample();
+                          style={{
+                            borderColor: "#3158d5",
+                            backgroundColor: "#f8fafd",
                           }}
-                          disabled={loadingSample}
-                          className="text-xs font-semibold text-[#3158d5] hover:underline inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                          className="mt-4 rounded-2xl border-2 border-dashed p-7 text-center animate-in fade-in duration-200"
                         >
-                          <span>Try a sample image</span>
-                          <span>→</span>
-                        </button>
-                      </div>
+                          <div className="relative mx-auto flex h-14 w-14 items-center justify-center">
+                            <div className="absolute inset-0 rounded-full bg-[#3158d5]/15 blur-lg animate-pulse" />
+                            <div
+                              style={{ backgroundColor: "#3158d5" }}
+                              className="relative flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-md shadow-[#3158d5]/30"
+                            >
+                              <svg className="h-6 w-6 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                              </svg>
+                            </div>
+                          </div>
+
+                          <h3 className="mt-3.5 text-sm sm:text-[15px] font-bold text-[#1c201a]">
+                            Optimizing {initialCompressCount > 1 ? `${initialCompressCount} images` : "image"}...
+                          </h3>
+                          <p className="mt-1 text-xs text-[#70746d] font-medium">
+                            {initialCompressProgress || "Preserving pixel sharpness with zero visual loss..."}
+                          </p>
+                          <div
+                            style={{ backgroundColor: "#e5e5df" }}
+                            className="mx-auto mt-4 max-w-[180px] h-1.5 w-full rounded-full overflow-hidden"
+                          >
+                            <div
+                              style={{ backgroundColor: "#3158d5" }}
+                              className="h-full rounded-full animate-pulse w-3/4"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {/* DASHED DROPZONE */}
+                          <div
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            onClick={() => fileInputRef.current?.click()}
+                            style={{
+                              borderColor: isDragging ? "#3158d5" : "#deded6",
+                              backgroundColor: isDragging ? "#eff6ff" : "#f6f5f3",
+                            }}
+                            className={`mt-4 rounded-2xl border-2 border-dashed p-5 sm:p-6 text-center transition-all cursor-pointer ${
+                              isDragging
+                                ? "border-[#3158d5] bg-blue-50/70"
+                                : "hover:border-[#3158d5]/50"
+                            }`}
+                          >
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              multiple
+                              accept="image/*,.pdf"
+                              className="hidden"
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files.length > 0) {
+                                  const fileList = Array.from(e.target.files);
+                                  if (isDesktop && items.length === 0) {
+                                    runInitialCompression(fileList);
+                                  } else {
+                                    processIncomingFiles(fileList);
+                                  }
+                                  e.target.value = "";
+                                }
+                              }}
+                            />
+
+                            <div
+                              style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                              className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border shadow-2xs text-[#3158d5] transition-transform duration-200 group-hover:scale-105"
+                            >
+                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                                <path d="M12 12v9" />
+                                <path d="m16 16-4-4-4 4" />
+                              </svg>
+                            </div>
+
+                            <h3 className="mt-3 text-sm sm:text-[15px] font-bold text-[#1c201a]">
+                              Drop your images here
+                            </h3>
+
+                            <div className="mt-3.5">
+                              <span
+                                style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                                className="inline-flex items-center justify-center gap-2 rounded-lg px-7 py-2.5 text-sm font-bold shadow-xs transition hover:opacity-95 active:scale-[0.98] cursor-pointer min-w-[150px]"
+                              >
+                                <span>Choose file</span>
+                                <span className="text-base font-bold">↗</span>
+                              </span>
+                            </div>
+
+                            <p className="mt-2.5 text-[11px] text-[#767a74]">
+                              JPG, PNG, WebP &amp; PDF · Up to 50+ files
+                            </p>
+                          </div>
+
+                          <div className="mt-3.5 text-center">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLoadSample();
+                              }}
+                              disabled={loadingSample}
+                              className="text-xs font-semibold text-[#3158d5] hover:underline inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                            >
+                              <span>Try a sample image</span>
+                              <span>→</span>
+                            </button>
+                          </div>
+                        </>
+                      )}
 
                       {isProcessingPdf && (
                         <div className="mt-3 flex items-center justify-center gap-2 text-xs font-semibold text-[#3158d5]">
@@ -2076,97 +2348,104 @@ export default function ImageCompressorClient() {
                       </div>
                     )}
 
-                    {/* FORMAT SELECTION */}
+                    {/* FORMAT SELECTION (RADIO GROUP) */}
                     <div className="mt-5">
-                      <label className="text-sm font-bold text-[#1c201a] block">
-                        Output Format
-                      </label>
-
-                      {/* Mobile Only (< sm): Output Format Dropdown Menu */}
-                      <div className="spellense-mobile-only mt-2">
-                        <div className="relative">
-                          <select
-                            value={globalFormat}
-                            onChange={(e) => setGlobalFormat(e.target.value as OutputFormat)}
-                            style={{
-                              backgroundColor: "#f8fafd",
-                              borderColor: "#3158d5",
-                              borderWidth: "1.5px",
-                              borderStyle: "solid",
-                              color: "#1c201a",
-                            }}
-                            className="w-full appearance-none rounded-xl px-3.5 py-2.5 pr-10 text-xs font-bold shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#3158d5]/20 cursor-pointer"
-                          >
-                            {FORMAT_OPTIONS.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label} — {opt.value === "webp" ? "Best for Web" : opt.value === "jpeg" ? "Photos & Print" : opt.value === "png" ? "Transparency" : opt.value === "avif" ? "Next-gen" : "Keep Original"}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#3158d5]">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="6 9 12 15 18 9" />
-                            </svg>
-                          </div>
-                        </div>
+                      <div className="flex items-center justify-between">
+                        <label
+                          id="output-format-group-label"
+                          className="text-sm font-bold text-[#1c201a]"
+                        >
+                          Output Format
+                        </label>
+                        <span className="text-[11px] font-medium text-[#64748b]">
+                          Select target extension
+                        </span>
                       </div>
 
-                      {/* Desktop Only (sm and up): EXACT PREVIOUS 2-Column Grid Cards */}
-                      <div className="spellense-desktop-only grid grid-cols-2 gap-2.5 mt-2.5">
-                        {FORMAT_OPTIONS.map((opt) => {
+                      {/* RESPONSIVE GRID: 2 COLUMNS ON MOBILE (< lg), 5 COLUMNS ON DESKTOP (>= lg) */}
+                      <div
+                        role="radiogroup"
+                        aria-labelledby="output-format-group-label"
+                        className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 mt-2.5"
+                      >
+                        {FORMAT_OPTIONS.map((opt, idx) => {
                           const isSelected = globalFormat === opt.value;
                           return (
                             <button
                               key={opt.value}
                               type="button"
-                              onClick={() => {
-                                setGlobalFormat(opt.value);
-                              }}
+                              role="radio"
+                              data-format-radio="true"
+                              aria-checked={isSelected}
+                              tabIndex={isSelected ? 0 : -1}
+                              onClick={() => setGlobalFormat(opt.value)}
+                              onKeyDown={(e) => handleFormatKeyDown(e, idx)}
                               style={{
-                                backgroundColor: isSelected ? "#e8effe" : "#ffffff",
-                                borderColor: isSelected ? "#3158d5" : "#e5e5df",
-                                borderWidth: "1px",
+                                backgroundColor: isSelected ? "#ecfdf5" : "#ffffff",
+                                borderColor: isSelected ? "#059669" : "#e5e5df",
+                                borderWidth: isSelected ? "2px" : "1px",
                                 borderStyle: "solid",
                               }}
-                              className={`rounded-2xl p-2.5 sm:p-3 text-left transition-all cursor-pointer relative ${
+                              className={`relative flex flex-col justify-start rounded-2xl p-2.5 sm:p-3 transition-all duration-200 ease-out text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669] active:scale-[0.98] ${
                                 isSelected
-                                  ? "shadow-xs"
-                                  : "hover:bg-[#f6f5f3] hover:border-[#deded6]"
+                                  ? "shadow-xs hover:-translate-y-0.5 hover:shadow-md hover:shadow-emerald-900/5"
+                                  : "hover:bg-[#faf9f6] hover:border-emerald-300 hover:-translate-y-0.5 hover:shadow-md hover:shadow-emerald-900/5"
                               }`}
                             >
-                              <div className="flex items-center justify-between gap-1">
-                                <div
-                                  style={{ color: isSelected ? "#3158d5" : "#1c201a" }}
-                                  className="text-sm font-bold truncate"
-                                >
-                                  {opt.label.split(" ")[0]}
-                                </div>
-                                {isSelected && (
-                                  <span
-                                    style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
-                                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold"
-                                  >
-                                    ✓
+                              {/* TOP ROW: FORMAT NAME (+ OPTIONAL RECOMMENDED BADGE) & CHECK BADGE */}
+                              <div className="flex items-start justify-between gap-1 w-full">
+                                <div className="flex flex-col items-start gap-0.5 min-w-0">
+                                  {opt.recommended && (
+                                    <span className="inline-flex items-center rounded-md bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800 tracking-wide uppercase">
+                                      Recommended
+                                    </span>
+                                  )}
+                                  <span className="text-[13px] sm:text-[14px] font-bold text-[#0f172a] tracking-tight leading-tight">
+                                    {opt.label}
                                   </span>
-                                )}
+                                </div>
+
+                                {/* CHECK BADGE IN TOP-RIGHT CORNER (DEDICATED SLOT - NEVER OVERLAPS TEXT) */}
+                                <div className="flex h-4 w-4 shrink-0 items-center justify-center">
+                                  {isSelected ? (
+                                    <span
+                                      style={{ backgroundColor: "#059669" }}
+                                      className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-white text-[9px] font-bold shadow-2xs"
+                                    >
+                                      ✓
+                                    </span>
+                                  ) : (
+                                    <span className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                  )}
+                                </div>
                               </div>
-                              <div
-                                style={{ color: isSelected ? "#3158d5" : "#70746d" }}
-                                className="text-[11px] mt-0.5 truncate font-medium"
-                              >
-                                {opt.value === "webp"
-                                  ? "Best for Web"
-                                  : opt.value === "jpeg"
-                                  ? "Photos & Print"
-                                  : opt.value === "png"
-                                  ? "Transparency"
-                                  : opt.value === "avif"
-                                  ? "Next-gen"
-                                  : "Keep Original"}
-                              </div>
+
+                              {/* DESCRIPTION ROW (REDUCED 2 POINTS, READABLE CONTRAST) */}
+                              <p className="mt-1 text-[10.5px] sm:text-[11px] text-[#4b5563] leading-snug break-words">
+                                {opt.desc}
+                              </p>
                             </button>
                           );
                         })}
+                      </div>
+
+                      {/* HELPER LINE FOR SELECTED FORMAT */}
+                      <div
+                        style={{
+                          backgroundColor: "#f8fafc",
+                          borderColor: "#e2e8f0",
+                        }}
+                        className="mt-3 flex items-start gap-2.5 rounded-xl border p-2.5 text-xs text-[#334155]"
+                      >
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold mt-0.5">
+                          ✓
+                        </span>
+                        <p className="leading-relaxed">
+                          <strong className="text-[#0f172a] font-semibold">
+                            {FORMAT_OPTIONS.find((f) => f.value === globalFormat)?.label}:
+                          </strong>{" "}
+                          {FORMAT_OPTIONS.find((f) => f.value === globalFormat)?.helper}
+                        </p>
                       </div>
                     </div>
 
