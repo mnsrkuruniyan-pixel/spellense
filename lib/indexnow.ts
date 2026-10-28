@@ -95,3 +95,4 @@ export async function submitToIndexNow(customUrls?: string[]): Promise<IndexNowS
     };
   }
 }
+

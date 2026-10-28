@@ -68,12 +68,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.95,
     },
-    {
-      url: `${baseUrl}/pdf-studio`,
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 0.95,
-    },
+    // Temporarily hidden: PDF Studio
+    // {
+    //   url: `${baseUrl}/pdf-studio`,
+    //   lastModified,
+    //   changeFrequency: "weekly",
+    //   priority: 0.95,
+    // },
     {
       url: `${baseUrl}/qr-code-generator`,
       lastModified,

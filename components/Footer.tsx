@@ -3,7 +3,7 @@ import Link from "next/link";
 const FOOTER_ROW_1 = [
   { label: "Home", href: "/" },
   { label: "3D Flipbook", href: "/flipbook", badge: "New" },
-  { label: "PDF Studio", href: "/pdf-studio", badge: "New" },
+  // { label: "PDF Studio", href: "/pdf-studio", badge: "New" },
   { label: "Image Compressor", href: "/image-compressor" },
   { label: "ID Print Maker", href: "/print-sheet-maker", badge: "New" },
   { label: "QR Code Generator", href: "/qr-code-generator", badge: "New" },
@@ -46,7 +46,10 @@ export default function Footer({ currentPath }: { currentPath?: string }) {
   };
 
   return (
-    <footer className="border-t border-slate-200/70 bg-white px-5 py-8 sm:px-6">
+    <footer
+      style={{ borderTop: "1px solid #e5e5df" }}
+      className="mt-16 sm:mt-20 bg-white px-5 py-8 sm:px-6"
+    >
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col items-center justify-between gap-6 text-center sm:flex-row sm:items-start sm:text-left">
           <div className="sm:max-w-[275px] shrink-0">

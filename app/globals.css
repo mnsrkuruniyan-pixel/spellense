@@ -41,6 +41,8 @@
 
 .border-brand-border,
 .border-\[\#deded6\],
+.border-\[\#eeede6\],
+.border-\[\#f0efe9\],
 .border-\[\#e5e5df\] {
   border-color: #e5e5df !important;
 }
@@ -419,7 +421,54 @@ body {
   border-color: #e5e5df !important;
 }
 
-/* PDF Studio uses clean, seamless modern surfaces without heavy outlines */
+/* PDF Studio uses clean, seamless modern surfaces matching Flipbook & Image Compressor (#e5e5df) */
+.pdf-studio-root {
+  --color-brand-border: #e5e5df;
+}
+
+/* Ensure box outlines default to the exact light theme stroke (#e5e5df) */
+.pdf-studio-root div[class*="border"],
+.pdf-studio-root aside[class*="border"],
+.pdf-studio-root header[class*="border"],
+.pdf-studio-root section[class*="border"],
+.pdf-studio-root nav[class*="border"],
+.pdf-studio-root button[class*="border"] {
+  border-color: #e5e5df;
+}
+
+/* Maintain soft light divider lines across all section rows */
+.pdf-studio-root [class*="border-b"],
+.pdf-studio-root [class*="border-t"] {
+  border-color: #e5e5df;
+}
+
+/* Explicitly preserve intentional vibrant active button borders */
+.pdf-studio-root .border-rose-600,
+.pdf-studio-root [style*="#e11d48"],
+.pdf-studio-root [style*="rgb(225, 29, 72)"] {
+  border-color: #e11d48 !important;
+}
+
+.pdf-studio-root .border-\[\#3158d5\],
+.pdf-studio-root [style*="#3158d5"],
+.pdf-studio-root [style*="rgb(49, 88, 213)"] {
+  border-color: #3158d5 !important;
+}
+
+.pdf-studio-root .border-\[\#bcd5ff\],
+.pdf-studio-root [style*="#bcd5ff"] {
+  border-color: #bcd5ff !important;
+}
+
+.pdf-studio-root .border-rose-200,
+.pdf-studio-root [style*="#fecdd3"],
+.pdf-studio-root [style*="rgb(254, 205, 211)"] {
+  border-color: #fecdd3 !important;
+}
+
+.pdf-studio-root .border-amber-200 {
+  border-color: #fde68a !important;
+}
 
 
 

@@ -22,7 +22,10 @@ export const FAQ_ITEMS = [
 
 export default function FaqSection() {
   return (
-    <section className="mt-16 sm:mt-24 border-t border-[#eeede6] pt-12 sm:pt-16">
+    <section
+      style={{ borderTop: "1px solid #e5e5df" }}
+      className="mt-16 sm:mt-24 pt-12 sm:pt-16"
+    >
       <div className="mx-auto max-w-4xl text-center mb-8">
         <span className="text-xs font-bold uppercase tracking-wider text-[#3158d5]">FAQ</span>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1c201a] mt-1">

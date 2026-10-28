@@ -136,20 +136,20 @@ export default function PageThumb({
       tabIndex={onClick ? 0 : undefined}
       style={{
         aspectRatio,
-        borderColor: isActive ? "#3158d5" : "rgba(0,0,0,0.08)",
+        border: isActive ? "1.5px solid #3b82f6" : "1px solid #e5e5df",
       }}
-      className={`group relative w-full overflow-hidden rounded-xl border bg-white shadow-2xs transition cursor-pointer select-none ${
+      className={`group relative w-full overflow-hidden rounded-xl bg-white shadow-2xs transition cursor-pointer select-none ${
         isActive
-          ? "border-[#3158d5] ring-2 ring-[#3158d5]/40 shadow-sm"
-          : "border-black/[0.08] hover:border-[#3158d5] hover:shadow-xs"
-      } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3158d5] focus-visible:ring-offset-1 ${className}`}
+          ? "ring-2 ring-blue-100 shadow-sm"
+          : "hover:border-[#3b82f6] hover:shadow-xs"
+      } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${className}`}
     >
       {/* Thumbnail image or placeholder */}
       {renderedUrl ? (
         <img
           src={renderedUrl}
           alt={`Page ${pageNumber}`}
-          className="h-full w-full object-contain pointer-events-none"
+          className="h-full w-full max-w-full object-contain pointer-events-none"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-[#faf9f6] text-[11px] text-[#8c8f87] font-medium">

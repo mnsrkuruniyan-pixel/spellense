@@ -51,6 +51,7 @@ import {
   SlidersHorizontal,
   Layers,
   Sparkles,
+  Hand,
 } from "lucide-react";
 
 export * from "./types";
@@ -75,8 +76,29 @@ export default function PdfStudioClient() {
   const [processingPercent, setProcessingPercent] = useState<number>(0);
   const [isDraggingFile, setIsDraggingFile] = useState<boolean>(false);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
+  const [editingTextOverlayId, setEditingTextOverlayId] = useState<string | null>(null);
+  const editingTextOverlayIdRef = useRef<string | null>(null);
+  editingTextOverlayIdRef.current = editingTextOverlayId;
+  const inlineTextRef = useRef<HTMLTextAreaElement | null>(null);
+  const lastClickTimeRef = useRef<{ time: number; x: number; y: number; id: string | null }>({ time: 0, x: 0, y: 0, id: null });
   const [showPostExportCard, setShowPostExportCard] = useState<boolean>(false); // Stage 1
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false); // Stage 5
+
+  // Hand tool / Pan state (with Spacebar hold support)
+  const [isHandToolActive, setIsHandToolActive] = useState<boolean>(false);
+  const [isSpacePressed, setIsSpacePressed] = useState<boolean>(false);
+  const [isPanDragging, setIsPanDragging] = useState<boolean>(false);
+  const isPanDraggingRef = useRef<boolean>(false);
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const panOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  panOffsetRef.current = panOffset;
+  const panDragStartRef = useRef<{ mouseX: number; mouseY: number; startPanX: number; startPanY: number }>({
+    mouseX: 0,
+    mouseY: 0,
+    startPanX: 0,
+    startPanY: 0,
+  });
+  const isPanning = isHandToolActive || isSpacePressed;
 
   // Quality dropdown (Standard = 150 DPI, High = 220 DPI)
   const [exportQuality, setExportQuality] = useState<"standard" | "high">("standard");
@@ -258,6 +280,7 @@ export default function PdfStudioClient() {
 
   // Signature canvas modal state
   const [isSignatureOpen, setIsSignatureOpen] = useState<boolean>(false);
+  const [sigColor, setSigColor] = useState<string>("#1d4ed8");
   const sigCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawingSig, setIsDrawingSig] = useState<boolean>(false);
   const lastSigPointRef = useRef<{ x: number; y: number } | null>(null);
@@ -506,7 +529,8 @@ export default function PdfStudioClient() {
     liveResize?: { id: string; x: number; y: number; width: number; height: number; fontSize?: number } | null,
     selectedId?: string | null,
     onImagePending?: () => void,
-    handleSizePx?: number
+    handleSizePx?: number,
+    editingTextId?: string | null
   ) => {
     for (const ov of overlays) {
       const isLiveDrag = liveDrag && liveDrag.id === ov.id;
@@ -538,26 +562,39 @@ export default function PdfStudioClient() {
           ctx.fillRect(ox, oy, ow, oh);
         } else if (ov.redactStyle === "blur") {
           ctx.save();
-          const pw = Math.max(1, Math.round(ow / 12));
-          const ph = Math.max(1, Math.round(oh / 6));
           try {
-            const snap = ctx.getImageData(ox, oy, ow, oh);
+            const ix = Math.max(0, Math.floor(ox));
+            const iy = Math.max(0, Math.floor(oy));
+            const iw = Math.max(1, Math.min(ctx.canvas.width - ix, Math.round(ow)));
+            const ih = Math.max(1, Math.min(ctx.canvas.height - iy, Math.round(oh)));
+            const snap = ctx.getImageData(ix, iy, iw, ih);
+
+            const pw = Math.max(2, Math.round(iw / 8));
+            const ph = Math.max(2, Math.round(ih / 6));
+
             const tmpCanvas = document.createElement("canvas");
             tmpCanvas.width = pw;
             tmpCanvas.height = ph;
             const tmpCtx = tmpCanvas.getContext("2d");
-            if (tmpCtx) {
-              const snapCanvas = document.createElement("canvas");
-              snapCanvas.width = ow;
-              snapCanvas.height = oh;
-              const snapCtx = snapCanvas.getContext("2d");
-              if (snapCtx) {
-                snapCtx.putImageData(snap, 0, 0);
-                tmpCtx.drawImage(snapCanvas, 0, 0, pw, ph);
-                ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(tmpCanvas, ox, oy, ow, oh);
-                ctx.imageSmoothingEnabled = true;
-              }
+
+            const snapCanvas = document.createElement("canvas");
+            snapCanvas.width = snap.width;
+            snapCanvas.height = snap.height;
+            const snapCtx = snapCanvas.getContext("2d");
+
+            if (tmpCtx && snapCtx) {
+              snapCtx.putImageData(snap, 0, 0);
+              tmpCtx.drawImage(snapCanvas, 0, 0, pw, ph);
+              ctx.imageSmoothingEnabled = false;
+              ctx.drawImage(tmpCanvas, ix, iy, iw, ih);
+              ctx.imageSmoothingEnabled = true;
+
+              // Semi-transparent dark tint on top of blur for clear redaction look & privacy
+              ctx.fillStyle = "rgba(15, 23, 42, 0.4)";
+              ctx.fillRect(ix, iy, iw, ih);
+            } else {
+              ctx.fillStyle = "#1e293b";
+              ctx.fillRect(ox, oy, ow, oh);
             }
           } catch (_) {
             ctx.fillStyle = "#1e293b";
@@ -618,9 +655,10 @@ export default function PdfStudioClient() {
       }
 
       // Draw active selection box & corner resize handles
-      if (selectedId && ov.id === selectedId) {
+      if (selectedId && ov.id === selectedId && (!editingTextId || editingTextId !== ov.id)) {
         ctx.save();
-        ctx.strokeStyle = "#3158d5";
+        const themeColor = ov.type === "redact" ? "#e11d48" : "#3158d5";
+        ctx.strokeStyle = themeColor;
         ctx.lineWidth = 2;
         ctx.setLineDash([5, 3]);
         ctx.strokeRect(ox - 2, oy - 2, ow + 4, oh + 4);
@@ -634,7 +672,7 @@ export default function PdfStudioClient() {
           [ox, oy + oh],
         ];
         ctx.fillStyle = "#ffffff";
-        ctx.strokeStyle = "#3158d5";
+        ctx.strokeStyle = themeColor;
         ctx.lineWidth = 1.5;
         for (const [hx, hy] of corners) {
           ctx.fillRect(hx - hSize / 2, hy - hSize / 2, hSize, hSize);
@@ -690,18 +728,37 @@ export default function PdfStudioClient() {
         liveResizeRef.current,
         selectedOverlayId,
         () => scheduleRedraw(),
-        handleSizePx
+        handleSizePx,
+        editingTextOverlayId
       );
 
       // Draw active dragging box preview
       if (isMouseDownRef.current && currentRectRef.current) {
         const { x, y, w, h } = currentRectRef.current;
         if (mode === "redact") {
-          ctx.fillStyle = redactStyle === "blur" ? "rgba(30, 41, 59, 0.75)" : "rgba(0, 0, 0, 0.85)";
-          ctx.fillRect(x, y, w, h);
-          ctx.strokeStyle = "#dc2626";
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, w, h);
+          if (redactStyle === "whiteout") {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = "#e11d48";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 3]);
+            ctx.strokeRect(x, y, w, h);
+            ctx.setLineDash([]);
+          } else if (redactStyle === "blur") {
+            ctx.fillStyle = "rgba(15, 23, 42, 0.65)";
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = "#e11d48";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 3]);
+            ctx.strokeRect(x, y, w, h);
+            ctx.setLineDash([]);
+          } else {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.88)";
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = "#e11d48";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, w, h);
+          }
         } else if (tool === "whiteout") {
           ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
           ctx.fillRect(x, y, w, h);
@@ -725,7 +782,7 @@ export default function PdfStudioClient() {
       };
       img.src = activePage.url;
     }
-  }, [activePage, selectedOverlayId, mode, tool, redactStyle, drawOverlays]);
+  }, [activePage, selectedOverlayId, mode, tool, redactStyle, drawOverlays, editingTextOverlayId]);
 
   // G2: Always use the latest renderCanvas reference to prevent stale redraws
   const renderCanvasRef = useRef(renderCanvas);
@@ -752,7 +809,17 @@ export default function PdfStudioClient() {
 
   useEffect(() => {
     scheduleRedraw();
-  }, [activePageIndex, pages, mode, tool, redactStyle, selectedOverlayId, scheduleRedraw]);
+  }, [activePageIndex, pages, mode, tool, redactStyle, selectedOverlayId, editingTextOverlayId, scheduleRedraw]);
+
+  useEffect(() => {
+    if (editingTextOverlayId) {
+      const timer = setTimeout(() => {
+        inlineTextRef.current?.focus();
+        inlineTextRef.current?.select();
+      }, 40);
+      return () => clearTimeout(timer);
+    }
+  }, [editingTextOverlayId]);
 
   // Stage 4: Redraw canvas on zoom change and viewport resize (ResizeObserver)
   useEffect(() => {
@@ -769,8 +836,191 @@ export default function PdfStudioClient() {
     return () => ro.disconnect();
   }, [scheduleRedraw]);
 
+  // Spacebar pan listener (hold Space to Pan anytime)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInput =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (isInput) return;
+
+      if (e.code === "Space" && !e.repeat) {
+        e.preventDefault();
+        setIsSpacePressed(true);
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        setIsSpacePressed(false);
+      }
+    };
+
+    const onWindowBlur = () => {
+      setIsSpacePressed(false);
+      setIsPanDragging(false);
+      isPanDraggingRef.current = false;
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onWindowBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onWindowBlur);
+    };
+  }, []);
+
+  // Viewport Panning Handlers (Translate offset for smooth pan anytime)
+  const handleStartPan = useCallback((clientX: number, clientY: number) => {
+    isPanDraggingRef.current = true;
+    setIsPanDragging(true);
+    panDragStartRef.current = {
+      mouseX: clientX,
+      mouseY: clientY,
+      startPanX: panOffsetRef.current.x,
+      startPanY: panOffsetRef.current.y,
+    };
+  }, []);
+
+  const handleMovePan = useCallback((clientX: number, clientY: number) => {
+    if (!isPanDraggingRef.current) return;
+    const dx = clientX - panDragStartRef.current.mouseX;
+    const dy = clientY - panDragStartRef.current.mouseY;
+    const newX = Math.round(panDragStartRef.current.startPanX + dx);
+    const newY = Math.round(panDragStartRef.current.startPanY + dy);
+    panOffsetRef.current = { x: newX, y: newY };
+    setPanOffset({ x: newX, y: newY });
+  }, []);
+
+  const handleEndPan = useCallback(() => {
+    if (isPanDraggingRef.current) {
+      isPanDraggingRef.current = false;
+      setIsPanDragging(false);
+    }
+  }, []);
+
+  // Global window pointer listener while pan dragging
+  useEffect(() => {
+    const onWindowPointerMove = (e: PointerEvent) => {
+      if (isPanDraggingRef.current) {
+        handleMovePan(e.clientX, e.clientY);
+      }
+    };
+    const onWindowPointerUp = () => {
+      if (isPanDraggingRef.current) {
+        handleEndPan();
+      }
+    };
+
+    window.addEventListener("pointermove", onWindowPointerMove);
+    window.addEventListener("pointerup", onWindowPointerUp);
+    return () => {
+      window.removeEventListener("pointermove", onWindowPointerMove);
+      window.removeEventListener("pointerup", onWindowPointerUp);
+    };
+  }, [handleMovePan, handleEndPan]);
+
+  // Reset pan offset when switching active page
+  useEffect(() => {
+    setPanOffset({ x: 0, y: 0 });
+    panOffsetRef.current = { x: 0, y: 0 };
+  }, [activePageIndex]);
+
+  // Zoom helpers with smooth gradual steps
+  const handleZoomIn = () => {
+    setZoom((z) => {
+      if (z < 0.95) return 1;
+      if (z < 1.15) return 1.2;
+      if (z < 1.35) return 1.4;
+      if (z < 1.7) return 1.75;
+      return Math.min(3, Math.round((z + 0.25) * 100) / 100);
+    });
+  };
+
+  const handleZoomOut = () => {
+    setZoom((z) => {
+      if (z > 2.1) return 1.75;
+      if (z > 1.5) return 1.4;
+      if (z > 1.25) return 1.2;
+      if (z > 1.05) return 1;
+      return Math.max(0.5, Math.round((z - 0.2) * 100) / 100);
+    });
+  };
+
   // ── Canvas Interaction Handlers ───────────────────────────────────────────
+  const startInlineTextEdit = useCallback((overlayId: string) => {
+    editingTextOverlayIdRef.current = overlayId;
+    setSelectedOverlayId(overlayId);
+    setEditingTextOverlayId(overlayId);
+    setMode("edit");
+    scheduleRedraw();
+    requestAnimationFrame(() => {
+      if (inlineTextRef.current) {
+        inlineTextRef.current.focus();
+        inlineTextRef.current.select();
+      }
+    });
+    setTimeout(() => {
+      if (inlineTextRef.current) {
+        inlineTextRef.current.focus();
+        inlineTextRef.current.select();
+      }
+    }, 40);
+  }, [scheduleRedraw]);
+
+  const finishInlineTextEdit = useCallback(() => {
+    const currentId = editingTextOverlayIdRef.current;
+    if (currentId && inlineTextRef.current) {
+      const finalVal = inlineTextRef.current.value;
+      setPages((prev) =>
+        prev.map((p, idx) => {
+          if (idx !== activePageIndex) return p;
+          const isRot = p.rotation === 90 || p.rotation === 270;
+          const canvasW = isRot ? p.height : p.width;
+          const canvasH = isRot ? p.width : p.height;
+          return {
+            ...p,
+            overlays: p.overlays.map((ov) => {
+              if (ov.id !== currentId || ov.type !== "text") return ov;
+              const merged: OverlayItem = { ...ov, text: finalVal };
+              const { widthPct, heightPct } = measureTextOverlay(
+                finalVal || " ",
+                merged.fontSize || 18,
+                merged.fontFamily || "Inter, sans-serif",
+                merged.fontWeight || "normal",
+                merged.fontStyle || "normal",
+                canvasW,
+                canvasH,
+                merged.rot || 0
+              );
+              return {
+                ...merged,
+                width: Math.max(merged.width, widthPct),
+                height: Math.max(merged.height, heightPct),
+              };
+            }),
+          };
+        })
+      );
+    }
+    editingTextOverlayIdRef.current = null;
+    setEditingTextOverlayId(null);
+    setTool("select");
+    scheduleRedraw();
+  }, [activePageIndex, measureTextOverlay, scheduleRedraw]);
+
   const handleCanvasPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (isPanning) {
+      return;
+    }
+    if (editingTextOverlayIdRef.current) {
+      finishInlineTextEdit();
+    }
     const canvas = canvasRef.current;
     if (!canvas || !activePage) return;
     const rect = canvas.getBoundingClientRect();
@@ -846,6 +1096,16 @@ export default function PdfStudioClient() {
         }
       }
       if (hitId) {
+        const now = Date.now();
+        const last = lastClickTimeRef.current;
+        if (last.id === hitId && now - last.time < 350) {
+          activeOverlayDragRef.current = null;
+          isMouseDownRef.current = false;
+          startInlineTextEdit(hitId);
+          lastClickTimeRef.current = { time: 0, x: 0, y: 0, id: null };
+          return;
+        }
+        lastClickTimeRef.current = { time: now, x: mouseX, y: mouseY, id: hitId };
         setSelectedOverlayId(hitId);
         isMouseDownRef.current = true;
         scheduleRedraw();
@@ -887,13 +1147,57 @@ export default function PdfStudioClient() {
           idx === activePageIndex ? { ...p, overlays: [...p.overlays, newOverlay] } : p
         )
       );
-      setSelectedOverlayId(newOverlay.id);
-      scheduleRedraw();
+      startInlineTextEdit(newOverlay.id);
       return;
     }
 
     // 3. Selection tool or Redact select mode
     if ((mode === "edit" && tool === "select") || (mode === "redact" && redactTool === "select")) {
+      let hitId: string | null = null;
+      let hitType: string | null = null;
+      for (let i = activePage.overlays.length - 1; i >= 0; i--) {
+        const ov = activePage.overlays[i];
+        const ox = (ov.x / 100) * canvas.width;
+        const oy = (ov.y / 100) * canvas.height;
+        const ow = (ov.width / 100) * canvas.width;
+        const oh = (ov.height / 100) * canvas.height;
+
+        if (mouseX >= ox && mouseX <= ox + ow && mouseY >= oy && mouseY <= oy + oh) {
+          hitId = ov.id;
+          hitType = ov.type;
+          activeOverlayDragRef.current = {
+            overlayId: ov.id,
+            startX: mouseX,
+            startY: mouseY,
+            origX: ov.x,
+            origY: ov.y,
+          };
+          break;
+        }
+      }
+      if (hitId && hitType === "text") {
+        const now = Date.now();
+        const last = lastClickTimeRef.current;
+        if (last.id === hitId && now - last.time < 350) {
+          activeOverlayDragRef.current = null;
+          isMouseDownRef.current = false;
+          startInlineTextEdit(hitId);
+          lastClickTimeRef.current = { time: 0, x: 0, y: 0, id: null };
+          return;
+        }
+        lastClickTimeRef.current = { time: now, x: mouseX, y: mouseY, id: hitId };
+      }
+      setSelectedOverlayId(hitId);
+      isMouseDownRef.current = true;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch (_) {}
+      scheduleRedraw();
+      return;
+    }
+
+    // 4. Redact mode drawing
+    if (mode === "redact" && redactTool === "draw") {
       let hitId: string | null = null;
       for (let i = activePage.overlays.length - 1; i >= 0; i--) {
         const ov = activePage.overlays[i];
@@ -914,22 +1218,75 @@ export default function PdfStudioClient() {
           break;
         }
       }
-      setSelectedOverlayId(hitId);
+
+      if (hitId) {
+        setSelectedOverlayId(hitId);
+        isMouseDownRef.current = true;
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch (_) {}
+        scheduleRedraw();
+        return;
+      }
+
       isMouseDownRef.current = true;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch (_) {}
+      dragStartRef.current = { x: mouseX, y: mouseY };
+      currentRectRef.current = { x: mouseX, y: mouseY, w: 0, h: 0 };
+      setSelectedOverlayId(null);
       scheduleRedraw();
       return;
     }
 
-    // 4. Creating new Whiteout or Redact box
-    if (tool === "whiteout" || (mode === "redact" && redactTool === "draw")) {
+    // 5. Whiteout mode in Edit mode
+    if (mode === "edit" && tool === "whiteout") {
+      let hitId: string | null = null;
+      for (let i = activePage.overlays.length - 1; i >= 0; i--) {
+        const ov = activePage.overlays[i];
+        const ox = (ov.x / 100) * canvas.width;
+        const oy = (ov.y / 100) * canvas.height;
+        const ow = (ov.width / 100) * canvas.width;
+        const oh = (ov.height / 100) * canvas.height;
+
+        if (mouseX >= ox && mouseX <= ox + ow && mouseY >= oy && mouseY <= oy + oh) {
+          hitId = ov.id;
+          activeOverlayDragRef.current = {
+            overlayId: ov.id,
+            startX: mouseX,
+            startY: mouseY,
+            origX: ov.x,
+            origY: ov.y,
+          };
+          break;
+        }
+      }
+
+      if (hitId) {
+        setSelectedOverlayId(hitId);
+        isMouseDownRef.current = true;
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch (_) {}
+        scheduleRedraw();
+        return;
+      }
+
       isMouseDownRef.current = true;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch (_) {}
       dragStartRef.current = { x: mouseX, y: mouseY };
       currentRectRef.current = { x: mouseX, y: mouseY, w: 0, h: 0 };
       setSelectedOverlayId(null);
+      scheduleRedraw();
+      return;
     }
   };
 
   const handleCanvasPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (isPanning) return;
     const canvas = canvasRef.current;
     if (!canvas || !activePage) return;
     const rect = canvas.getBoundingClientRect();
@@ -1213,8 +1570,9 @@ export default function PdfStudioClient() {
 
     const { x, y, w, h } = currentRectRef.current;
     currentRectRef.current = null;
+    dragStartRef.current = null;
 
-    if (w > 6 && h > 6) {
+    if (w > 4 && h > 4) {
       pushHistory();
       const xPct = (x / canvas.width) * 100;
       const yPct = (y / canvas.height) * 100;
@@ -1286,11 +1644,9 @@ export default function PdfStudioClient() {
         const ow = (ov.width / 100) * canvas.width;
         const oh = (ov.height / 100) * canvas.height;
         if (mouseX >= ox && mouseX <= ox + ow && mouseY >= oy && mouseY <= oy + oh) {
-          setSelectedOverlayId(ov.id);
-          setTimeout(() => {
-            textInputRef.current?.focus();
-            textInputRef.current?.select();
-          }, 50);
+          activeOverlayDragRef.current = null;
+          isMouseDownRef.current = false;
+          startInlineTextEdit(ov.id);
           break;
         }
       }
@@ -1362,6 +1718,32 @@ export default function PdfStudioClient() {
     );
     scheduleRedraw();
   }, [selectedOverlayId, activePage, activePageIndex, measureTextOverlay, scheduleRedraw]);
+
+  // Set Redaction Style: updates default style AND immediately updates any selected redact overlay
+  const handleSetRedactStyle = useCallback((newStyle: "blackout" | "blur" | "whiteout") => {
+    setRedactStyle(newStyle);
+    if (selectedOverlayId && activePage) {
+      const isRedact = activePage.overlays.some((ov) => ov.id === selectedOverlayId && ov.type === "redact");
+      if (isRedact) {
+        pushHistory();
+        setPages((prev) =>
+          prev.map((p, idx) =>
+            idx === activePageIndex
+              ? {
+                  ...p,
+                  overlays: p.overlays.map((ov) =>
+                    ov.id === selectedOverlayId && ov.type === "redact"
+                      ? { ...ov, redactStyle: newStyle }
+                      : ov
+                  ),
+                }
+              : p
+          )
+        );
+        scheduleRedraw();
+      }
+    }
+  }, [selectedOverlayId, activePage, activePageIndex, pushHistory, scheduleRedraw]);
 
   // G4: duplicateOverlay taking overlay id and clamping inside page bounds
   const duplicateOverlay = useCallback((id: string | null) => {
@@ -1517,6 +1899,20 @@ export default function PdfStudioClient() {
   ]);
 
   // ── Signature Drawing Handlers (Pointer Events & Precise CSS Scaling) ──────
+  const changeSigColor = (newColor: string) => {
+    setSigColor(newColor);
+    const c = sigCanvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    // Recolor any existing strokes on the canvas so the user immediately sees the color change
+    ctx.save();
+    ctx.globalCompositeOperation = "source-in";
+    ctx.fillStyle = newColor;
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.restore();
+  };
+
   const startSigDraw = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     const c = sigCanvasRef.current;
@@ -1534,7 +1930,7 @@ export default function PdfStudioClient() {
     lastSigPointRef.current = p;
     ctx.beginPath();
     ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
-    ctx.fillStyle = "#1e293b";
+    ctx.fillStyle = sigColor;
     ctx.fill();
   };
 
@@ -1552,7 +1948,7 @@ export default function PdfStudioClient() {
       y: (e.clientY - r.top) * scaleY,
     };
 
-    ctx.strokeStyle = "#1e293b";
+    ctx.strokeStyle = sigColor;
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -2574,35 +2970,42 @@ export default function PdfStudioClient() {
     isDrawingTool || selectedOverlayId !== null ? "none" : "pan-x pan-y pinch-zoom";
 
   const selectedOverlay = activePage?.overlays.find((o) => o.id === selectedOverlayId) || null;
+  const editingTextOverlay = activePage?.overlays.find((o) => o.id === editingTextOverlayId && o.type === "text") || null;
 
   // Reusable Tool Panel Content (used by Desktop Sidebar & Mobile Bottom Sheet Drawer)
   const renderToolPanel = () => (
     <div className="space-y-4 text-xs">
-      {/* Redact Mode Controls */}
+      {/* ── Redact Mode Controls ── */}
       {mode === "redact" && (
-        <div className="rounded-2xl border border-black/[0.06] bg-white p-3.5 space-y-3 shadow-2xs">
-          <div className="flex items-center justify-between pb-2 border-b border-black/[0.06]">
-            <span className="font-bold text-rose-600 flex items-center gap-1.5 uppercase tracking-wider text-xs">
-              <RedactIcon size={14} className="text-rose-600" />
-              <span>Redaction</span>
+        <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-4 sm:p-5 space-y-4 shadow-2xs">
+          <div style={{ borderBottom: "1px solid #e5e5df" }} className="flex items-center justify-between pb-3">
+            <span className="font-bold text-rose-600 flex items-center gap-2 uppercase tracking-wider text-xs">
+              <span className="p-1 rounded-md bg-rose-100/80 text-rose-600">
+                <RedactIcon size={14} />
+              </span>
+              <span>Redaction Mode</span>
             </span>
-            <span className="font-semibold text-[#70746d]">
+            <span style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df", color: "#70746d" }} className="font-semibold text-[11px] px-2.5 py-1 rounded-full border">
               Page {activePageIndex + 1} of {pages.length}
             </span>
           </div>
 
-          <div>
-            <label className="font-semibold text-[#1c201a] block mb-1.5 text-xs">Action Mode</label>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2">
+            <label className="font-bold text-[#575a53] block text-xs uppercase tracking-wider">Action Mode</label>
+            <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
                 onClick={() => setRedactTool("draw")}
                 aria-pressed={redactTool === "draw"}
-                style={redactTool === "draw" ? { backgroundColor: "#e11d48", color: "#ffffff" } : undefined}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                style={
                   redactTool === "draw"
-                    ? "bg-rose-600 text-white shadow-xs"
-                    : "bg-[#f6f5f1] text-[#1c201a] hover:bg-[#eeebe3]"
+                    ? { backgroundColor: "#e11d48", color: "#ffffff", borderColor: "#e11d48" }
+                    : { backgroundColor: "#ffffff", color: "#1c201a", borderColor: "#e5e5df" }
+                }
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 active:scale-95 border ${
+                  redactTool === "draw"
+                    ? "shadow-xs"
+                    : "shadow-2xs hover:bg-[#faf9f6] hover:border-[#cbd5e1]"
                 }`}
               >
                 <RedactIcon size={14} />
@@ -2612,11 +3015,15 @@ export default function PdfStudioClient() {
                 type="button"
                 onClick={() => setRedactTool("select")}
                 aria-pressed={redactTool === "select"}
-                style={redactTool === "select" ? { backgroundColor: "#3158d5", color: "#ffffff" } : undefined}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                style={
                   redactTool === "select"
-                    ? "bg-[#3158d5] text-white shadow-xs"
-                    : "bg-[#f6f5f1] text-[#1c201a] hover:bg-[#eeebe3]"
+                    ? { backgroundColor: "#3158d5", color: "#ffffff", borderColor: "#3158d5" }
+                    : { backgroundColor: "#ffffff", color: "#1c201a", borderColor: "#e5e5df" }
+                }
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 active:scale-95 border ${
+                  redactTool === "select"
+                    ? "shadow-xs"
+                    : "shadow-2xs hover:bg-[#faf9f6] hover:border-[#cbd5e1]"
                 }`}
               >
                 <MousePointer2 className="w-3.5 h-3.5" />
@@ -2625,57 +3032,78 @@ export default function PdfStudioClient() {
             </div>
           </div>
 
-          <div>
-            <label className="font-semibold text-[#1c201a] block mb-1.5 text-xs">Redaction Style</label>
+          <div className="space-y-2 pt-1">
+            <label className="font-bold text-[#575a53] block text-xs uppercase tracking-wider">Redaction Style</label>
             <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setRedactStyle("blackout")}
-                aria-pressed={redactStyle === "blackout"}
-                style={redactStyle === "blackout" ? { backgroundColor: "#3158d5", color: "#ffffff" } : undefined}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                  redactStyle === "blackout"
-                    ? "bg-[#3158d5] text-white shadow-xs"
-                    : "bg-[#f6f5f1] text-[#1c201a] hover:bg-[#eeebe3]"
-                }`}
-              >
-                <div className="w-3 h-3 rounded-xs bg-black" />
-                <span>Blackout</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setRedactStyle("blur")}
-                aria-pressed={redactStyle === "blur"}
-                style={redactStyle === "blur" ? { backgroundColor: "#3158d5", color: "#ffffff" } : undefined}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                  redactStyle === "blur"
-                    ? "bg-[#3158d5] text-white shadow-xs"
-                    : "bg-[#f6f5f1] text-[#1c201a] hover:bg-[#eeebe3]"
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>Pixel Blur</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setRedactStyle("whiteout")}
-                aria-pressed={redactStyle === "whiteout"}
-                style={redactStyle === "whiteout" ? { backgroundColor: "#3158d5", color: "#ffffff" } : undefined}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                  redactStyle === "whiteout"
-                    ? "bg-[#3158d5] text-white shadow-xs"
-                    : "bg-[#f6f5f1] text-[#1c201a] hover:bg-[#eeebe3]"
-                }`}
-              >
-                <span className="w-3 h-3 rounded-xs border border-black/10 bg-white" />
-                <span>Whiteout</span>
-              </button>
+              {[
+                { id: "blackout", label: "Blackout", icon: <div className="w-3.5 h-3.5 rounded-xs bg-slate-900 shrink-0" /> },
+                { id: "blur", label: "Pixel Blur", icon: <Layers className="w-3.5 h-3.5 shrink-0" /> },
+                { id: "whiteout", label: "Whiteout", icon: <span style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }} className="w-3.5 h-3.5 rounded-xs border shrink-0" /> },
+              ].map((s) => {
+                const currentRedactStyle =
+                  (selectedOverlay && selectedOverlay.type === "redact"
+                    ? selectedOverlay.redactStyle
+                    : redactStyle) || "blackout";
+                const active = currentRedactStyle === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => handleSetRedactStyle(s.id as "blackout" | "blur" | "whiteout")}
+                    aria-pressed={active}
+                    style={
+                      active
+                        ? s.id === "whiteout"
+                          ? { backgroundColor: "#ffffff", color: "#e11d48", borderColor: "#e11d48", borderWidth: "2px" }
+                          : { backgroundColor: "#1e293b", color: "#ffffff", borderColor: "#1e293b" }
+                        : { backgroundColor: "#ffffff", color: "#1c201a", borderColor: "#e5e5df" }
+                    }
+                    className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 border ${
+                      active ? "shadow-xs" : "shadow-2xs hover:bg-[#faf9f6] hover:border-[#cbd5e1]"
+                    }`}
+                  >
+                    {s.icon}
+                    <span>{s.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {redactStyle === "blur" && (
-            <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 leading-snug">
+            <div style={{ backgroundColor: "#fffbeb", borderColor: "#fde68a", color: "#78350f" }} className="p-3 rounded-xl border text-xs leading-relaxed">
               Pixelation can sometimes be reversed. Use Blackout for sensitive data.
+            </div>
+          )}
+
+          {/* Selected Redact Box Card (Single clean delete banner, style is unified at top) */}
+          {selectedOverlay && selectedOverlay.type === "redact" && (
+            <div style={{ backgroundColor: "#fff1f2", borderColor: "#fecdd3" }} className="rounded-2xl border p-3 flex items-center justify-between shadow-2xs animate-in fade-in duration-150">
+              <span className="font-bold text-rose-900 text-xs flex items-center gap-1.5">
+                <RedactIcon size={14} className="text-rose-600" />
+                <span>Selected Redaction</span>
+              </span>
+              <button
+                type="button"
+                title="Delete Redaction"
+                onClick={() => {
+                  pushHistory();
+                  setPages((prev) =>
+                    prev.map((p, idx) =>
+                      idx === activePageIndex
+                        ? { ...p, overlays: p.overlays.filter((o) => o.id !== selectedOverlay.id) }
+                        : p
+                    )
+                  );
+                  setSelectedOverlayId(null);
+                  scheduleRedraw();
+                }}
+                style={{ backgroundColor: "#ffffff", borderColor: "#fecdd3", color: "#be123c" }}
+                className="inline-flex items-center gap-1.5 text-xs font-bold border px-3 py-1.5 rounded-xl shadow-2xs hover:bg-rose-100 transition cursor-pointer active:scale-95"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete</span>
+              </button>
             </div>
           )}
         </div>
@@ -2683,17 +3111,48 @@ export default function PdfStudioClient() {
 
       {/* Edit Mode Tools */}
       {mode === "edit" && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {/* Tool Selector Grid */}
-          <div className="rounded-2xl border border-black/[0.06] bg-white p-3.5 space-y-2.5 shadow-2xs">
-            <label className="font-semibold text-[#575a53] block text-xs">Select Tool</label>
-            <div className="grid grid-cols-2 gap-1.5">
+          <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-4 sm:p-5 space-y-3.5 shadow-2xs">
+            <div style={{ borderBottom: "1px solid #e5e5df" }} className="flex items-center justify-between pb-3">
+              <label className="font-bold text-[#575a53] block text-xs uppercase tracking-wider">Select Tool</label>
+              <span style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df", color: "#70746d" }} className="font-semibold text-[11px] px-2.5 py-1 rounded-full border">
+                Page {activePageIndex + 1}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
               {[
-                { id: "whiteout", label: "Whiteout", icon: Eraser },
-                { id: "text", label: "Text", icon: Type },
-                { id: "sign", label: "Signature", icon: PenLine },
-                { id: "stamp", label: "Stamps", icon: StampIcon },
-                { id: "select", label: "Select", icon: MousePointer2 },
+                {
+                  id: "whiteout",
+                  label: "Whiteout",
+                  icon: Eraser,
+                  badgeBg: "bg-blue-100/80 text-[#3158d5]",
+                },
+                {
+                  id: "text",
+                  label: "Text",
+                  icon: Type,
+                  badgeBg: "bg-indigo-100/80 text-indigo-700",
+                },
+                {
+                  id: "sign",
+                  label: "Signature",
+                  icon: PenLine,
+                  badgeBg: "bg-purple-100/80 text-purple-700",
+                },
+                {
+                  id: "stamp",
+                  label: "Stamps",
+                  icon: StampIcon,
+                  badgeBg: "bg-amber-100/80 text-amber-800",
+                },
+                {
+                  id: "select",
+                  label: "Select",
+                  icon: MousePointer2,
+                  colSpan: "col-span-2",
+                  badgeBg: "bg-sky-100/80 text-sky-800",
+                },
               ].map((t) => {
                 const Icon = t.icon;
                 const active = tool === t.id;
@@ -2710,14 +3169,29 @@ export default function PdfStudioClient() {
                       }
                     }}
                     aria-pressed={active}
-                    style={active ? { backgroundColor: "#3158d5", color: "#ffffff" } : undefined}
-                    className={`p-2.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+                    style={
                       active
-                        ? "bg-[#3158d5] text-white shadow-xs"
-                        : "bg-[#f6f5f1] text-[#1c201a] hover:bg-[#eeebe3]"
+                        ? { backgroundColor: "#3158d5", borderColor: "#3158d5", color: "#ffffff" }
+                        : { backgroundColor: "#ffffff", borderColor: "#e5e5df", color: "#1c201a" }
+                    }
+                    className={`p-3 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer flex items-center gap-2.5 active:scale-95 border ${
+                      t.colSpan || ""
+                    } ${
+                      active
+                        ? "shadow-xs"
+                        : "shadow-2xs hover:bg-[#faf9f6] hover:border-[#cbd5e1]"
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span
+                      style={
+                        active
+                          ? { backgroundColor: "rgba(255,255,255,0.2)", color: "#ffffff" }
+                          : undefined
+                      }
+                      className={`p-1 rounded-lg flex items-center justify-center shrink-0 ${active ? "" : t.badgeBg}`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                    </span>
                     <span>{t.label}</span>
                   </button>
                 );
@@ -2727,9 +3201,9 @@ export default function PdfStudioClient() {
 
           {/* Whiteout Recolor Card for selected whiteout */}
           {selectedOverlay && selectedOverlay.type === "whiteout" && (
-            <div className="rounded-2xl border border-[#bcd5ff] bg-[#eff4fe] p-3 space-y-2">
-              <span className="font-bold text-[#1c201a] block">Change Whiteout Color</span>
-              <div className="flex flex-wrap items-center gap-1.5">
+            <div style={{ backgroundColor: "#eff4fe", borderColor: "#bcd5ff" }} className="rounded-2xl border p-4 space-y-3 shadow-2xs">
+              <span className="font-bold text-[#1c201a] block text-xs">Change Whiteout Color</span>
+              <div className="flex flex-wrap items-center gap-2">
                 {[
                   { label: "White", val: "#ffffff" },
                   { label: "Cream", val: "#fbfbfa" },
@@ -2754,39 +3228,52 @@ export default function PdfStudioClient() {
                       );
                       scheduleRedraw();
                     }}
-                    className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-semibold cursor-pointer ${
+                    style={
                       selectedOverlay.bgColor === c.val
-                        ? "bg-white text-[#3158d5] border-[#3158d5] ring-2 ring-[#bcd5ff]"
-                        : "bg-white text-[#1c201a] border-[#eeede6]"
+                        ? { backgroundColor: "#3158d5", borderColor: "#3158d5", color: "#ffffff" }
+                        : { backgroundColor: "#ffffff", borderColor: "#e5e5df", color: "#1c201a" }
+                    }
+                    className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold cursor-pointer transition ${
+                      selectedOverlay.bgColor === c.val
+                        ? "shadow-xs font-bold"
+                        : "hover:border-[#bcd5ff] shadow-2xs"
                     }`}
                   >
-                    <span style={{ backgroundColor: c.val }} className="h-3 w-3 rounded-full border border-[#eeede6] shrink-0" />
+                    <span style={{ backgroundColor: c.val }} className="h-3 w-3 rounded-full border border-black/10 shrink-0" />
                     <span>{c.label}</span>
                   </button>
                 ))}
-                <label className="inline-flex items-center gap-1.5 rounded-lg border border-[#eeede6] bg-white px-2 py-0.5 text-xs font-semibold text-[#1c201a] cursor-pointer">
-                  <input
-                    type="color"
-                    value={selectedOverlay.bgColor || "#ffffff"}
-                    onChange={(e) => {
-                      const newCol = e.target.value;
-                      pushHistory("color", 800);
-                      setPages((prev) =>
-                        prev.map((p, idx) =>
-                          idx === activePageIndex
-                            ? {
-                                ...p,
-                                overlays: p.overlays.map((ov) =>
-                                  ov.id === selectedOverlay.id ? { ...ov, bgColor: newCol } : ov
-                                ),
-                              }
-                            : p
-                        )
-                      );
-                      scheduleRedraw();
+                <label className="relative inline-flex items-center gap-1.5 rounded-xl border border-[#e5e5df] bg-white px-3 py-1.5 text-xs font-semibold text-[#1c201a] cursor-pointer hover:border-[#bcd5ff] shadow-2xs transition-all active:scale-95">
+                  <div
+                    style={{
+                      background: "conic-gradient(from 180deg at 50% 50%, #f43f5e 0deg, #eab308 72deg, #22c55e 144deg, #06b6d4 216deg, #3b82f6 288deg, #f43f5e 360deg)",
                     }}
-                    className="w-4 h-4 p-0 border-0 rounded cursor-pointer bg-transparent"
-                  />
+                    className="relative h-3.5 w-3.5 rounded-full border border-white/80 shrink-0 flex items-center justify-center shadow-2xs overflow-hidden"
+                  >
+                    <Pipette className="w-2 h-2 text-white drop-shadow-xs pointer-events-none" />
+                    <input
+                      type="color"
+                      value={selectedOverlay.bgColor || "#ffffff"}
+                      onChange={(e) => {
+                        const newCol = e.target.value;
+                        pushHistory("color", 800);
+                        setPages((prev) =>
+                          prev.map((p, idx) =>
+                            idx === activePageIndex
+                              ? {
+                                  ...p,
+                                  overlays: p.overlays.map((ov) =>
+                                    ov.id === selectedOverlay.id ? { ...ov, bgColor: newCol } : ov
+                                  ),
+                                }
+                              : p
+                          )
+                        );
+                        scheduleRedraw();
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                  </div>
                   <span>Custom</span>
                 </label>
               </div>
@@ -2795,14 +3282,25 @@ export default function PdfStudioClient() {
 
           {/* Selected Text Edit Card */}
           {selectedOverlay && selectedOverlay.type === "text" && (
-            <div className="rounded-2xl border border-[#bcd5ff] bg-[#eff4fe] p-3 space-y-2.5 shadow-2xs">
-              <span className="font-bold text-[#3158d5] flex items-center gap-1.5">
-                <Type className="w-3.5 h-3.5" />
-                <span>Edit Selected Text</span>
-              </span>
+            <div className="rounded-2xl border border-[#bcd5ff] bg-[#eff4fe]/60 p-4 space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-[#3158d5] flex items-center gap-1.5">
+                  <Type className="w-3.5 h-3.5" />
+                  <span>Edit Selected Text</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => startInlineTextEdit(selectedOverlay.id)}
+                  style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                  className="px-2 py-0.5 rounded-md text-[10px] font-bold shadow-2xs hover:bg-[#2546b8] transition cursor-pointer active:scale-95 flex items-center gap-1"
+                >
+                  <span>Edit on Page</span>
+                  <span>↗</span>
+                </button>
+              </div>
 
-              <div>
-                <label className="font-semibold text-[#1c201a] block mb-1">Text Content</label>
+              <div className="space-y-1.5">
+                <label className="font-semibold text-[#1c201a] block">Text Content</label>
                 <textarea
                   ref={(el) => { textInputRef.current = el; }}
                   rows={3}
@@ -2821,11 +3319,11 @@ export default function PdfStudioClient() {
                     updateSelectedTextOverlay({ text: e.target.value });
                   }}
                   placeholder="Type text..."
-                  className="w-full resize-y rounded-xl border border-[#bcd5ff] bg-white px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#3158d5]"
+                  className="w-full resize-y rounded-xl border border-[#bcd5ff] bg-white px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#3158d5] focus:ring-2 focus:ring-[#bcd5ff]/40"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <label className="font-semibold text-[#1c201a]">
                   Size ({pxToPt(selectedOverlay.fontSize || 18, activePage)} pt)
                   <input
@@ -2850,7 +3348,7 @@ export default function PdfStudioClient() {
                       pushHistory();
                       updateSelectedTextOverlay({ fontFamily: e.target.value });
                     }}
-                    className="mt-1 w-full rounded-lg border border-[#bcd5ff] bg-white px-2 py-1.5 text-xs font-medium"
+                    className="mt-1 w-full rounded-xl border border-[#bcd5ff] bg-white px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-[#3158d5]"
                   >
                     <option value="Inter, sans-serif">Modern Sans</option>
                     <option value="Georgia, serif">Classic Serif</option>
@@ -2872,7 +3370,7 @@ export default function PdfStudioClient() {
                     className={`h-7 w-7 rounded-lg text-xs font-bold border transition cursor-pointer flex items-center justify-center ${
                       selectedOverlay.fontWeight === "bold"
                         ? "bg-[#3158d5] text-white border-[#3158d5]"
-                        : "bg-white text-[#1c201a] border-[#eeede6] hover:bg-[#faf9f6]"
+                        : "bg-white text-[#1c201a] border-[#e5e5df] hover:bg-[#faf9f6]"
                     }`}
                     title="Toggle Bold"
                   >
@@ -2889,7 +3387,7 @@ export default function PdfStudioClient() {
                     className={`h-7 w-7 rounded-lg text-xs font-semibold italic border transition cursor-pointer flex items-center justify-center ${
                       selectedOverlay.fontStyle === "italic"
                         ? "bg-[#3158d5] text-white border-[#3158d5]"
-                        : "bg-white text-[#1c201a] border-[#eeede6] hover:bg-[#faf9f6]"
+                        : "bg-white text-[#1c201a] border-[#e5e5df] hover:bg-[#faf9f6]"
                     }`}
                     title="Toggle Italic"
                   >
@@ -2932,9 +3430,9 @@ export default function PdfStudioClient() {
 
           {/* Whiteout Settings Card */}
           {tool === "whiteout" && (
-            <div className="rounded-2xl border border-black/[0.06] bg-white p-3.5 space-y-2.5 shadow-2xs">
-              <span className="font-bold text-[#1c201a] block text-xs">Whiteout Tone</span>
-              <div className="flex flex-wrap items-center gap-1.5">
+            <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-4 sm:p-5 space-y-3.5 shadow-2xs">
+              <span className="font-bold text-[#575a53] block text-xs uppercase tracking-wider">Whiteout Tone</span>
+              <div className="flex flex-wrap items-center gap-2">
                 {[
                   { id: "auto", label: "Auto colour", swatch: "linear-gradient(135deg, #ffffff 50%, #e2e8f0 50%)" },
                   { id: "white", label: "White", swatch: "#ffffff" },
@@ -2950,40 +3448,66 @@ export default function PdfStudioClient() {
                         setWhiteoutTone(c.id as "auto" | "white" | "cream" | "gray");
                         setIsColorPicking(false);
                       }}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold cursor-pointer transition ${
-                        active ? "text-[#3158d5] bg-[#eff4fe] ring-1.5 ring-[#3158d5] font-bold" : "text-[#1c201a] bg-[#f6f5f1] hover:bg-[#eeebe3]"
+                      style={
+                        active
+                          ? { backgroundColor: "#3158d5", borderColor: "#3158d5", color: "#ffffff" }
+                          : { backgroundColor: "#ffffff", borderColor: "#e5e5df", color: "#1c201a" }
+                      }
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold cursor-pointer transition-all duration-150 active:scale-95 border ${
+                        active ? "font-bold shadow-xs" : "shadow-2xs hover:bg-[#faf9f6] hover:border-[#cbd5e1]"
                       }`}
                     >
-                      <span style={{ background: c.swatch }} className="h-3 w-3 rounded-full border border-black/10 shrink-0" />
+                      <span
+                        style={{ background: c.swatch }}
+                        className={`h-3 w-3 rounded-full shrink-0 ${active ? "ring-1.5 ring-white/60" : "border border-black/15"}`}
+                      />
                       <span>{c.label}</span>
                     </button>
                   );
                 })}
 
                 <label
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold cursor-pointer transition ${
-                    whiteoutTone === "custom" ? "text-[#3158d5] bg-[#eff4fe] ring-1.5 ring-[#3158d5] font-bold" : "text-[#1c201a] bg-[#f6f5f1] hover:bg-[#eeebe3]"
+                  style={
+                    whiteoutTone === "custom"
+                      ? { backgroundColor: "#3158d5", borderColor: "#3158d5", color: "#ffffff" }
+                      : { backgroundColor: "#ffffff", borderColor: "#e5e5df", color: "#1c201a" }
+                  }
+                  className={`relative inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold cursor-pointer transition-all duration-150 active:scale-95 border ${
+                    whiteoutTone === "custom" ? "font-bold shadow-xs" : "shadow-2xs hover:bg-[#faf9f6] hover:border-[#cbd5e1]"
                   }`}
                 >
-                  <input
-                    type="color"
-                    value={customWhiteoutColor}
-                    onChange={(e) => {
-                      setCustomWhiteoutColor(e.target.value);
-                      setWhiteoutColor(e.target.value);
-                      setWhiteoutTone("custom");
-                      setIsColorPicking(false);
+                  <div
+                    style={{
+                      background: "conic-gradient(from 180deg at 50% 50%, #f43f5e 0deg, #eab308 72deg, #22c55e 144deg, #06b6d4 216deg, #3b82f6 288deg, #f43f5e 360deg)",
                     }}
-                    className="w-4 h-4 p-0 border-0 rounded cursor-pointer bg-transparent"
-                  />
+                    className="relative h-3.5 w-3.5 rounded-full border border-white/80 shrink-0 flex items-center justify-center shadow-2xs overflow-hidden"
+                  >
+                    <Pipette className="w-2 h-2 text-white drop-shadow-xs pointer-events-none" />
+                    <input
+                      type="color"
+                      value={customWhiteoutColor}
+                      onChange={(e) => {
+                        setCustomWhiteoutColor(e.target.value);
+                        setWhiteoutColor(e.target.value);
+                        setWhiteoutTone("custom");
+                        setIsColorPicking(false);
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                  </div>
                   <span>Custom</span>
                 </label>
 
                 <button
                   type="button"
                   onClick={handlePickColorFromPage}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
-                    isColorPicking ? "text-[#3158d5] bg-[#eff4fe] ring-1.5 ring-[#3158d5] font-bold" : "text-[#1c201a] bg-[#f6f5f1] hover:bg-[#eeebe3]"
+                  style={
+                    isColorPicking
+                      ? { backgroundColor: "#3158d5", borderColor: "#3158d5", color: "#ffffff" }
+                      : { backgroundColor: "#eff4fe", borderColor: "#bcd5ff", color: "#3158d5" }
+                  }
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all duration-150 cursor-pointer active:scale-95 border ${
+                    isColorPicking ? "shadow-xs animate-pulse" : "shadow-2xs hover:bg-[#dbeafe]"
                   }`}
                   title="Pick color directly from document page"
                 >
@@ -2996,19 +3520,19 @@ export default function PdfStudioClient() {
 
           {/* Default Text Tool Settings (when no text is selected) */}
           {tool === "text" && (!selectedOverlay || selectedOverlay.type !== "text") && (
-            <div className="rounded-2xl border border-[#eeede6] bg-white p-3 space-y-3">
-              <div>
-                <label className="font-semibold text-[#1c201a] block mb-1">Default Text</label>
+            <div className="rounded-2xl border border-[#e5e5df] bg-white p-4 space-y-3.5 shadow-2xs">
+              <div className="space-y-1.5">
+                <label className="font-semibold text-[#1c201a] block">Default Text</label>
                 <textarea
                   rows={2}
                   value={textValue}
                   onChange={(e) => setTextValue(e.target.value)}
                   placeholder="Type text to place... (new lines supported)"
-                  className="w-full resize-y rounded-xl border border-[#eeede6] bg-white px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#3158d5]"
+                  className="w-full resize-y rounded-xl border border-[#e5e5df] bg-[#faf9f6] px-3 py-2 text-xs font-medium focus:bg-white focus:outline-none focus:border-[#3158d5] focus:ring-2 focus:ring-[#bcd5ff]/40"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <label className="font-semibold text-[#1c201a]">
                   Size ({textPtSize} pt)
                   <input
@@ -3026,7 +3550,7 @@ export default function PdfStudioClient() {
                   <select
                     value={textFont}
                     onChange={(e) => setTextFont(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-[#eeede6] bg-white px-2 py-1.5 text-xs font-medium"
+                    className="mt-1 w-full rounded-xl border border-[#e5e5df] bg-[#faf9f6] focus:bg-white px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-[#3158d5]"
                   >
                     <option value="Inter, sans-serif">Modern Sans</option>
                     <option value="Georgia, serif">Classic Serif</option>
@@ -3035,7 +3559,7 @@ export default function PdfStudioClient() {
                 </label>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -3043,7 +3567,7 @@ export default function PdfStudioClient() {
                     className={`h-7 w-7 rounded-lg text-xs font-bold border transition cursor-pointer flex items-center justify-center ${
                       textWeight === "bold"
                         ? "bg-[#3158d5] text-white border-[#3158d5]"
-                        : "bg-white text-[#1c201a] border-[#eeede6] hover:bg-[#faf9f6]"
+                        : "bg-white text-[#1c201a] border-[#e5e5df] hover:bg-[#faf9f6]"
                     }`}
                     title="Toggle Bold"
                   >
@@ -3055,7 +3579,7 @@ export default function PdfStudioClient() {
                     className={`h-7 w-7 rounded-lg text-xs font-semibold italic border transition cursor-pointer flex items-center justify-center ${
                       textStyle === "italic"
                         ? "bg-[#3158d5] text-white border-[#3158d5]"
-                        : "bg-white text-[#1c201a] border-[#eeede6] hover:bg-[#faf9f6]"
+                        : "bg-white text-[#1c201a] border-[#e5e5df] hover:bg-[#faf9f6]"
                     }`}
                     title="Toggle Italic"
                   >
@@ -3091,9 +3615,9 @@ export default function PdfStudioClient() {
 
           {/* Stamps Panel */}
           {tool === "stamp" && (
-            <div className="rounded-2xl border border-[#eeede6] bg-white p-3 space-y-2.5">
-              <span className="font-bold text-[#1c201a] block">1-Click Document Stamps</span>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="rounded-2xl border border-[#e5e5df] bg-white p-4 space-y-3 shadow-2xs">
+              <span className="font-bold text-[#575a53] block text-xs uppercase tracking-wider">1-Click Document Stamps</span>
+              <div className="flex flex-wrap gap-2">
                 {[
                   { label: "PAID", color: STAMP_COLORS.PAID },
                   { label: "APPROVED", color: STAMP_COLORS.APPROVED },
@@ -3106,7 +3630,7 @@ export default function PdfStudioClient() {
                     type="button"
                     onClick={() => insertStampOverlay(s.label)}
                     style={{ borderColor: s.color, color: s.color }}
-                    className="rounded-xl border-2 px-3 py-1 text-xs font-black tracking-wider uppercase bg-white hover:bg-[#faf9f6] transition cursor-pointer"
+                    className="rounded-xl border-2 px-3.5 py-1.5 text-xs font-black tracking-wider uppercase bg-white hover:bg-[#faf9f6] transition cursor-pointer shadow-2xs active:scale-95"
                   >
                     {s.label}
                   </button>
@@ -3119,31 +3643,34 @@ export default function PdfStudioClient() {
 
       {/* Overlays / Edits List for Active Page */}
       {activePage && activePage.overlays.length > 0 && (
-        <div className="rounded-2xl border border-[#eeede6] bg-white p-3 space-y-2.5">
-          <div className="flex items-center justify-between pb-1.5 border-b border-[#eeede6]">
+        <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-4 space-y-3 shadow-2xs">
+          <div style={{ borderBottom: "1px solid #e5e5df" }} className="flex items-center justify-between pb-2.5">
             <span className="font-bold text-[#1c201a] text-xs">
               Page Edits ({activePage.overlays.length})
             </span>
             <button
               type="button"
               onClick={handleClearAllOnPage}
-              className="text-xs font-semibold text-rose-600 hover:underline cursor-pointer"
+              className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
             >
               Clear All
             </button>
           </div>
 
-          <div className="max-h-48 overflow-y-auto space-y-1.5 pr-0.5 scrollbar-thin">
+          <div className="max-h-48 overflow-y-auto space-y-2 pr-0.5 scrollbar-thin">
             {activePage.overlays.map((ov, oIdx) => {
               const isSelected = ov.id === selectedOverlayId;
               return (
                 <div
                   key={ov.id}
                   onClick={() => setSelectedOverlayId(ov.id)}
-                  className={`flex items-center justify-between p-2 rounded-xl border text-xs cursor-pointer transition ${
-                    isSelected
-                      ? "border-[#3158d5] bg-[#eff4fe] font-bold text-[#3158d5]"
-                      : "border-[#eeede6] bg-[#faf9f6] hover:bg-[#f1f0eb] text-[#1c201a]"
+                  style={{
+                    backgroundColor: isSelected ? "#eff4fe" : "#faf9f6",
+                    borderColor: isSelected ? "#3158d5" : "#e5e5df",
+                    color: isSelected ? "#3158d5" : "#1c201a",
+                  }}
+                  className={`flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
+                    isSelected ? "font-bold shadow-2xs" : "hover:bg-[#f1f0eb] hover:border-[#bcd5ff]"
                   }`}
                 >
                   <span className="truncate capitalize mr-2">
@@ -3157,7 +3684,7 @@ export default function PdfStudioClient() {
                         e.stopPropagation();
                         duplicateOverlay(ov.id);
                       }}
-                      className="p-1 rounded hover:bg-[#e8effe] hover:text-blue-600 text-[#8c8f87] transition"
+                      className="p-1 rounded-lg hover:bg-[#e8effe] hover:text-[#3158d5] text-[#8c8f87] transition cursor-pointer"
                       aria-label="Duplicate edit"
                     >
                       <Copy className="w-3.5 h-3.5" />
@@ -3178,7 +3705,7 @@ export default function PdfStudioClient() {
                         if (selectedOverlayId === ov.id) setSelectedOverlayId(null);
                         scheduleRedraw();
                       }}
-                      className="p-1 rounded hover:bg-rose-100 hover:text-rose-600 text-[#8c8f87] transition"
+                      className="p-1 rounded-lg hover:bg-rose-100 hover:text-rose-600 text-[#8c8f87] transition cursor-pointer"
                       aria-label="Delete edit"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -3202,11 +3729,11 @@ export default function PdfStudioClient() {
 
       <main className="flex-1 pb-28 lg:pb-16 [&_button:focus-visible]:outline-none [&_button:focus-visible]:ring-2 [&_button:focus-visible]:ring-[#3158d5] [&_button:focus-visible]:ring-offset-2">
         <section className="relative overflow-x-clip">
-          <div className="relative mx-auto max-w-[1600px] px-2 sm:px-4 lg:px-6 pt-3 sm:pt-4">
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4">
 
-            {/* STAGE 1: UPLOAD STAGE */}
+            {/* STAGE 1: UPLOAD STAGE (MATCHING HOMEPAGE & COMPRESSOR STYLE) */}
             {pages.length === 0 ? (
-              <div className="mx-auto max-w-5xl w-full pt-2 sm:pt-4 pb-8">
+              <div className="mx-auto max-w-7xl w-full pt-2 sm:pt-4 pb-8">
                 {/* Hero Header */}
                 <div className="mx-auto max-w-4xl text-center pt-2 sm:pt-6 pb-2">
                   <div
@@ -3228,9 +3755,9 @@ export default function PdfStudioClient() {
                   >
                     <span
                       style={{
-                        fontSize: "clamp(42px, 5.5vw, 68px)",
+                        fontSize: "clamp(34px, 5.2vw, 68px)",
                         fontWeight: 900,
-                        lineHeight: 1.04,
+                        lineHeight: 1.05,
                         letterSpacing: "-0.035em",
                         color: "#1c201a",
                         display: "block",
@@ -3242,7 +3769,7 @@ export default function PdfStudioClient() {
                     <span
                       style={{
                         fontFamily: "'ITC Modern No. 216', var(--font-itc-modern), 'Instrument Serif', Georgia, serif",
-                        fontSize: "clamp(36px, 4.6vw, 60px)",
+                        fontSize: "clamp(36px, 4.8vw, 62px)",
                         fontWeight: 400,
                         fontStyle: "italic",
                         lineHeight: 1.05,
@@ -3258,127 +3785,393 @@ export default function PdfStudioClient() {
 
                   <p
                     style={{
-                      color: "#575a53",
-                      fontSize: "15px",
+                      color: "#70746d",
+                      fontSize: "16px",
                       lineHeight: 1.55,
+                      maxWidth: "580px",
                       margin: "18px auto 0",
                     }}
-                    className="text-center font-normal px-4 max-w-[620px] mx-auto"
+                    className="text-center font-normal px-4"
                   >
                     Whiteout typos, patch text, reorder pages, sign documents, and permanently redact sensitive data with zero server uploads.
                   </p>
                 </div>
 
-                {/* Upload Card */}
-                <div className="mx-auto mt-6 sm:mt-8 w-full max-w-4xl">
-                  <div
-                    style={{
-                      borderColor: "#eeede6",
-                      backgroundColor: "#ecebe4",
-                    }}
-                    className="relative w-full rounded-2xl sm:rounded-[24px] border overflow-hidden p-2"
-                  >
+                {/* THE SIGNATURE SPELLENSE SPLIT STUDIO CARD */}
+                <div
+                  style={{
+                    borderColor: "#e5e5df",
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    backgroundColor: "#ecebe4",
+                    boxShadow: "none",
+                  }}
+                  className={`mt-8 sm:mt-10 relative w-full rounded-2xl sm:rounded-[24px] overflow-hidden transition-all duration-300 ${
+                    isDraggingFile ? "ring-4 ring-[#eff4fe]" : ""
+                  }`}
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
+                    {/* LEFT COLUMN: UPLOAD BOX & CONTROLS */}
                     <div
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setIsDraggingFile(true);
-                      }}
-                      onDragLeave={() => setIsDraggingFile(false)}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        setIsDraggingFile(false);
-                        loadFiles(e.dataTransfer.files);
-                      }}
-                      style={{ backgroundColor: "#ffffff", borderColor: isDraggingFile ? "#3158d5" : "#eeede6" }}
-                      className={`relative w-full rounded-xl sm:rounded-[20px] border p-6 sm:p-10 text-center transition-all duration-300 ${
-                        isDraggingFile ? "ring-4 ring-[#eff4fe]" : ""
-                      }`}
+                      style={{ borderRight: "1px solid #e5e5df" }}
+                      className="lg:col-span-5 p-5 sm:p-7 flex flex-col justify-between bg-white"
                     >
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".pdf,image/png,image/jpeg,image/webp"
-                        multiple
-                        onChange={(e) => loadFiles(e.target.files)}
-                        className="hidden"
-                      />
-
-                      {isProcessing ? (
+                      <div>
+                        {/* HEADER */}
                         <div
-                          style={{ borderColor: "#bcd5ff", backgroundColor: "#f0f5ff" }}
-                          className="rounded-2xl border p-5 shadow-xs max-w-sm mx-auto"
+                          style={{ borderBottom: "1px solid #e5e5df" }}
+                          className="flex items-center justify-between pb-3"
                         >
-                          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-[#3158d5] text-white shadow-md">
-                            <RotateCw className="h-5 w-5 animate-spin" />
-                          </div>
-                          <p className="mt-3 text-sm font-bold text-[#1c201a]">{processingText}</p>
-                          <p className="mt-0.5 text-xs text-[#575a53]">100% in-browser RAM engine</p>
-                          <div
-                            style={{ backgroundColor: "#e0ebff" }}
-                            className="mx-auto mt-4 max-w-[200px] h-1.5 w-full rounded-full overflow-hidden"
+                          <span
+                            style={{
+                              backgroundColor: "#efeee7",
+                              color: "#3158d5",
+                              border: "1px solid #e5e5df",
+                            }}
+                            className="text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"
                           >
+                            <FileText className="w-3.5 h-3.5 text-[#3158d5]" />
+                            <span>PDF &amp; Images</span>
+                          </span>
+
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                            ZERO SERVER UPLOADS
+                          </span>
+                        </div>
+
+                        {/* DROPZONE / PROCESSING */}
+                        {isProcessing ? (
+                          <div
+                            style={{ borderColor: "#bcd5ff", backgroundColor: "#f0f5ff" }}
+                            className="mt-4 rounded-2xl border p-7 text-center animate-in fade-in duration-200"
+                          >
+                            <div className="relative mx-auto flex h-14 w-14 items-center justify-center">
+                              <div className="absolute inset-0 rounded-full bg-[#3158d5]/15 blur-lg animate-pulse" />
+                              <div
+                                style={{ backgroundColor: "#3158d5" }}
+                                className="relative flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-md shadow-[#3158d5]/30"
+                              >
+                                <RotateCw className="h-6 w-6 animate-spin text-white" />
+                              </div>
+                            </div>
+                            <h3 className="mt-3.5 text-sm sm:text-[15px] font-bold text-[#1c201a]">
+                              {processingText}
+                            </h3>
+                            <p className="mt-1 text-xs text-[#70746d] font-medium">
+                              100% in-browser RAM engine · Private &amp; secure
+                            </p>
                             <div
-                              style={{
-                                width: `${processingPercent}%`,
-                                backgroundColor: "#3158d5",
-                                transition: "width 200ms ease",
+                              style={{ backgroundColor: "#e0ebff" }}
+                              className="mx-auto mt-4 max-w-[200px] h-1.5 w-full rounded-full overflow-hidden"
+                            >
+                              <div
+                                style={{
+                                  width: `${processingPercent}%`,
+                                  backgroundColor: "#3158d5",
+                                  transition: "width 200ms ease",
+                                }}
+                                className="h-full rounded-full"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            {/* DASHED DROPZONE */}
+                            <div
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                setIsDraggingFile(true);
                               }}
-                              className="h-full rounded-full"
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eff4fe] text-[#3158d5] shadow-xs">
-                            <Upload className="w-6 h-6" />
-                          </div>
-
-                          <div>
-                            <p className="text-base sm:text-lg font-bold text-[#1c201a]">
-                              Drop your PDF or image here
-                            </p>
-                            <p className="mt-1 text-xs sm:text-sm text-[#575a53]">
-                              Supports multi-page PDFs, scans, PNG, JPG, or WebP
-                            </p>
-                          </div>
-
-                          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                            <button
-                              type="button"
+                              onDragLeave={() => setIsDraggingFile(false)}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                setIsDraggingFile(false);
+                                loadFiles(e.dataTransfer.files);
+                              }}
                               onClick={() => fileInputRef.current?.click()}
-                              style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
-                              className="inline-flex items-center gap-2 rounded-xl bg-[#3158d5] text-white px-5 py-2.5 text-xs sm:text-sm font-bold shadow-md hover:bg-[#2546b8] active:scale-95 transition cursor-pointer focus-visible:ring-2 focus-visible:ring-[#3158d5] focus-visible:outline-none"
+                              style={{
+                                borderColor: isDraggingFile ? "#3158d5" : "#deded6",
+                                backgroundColor: isDraggingFile ? "#eff6ff" : "#f6f5f3",
+                              }}
+                              className={`mt-4 rounded-2xl border-2 border-dashed p-5 sm:p-6 text-center transition-all cursor-pointer ${
+                                isDraggingFile
+                                  ? "border-[#3158d5] bg-blue-50/70"
+                                  : "hover:border-[#3158d5]/50"
+                              }`}
                             >
-                              <FileText className="w-4 h-4" />
-                              <span>Select Document</span>
-                            </button>
+                              <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".pdf,image/png,image/jpeg,image/webp"
+                                multiple
+                                onChange={(e) => loadFiles(e.target.files)}
+                                className="hidden"
+                              />
 
-                            <button
-                              type="button"
-                              onClick={loadSampleDocument}
-                              style={{ borderColor: "#eeede6", backgroundColor: "#f6f5f3", color: "#1c201a" }}
-                              className="inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-xs sm:text-sm font-bold hover:bg-[#eeede6] transition cursor-pointer focus-visible:ring-2 focus-visible:ring-[#3158d5] focus-visible:outline-none"
-                            >
-                              <span>Try Demo Invoice</span>
-                            </button>
+                              <div
+                                style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                                className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border shadow-2xs text-[#3158d5] transition-transform duration-200 group-hover:scale-105"
+                              >
+                                <Upload className="w-5 h-5 text-[#3158d5]" />
+                              </div>
+
+                              <h3 className="mt-3 text-sm sm:text-[15px] font-bold text-[#1c201a]">
+                                Drop your document here
+                              </h3>
+
+                              <div className="mt-3">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    fileInputRef.current?.click();
+                                  }}
+                                  style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                                  className="inline-flex items-center justify-center gap-2 rounded-lg px-7 py-2.5 text-sm font-bold shadow-xs transition hover:opacity-95 active:scale-[0.98] cursor-pointer min-w-[150px]"
+                                >
+                                  <span>Choose Document</span>
+                                  <span className="text-base font-bold">↗</span>
+                                </button>
+                              </div>
+
+                              <p className="mt-2.5 text-[11px] text-[#767a74]">
+                                Multi-page PDFs, scans, PNG, JPG, or WebP · Up to 50 MB
+                              </p>
+                            </div>
+
+                            <div className="mt-3 text-center">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  loadSampleDocument();
+                                }}
+                                className="text-xs font-semibold text-[#1c201a] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>Try a demo invoice</span>
+                                <span>→</span>
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="pt-4 flex items-center justify-center gap-2 text-xs font-semibold text-emerald-700">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                        <span>Zero uploads · 100% private in browser memory</span>
+                      </div>
+                    </div>
+
+                    {/* RIGHT COLUMN: SAMPLE PREVIEW (MATCHING HOMEPAGE & COMPRESSOR STYLE) */}
+                    <div
+                      style={{ backgroundColor: "#ecebe4" }}
+                      className="lg:col-span-7 p-3.5 sm:p-5 lg:p-7 flex flex-col justify-between"
+                    >
+                      <div>
+                        {/* HEADER */}
+                        <div
+                          style={{ borderBottom: "1px solid #deded6" }}
+                          className="flex items-center justify-between pb-3 sm:pb-3.5"
+                        >
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <FileText className="w-3.5 h-3.5 text-slate-500" />
+                            <span>sample-invoice.pdf</span>
+                          </div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8e928a]">
+                            STUDIO PREVIEW
+                          </span>
+                        </div>
+
+                        {/* DESKTOP LAYOUT (>= 1024px) */}
+                        <div className="hidden lg:flex mt-5 flex-row items-start gap-6">
+                          {/* ARTWORK CARD */}
+                          <div
+                            onClick={loadSampleDocument}
+                            style={{ width: "230px", minWidth: "210px", maxWidth: "240px", flexShrink: 0 }}
+                            className="rounded-xl overflow-hidden shadow-xs border border-[#deded6] bg-white cursor-pointer group/art transition hover:scale-[1.01] p-3 text-[9px] select-none space-y-2 relative"
+                            title="Click to test PDF Studio with this demo invoice"
+                          >
+                            <div className="h-1.5 w-full bg-[#3158d5] rounded-full" />
+                            <div className="flex items-center justify-between pt-1">
+                              <span className="font-bold text-[#1c201a] text-[11px]">INVOICE</span>
+                              <span className="text-[8px] text-[#70746d]">INV-2026-089</span>
+                            </div>
+                            <div className="space-y-1 text-[#575a53] border-b border-[#f0efe9] pb-2">
+                              <div className="h-2 w-28 bg-slate-100 rounded" />
+                              <div className="h-2 w-20 bg-slate-100 rounded" />
+                            </div>
+                            <div className="space-y-1.5 py-1">
+                              <div className="flex justify-between items-center bg-[#eff4fe] p-1 rounded font-bold text-[#3158d5]">
+                                <span>PDF Studio License</span>
+                                <span>$4,920.00</span>
+                              </div>
+                              <div className="flex justify-between items-center text-slate-600 px-1">
+                                <span>Vector Security Audit</span>
+                                <span>$1,950.00</span>
+                              </div>
+                            </div>
+                            {/* Redacted demo box */}
+                            <div className="p-1.5 rounded bg-rose-50 border border-rose-200 text-[8px] text-rose-800 space-y-1">
+                              <div className="flex items-center justify-between font-bold text-rose-700">
+                                <span>WIRE DETAILS</span>
+                                <span className="text-[7px] bg-rose-200 px-1 rounded">REDACTED</span>
+                              </div>
+                              <div className="h-2.5 w-24 bg-slate-900 rounded-xs" />
+                            </div>
+                            {/* Signature line */}
+                            <div className="pt-2 border-t border-[#f0efe9] flex justify-between items-center">
+                              <span className="text-[7px] text-slate-400">Authorized Sign:</span>
+                              <span className="font-serif italic text-blue-700 text-[10px]">Jane Doe</span>
+                            </div>
+
+                            {/* Hover overlay hint */}
+                            <div className="absolute inset-0 bg-[#3158d5]/0 group-hover/art:bg-[#3158d5]/5 transition flex items-center justify-center">
+                              <span className="opacity-0 group-hover/art:opacity-100 bg-[#3158d5] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-sm transition">
+                                Test Demo →
+                              </span>
+                            </div>
                           </div>
 
-                          <div className="pt-3 flex items-center justify-center gap-2 text-xs font-semibold text-emerald-700">
-                            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                            <span>Zero uploads · 100% private in browser memory</span>
+                          {/* DETAILS & FEATURES LIST */}
+                          <div className="flex-1 min-w-0 w-full flex flex-col justify-between self-stretch">
+                            <div>
+                              <div className="flex items-center gap-2 text-xs font-bold text-[#1c201a]">
+                                <span style={{ backgroundColor: "#3158d5" }} className="h-2 w-2 rounded-full inline-block" />
+                                <span>Interactive PDF Studio Demo</span>
+                              </div>
+
+                              {/* SAMPLE CARD 1 */}
+                              <div
+                                onClick={loadSampleDocument}
+                                style={{ border: "2px solid #365cd6", backgroundColor: "#ffffff" }}
+                                className="mt-3 rounded-xl p-3.5 shadow-xs cursor-pointer hover:border-[#2546b8] transition"
+                              >
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-[#3158d5]">
+                                  WHITEOUT &amp; PATCH
+                                </div>
+                                <div className="mt-1 flex items-center justify-between text-xs font-bold text-[#1c201a]">
+                                  <span>Erase typos &amp; write matching text</span>
+                                  <span className="text-[#3158d5] font-semibold text-[11px]">Click to open →</span>
+                                </div>
+                                <p className="mt-1 text-[11px] text-[#767a74]">
+                                  Auto-color tone match &amp; custom typography
+                                </p>
+                              </div>
+
+                              {/* SAMPLE CARD 2 */}
+                              <div
+                                style={{ border: "1px solid #deded6", backgroundColor: "#ffffff" }}
+                                className="mt-2.5 rounded-xl p-3.5 shadow-2xs"
+                              >
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-rose-600">
+                                  PERMANENT REDACTION
+                                </div>
+                                <div className="mt-1 flex items-center justify-between text-xs font-bold text-[#1c201a]">
+                                  <span>Blackout &amp; Pixel Blur</span>
+                                  <span className="text-slate-400 font-normal text-[11px]">100% Unrecoverable</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <p className="mt-4 text-[11px] leading-relaxed text-[#767a74] text-center">
+                              Click sample invoice to test all tools live in browser
+                            </p>
                           </div>
                         </div>
-                      )}
+
+                        {/* MOBILE & TABLET LAYOUT (< 1024px) */}
+                        <div className="block lg:hidden mt-3.5 sm:mt-5">
+                          <div className="flex flex-row items-start gap-3 sm:gap-4">
+                            <div
+                              onClick={loadSampleDocument}
+                              style={{ width: "38%", minWidth: "120px", maxWidth: "165px", flexShrink: 0 }}
+                              className="rounded-xl overflow-hidden shadow-xs border border-[#deded6] bg-white cursor-pointer p-2.5 text-[8px] space-y-1.5"
+                            >
+                              <div className="h-1 w-full bg-[#3158d5] rounded-full" />
+                              <div className="font-bold text-[#1c201a] text-[10px]">INVOICE DEMO</div>
+                              <div className="h-2 w-16 bg-slate-100 rounded" />
+                              <div className="h-2 w-12 bg-blue-100 rounded" />
+                              <div className="h-2 w-14 bg-slate-900 rounded-xs mt-1" />
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-[#1c201a]">Interactive Demo</p>
+                              <p className="text-[11px] text-[#70746d] mt-0.5">Test whiteout, text patching, signatures &amp; redactions.</p>
+                              <button
+                                type="button"
+                                onClick={loadSampleDocument}
+                                style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
+                                className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold shadow-xs cursor-pointer"
+                              >
+                                <span>Try Demo Invoice</span>
+                                <span>→</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* BENTO GRID CARDS (MATCHING HOMEPAGE STYLE) */}
+                <div className="mt-12 sm:mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {/* Card 1: 3-Mode Studio */}
+                  <div style={{ borderColor: "#e5e5df" }} className="group relative h-full rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md">
+                    <div className="flex items-center gap-2">
+                      <span style={{ backgroundColor: "#3158d5", color: "#ffffff" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide shadow-xs">
+                        ORGANIZER
+                      </span>
+                    </div>
+                    <div style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df", color: "#3158d5" }} className="mt-5 flex h-11 w-11 items-center justify-center rounded-2xl">
+                      <LayoutGrid className="w-5 h-5 text-[#3158d5]" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-bold text-[#1c201a]">Visual Page Assembly</h3>
+                    <p className="mt-2 text-xs sm:text-sm text-[#575a53] leading-relaxed">
+                      Reorder pages, rotate scans, delete unwanted sheets, or combine multiple PDF files into one clean document.
+                    </p>
+                  </div>
+
+                  {/* Card 2: Patch & Whiteout */}
+                  <div style={{ borderColor: "#e5e5df" }} className="group relative h-full rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md">
+                    <div className="flex items-center gap-2">
+                      <span style={{ backgroundColor: "#3158d5", color: "#ffffff" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide shadow-xs">
+                        PATCH &amp; EDIT
+                      </span>
+                    </div>
+                    <div style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df", color: "#3158d5" }} className="mt-5 flex h-11 w-11 items-center justify-center rounded-2xl">
+                      <Eraser className="w-5 h-5 text-[#3158d5]" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-bold text-[#1c201a]">Whiteout &amp; Typography</h3>
+                    <p className="mt-2 text-xs sm:text-sm text-[#575a53] leading-relaxed">
+                      Fix typos and outdated numbers with intelligent auto-color matching, custom fonts, vector signature drawing, and stamps.
+                    </p>
+                  </div>
+
+                  {/* Card 3: Deep Redaction */}
+                  <div style={{ borderColor: "#e5e5df" }} className="group relative h-full rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md">
+                    <div className="flex items-center gap-2">
+                      <span style={{ backgroundColor: "#e11d48", color: "#ffffff" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide shadow-xs">
+                        SECURITY
+                      </span>
+                    </div>
+                    <div style={{ backgroundColor: "#fff1f2", border: "1px solid #fecdd3", color: "#e11d48" }} className="mt-5 flex h-11 w-11 items-center justify-center rounded-2xl">
+                      <RedactIcon size={20} className="text-rose-600" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-bold text-[#1c201a]">Permanent Redaction</h3>
+                    <p className="mt-2 text-xs sm:text-sm text-[#575a53] leading-relaxed">
+                      Permanently sanitize sensitive records with Blackout or Pixel Blur. Edited pages are rasterized so text cannot be uncovered.
+                    </p>
                   </div>
                 </div>
               </div>
             ) : (
               /* STAGE 2: WORKSPACE (PAGES LOADED) */
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {/* STICKY WORKSPACE TOOLBAR (STAGE 5) */}
                 <header
-                  className="sticky top-16 sm:top-[70px] z-30 bg-white/95 backdrop-blur-md rounded-2xl border border-black/[0.06] p-2.5 sm:px-4 shadow-xs flex items-center justify-between gap-2 max-w-[1600px] mx-auto"
+                  style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", borderColor: "#e5e5df" }}
+                  className="sticky top-16 sm:top-[70px] z-30 backdrop-blur-md rounded-2xl border p-2.5 sm:px-4 shadow-xs flex items-center justify-between gap-2 w-full"
                 >
                   {/* Left: Start Over & Page Count */}
                   <div className="flex items-center gap-2 shrink-0">
@@ -3387,7 +4180,8 @@ export default function PdfStudioClient() {
                       title="Start Over"
                       aria-label="Start Over"
                       onClick={handleStartOver}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-[#f6f5f1] hover:bg-rose-50 hover:text-rose-600 px-3 py-1.5 text-xs font-semibold text-[#575a53] transition cursor-pointer focus-visible:ring-2 focus-visible:ring-[#3158d5] focus-visible:outline-none"
+                      style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df", color: "#575a53" }}
+                      className="inline-flex items-center gap-1.5 rounded-xl border hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 px-3 py-1.5 text-xs font-semibold transition cursor-pointer shadow-2xs focus-visible:ring-2 focus-visible:ring-[#3158d5] focus-visible:outline-none"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">Start Over</span>
@@ -3399,16 +4193,16 @@ export default function PdfStudioClient() {
                   </div>
 
                   {/* Center: 3-Mode Switch */}
-                  <div className="flex items-center rounded-xl bg-[#f1f0eb] p-1 gap-1">
+                  <div style={{ backgroundColor: "#f4f3ef", borderColor: "#e5e5df" }} className="flex items-center rounded-2xl border p-1 gap-1 shadow-2xs">
                     <button
                       type="button"
                       onClick={() => setMode("pages")}
                       aria-pressed={mode === "pages"}
-                      style={mode === "pages" ? { backgroundColor: "#3158d5", color: "#ffffff" } : undefined}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                      style={mode === "pages" ? { backgroundColor: "#3158d5", borderColor: "#3158d5", color: "#ffffff" } : undefined}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-all duration-150 cursor-pointer ${
                         mode === "pages"
-                          ? "bg-[#3158d5] text-white shadow-xs"
-                          : "text-[#575a53] hover:bg-[#faf9f6] hover:text-[#3158d5]"
+                          ? "shadow-xs"
+                          : "text-[#575a53] hover:bg-white hover:text-[#3158d5]"
                       }`}
                     >
                       <LayoutGrid className="w-3.5 h-3.5" />
@@ -3422,11 +4216,11 @@ export default function PdfStudioClient() {
                         if (tool === "select") setTool("whiteout");
                       }}
                       aria-pressed={mode === "edit"}
-                      style={mode === "edit" ? { backgroundColor: "#3158d5", color: "#ffffff" } : undefined}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                      style={mode === "edit" ? { backgroundColor: "#3158d5", borderColor: "#3158d5", color: "#ffffff" } : undefined}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-all duration-150 cursor-pointer ${
                         mode === "edit"
-                          ? "bg-[#3158d5] text-white shadow-xs"
-                          : "text-[#575a53] hover:bg-[#eff4fe] hover:text-[#3158d5]"
+                          ? "shadow-xs"
+                          : "text-[#575a53] hover:bg-white hover:text-[#3158d5]"
                       }`}
                     >
                       <Eraser className="w-3.5 h-3.5" />
@@ -3435,13 +4229,16 @@ export default function PdfStudioClient() {
 
                     <button
                       type="button"
-                      onClick={() => setMode("redact")}
+                      onClick={() => {
+                        setMode("redact");
+                        setRedactTool("draw");
+                      }}
                       aria-pressed={mode === "redact"}
-                      style={mode === "redact" ? { backgroundColor: "#e11d48", color: "#ffffff" } : undefined}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                      style={mode === "redact" ? { backgroundColor: "#e11d48", borderColor: "#e11d48", color: "#ffffff" } : undefined}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-all duration-150 cursor-pointer ${
                         mode === "redact"
-                          ? "bg-rose-600 text-white shadow-xs"
-                          : "text-[#575a53] hover:bg-rose-50 hover:text-rose-600"
+                          ? "shadow-xs"
+                          : "text-[#575a53] hover:bg-white hover:text-rose-600"
                       }`}
                     >
                       <RedactIcon size={14} />
@@ -3451,7 +4248,7 @@ export default function PdfStudioClient() {
 
                   {/* Right: Quality & Download */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <div className="hidden sm:flex items-center gap-1 bg-[#f1f0eb] rounded-xl px-2.5 py-1 text-xs text-[#1c201a]">
+                    <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="hidden sm:flex items-center gap-1 border rounded-xl px-2.5 py-1 text-xs text-[#1c201a] shadow-2xs">
                       <span className="font-semibold text-[#70746d]">Quality:</span>
                       <select
                         aria-label="Export quality"
@@ -3485,8 +4282,8 @@ export default function PdfStudioClient() {
 
                 {/* ── MODE 1: VISUAL PAGE ORGANIZER (PAGES VIEW) ──────────────── */}
                 {mode === "pages" && (
-                  <div className="rounded-3xl border border-[#eeede6] bg-white p-5 sm:p-6 shadow-xs animate-in fade-in duration-150">
-                    <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#eeede6]">
+                  <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-3xl border p-5 sm:p-6 shadow-xs animate-in fade-in duration-150">
+                    <div style={{ borderBottom: "1px solid #e5e5df" }} className="flex items-center justify-between pb-4 mb-6">
                       <div>
                         <h2 className="text-base font-bold text-[#1c201a]">Organize &amp; Assemble Pages</h2>
                         <p className="text-xs text-[#575a53]">Reorder, rotate, delete, or merge additional documents.</p>
@@ -3495,7 +4292,8 @@ export default function PdfStudioClient() {
                       <button
                         type="button"
                         onClick={() => appendFileInputRef.current?.click()}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-[#bcd5ff] bg-[#eff4fe] hover:bg-[#e8effe] px-3.5 py-2 text-xs font-bold text-[#3158d5] transition cursor-pointer"
+                        style={{ backgroundColor: "#eff4fe", borderColor: "#bcd5ff", color: "#3158d5" }}
+                        className="inline-flex items-center gap-1.5 rounded-xl border hover:bg-[#dbeafe] px-3.5 py-2 text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer"
                       >
                         <input
                           ref={appendFileInputRef}
@@ -3510,20 +4308,31 @@ export default function PdfStudioClient() {
                       </button>
                     </div>
 
-                    {/* Page Grid (Stage 3 PageThumb) */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
+                    {/* Page Grid (Stage 3 PageThumb - Compact Smaller Grid) */}
+                    <div className="flex flex-wrap gap-3 sm:gap-4 items-start">
                       {pages.map((p, idx) => {
                         const isCurrent = idx === activePageIndex;
                         return (
                           <div
                             key={p.id}
-                            className={`group relative rounded-2xl border p-2.5 flex flex-col justify-between transition-all shadow-xs hover:shadow-md bg-white ${
-                              isCurrent ? "border-[#3158d5] ring-2 ring-[#eff4fe]" : "border-[#eeede6]"
+                            style={{
+                              width: "140px",
+                              minWidth: "140px",
+                              maxWidth: "140px",
+                              backgroundColor: "#ffffff",
+                              border: isCurrent ? "2px solid #3b82f6" : "1px solid #e5e5df",
+                              boxShadow: isCurrent ? "0 0 0 3px rgba(59, 130, 246, 0.15)" : undefined,
+                            }}
+                            className={`group relative rounded-xl p-2 flex flex-col justify-between transition-all shrink-0 cursor-pointer ${
+                              isCurrent ? "shadow-sm" : "hover:shadow-md hover:border-[#cbd5e1]"
                             }`}
+                            onClick={() => {
+                              setActivePageIndex(idx);
+                            }}
                           >
-                            {/* Page Header */}
-                            <div className="flex items-center justify-between mb-2">
-                              <span className={`text-xs ${isCurrent ? "font-bold text-[#3158d5]" : "font-semibold text-[#70746d]"}`}>
+                            {/* Page Header (No outlines) */}
+                            <div className="flex items-center justify-between mb-1.5 px-0.5">
+                              <span className={`text-[11px] font-bold ${isCurrent ? "text-[#3b82f6]" : "text-[#70746d]"}`}>
                                 Page {idx + 1}
                               </span>
 
@@ -3537,7 +4346,7 @@ export default function PdfStudioClient() {
                                     e.stopPropagation();
                                     movePage(idx, idx - 1);
                                   }}
-                                  className="h-6 w-6 rounded-lg text-[#8c8f87] hover:text-[#3158d5] hover:bg-[#eff4fe] flex items-center justify-center disabled:opacity-20 cursor-pointer transition"
+                                  className="h-5 w-5 rounded text-[#70746d] hover:text-[#3b82f6] hover:bg-[#eff4fe] flex items-center justify-center disabled:opacity-20 cursor-pointer transition border-0 bg-transparent"
                                 >
                                   <ChevronLeft className="w-3.5 h-3.5" />
                                 </button>
@@ -3550,7 +4359,7 @@ export default function PdfStudioClient() {
                                     e.stopPropagation();
                                     movePage(idx, idx + 1);
                                   }}
-                                  className="h-6 w-6 rounded-lg text-[#8c8f87] hover:text-[#3158d5] hover:bg-[#eff4fe] flex items-center justify-center disabled:opacity-20 cursor-pointer transition"
+                                  className="h-5 w-5 rounded text-[#70746d] hover:text-[#3b82f6] hover:bg-[#eff4fe] flex items-center justify-center disabled:opacity-20 cursor-pointer transition border-0 bg-transparent"
                                 >
                                   <ChevronRight className="w-3.5 h-3.5" />
                                 </button>
@@ -3570,8 +4379,8 @@ export default function PdfStudioClient() {
                               badgeStyle="editsCount"
                             />
 
-                            {/* Action Footer */}
-                            <div className="mt-2.5 flex items-center justify-between px-1">
+                            {/* Action Footer (No outlines) */}
+                            <div className="mt-2 flex items-center justify-between px-0.5">
                               <button
                                 type="button"
                                 title="Rotate 90° Clockwise"
@@ -3580,7 +4389,7 @@ export default function PdfStudioClient() {
                                   e.stopPropagation();
                                   rotatePage(idx);
                                 }}
-                                className="h-7 w-7 rounded-lg text-[#8c8f87] hover:text-[#3158d5] hover:bg-[#eff4fe] flex items-center justify-center transition cursor-pointer"
+                                className="h-6 w-6 rounded-md text-[#3b82f6] hover:bg-[#eff4fe] flex items-center justify-center transition active:scale-90 cursor-pointer border-0 bg-transparent"
                               >
                                 <RotateCw className="w-3.5 h-3.5" />
                               </button>
@@ -3593,7 +4402,7 @@ export default function PdfStudioClient() {
                                   e.stopPropagation();
                                   duplicatePage(idx);
                                 }}
-                                className="h-7 w-7 rounded-lg text-[#8c8f87] hover:text-[#3158d5] hover:bg-[#eff4fe] flex items-center justify-center transition cursor-pointer"
+                                className="h-6 w-6 rounded-md text-[#575a53] hover:text-[#3b82f6] hover:bg-[#eff4fe] flex items-center justify-center transition active:scale-90 cursor-pointer border-0 bg-transparent"
                               >
                                 <Copy className="w-3.5 h-3.5" />
                               </button>
@@ -3606,7 +4415,7 @@ export default function PdfStudioClient() {
                                   e.stopPropagation();
                                   deletePage(idx);
                                 }}
-                                className="h-7 w-7 rounded-lg text-[#8c8f87] hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition cursor-pointer"
+                                className="h-6 w-6 rounded-md text-rose-600 hover:bg-rose-50 flex items-center justify-center transition active:scale-90 cursor-pointer border-0 bg-transparent"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -3620,11 +4429,12 @@ export default function PdfStudioClient() {
 
                 {/* ── MODE 2 & 3: THREE-COLUMN WORKSPACE (STAGE 4) ───────── */}
                 {(mode === "edit" || mode === "redact") && (
-                  <div className="flex flex-col lg:flex-row items-start gap-4">
+                  <div className="flex flex-col lg:flex-row items-start gap-5 xl:gap-6">
                     {/* COLUMN 1: VERTICAL FILMSTRIP (DESKTOP) */}
                     <aside
                       aria-label="Document pages filmstrip"
-                      className="hidden lg:flex w-24 shrink-0 flex-col gap-2.5 overflow-y-auto max-h-[calc(100dvh-220px)] min-h-[520px] pr-1.5 scrollbar-thin"
+                      style={{ width: "116px", minWidth: "116px", maxWidth: "116px", backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                      className="hidden lg:flex flex-col gap-3 overflow-y-auto max-h-[calc(100dvh-220px)] min-h-[540px] p-2.5 rounded-2xl border shadow-2xs scrollbar-thin shrink-0"
                     >
                       {pages.map((p, idx) => (
                         <div
@@ -3646,15 +4456,18 @@ export default function PdfStudioClient() {
                     </aside>
 
                     {/* COLUMN 2: MIDDLE CANVAS STAGE */}
-                    <div className="flex-1 min-w-0 w-full flex flex-col gap-2">
+                    <div className="flex-1 min-w-0 w-full flex flex-col gap-2.5">
                       {/* Tool Hint Strip (Stage 4) */}
-                      <div className="flex items-center gap-2 px-1 text-xs font-medium text-[#575a53]">
+                      <div className="flex items-center gap-2 px-2 py-1 text-xs font-medium text-[#575a53]">
                         <Sparkles className="w-3.5 h-3.5 text-[#3158d5] shrink-0" />
-                        <span className="truncate">{getToolHint()}</span>
+                        <span className="truncate leading-relaxed">{getToolHint()}</span>
                       </div>
 
                       {/* Compact Canvas Header (Stage 4) */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-black/[0.06] bg-white px-3 py-1.5 shadow-2xs">
+                      <div
+                        style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
+                        className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border px-4 py-2 shadow-2xs"
+                      >
                         {/* Page navigation */}
                         <div className="flex items-center gap-1">
                           <button
@@ -3667,7 +4480,7 @@ export default function PdfStudioClient() {
                           >
                             <ChevronLeft className="w-3.5 h-3.5" />
                           </button>
-                          <span className="text-xs font-bold text-[#1c201a] px-1">
+                          <span className="text-xs font-bold text-[#1c201a] px-1.5">
                             Page {activePageIndex + 1} of {pages.length}
                           </span>
                           <button
@@ -3683,7 +4496,7 @@ export default function PdfStudioClient() {
                         </div>
 
                         {/* Rotate & Undo & Redo */}
-                        <div className="flex items-center gap-1 px-1">
+                        <div className="flex items-center gap-1.5 px-1">
                           <button
                             type="button"
                             title="Rotate page 90° clockwise"
@@ -3715,13 +4528,35 @@ export default function PdfStudioClient() {
                           </button>
                         </div>
 
-                        {/* Zoom dock */}
-                        <div className="flex items-center gap-0.5">
+                        {/* Zoom dock & Pan Hand Tool */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            title="Hand Tool (Pan) — Hold Spacebar anytime to Pan"
+                            aria-label="Hand Tool (Pan)"
+                            onClick={() => setIsHandToolActive((prev) => !prev)}
+                            style={
+                              isPanning
+                                ? { backgroundColor: "#eff4fe", color: "#3158d5" }
+                                : undefined
+                            }
+                            className={`p-1.5 rounded-lg border-0 transition cursor-pointer flex items-center gap-1 text-xs select-none ${
+                              isPanning
+                                ? "text-[#3158d5] bg-[#eff4fe] font-bold"
+                                : "text-[#575a53] hover:text-[#3158d5] hover:bg-[#eff4fe]"
+                            }`}
+                          >
+                            <Hand className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline text-[11px] font-semibold">Pan</span>
+                          </button>
+
+                          <div className="h-4 w-px bg-[#e5e5df] mx-1" />
+
                           <button
                             type="button"
                             title="Zoom Out"
                             aria-label="Zoom Out"
-                            onClick={() => setZoom((z) => Math.max(0.25, Math.round((z - 0.25) * 100) / 100))}
+                            onClick={handleZoomOut}
                             className="p-1.5 rounded-lg text-[#575a53] hover:text-[#3158d5] hover:bg-[#eff4fe] transition cursor-pointer"
                           >
                             <ZoomOut className="w-3.5 h-3.5" />
@@ -3733,7 +4568,7 @@ export default function PdfStudioClient() {
                             type="button"
                             title="Zoom In"
                             aria-label="Zoom In"
-                            onClick={() => setZoom((z) => Math.min(3, Math.round((z + 0.25) * 100) / 100))}
+                            onClick={handleZoomIn}
                             className="p-1.5 rounded-lg text-[#575a53] hover:text-[#3158d5] hover:bg-[#eff4fe] transition cursor-pointer"
                           >
                             <ZoomIn className="w-3.5 h-3.5" />
@@ -3742,7 +4577,11 @@ export default function PdfStudioClient() {
                             type="button"
                             title="Reset zoom (Fit)"
                             aria-label="Reset zoom (Fit)"
-                            onClick={() => setZoom(1)}
+                            onClick={() => {
+                              setZoom(1);
+                              setPanOffset({ x: 0, y: 0 });
+                              panOffsetRef.current = { x: 0, y: 0 };
+                            }}
                             className="p-1.5 rounded-lg text-[#575a53] hover:text-[#3158d5] hover:bg-[#eff4fe] transition cursor-pointer"
                           >
                             <Maximize className="w-3.5 h-3.5" />
@@ -3753,30 +4592,162 @@ export default function PdfStudioClient() {
                       {/* Main Canvas Viewport (Stage 4) */}
                       <div
                         ref={viewportRef}
-                        style={{ height: "min(72dvh, 780px)", minHeight: "440px" }}
-                        className="relative w-full rounded-2xl bg-[#ecebe5] overflow-auto flex items-center justify-center p-4 sm:p-6 lg:p-8"
+                        onPointerDown={(e) => {
+                          if (isPanning) {
+                            e.preventDefault();
+                            handleStartPan(e.clientX, e.clientY);
+                          }
+                        }}
+                        style={{
+                          height: "min(72dvh, 780px)",
+                          minHeight: "440px",
+                          backgroundColor: "#eae8e1",
+                          borderColor: "#e5e5df",
+                          cursor: isPanning ? (isPanDragging ? "grabbing" : "grab") : undefined,
+                        }}
+                        className={`relative w-full rounded-2xl border overflow-hidden flex p-4 sm:p-6 shadow-inner ${
+                          isPanning ? (isPanDragging ? "[&_*]:cursor-grabbing cursor-grabbing" : "[&_*]:cursor-grab cursor-grab") : ""
+                        }`}
                       >
-                        <canvas
-                          ref={canvasRef}
-                          onPointerDown={handleCanvasPointerDown}
-                          onPointerMove={handleCanvasPointerMove}
-                          onPointerUp={handleCanvasPointerUp}
-                          onPointerCancel={handleCanvasPointerCancel}
-                          onDoubleClick={handleCanvasDoubleClick}
+                        <div
+                          className="relative inline-flex items-center justify-center select-none shrink-0 m-auto"
                           style={{
-                            width: zoom <= 1 ? "auto" : `${Math.round(zoom * 100)}%`,
-                            height: zoom <= 1 ? "auto" : "auto",
-                            maxWidth: zoom <= 1 ? "85%" : "none",
-                            maxHeight: zoom <= 1 ? "85%" : "none",
+                            height: zoom <= 1 ? "calc(100% - 20px)" : `${Math.round(zoom * 88)}%`,
+                            maxHeight: zoom <= 1 ? "calc(100% - 20px)" : "none",
+                            maxWidth: zoom <= 1 ? "calc(100% - 20px)" : "none",
                             aspectRatio: activePage
                               ? (activePage.rotation === 90 || activePage.rotation === 270)
                                 ? `${activePage.height} / ${activePage.width}`
                                 : `${activePage.width} / ${activePage.height}`
                               : "auto",
-                            touchAction: canvasTouchAction,
+                            transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
+                            willChange: isPanDragging ? "transform" : undefined,
+                            cursor: isPanning ? (isPanDragging ? "grabbing" : "grab") : undefined,
                           }}
-                          className="rounded-xs shadow-xl shadow-black/10 cursor-crosshair bg-white transition-[width,height] duration-75 select-none"
-                        />
+                        >
+                          <canvas
+                            ref={canvasRef}
+                            onPointerDown={(e) => {
+                              if (isPanning) {
+                                e.preventDefault();
+                                handleStartPan(e.clientX, e.clientY);
+                                return;
+                              }
+                              handleCanvasPointerDown(e);
+                            }}
+                            onPointerMove={handleCanvasPointerMove}
+                            onPointerUp={handleCanvasPointerUp}
+                            onPointerCancel={handleCanvasPointerCancel}
+                            onDoubleClick={handleCanvasDoubleClick}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              aspectRatio: activePage
+                                ? (activePage.rotation === 90 || activePage.rotation === 270)
+                                  ? `${activePage.height} / ${activePage.width}`
+                                  : `${activePage.width} / ${activePage.height}`
+                                : "auto",
+                              border: "1px solid #e5e5df",
+                              boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04)",
+                              touchAction: isPanning ? "none" : canvasTouchAction,
+                              cursor: isPanning ? (isPanDragging ? "grabbing" : "grab") : "crosshair",
+                              display: "block",
+                            }}
+                            className="rounded-xs bg-white select-none"
+                          />
+
+                          {/* INLINE TEXT OVERLAY EDITOR */}
+                          {editingTextOverlay && (() => {
+                            const canvasEl = canvasRef.current;
+                            const canvasRect = canvasEl?.getBoundingClientRect();
+                            const scaleRatio = canvasRect && canvasEl && canvasEl.width > 0
+                              ? canvasRect.width / canvasEl.width
+                              : 1;
+                            const renderedFontSize = Math.max(12, Math.round((editingTextOverlay.fontSize || 18) * scaleRatio));
+
+                            return (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  left: `${editingTextOverlay.x}%`,
+                                  top: `${editingTextOverlay.y}%`,
+                                  width: `${Math.max(editingTextOverlay.width, 16)}%`,
+                                  minHeight: `${Math.max(editingTextOverlay.height, 4)}%`,
+                                  transform: editingTextOverlay.rot ? `rotate(${editingTextOverlay.rot}deg)` : undefined,
+                                  transformOrigin: "top left",
+                                  zIndex: 30,
+                                }}
+                                className="pointer-events-auto flex flex-col items-start"
+                                onClick={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
+                              >
+                                {/* Floating Action Pill */}
+                                <div
+                                  style={{ backgroundColor: "#3158d5" }}
+                                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold text-white shadow-md animate-in fade-in duration-150 select-none whitespace-nowrap ${
+                                    editingTextOverlay.y < 8 ? "mt-1.5 order-2" : "mb-1.5"
+                                  }`}
+                                >
+                                  <span>Edit Text</span>
+                                  <button
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      finishInlineTextEdit();
+                                    }}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      finishInlineTextEdit();
+                                    }}
+                                    className="ml-1 bg-white/20 hover:bg-white/30 text-white rounded px-2 py-0.5 text-[10px] font-bold cursor-pointer transition active:scale-95"
+                                  >
+                                    Done ✓
+                                  </button>
+                                </div>
+
+                                <textarea
+                                  ref={inlineTextRef}
+                                  value={editingTextOverlay.text || ""}
+                                  rows={Math.max(1, (editingTextOverlay.text || "").split("\n").length)}
+                                  autoFocus
+                                  onFocus={(e) => {
+                                    e.currentTarget.select();
+                                  }}
+                                  onChange={(e) => {
+                                    updateSelectedTextOverlay({ text: e.target.value });
+                                  }}
+                                  onBlur={() => {
+                                    finishInlineTextEdit();
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Escape") {
+                                      e.preventDefault();
+                                      finishInlineTextEdit();
+                                    }
+                                  }}
+                                  style={{
+                                    fontSize: `${renderedFontSize}px`,
+                                    fontFamily: editingTextOverlay.fontFamily || "Inter, sans-serif",
+                                    fontWeight: editingTextOverlay.fontWeight || "normal",
+                                    fontStyle: editingTextOverlay.fontStyle || "normal",
+                                    color: editingTextOverlay.color || "#1c201a",
+                                    backgroundColor:
+                                      editingTextOverlay.bgColor && editingTextOverlay.bgColor !== "transparent"
+                                        ? editingTextOverlay.bgColor
+                                        : "rgba(255, 255, 255, 0.96)",
+                                    border: "2px solid #3158d5",
+                                    lineHeight: 1.25,
+                                    padding: "2px 6px",
+                                    outline: "none",
+                                    boxShadow: "0 0 0 3px rgba(49, 88, 213, 0.25)",
+                                    width: "100%",
+                                  }}
+                                  className="rounded-lg resize-y focus:outline-none shadow-sm"
+                                />
+                              </div>
+                            );
+                          })()}
+                        </div>
                       </div>
 
                       {/* Horizontal Filmstrip (Mobile / Tablet below lg) */}
@@ -3803,7 +4774,10 @@ export default function PdfStudioClient() {
                     </div>
 
                     {/* COLUMN 3: DESKTOP RIGHT TOOL PANEL */}
-                    <div className="hidden lg:block w-80 shrink-0 max-h-[calc(100dvh-220px)] min-h-[520px] overflow-y-auto pr-1 space-y-3.5 scrollbar-thin">
+                    <div
+                      style={{ width: "330px", minWidth: "330px", maxWidth: "330px" }}
+                      className="hidden lg:block shrink-0 max-h-[calc(100dvh-220px)] min-h-[540px] overflow-y-auto pr-1 space-y-4 scrollbar-thin"
+                    >
                       {renderToolPanel()}
                     </div>
                   </div>
@@ -3813,7 +4787,7 @@ export default function PdfStudioClient() {
                 {(mode === "edit" || mode === "redact") && (
                   <nav
                     aria-label="Mobile document editing tools"
-                    className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-[#eeede6] px-2 py-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-xl flex items-center justify-around lg:hidden"
+                    className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-[#e5e5df] px-2 py-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-xl flex items-center justify-around lg:hidden"
                   >
                     {mode === "edit" ? (
                       <>
@@ -3920,8 +4894,11 @@ export default function PdfStudioClient() {
 
                         <button
                           type="button"
-                          onClick={() => setRedactStyle((s) => s === "blackout" ? "blur" : s === "blur" ? "whiteout" : "blackout")}
-                          className="min-h-[44px] min-w-[44px] px-2 py-1 rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs font-semibold text-[#1c201a] bg-[#faf9f6] border border-[#eeede6] transition cursor-pointer"
+                          onClick={() => {
+                            const next = redactStyle === "blackout" ? "blur" : redactStyle === "blur" ? "whiteout" : "blackout";
+                            handleSetRedactStyle(next);
+                          }}
+                          className="min-h-[44px] min-w-[44px] px-2 py-1 rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs font-semibold text-[#1c201a] bg-[#faf9f6] border border-[#e5e5df] transition cursor-pointer"
                         >
                           <Layers className="w-5 h-5" />
                           <span className="capitalize">{redactStyle}</span>
@@ -3933,7 +4910,7 @@ export default function PdfStudioClient() {
                           className="min-h-[44px] min-w-[44px] px-2 py-1 rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs font-semibold text-[#575a53] hover:text-[#3158d5] hover:bg-[#eff4fe] transition cursor-pointer"
                         >
                           <SlidersHorizontal className="w-5 h-5" />
-                          <span>More</span>
+                          <span>Options</span>
                         </button>
                       </>
                     )}
@@ -3950,10 +4927,10 @@ export default function PdfStudioClient() {
                     aria-label="Tool Options"
                   >
                     <div
-                      className="w-full max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white p-4 shadow-2xl border-t border-[#eeede6] space-y-4 animate-in slide-in-from-bottom duration-200"
+                      className="w-full max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white p-4 shadow-2xl border-t border-[#e5e5df] space-y-4 animate-in slide-in-from-bottom duration-200"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="flex items-center justify-between pb-2 border-b border-[#eeede6]">
+                      <div className="flex items-center justify-between pb-2 border-b border-[#f0efe9]">
                         <span className="text-xs font-bold text-[#1c201a] uppercase tracking-wider">
                           Tool Options
                         </span>
@@ -3982,10 +4959,10 @@ export default function PdfStudioClient() {
                 aria-label="Password Protected PDF"
               >
                 <div
-                  style={{ backgroundColor: "#ffffff", borderColor: "#eeede6" }}
+                  style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
                   className="w-full max-w-sm rounded-3xl p-6 shadow-2xl border space-y-4"
                 >
-                  <div className="flex items-center justify-between pb-3 border-b border-[#eeede6]">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#f0efe9]">
                     <div>
                       <h3 className="text-base font-bold text-[#1c201a]">Password Protected PDF</h3>
                       <p className="text-xs text-[#575a53] truncate max-w-[240px]">{passwordPrompt.fileName}</p>
@@ -3997,7 +4974,7 @@ export default function PdfStudioClient() {
                         setPasswordInput("");
                       }}
                       aria-label="Close password dialog"
-                      className="h-7 w-7 rounded-lg border border-[#eeede6] text-[#8c8f87] hover:text-[#3158d5] hover:bg-[#eff4fe] flex items-center justify-center transition cursor-pointer"
+                      className="h-7 w-7 rounded-lg border border-[#e5e5df] text-[#8c8f87] hover:text-[#3158d5] hover:bg-[#eff4fe] flex items-center justify-center transition cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -4024,18 +5001,18 @@ export default function PdfStudioClient() {
                         }
                       }}
                       placeholder="Enter password to unlock"
-                      className="w-full rounded-xl border border-[#eeede6] bg-[#faf9f6] px-3.5 py-2.5 text-xs text-[#1c201a] placeholder-slate-400 outline-none focus:border-[#3158d5] focus:bg-white"
+                      className="w-full rounded-xl border border-[#e5e5df] bg-[#faf9f6] px-3.5 py-2.5 text-xs text-[#1c201a] placeholder-slate-400 outline-none focus:border-[#3158d5] focus:bg-white"
                     />
                   </div>
 
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#eeede6]">
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#f0efe9]">
                     <button
                       type="button"
                       onClick={() => {
                         passwordPrompt.onCancel();
                         setPasswordInput("");
                       }}
-                      className="rounded-xl border border-[#eeede6] px-4 py-2 text-xs font-bold text-[#575a53] hover:bg-[#f6f5f3] transition cursor-pointer"
+                      className="rounded-xl border border-[#e5e5df] px-4 py-2 text-xs font-bold text-[#575a53] hover:bg-[#f6f5f3] transition cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -4064,10 +5041,10 @@ export default function PdfStudioClient() {
                 aria-label="Draw your signature"
               >
                 <div
-                  style={{ backgroundColor: "#ffffff", borderColor: "#eeede6" }}
+                  style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }}
                   className="w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4"
                 >
-                  <div className="flex items-center justify-between pb-3 border-b border-[#eeede6]">
+                  <div style={{ borderBottom: "1px solid #e5e5df" }} className="flex items-center justify-between pb-3">
                     <h3 className="text-base font-bold text-[#1c201a]">Draw Signature</h3>
                     <button
                       type="button"
@@ -4076,13 +5053,70 @@ export default function PdfStudioClient() {
                         clearSigPad();
                       }}
                       aria-label="Close signature modal"
-                      className="h-7 w-7 rounded-lg border border-[#eeede6] text-[#8c8f87] hover:text-[#3158d5] hover:bg-[#eff4fe] flex items-center justify-center transition cursor-pointer"
+                      className="h-7 w-7 rounded-lg border border-[#e5e5df] text-[#8c8f87] hover:text-[#3158d5] hover:bg-[#eff4fe] flex items-center justify-center transition cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  <div className="rounded-2xl border border-[#eeede6] bg-[#f8fafd] p-2">
+                  {/* 1. Small color selection: Blue, Black, Red, Custom */}
+                  <div className="flex items-center justify-between px-1 py-0.5">
+                    <span className="text-xs font-bold text-[#575a53] uppercase tracking-wider text-[11px]">
+                      Ink Color
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {[
+                        { id: "blue", label: "Blue", color: "#1d4ed8" },
+                        { id: "black", label: "Black", color: "#0f172a" },
+                        { id: "red", label: "Red", color: "#dc2626" },
+                      ].map((item) => {
+                        const isSelected = sigColor.toLowerCase() === item.color.toLowerCase();
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => changeSigColor(item.color)}
+                            title={item.label}
+                            style={{ backgroundColor: item.color }}
+                            className={`h-6 w-6 rounded-full border-2 transition cursor-pointer flex items-center justify-center ${
+                              isSelected
+                                ? "scale-110 border-white ring-2 ring-[#3158d5] shadow-xs"
+                                : "border-white/80 hover:scale-105 shadow-2xs opacity-85 hover:opacity-100"
+                            }`}
+                          >
+                            {isSelected && (
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </button>
+                        );
+                      })}
+
+                      {/* Custom Color Picker */}
+                      <label
+                        title="Custom Color"
+                        style={{
+                          background: "conic-gradient(from 180deg at 50% 50%, #f43f5e 0deg, #eab308 72deg, #22c55e 144deg, #06b6d4 216deg, #3b82f6 288deg, #f43f5e 360deg)",
+                        }}
+                        className={`relative h-6 w-6 rounded-full border-2 border-white cursor-pointer transition flex items-center justify-center shadow-2xs ${
+                          !["#1d4ed8", "#0f172a", "#dc2626"].includes(sigColor.toLowerCase())
+                            ? "scale-110 ring-2 ring-[#3158d5]"
+                            : "hover:scale-105 opacity-85 hover:opacity-100"
+                        }`}
+                      >
+                        <input
+                          type="color"
+                          value={sigColor}
+                          onChange={(e) => changeSigColor(e.target.value)}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        />
+                        <Pipette className="w-3 h-3 text-white drop-shadow-xs pointer-events-none" />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div style={{ backgroundColor: "#f8fafd", borderColor: "#e5e5df" }} className="rounded-2xl border p-2">
                     <canvas
                       ref={sigCanvasRef}
                       width={400}
@@ -4112,14 +5146,16 @@ export default function PdfStudioClient() {
                           setIsSignatureOpen(false);
                           clearSigPad();
                         }}
-                        className="rounded-xl border border-[#eeede6] px-4 py-2 text-xs font-bold text-[#575a53] hover:bg-[#f6f5f3] transition cursor-pointer"
+                        style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df", color: "#575a53" }}
+                        className="rounded-xl border px-4 py-2 text-xs font-bold hover:bg-[#f6f5f3] transition cursor-pointer shadow-2xs"
                       >
                         Cancel
                       </button>
                       <button
                         type="button"
                         onClick={insertSignatureOverlay}
-                        className="rounded-xl px-4 py-2 text-xs font-bold bg-[#3158d5] text-white shadow-xs hover:opacity-95 transition cursor-pointer"
+                        style={{ backgroundColor: "#3158d5", borderColor: "#3158d5", color: "#ffffff" }}
+                        className="rounded-xl px-4 py-2 text-xs font-bold shadow-xs hover:bg-[#2546b8] transition cursor-pointer active:scale-95"
                       >
                         Place on Page
                       </button>
