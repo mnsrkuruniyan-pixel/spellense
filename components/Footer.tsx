@@ -3,6 +3,7 @@ import Link from "next/link";
 const FOOTER_ROW_1 = [
   { label: "Home", href: "/" },
   { label: "3D Flipbook", href: "/flipbook", badge: "New" },
+  { label: "PDF Studio", href: "/pdf-studio", badge: "New" },
   { label: "Image Compressor", href: "/image-compressor" },
   { label: "ID Print Maker", href: "/print-sheet-maker", badge: "New" },
   { label: "QR Code Generator", href: "/qr-code-generator", badge: "New" },

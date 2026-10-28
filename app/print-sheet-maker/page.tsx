@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import PrintSheetMakerClient from "./PrintSheetMakerClient";
 
 export const metadata: Metadata = {
-  title: "ID Print Maker: Copy ID Card Front & Back on One Page (Free PDF) | Spellense",
+  title: "ID Print Maker: Copy ID Card Front & Back on One Page (Free PDF)",
   description:
     "Copy your ID card front and back onto one page at exact physical dimensions (85.6 × 54 mm). 100% private in-browser ID print maker with auto-crop, custom layout, and security watermark.",
   keywords: [

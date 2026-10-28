@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Contact Spellense",
+  title: "Contact Us",
   description:
     "Get in touch with the Spellense team for questions, feedback, or support.",
   alternates: { canonical: "/contact" },

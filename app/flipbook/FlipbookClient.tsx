@@ -247,11 +247,14 @@ const APP_CSS = `
 .dpnote{margin:8px 0 0;font-size:11px;line-height:1.35;color:#70746d}
 @media (max-width: 640px) {
   .ftb {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(48px, 1fr));
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
-  .ftb button {
-    flex: 1 1 auto;
+  .ftb::-webkit-scrollbar {
+    display: none;
   }
 }
 .ftb button {
@@ -438,10 +441,10 @@ const APP_CSS = `
 }
 
 .f-upload-zone {
-  border: 1.5px dashed #cbd5e1;
-  border-radius: 18px;
-  background: #f6f5f3;
-  padding: 16px;
+  border: 1px dashed #e5e5df;
+  border-radius: 14px;
+  background: #faf9f6;
+  padding: 14px;
   text-align: center;
   cursor: pointer;
   transition: all .18s ease;
@@ -449,25 +452,27 @@ const APP_CSS = `
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
 }
 .f-upload-zone:hover {
   border-color: #3158d5;
-  background: #eff6ff;
+  background: #f6f5f1;
 }
 .f-upload-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  background: #eff6ff;
-  color: #3158d5;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #71717a;
+  border: 1px solid #e5e5df;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform .18s ease;
+  transition: transform .18s ease, color .18s ease;
 }
 .f-upload-zone:hover .f-upload-icon {
-  transform: scale(1.08);
+  transform: scale(1.05);
+  color: #18181b;
 }
 .fpl {
   display: flex;
@@ -475,37 +480,40 @@ const APP_CSS = `
   gap: 8px;
 }
 .fpl button {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1.5px #cbd5e1;
+  box-shadow: 0 0 0 1px #e5e5df;
   cursor: pointer;
-  transition: transform .18s, box-shadow .18s;
+  transition: transform .18s ease, box-shadow .18s ease;
   padding: 0;
   flex-shrink: 0;
 }
-.fpl button.on { box-shadow: 0 0 0 2.5px #3158d5; }
-.fpl button.pn { background: linear-gradient(45deg,#e2e8f0 25%,transparent 25%,transparent 75%,#e2e8f0 75%),linear-gradient(45deg,#e2e8f0 25%,#fff 25%,#fff 75%,#e2e8f0 75%); background-size: 10px 10px; background-position: 0 0, 5px 5px; }
+.fpl button.on { box-shadow: 0 0 0 2px #3158d5; }
+.fpl button.pn { background: linear-gradient(45deg,#e2e8f0 25%,transparent 25%,transparent 75%,#e2e8f0 75%),linear-gradient(45deg,#e2e8f0 25%,#fff 25%,#fff 75%,#e2e8f0 75%); background-size: 8px 8px; background-position: 0 0, 4px 4px; }
 .fpl button:hover {
-  transform: scale(1.15);
+  transform: scale(1.12);
   box-shadow: 0 0 0 2px #3158d5;
 }
 .ftp input[type=color] {
   appearance: none;
   border: 0;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   border-radius: 50%;
   cursor: pointer;
   background: none;
   flex-shrink: 0;
 }
+.ftp input[type=color]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
 .ftp input[type=color]::-webkit-color-swatch {
   border-radius: 50%;
   border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1.5px #cbd5e1;
+  box-shadow: 0 0 0 1px #e5e5df;
 }
 .ftp textarea, .ftp select, .ftp input[type=text] {
   font: inherit;
@@ -534,6 +542,55 @@ const APP_CSS = `
   outline: none;
   border-color: #3158d5;
   box-shadow: 0 0 0 3px rgba(49,88,213,.15);
+}
+.ftp input[type=text].f-hex-input {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  width: 72px !important;
+  height: auto !important;
+  font-size: 0.8125rem !important;
+  letter-spacing: 0.04em !important;
+}
+.ftp input[type=text].f-hex-input:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.f-sampler-btn {
+  background-color: #ffffff;
+  border: 1px solid #e5e5df;
+  color: #3158d5;
+  border-radius: 9px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0,0,0,.03);
+}
+.f-sampler-btn svg {
+  transition: transform .2s ease;
+}
+.f-sampler-btn:hover {
+  background-color: #eff6ff;
+  border-color: #dbeafe;
+  color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(49, 88, 213, 0.1);
+}
+.f-sampler-btn:hover svg {
+  transform: rotate(-8deg) scale(1.1);
+}
+.f-sampler-btn:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 1px 2px rgba(0,0,0,.03);
 }
 .fbtn {
   display: inline-flex;
@@ -957,31 +1014,121 @@ function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) =
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function playSnd(ctx: any, kind: string, vol: number): void {
-  var sr = ctx.sampleRate, t0 = ctx.currentTime;
-  function noise(sec: number, p: number, at: number, type: string, f0: number, f1: number, g: number, q: number) {
-    var n = Math.floor(sr * sec), b = ctx.createBuffer(1, n, sr), d = b.getChannelData(0);
-    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, p);
-    var s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), o = ctx.createGain();
-    s.buffer = b; f.type = type; f.Q.value = q;
-    f.frequency.setValueAtTime(f0, t0 + at);
-    if (f1 !== f0) f.frequency.exponentialRampToValueAtTime(f1, t0 + at + sec);
-    o.gain.value = g * vol;
-    s.connect(f); f.connect(o); o.connect(ctx.destination); s.start(t0 + at);
+  var sr = ctx.sampleRate, t0 = ctx.currentTime + 0.015;
+  var masterVol = Math.max(0, Math.min(2, vol == null ? 1 : vol));
+
+  // Generate pink/brownian noise with natural organic paper grain
+  function createPaperNoise(dur: number, roughness: number) {
+    var len = Math.max(1, Math.floor(sr * dur));
+    var buf = ctx.createBuffer(1, len, sr);
+    var d = buf.getChannelData(0);
+    var b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+    for (var i = 0; i < len; i++) {
+      var white = Math.random() * 2 - 1;
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      b3 = 0.86650 * b3 + white * 0.3104856;
+      b4 = 0.55000 * b4 + white * 0.5329522;
+      b5 = -0.7616 * b5 - white * 0.0168980;
+      var pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+      b6 = white * 0.115926;
+      var grain = 1 + roughness * (Math.random() > 0.9 ? (Math.random() * 0.7) : 0);
+      d[i] = pink * 0.12 * grain;
+    }
+    return buf;
   }
-  if (kind === "crisp") noise(0.09, 4, 0, "bandpass", 3500, 3500, 0.9, 1);
-  else if (kind === "soft") noise(0.3, 1, 0, "bandpass", 500, 2200, 0.7, 0.6);
-  else if (kind === "flick") { noise(0.05, 2, 0, "bandpass", 5200, 5200, 0.8, 0.8); noise(0.05, 2, 0.07, "bandpass", 4200, 4200, 0.6, 0.8); }
-  else if (kind === "thump") {
-    noise(0.07, 2, 0, "lowpass", 700, 700, 0.8, 0.7);
-    var o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = "sine";
-    o.frequency.setValueAtTime(110, t0);
-    o.frequency.exponentialRampToValueAtTime(45, t0 + 0.18);
-    g.gain.setValueAtTime(0.9 * vol, t0);
-    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.2);
-    o.connect(g); g.connect(ctx.destination); o.start(t0); o.stop(t0 + 0.22);
+
+  // Multi-pole acoustic layer with gain envelope and filter sweep
+  function layer(opts: {
+    start: number;
+    dur: number;
+    type: BiquadFilterType;
+    f0: number;
+    f1?: number;
+    q?: number;
+    gain: number;
+    rough?: number;
+  }) {
+    var at = t0 + opts.start;
+    var dur = Math.max(0.01, opts.dur);
+    var buf = createPaperNoise(dur, opts.rough || 0.4);
+    var src = ctx.createBufferSource();
+    var filter = ctx.createBiquadFilter();
+    var gain = ctx.createGain();
+
+    src.buffer = buf;
+    filter.type = opts.type;
+    filter.Q.value = opts.q || 1.2;
+    filter.frequency.setValueAtTime(Math.max(20, opts.f0), at);
+    if (opts.f1 && opts.f1 !== opts.f0) {
+      filter.frequency.exponentialRampToValueAtTime(Math.max(20, opts.f1), at + dur);
+    }
+
+    var peakGain = opts.gain * masterVol;
+    gain.gain.setValueAtTime(0.0001, at);
+    var attackTime = Math.min(0.04, dur * 0.25);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peakGain), at + attackTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    src.start(at);
+    src.stop(at + dur);
   }
-  else noise(0.16, 3, 0, "lowpass", 1600, 1600, 0.4, 0.7);
+
+  // Low frequency body/cover resonance
+  function subThud(atTime: number, freqStart: number, freqEnd: number, dur: number, gainVal: number) {
+    var at = t0 + atTime;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freqStart, at);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), at + dur);
+    gain.gain.setValueAtTime(gainVal * masterVol, at);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(at);
+    osc.stop(at + dur);
+  }
+
+  var k = kind || "realistic";
+
+  if (k === "realistic") {
+    // 📖 Realistic Natural Book Page (3-phase physical acoustics: Lift, Flutter Whoosh, Landing Rustle)
+    layer({ start: 0, dur: 0.16, type: "bandpass", f0: 1200, f1: 2600, q: 1.4, gain: 0.75, rough: 0.7 });
+    layer({ start: 0.03, dur: 0.26, type: "lowpass", f0: 1800, f1: 850, q: 0.8, gain: 0.65, rough: 0.3 });
+    layer({ start: 0.14, dur: 0.15, type: "bandpass", f0: 2800, f1: 1400, q: 1.8, gain: 0.55, rough: 0.9 });
+    layer({ start: 0.19, dur: 0.12, type: "lowpass", f0: 950, f1: 400, q: 0.7, gain: 0.35, rough: 0.2 });
+  } else if (k === "magazine") {
+    // 📰 Glossy Magazine / Catalog (Smooth coated paper, silk slide)
+    layer({ start: 0, dur: 0.22, type: "bandpass", f0: 2200, f1: 4200, q: 1.6, gain: 0.6, rough: 0.2 });
+    layer({ start: 0.04, dur: 0.20, type: "highpass", f0: 1600, f1: 2400, q: 0.7, gain: 0.45, rough: 0.15 });
+    layer({ start: 0.12, dur: 0.11, type: "bandpass", f0: 3400, f1: 1800, q: 2.0, gain: 0.4, rough: 0.3 });
+  } else if (k === "parchment" || k === "thump") {
+    // 📕 Heavy Parchment / Hardcover Book (Substantial weight, firm settle)
+    subThud(0.12, 120, 48, 0.16, 0.65);
+    layer({ start: 0, dur: 0.22, type: "bandpass", f0: 750, f1: 1600, q: 1.1, gain: 0.8, rough: 0.6 });
+    layer({ start: 0.05, dur: 0.25, type: "lowpass", f0: 1400, f1: 500, q: 0.9, gain: 0.7, rough: 0.4 });
+    layer({ start: 0.12, dur: 0.18, type: "bandpass", f0: 1900, f1: 900, q: 1.5, gain: 0.5, rough: 0.8 });
+  } else if (k === "crisp") {
+    // 📄 Crisp Novel Page (Bright, fresh textured paper)
+    layer({ start: 0, dur: 0.12, type: "bandpass", f0: 2800, f1: 3800, q: 1.5, gain: 0.8, rough: 0.8 });
+    layer({ start: 0.06, dur: 0.14, type: "bandpass", f0: 2200, f1: 1500, q: 1.3, gain: 0.6, rough: 0.7 });
+  } else if (k === "soft") {
+    // 🍃 Soft Whisper (Gentle, quiet and unobtrusive)
+    layer({ start: 0, dur: 0.26, type: "bandpass", f0: 600, f1: 1400, q: 0.8, gain: 0.4, rough: 0.2 });
+    layer({ start: 0.04, dur: 0.22, type: "lowpass", f0: 1200, f1: 600, q: 0.6, gain: 0.35, rough: 0.1 });
+  } else if (k === "flick") {
+    // ⚡ Quick Double Flick (Swift leafing)
+    layer({ start: 0, dur: 0.06, type: "bandpass", f0: 4200, f1: 4800, q: 1.6, gain: 0.7, rough: 0.8 });
+    layer({ start: 0.05, dur: 0.07, type: "bandpass", f0: 3600, f1: 2800, q: 1.4, gain: 0.6, rough: 0.7 });
+  } else {
+    // 📜 Classic Paper Rustle
+    layer({ start: 0, dur: 0.16, type: "lowpass", f0: 1600, f1: 1600, q: 0.7, gain: 0.55, rough: 0.5 });
+  }
 }
 
 export default function FlipbookClient() {
@@ -1744,17 +1891,25 @@ export default function FlipbookClient() {
               {/* 1. Style panel */}
               <div className="ftp" id="p-st">
                 {/* Display style picker */}
-                <div>
-                  <span className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-slate-500">Display style</span>
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3.5 flex flex-col gap-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                      <rect width="7" height="7" x="3" y="3" rx="1"/>
+                      <rect width="7" height="7" x="14" y="3" rx="1"/>
+                      <rect width="7" height="7" x="14" y="14" rx="1"/>
+                      <rect width="7" height="7" x="3" y="14" rx="1"/>
+                    </svg>
+                    <span className="text-xs font-semibold text-slate-700">Display Mode</span>
+                  </div>
                   <div id="dsp" className="dsp"></div>
                   <p id="dnote" className="dpnote"></p>
                 </div>
 
                 {/* Active Style Description Box */}
-                <div id="note" style={{ borderColor: "#e5e5df", backgroundColor: "#efeee7", color: "#1c201a" }} className="rounded-xl border p-3 text-xs leading-relaxed font-medium"></div>
+                <div id="note" style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6", color: "#1c201a" }} className="rounded-xl border p-3 text-xs leading-relaxed font-medium"></div>
 
                 {/* Optional inside-cover image (available for every style) */}
-                <div id="ic-box" style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }} className="rounded-2xl border p-3 shadow-2xs">
+                <div id="ic-box" style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }} className="rounded-2xl border p-3.5 shadow-2xs">
                   <label style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 8, textAlign: "left", color: "#1c201a" }} className="text-xs font-bold cursor-pointer">
                     <input type="checkbox" id="icOn" style={{ width: 16, height: 16, margin: 0, flex: "none" }} />
                     <span>Add an inside-cover image</span>
@@ -1763,7 +1918,7 @@ export default function FlipbookClient() {
                     <div className="flex items-center gap-2 pt-2.5">
                       <div id="thI" className="h-10 w-8 rounded border border-[#e5e5df] bg-white bg-cover bg-center"></div>
                       <button type="button" className="fbtn text-xs py-1 px-2.5" id="uI">Upload image</button>
-                      <button type="button" className="text-xs text-rose-600 hover:text-rose-800 font-bold px-1.5 hidden" id="uIx">Remove</button>
+                      <button type="button" className="text-xs text-rose-600 hover:text-rose-800 font-semibold px-1.5 hidden" id="uIx">Remove</button>
                     </div>
                     <span style={{ color: "#70746d" }} className="block pt-1.5 text-[10px]">Shown on the page just inside the front cover.</span>
                   </div>
@@ -1773,21 +1928,21 @@ export default function FlipbookClient() {
                 {/* Custom Cover Studio Panel (Shown when 'Your Own Cover' is selected) */}
                 <div id="cpanel" style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }} className="rounded-2xl border p-3.5 shadow-2xs flex flex-col gap-3" hidden>
                   <div style={{ borderBottomColor: "#e5e5df" }} className="flex items-center justify-between pb-2 border-b">
-                    <span className="text-xs font-bold text-[#1c201a]">Bespoke Hardcover Artwork</span>
+                    <span className="text-xs font-semibold text-slate-800">Bespoke Hardcover Artwork</span>
                     <button type="button" className="fcta text-[11px] py-1 px-2.5" id="cpanel-sample">✨ Sample Cover</button>
                   </div>
 
                   {/* Front Cover */}
                   <div>
-                    <span className="text-xs font-bold text-slate-700">Front Cover Artwork</span>
+                    <span className="text-xs font-semibold text-slate-700">Front Cover Artwork</span>
                     <div className="flex items-center gap-2.5 mt-1.5">
-                      <div id="thF" className="h-14 w-10 rounded-md border border-slate-200 bg-slate-100 bg-center bg-cover shrink-0 shadow-2xs flex items-center justify-center text-slate-400">
+                      <div id="thF" className="h-14 w-10 rounded-md border border-[#e5e5df] bg-[#faf9f6] bg-center bg-cover shrink-0 shadow-2xs flex items-center justify-center text-slate-400">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                       </div>
                       <div className="flex flex-col gap-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <button type="button" className="fbtn text-xs py-1 px-2.5" id="uF">Upload Front</button>
-                          <button type="button" className="text-xs text-rose-600 hover:text-rose-800 font-bold px-1.5 hidden" id="uFx">Remove</button>
+                          <button type="button" className="text-xs text-rose-600 hover:text-rose-800 font-semibold px-1.5 hidden" id="uFx">Remove</button>
                         </div>
                         <span className="text-[10px] text-slate-400">Ratio ~5:7 recommended</span>
                       </div>
@@ -1797,15 +1952,15 @@ export default function FlipbookClient() {
 
                   {/* Back Cover */}
                   <div>
-                    <span className="text-xs font-bold text-slate-700">Back Cover Artwork (Optional)</span>
+                    <span className="text-xs font-semibold text-slate-700">Back Cover Artwork (Optional)</span>
                     <div className="flex items-center gap-2.5 mt-1.5">
-                      <div id="thB" className="h-14 w-10 rounded-md border border-slate-200 bg-slate-100 bg-center bg-cover shrink-0 shadow-2xs flex items-center justify-center text-slate-400">
+                      <div id="thB" className="h-14 w-10 rounded-md border border-[#e5e5df] bg-[#faf9f6] bg-center bg-cover shrink-0 shadow-2xs flex items-center justify-center text-slate-400">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                       </div>
                       <div className="flex flex-col gap-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <button type="button" className="fbtn text-xs py-1 px-2.5" id="uB">Upload Back</button>
-                          <button type="button" className="text-xs text-rose-600 hover:text-rose-800 font-bold px-1.5 hidden" id="uBx">Remove</button>
+                          <button type="button" className="text-xs text-rose-600 hover:text-rose-800 font-semibold px-1.5 hidden" id="uBx">Remove</button>
                         </div>
                         <span className="text-[10px] text-slate-400">Matches board if empty</span>
                       </div>
@@ -1814,19 +1969,19 @@ export default function FlipbookClient() {
                   </div>
 
                   {/* Board & Endpaper Color */}
-                  <div className="flex items-center justify-between pt-1">
+                  <div style={{ borderColor: "#e5e5df" }} className="flex items-center justify-between pt-2 border-t">
                     <div className="flex flex-col">
-                      <span className="text-xs font-bold text-slate-700">Board &amp; Endpaper Color</span>
+                      <span className="text-xs font-semibold text-slate-700">Board &amp; Endpaper Color</span>
                       <span className="text-[10px] text-slate-400" id="cpanel-auto">Auto-extracted from cover</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <input type="color" id="col" defaultValue="#2a2545" className="h-8 w-8 rounded-full border-0 cursor-pointer" />
+                      <input type="color" id="col" defaultValue="#2a2545" className="h-7 w-7 rounded-full border-0 cursor-pointer" />
                     </div>
                   </div>
 
                   {/* Matte / Glossy */}
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs font-bold text-slate-700">Cover Finish</span>
+                  <div style={{ borderColor: "#e5e5df" }} className="flex items-center justify-between pt-2 border-t">
+                    <span className="text-xs font-semibold text-slate-700">Cover Finish</span>
                     <div className="flex items-center gap-3 text-xs font-semibold text-slate-700">
                       <label className="flex items-center gap-1 cursor-pointer">
                         <input type="radio" name="fin" value="matte" defaultChecked /> Matte
@@ -1844,274 +1999,430 @@ export default function FlipbookClient() {
 
               {/* 2. Brand panel */}
               <div className="ftp" id="p-br" hidden>
-                {/* Book Title (Embossed on Cover) */}
-                <div>
-                  <label htmlFor="bt" className="text-xs font-bold text-[#1c201a] block mb-1">
-                    Book Title (Embossed on Cover)
-                  </label>
-                  <input type="text" id="bt" placeholder="Spellense Catalog" maxLength={45} className="w-full text-xs font-semibold" />
-                  <span style={{ color: "#70746d" }} className="text-[10px] mt-1 block">Rendered in gold foil on Luxury editions and stamped ink on Classic</span>
+                {/* Book Details Card */}
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3.5 flex flex-col gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                      <path d="M6 6h10"/>
+                      <path d="M6 10h7"/>
+                    </svg>
+                    <span className="text-xs font-semibold text-slate-700">Book Details</span>
+                  </div>
+
+                  {/* Book Title */}
+                  <div>
+                    <label htmlFor="bt" className="text-[11px] font-medium text-slate-600 block mb-1.5">
+                      Book Title (Embossed on Cover)
+                    </label>
+                    <input
+                      type="text"
+                      id="bt"
+                      placeholder="Spellense Catalog"
+                      maxLength={45}
+                      style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                      className="w-full text-xs font-semibold text-slate-800 rounded-xl border px-3 py-2.5 outline-none transition focus:border-[#3158d5] focus:ring-1 focus:ring-[#3158d5] shadow-2xs"
+                    />
+                    <span className="text-[10px] text-slate-400 mt-1.5 block">Rendered in gold foil on Luxury editions and stamped ink on Classic</span>
+                  </div>
+
+                  {/* Book Header Subtitle */}
+                  <div>
+                    <label htmlFor="ds" className="text-[11px] font-medium text-slate-600 block mb-1.5">
+                      Book Header Subtitle
+                    </label>
+                    <textarea
+                      id="ds"
+                      rows={2}
+                      maxLength={160}
+                      placeholder="Spellense Editorial 2026 • Designed for print and digital"
+                      style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                      className="w-full text-xs font-medium text-slate-800 rounded-xl border px-3 py-2.5 outline-none resize-none transition focus:border-[#3158d5] focus:ring-1 focus:ring-[#3158d5] shadow-2xs"
+                    ></textarea>
+                  </div>
                 </div>
 
-                {/* Book Header Subtitle */}
-                <div>
-                  <label htmlFor="ds" className="text-xs font-bold text-[#1c201a] block mb-1">
-                    Book Header Subtitle
-                  </label>
-                  <textarea id="ds" rows={2} maxLength={160} placeholder="Spellense Editorial 2026 • Designed for print and digital" className="w-full text-xs font-medium"></textarea>
-                </div>
+                {/* Brand Logo Card */}
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3.5 flex flex-col gap-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                    </svg>
+                    <span className="text-xs font-semibold text-slate-700">Brand Logo</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Displayed in header alongside book description</p>
 
-                {/* Brand Logo */}
-                <div>
-                  <span className="text-xs font-bold text-[#1c201a]">Brand Logo</span>
-                  <p style={{ color: "#70746d" }} className="text-[11px] mb-2">Displayed in header alongside book description</p>
-                  <label htmlFor="lg" className="f-upload-zone group">
+                  <label htmlFor="lg" style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }} className="f-upload-zone group">
                     <input type="file" id="lg" accept="image/*" className="hidden" />
                     <div className="f-upload-icon">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="17 8 12 3 7 8" />
                         <line x1="12" y1="3" x2="12" y2="15" />
                       </svg>
                     </div>
-                    <span className="text-xs font-bold text-[#1c201a] group-hover:text-[#3158d5] transition-colors">Upload Transparent Logo</span>
-                    <span style={{ color: "#70746d" }} className="text-[10px]">PNG or SVG recommended</span>
+                    <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900 transition-colors">Upload Transparent Logo</span>
+                    <span className="text-[10px] text-slate-400">PNG or SVG recommended</span>
                   </label>
-                  <div id="lg-status" style={{ borderColor: "#e5e5df" }} className="mt-2.5 flex items-center justify-between rounded-xl border bg-white px-3 py-2 shadow-2xs hidden">
+
+                  <div id="lg-status" style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }} className="flex items-center justify-between rounded-xl border px-3 py-2 hidden">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <img id="lg-thumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" className="h-6 w-auto max-w-[48px] object-contain rounded border border-[#e5e5df] p-0.5" />
-                      <span className="text-xs font-semibold text-[#1c201a] truncate">Logo active</span>
+                      <img id="lg-thumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" className="h-6 w-auto max-w-[48px] object-contain rounded border border-[#e5e5df] bg-white p-0.5" />
+                      <span className="text-xs font-semibold text-slate-700 truncate">Logo active</span>
                     </div>
-                    <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 px-2 py-0.5 rounded hover:bg-rose-50 transition-colors cursor-pointer" id="lgx">
+                    <button type="button" className="text-xs font-medium text-rose-500 hover:text-rose-700 px-2 py-0.5 rounded hover:bg-rose-50 transition cursor-pointer" id="lgx">
                       Remove
                     </button>
                   </div>
                 </div>
 
-                {/* Option 1: Swap Sides */}
-                <label htmlFor="lr" className="f-toggle-card">
-                  <div className="flex flex-col pr-3">
-                    <span className="text-xs font-bold text-[#1c201a]">Swap Header Sides</span>
-                    <span style={{ color: "#70746d" }} className="text-[11px] font-normal mt-0.5">Logo on right, text on left</span>
-                  </div>
-                  <span className="f-toggle-switch">
-                    <input type="checkbox" id="lr" />
-                    <span className="f-toggle-slider"></span>
-                  </span>
-                </label>
+                {/* Options / Toggles Card */}
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3 flex flex-col gap-2">
+                  {/* Option 1: Swap Sides */}
+                  <label htmlFor="lr" style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df" }} className="flex items-center justify-between rounded-xl border p-2.5 cursor-pointer hover:bg-[#f6f5f1] transition select-none">
+                    <div className="flex flex-col pr-3">
+                      <span className="text-xs font-semibold text-slate-700">Swap Header Sides</span>
+                      <span className="text-[11px] text-slate-400 font-normal mt-0.5">Logo on right, text on left</span>
+                    </div>
+                    <span className="f-toggle-switch shrink-0 scale-90">
+                      <input type="checkbox" id="lr" />
+                      <span className="f-toggle-slider"></span>
+                    </span>
+                  </label>
 
-                {/* Option 2: Made with Spellense credit */}
-                <label htmlFor="cr" className="f-toggle-card">
-                  <div className="flex flex-col pr-3">
-                    <span className="text-xs font-bold text-[#1c201a]">Brand Watermark</span>
-                    <span style={{ color: "#70746d" }} className="text-[11px] font-normal mt-0.5">Show subtle &ldquo;Made with Spellense&rdquo; credit</span>
-                  </div>
-                  <span className="f-toggle-switch">
-                    <input type="checkbox" id="cr" />
-                    <span className="f-toggle-slider"></span>
-                  </span>
-                </label>
+                  {/* Option 2: Made with Spellense credit */}
+                  <label htmlFor="cr" style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df" }} className="flex items-center justify-between rounded-xl border p-2.5 cursor-pointer hover:bg-[#f6f5f1] transition select-none">
+                    <div className="flex flex-col pr-3">
+                      <span className="text-xs font-semibold text-slate-700">Brand Watermark</span>
+                      <span className="text-[11px] text-slate-400 font-normal mt-0.5">Show subtle &ldquo;Made with Spellense&rdquo; credit</span>
+                    </div>
+                    <span className="f-toggle-switch shrink-0 scale-90">
+                      <input type="checkbox" id="cr" />
+                      <span className="f-toggle-slider"></span>
+                    </span>
+                  </label>
+                </div>
               </div>
 
               {/* 3. Backdrop panel */}
               <div className="ftp" id="p-bg" hidden>
+                {/* 1. Curated Palettes */}
                 <div>
-                  <span className="text-xs font-bold text-slate-800">Curated Palettes</span>
-                  <div className="fpl mt-2" id="pal"></div>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                      <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+                      <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+                      <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+                      <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+                      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+                    </svg>
+                    <span className="text-xs font-semibold text-slate-700">Presets</span>
+                  </div>
+                  <div className="fpl" id="pal"></div>
                 </div>
 
-                {/* Colors from Logo */}
-                <div>
-                  <span className="text-xs font-bold text-slate-800">Colors from Logo</span>
-                  <p className="text-[11px] text-slate-500 mb-2">Auto-extract matching backdrop palette from your brand logo</p>
-                  
-                  {/* Upload button when logo is not yet uploaded */}
-                  <div id="lp-upload-box" className="mt-1">
-                    <label htmlFor="lg-backdrop" className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/80 text-blue-700 text-xs font-semibold cursor-pointer transition-all hover:shadow-xs">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="17 8 12 3 7 8" />
-                        <line x1="12" y1="3" x2="12" y2="15" />
+                {/* 2. Custom Hex Color & Gradient */}
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3.5 flex flex-col gap-3">
+                  {/* Header: Title + Sampler button */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="m4.93 4.93 4.24 4.24"/>
+                        <path d="m14.83 9.17 4.24-4.24"/>
+                        <path d="m14.83 14.83 4.24 4.24"/>
+                        <path d="m9.17 14.83-4.24 4.24"/>
+                        <circle cx="12" cy="12" r="4"/>
                       </svg>
-                      <span>Upload Brand Logo to Extract Palette</span>
-                      <input type="file" id="lg-backdrop" accept="image/*" className="hidden" />
-                    </label>
-                  </div>
-
-                  <div id="lp-status" className="mt-2.5 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/80 px-3 py-2 shadow-2xs hidden">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-800">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                      Logo palette active
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <label htmlFor="lg-backdrop-change" className="text-xs font-bold text-blue-600 hover:text-blue-800 cursor-pointer">
-                        Change
-                        <input type="file" id="lg-backdrop-change" accept="image/*" className="hidden" />
-                      </label>
-                      <span className="text-slate-300">•</span>
-                      <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 px-1 py-0.5 rounded hover:bg-rose-100/60 transition-colors cursor-pointer" id="lpx">
-                        Remove
-                      </button>
+                      <span className="text-xs font-semibold text-slate-700">Hex Color</span>
                     </div>
-                  </div>
-                  <div className="fpl mt-2.5" id="lp" hidden></div>
-                </div>
 
-                <div>
-                  <span className="text-xs font-bold text-slate-800">Custom Backdrop Dual-Tone</span>
-                  <div className="flex flex-wrap items-center gap-3 mt-2">
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xs">
-                        <input type="color" id="c1" aria-label="Color 1" defaultValue="#efeee7" />
-                        <span className="text-[11px] font-bold text-slate-500 uppercase pr-1" id="c1-val">#EFEEE7</span>
-                      </div>
-                      <div className="relative flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xs">
-                        <input type="color" id="c2" aria-label="Color 2" defaultValue="#e5e5df" />
-                        <span className="text-[11px] font-bold text-slate-500 uppercase pr-1" id="c2-val">#E5E5DF</span>
-                      </div>
-                    </div>
-                    <button type="button" className="feye-btn" id="eye" title="Pick color from screen">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <button
+                      type="button"
+                      className="f-sampler-btn"
+                      id="eye"
+                      title="Sample color anywhere on screen"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-[#3158d5]">
                         <path d="m2 22 1-1h3l9-9"/>
                         <path d="M3 21v-3l9-9"/>
                         <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8"/>
                       </svg>
-                      <span>Pick from screen</span>
+                      <span>Sampler</span>
                     </button>
                   </div>
+
+                  {/* Color inputs list */}
+                  <div className="flex flex-col gap-2">
+                    {/* Primary Color Hex */}
+                    <div style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df" }} className="flex items-center justify-between rounded-xl border p-2 transition">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <input
+                          type="color"
+                          id="c1"
+                          aria-label="Color 1 picker"
+                          defaultValue="#efeee7"
+                          className="h-7 w-7 cursor-pointer shrink-0"
+                        />
+                        {/* White editable box for Hex code */}
+                        <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 focus-within:border-[#3158d5] focus-within:ring-1 focus-within:ring-[#3158d5] transition shadow-2xs">
+                          <span className="text-xs font-mono font-bold text-slate-400 select-none">#</span>
+                          <input
+                            type="text"
+                            id="hex-c1"
+                            placeholder="EFEEE7"
+                            maxLength={6}
+                            spellCheck={false}
+                            className="f-hex-input text-xs font-mono font-bold uppercase tracking-wider text-slate-800"
+                          />
+                        </div>
+                      </div>
+                      <span id="c1-label" className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 shrink-0">Color</span>
+                    </div>
+
+                    {/* Secondary Color Hex (Visible only when Gradient is enabled!) */}
+                    <div id="c2-container" style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df" }} className="flex items-center justify-between rounded-xl border p-2 transition">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <input
+                          type="color"
+                          id="c2"
+                          aria-label="Color 2 picker"
+                          defaultValue="#e5e5df"
+                          className="h-7 w-7 cursor-pointer shrink-0"
+                        />
+                        {/* White editable box for Hex code */}
+                        <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 focus-within:border-[#3158d5] focus-within:ring-1 focus-within:ring-[#3158d5] transition shadow-2xs">
+                          <span className="text-xs font-mono font-bold text-slate-400 select-none">#</span>
+                          <input
+                            type="text"
+                            id="hex-c2"
+                            placeholder="E5E5DF"
+                            maxLength={6}
+                            spellCheck={false}
+                            className="f-hex-input text-xs font-mono font-bold uppercase tracking-wider text-slate-800"
+                          />
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 shrink-0">Color 2</span>
+                    </div>
+                  </div>
+
+                  {/* Gradient Blend Toggle (Full White Box) */}
+                  <label htmlFor="gr" style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="flex items-center justify-between rounded-xl border p-2.5 cursor-pointer hover:bg-[#faf9f6] transition">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 shrink-0">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor"/>
+                      </svg>
+                      <span className="text-xs font-semibold text-slate-700">Gradient Blend</span>
+                    </div>
+                    <span className="f-toggle-switch shrink-0 scale-90">
+                      <input type="checkbox" id="gr" defaultChecked />
+                      <span className="f-toggle-slider"></span>
+                    </span>
+                  </label>
                 </div>
 
-                {/* Option 3: Gradient Toggle */}
-                <label htmlFor="gr" className="f-toggle-card">
-                  <div className="flex flex-col pr-3">
-                    <span className="text-xs font-bold text-slate-800">Gradient Backdrop</span>
-                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Smooth diagonal dual-tone transition</span>
+                {/* 3. Backdrop Scenic Photo & Dimmer */}
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3.5 flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                      <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                      <circle cx="9" cy="9" r="2"/>
+                      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                    </svg>
+                    <span className="text-xs font-semibold text-slate-700">Scenic Photo</span>
                   </div>
-                  <span className="f-toggle-switch">
-                    <input type="checkbox" id="gr" defaultChecked />
-                    <span className="f-toggle-slider"></span>
-                  </span>
-                </label>
 
-                {/* Backdrop photo */}
-                <div>
-                  <span className="text-xs font-bold text-slate-800">Backdrop Scenic Photo</span>
-                  <p className="text-[11px] text-slate-500 mb-2">Display photography behind the 3D book</p>
-                  <label htmlFor="bi" className="f-upload-zone group">
+                  <label htmlFor="bi" style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }} className="f-upload-zone group">
                     <input type="file" id="bi" accept="image/*" className="hidden" />
                     <div className="f-upload-icon">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-                        <circle cx="9" cy="9" r="2"/>
-                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
                       </svg>
                     </div>
-                    <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Choose Backdrop Photo</span>
-                    <span className="text-[10px] text-slate-400">High-resolution scenery or studio desk</span>
+                    <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900 transition-colors">Choose Backdrop Image</span>
                   </label>
-                  <div id="bi-status" className="mt-2.5 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/80 px-3 py-2 shadow-2xs hidden">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-800">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+
+                  <div id="bi-status" style={{ borderColor: "#e5e5df", backgroundColor: "#faf9f6" }} className="flex items-center justify-between rounded-lg border px-2.5 py-1.5 hidden">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-400"><polyline points="20 6 9 17 4 12"/></svg>
                       Photo active
                     </span>
-                    <button type="button" className="text-xs font-bold text-rose-600 hover:text-rose-800 px-2 py-0.5 rounded hover:bg-rose-100/60 transition-colors cursor-pointer" id="bix">
+                    <button type="button" className="text-xs font-medium text-rose-500 hover:text-rose-700 px-1.5 py-0.5 rounded hover:bg-rose-50 transition-colors cursor-pointer" id="bix">
                       Remove
                     </button>
                   </div>
-                </div>
 
-                <div>
-                  <label htmlFor="dm" className="text-xs font-bold text-slate-800 block mb-1">
-                    Photo Dimming Overlay
-                  </label>
-                  <input type="range" id="dm" min="0" max=".8" step=".05" defaultValue="0.35" className="w-full accent-blue-600" />
+                  <div style={{ borderColor: "#e5e5df" }} className="pt-2 border-t">
+                    <label htmlFor="dm" className="text-xs font-semibold text-slate-700 flex justify-between items-center mb-1">
+                      <span className="text-[11px] font-medium text-slate-500">Photo Dimmer</span>
+                      <span id="dm-val" className="text-xs font-mono font-medium text-slate-600">35%</span>
+                    </label>
+                    <input type="range" id="dm" min="0" max="0.8" step="0.05" defaultValue="0.35" className="w-full accent-slate-600" />
+                  </div>
                 </div>
               </div>
 
               {/* Pages panel: delete / add / reorder */}
               <div className="ftp" id="p-pm" hidden>
-                <div className="pm-bar">
-                  <button type="button" className="fcta text-xs py-1.5 px-3" id="pmAdd">＋ Add pages</button>
-                  <button type="button" className="fbtn text-xs py-1.5 px-3" id="pmBlank">＋ Blank page</button>
-                  <button type="button" className="fbtn text-xs py-1.5 px-3" id="pmDel" disabled>Delete selected</button>
-                  <button type="button" className="fbtn text-xs py-1.5 px-3" id="pmUndo" disabled>↶ Undo</button>
-                  <button type="button" className="fbtn text-xs py-1.5 px-3" id="pmRedo" disabled>↷ Redo</button>
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3.5 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                      </svg>
+                      <span className="text-xs font-semibold text-slate-700">Page Management</span>
+                    </div>
+                    <span id="pmInfo" className="text-[11px] font-medium text-slate-500"></span>
+                  </div>
+
+                  <div className="pm-bar flex flex-wrap items-center gap-1.5">
+                    <button type="button" className="fcta text-xs py-1.5 px-3" id="pmAdd">＋ Add pages</button>
+                    <button type="button" className="fbtn text-xs py-1.5 px-3" id="pmBlank">＋ Blank</button>
+                    <button type="button" className="fbtn text-xs py-1.5 px-2.5" id="pmDel" disabled>Delete</button>
+                    <button type="button" className="fbtn text-xs py-1.5 px-2.5" id="pmUndo" disabled title="Undo">↶ Undo</button>
+                    <button type="button" className="fbtn text-xs py-1.5 px-2.5" id="pmRedo" disabled title="Redo">↷ Redo</button>
+                  </div>
                 </div>
-                <p id="pmInfo" className="text-[11px] text-slate-500 leading-relaxed"></p>
-                <div id="pmGrid" className="pm-grid"></div>
+
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3">
+                  <div id="pmGrid" className="pm-grid"></div>
+                </div>
                 <input id="pmFile" type="file" accept="application/pdf,image/*" multiple className="hidden" />
               </div>
 
               {/* 4. Layout panel */}
               <div className="ftp" id="p-ly" hidden>
-                <div>
-                  <label htmlFor="md" className="text-xs font-bold text-slate-800 block mb-1.5">
-                    Two-Page Spread Handling
-                  </label>
-                  <select id="md" className="w-full" defaultValue="keep">
+                {/* Spread Handling Card */}
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3.5 flex flex-col gap-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                    </svg>
+                    <span className="text-xs font-semibold text-slate-700">Two-Page Spread Handling</span>
+                  </div>
+                  <select
+                    id="md"
+                    style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                    className="w-full text-xs font-semibold text-slate-800 rounded-xl border px-3 py-2.5 outline-none transition focus:border-[#3158d5] focus:ring-1 focus:ring-[#3158d5] shadow-2xs cursor-pointer"
+                    defaultValue="keep"
+                  >
                     <option value="ask">Ask me when wide pages are found</option>
                     <option value="keep">Keep every page as one page</option>
                     <option value="split">Split wide pages into left and right</option>
                   </select>
                 </div>
 
-                {/* Clean toolbar */}
-                <label htmlFor="cl" className="f-toggle-card">
-                  <div className="flex flex-col pr-3">
-                    <span className="text-xs font-bold text-slate-800">Clean minimal toolbar</span>
-                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Flat white toolbar with simple line icons</span>
-                  </div>
-                  <span className="f-toggle-switch">
-                    <input type="checkbox" id="cl" />
-                    <span className="f-toggle-slider"></span>
-                  </span>
-                </label>
-
-                {/* Sound Effects */}
-                <label htmlFor="sn" className="f-toggle-card">
-                  <div className="flex flex-col pr-3">
-                    <span className="text-xs font-bold text-slate-800">Realistic Sound Effects</span>
-                    <span className="text-[11px] text-slate-500 font-normal mt-0.5">Physical paper rustle on corner turn</span>
-                  </div>
-                  <span className="f-toggle-switch">
-                    <input type="checkbox" id="sn" />
-                    <span className="f-toggle-slider"></span>
-                  </span>
-                </label>
-
-                <div id="snd-opts" className="flex flex-col gap-2.5">
-                  <label htmlFor="sk" className="text-xs font-bold text-slate-800">
-                    Sound style
-                    <select id="sk" defaultValue="paper">
-                      <option value="paper">Paper rustle</option>
-                      <option value="crisp">Crisp page</option>
-                      <option value="soft">Soft whoosh</option>
-                      <option value="thump">Hardcover thump</option>
-                      <option value="flick">Quick double flick</option>
-                    </select>
+                {/* Toolbar & Display Options Card */}
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3 flex flex-col gap-2">
+                  {/* Clean toolbar */}
+                  <label htmlFor="cl" style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df" }} className="flex items-center justify-between rounded-xl border p-2.5 cursor-pointer hover:bg-[#f6f5f1] transition select-none">
+                    <div className="flex flex-col pr-3">
+                      <span className="text-xs font-semibold text-slate-700">Clean minimal toolbar</span>
+                      <span className="text-[11px] text-slate-400 font-normal mt-0.5">Flat white toolbar with simple line icons</span>
+                    </div>
+                    <span className="f-toggle-switch shrink-0 scale-90">
+                      <input type="checkbox" id="cl" />
+                      <span className="f-toggle-slider"></span>
+                    </span>
                   </label>
-                  <label htmlFor="sv" className="text-xs font-bold text-slate-800">
-                    Volume
-                    <input type="range" id="sv" min="0.3" max="2" step="0.1" defaultValue="1" className="w-full accent-blue-600" />
+                </div>
+
+                {/* Sound Effects Card */}
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3.5 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                      </svg>
+                      <span className="text-xs font-semibold text-slate-700">Page Turn Sound</span>
+                    </div>
+                    <button type="button" id="sndTest" className="f-sampler-btn text-xs py-1 px-2.5" title="Test audio">
+                      ▶ Test sound
+                    </button>
+                  </div>
+
+                  {/* Realistic Sound Effects toggle */}
+                  <label htmlFor="sn" style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df" }} className="flex items-center justify-between rounded-xl border p-2.5 cursor-pointer hover:bg-[#f6f5f1] transition select-none">
+                    <div className="flex flex-col pr-3">
+                      <span className="text-xs font-semibold text-slate-700">Enable Sound Effects</span>
+                      <span className="text-[11px] text-slate-400 font-normal mt-0.5">Physical paper rustle on corner turn</span>
+                    </div>
+                    <span className="f-toggle-switch shrink-0 scale-90">
+                      <input type="checkbox" id="sn" />
+                      <span className="f-toggle-slider"></span>
+                    </span>
                   </label>
-                  <button type="button" id="sndTest" className="fbtn text-xs py-1.5 px-3 self-start">▶ Test sound</button>
-                  <p className="text-[11px] text-slate-500">Plays in the page-turn styles: Spread, Folio, Hardback, Classic.</p>
+
+                  <div id="snd-opts" className="flex flex-col gap-2.5">
+                    <div>
+                      <label htmlFor="sk" className="text-[11px] font-medium text-slate-500 block mb-1">
+                        Sound Style
+                      </label>
+                      <select
+                        id="sk"
+                        defaultValue="realistic"
+                        style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff" }}
+                        className="w-full text-xs font-semibold text-slate-800 rounded-xl border px-3 py-2.5 outline-none transition focus:border-[#3158d5] focus:ring-1 focus:ring-[#3158d5] shadow-2xs cursor-pointer"
+                      >
+                        <option value="realistic">✨ Realistic book (Natural turn)</option>
+                        <option value="magazine">Glossy magazine / Catalog</option>
+                        <option value="crisp">Crisp novel page</option>
+                        <option value="parchment">Heavy parchment / Hardcover</option>
+                        <option value="soft">Soft gentle whisper</option>
+                        <option value="flick">Quick double flick</option>
+                        <option value="paper">Classic rustle</option>
+                      </select>
+                    </div>
+
+                    <div style={{ borderColor: "#e5e5df" }} className="pt-2 border-t">
+                      <label htmlFor="sv" className="text-xs font-semibold text-slate-700 flex justify-between items-center mb-1">
+                        <span className="text-[11px] font-medium text-slate-500">Volume</span>
+                        <span id="sv-val" className="text-xs font-mono font-medium text-slate-600">100%</span>
+                      </label>
+                      <input type="range" id="sv" min="0.3" max="2" step="0.1" defaultValue="1" className="w-full accent-slate-600" />
+                    </div>
+
+                    <p className="text-[10px] text-slate-400">Plays in the page-turn styles: Spread, Folio, Hardback, Classic.</p>
+                  </div>
                 </div>
               </div>
 
               {/* 5. Brand kit panel */}
               <div className="ftp" id="p-kt" hidden>
-                <div className="rounded-2xl border border-slate-200/90 bg-slate-50/80 p-3.5 shadow-2xs">
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Your chosen style, custom cover, title, logo, and palette automatically save locally. Export as JSON to reuse across devices or teammates.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2.5 mt-2">
-                  <button className="fbtn w-full justify-center" id="ke">Export brand kit (.json)</button>
-                  <label className="fbtn w-full justify-center text-center cursor-pointer">
-                    Import brand kit
-                    <input type="file" id="ki" accept=".json" hidden />
-                  </label>
+                <div style={{ backgroundColor: "#ffffff", borderColor: "#e5e5df" }} className="rounded-2xl border p-3.5 flex flex-col gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                      <path d="m3.3 7 8.7 5 8.7-5"/>
+                      <path d="M12 22V12"/>
+                    </svg>
+                    <span className="text-xs font-semibold text-slate-700">Brand Kit Transfer</span>
+                  </div>
+
+                  <div style={{ backgroundColor: "#faf9f6", borderColor: "#e5e5df" }} className="rounded-xl border p-3">
+                    <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                      Your chosen style, custom cover, title, logo, and palette automatically save locally. Export as JSON to reuse across devices or teammates.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2 pt-1">
+                    <button className="fbtn w-full justify-center text-xs py-2" id="ke">Export brand kit (.json)</button>
+                    <label className="fbtn w-full justify-center text-xs py-2 text-center cursor-pointer">
+                      Import brand kit
+                      <input type="file" id="ki" accept=".json" hidden />
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2706,12 +3017,24 @@ function initFlipbookApp() {
   let globalAudioCtx: AudioContext | null = null;
   const playPageSound = (kind?: string, vol?: number) => {
     const active = typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
-    if (active && /INPUT|TEXTAREA|SELECT/i.test(active.tagName)) return;
+    if (active && (active.tagName === "TEXTAREA" || (active.tagName === "INPUT" && /text|search/i.test((active as HTMLInputElement).type)))) {
+      return;
+    }
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!globalAudioCtx) globalAudioCtx = new AudioCtx();
-      if (globalAudioCtx.state === "suspended") globalAudioCtx.resume();
-      playSnd(globalAudioCtx, kind || "paper", vol == null ? 1 : vol);
+      const doPlay = () => {
+        try {
+          if (globalAudioCtx) {
+            playSnd(globalAudioCtx, kind || "realistic", vol == null ? 1 : vol);
+          }
+        } catch (_) {}
+      };
+      if (globalAudioCtx.state === "suspended") {
+        globalAudioCtx.resume().then(doPlay).catch(doPlay);
+      } else {
+        doPlay();
+      }
     } catch (_) {}
   };
 
@@ -3076,7 +3399,7 @@ function initFlipbookApp() {
         let restoring = keepIdx > 0;
         let restoreTimer: any = null;
         if (keepIdx > 0) {
-          restoreTimer = setTimeout(() => { restoring = false; }, 1400);
+          restoreTimer = setTimeout(() => { restoring = false; }, 500);
         }
         root._pf = flip;
         flip.loadFromHTML(els);
@@ -3090,10 +3413,11 @@ function initFlipbookApp() {
             root._curPage = idx;
           } catch (_) {}
           const active = typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
-          const isTyping = active && /INPUT|TEXTAREA|SELECT/i.test(active.tagName);
+          const isTyping = active && (active.tagName === "TEXTAREA" || (active.tagName === "INPUT" && /text|search/i.test((active as HTMLInputElement).type)));
           if (!restoring && !isTyping && snd) {
             playPageSound(c.sndKind as string, c.sndVol as number);
           }
+          restoring = false;
           setTimeout(fit, 80);
         });
 
@@ -3102,7 +3426,7 @@ function initFlipbookApp() {
             root._curPage = flip.getCurrentPageIndex();
           } catch (_) {}
           if (e.data === "read") {
-            setTimeout(() => { restoring = false; }, 300);
+            restoring = false;
             setTimeout(fit, 40);
           }
         });
@@ -3112,7 +3436,7 @@ function initFlipbookApp() {
             try { flip.turnToPage(Math.min(keepIdx, els.length - 1)); } catch (_) {}
           }
           if (restoreTimer) clearTimeout(restoreTimer);
-          restoreTimer = setTimeout(() => { restoring = false; }, 1200);
+          restoreTimer = setTimeout(() => { restoring = false; }, 500);
           setTimeout(fit, 50);
         });
 
@@ -3320,7 +3644,7 @@ function initFlipbookApp() {
       bgImg: "",
       dim: 0.35,
       sound: false,
-      sndKind: "paper",
+      sndKind: "realistic",
       sndVol: 1,
       exportQ: "balanced",
       mode: "keep",
@@ -3852,6 +4176,18 @@ function initFlipbookApp() {
     }, 250) as unknown as number;
   }
 
+  const updateGradientVisibility = () => {
+    const isGrad = S.bgType === "grad";
+    const c2Container = document.getElementById("c2-container");
+    if (c2Container) {
+      c2Container.style.display = isGrad ? "flex" : "none";
+    }
+    const c1Label = document.getElementById("c1-label");
+    if (c1Label) {
+      c1Label.textContent = isGrad ? "Color 1" : "Color";
+    }
+  };
+
   function sync() {
     const curStyle = BOOK_STYLES[S.theme] || BOOK_STYLES[0];
     (getEl("bt") as HTMLInputElement).value = S.title || "";
@@ -3864,13 +4200,22 @@ function initFlipbookApp() {
     if (c1Val) c1Val.textContent = S.bg1.toUpperCase();
     const c2Val = document.getElementById("c2-val");
     if (c2Val) c2Val.textContent = S.bg2.toUpperCase();
+    const hexC1 = document.getElementById("hex-c1") as HTMLInputElement | null;
+    if (hexC1) hexC1.value = S.bg1.replace(/^#/, "").toUpperCase();
+    const hexC2 = document.getElementById("hex-c2") as HTMLInputElement | null;
+    if (hexC2) hexC2.value = S.bg2.replace(/^#/, "").toUpperCase();
     (getEl("gr") as HTMLInputElement).checked = S.bgType !== "color";
+    updateGradientVisibility();
     (getEl("dm") as HTMLInputElement).value = S.dim;
+    const dmVal = document.getElementById("dm-val");
+    if (dmVal) dmVal.textContent = Math.round(Number(S.dim == null ? 0.35 : S.dim) * 100) + "%";
     (getEl("md") as HTMLSelectElement).value = S.mode;
     (getEl("sn") as HTMLInputElement).checked = S.sound;
     (getEl("cl") as HTMLInputElement).checked = S.clean !== false;
-    (getEl("sk") as HTMLSelectElement).value = S.sndKind || "paper";
+    (getEl("sk") as HTMLSelectElement).value = S.sndKind || "realistic";
     (getEl("sv") as HTMLInputElement).value = String(S.sndVol == null ? 1 : S.sndVol);
+    const svVal = document.getElementById("sv-val");
+    if (svVal) svVal.textContent = Math.round(Number(S.sndVol == null ? 1 : S.sndVol) * 100) + "%";
     const xq = getEl("xq") as HTMLSelectElement | null;
     if (xq) xq.value = S.exportQ || "balanced";
     if (S.exportQ) {
@@ -4219,23 +4564,89 @@ function initFlipbookApp() {
     sync(); show();
     playPageSound(S.sndKind, S.sndVol);
   });
-  getEl("sv").addEventListener("input", (e: Event) => { S.sndVol = +(e.target as HTMLInputElement).value; });
+  getEl("sv").addEventListener("input", (e: Event) => {
+    const val = +(e.target as HTMLInputElement).value;
+    S.sndVol = val;
+    const svVal = document.getElementById("sv-val");
+    if (svVal) svVal.textContent = Math.round(val * 100) + "%";
+  });
   getEl("sv").addEventListener("change", () => { S.sound = true; sync(); show(); playPageSound(S.sndKind, S.sndVol); });
   getEl("sndTest").onclick = () => playPageSound(S.sndKind, S.sndVol);
   bind("cl", (e) => { S.clean = (e as HTMLInputElement).checked; }, "change");
-  bind("dm", (e) => { S.dim = +(e as HTMLInputElement).value; });
+  bind("dm", (e) => {
+    const val = +(e as HTMLInputElement).value;
+    S.dim = val;
+    const dmVal = document.getElementById("dm-val");
+    if (dmVal) dmVal.textContent = Math.round(val * 100) + "%";
+  });
   bind("c1", (e) => {
     S.bg1 = (e as HTMLInputElement).value;
     if (S.bgType === "img") S.bgType = "grad";
     const c1Val = document.getElementById("c1-val");
     if (c1Val) c1Val.textContent = S.bg1.toUpperCase();
+    const h1 = document.getElementById("hex-c1") as HTMLInputElement | null;
+    if (h1) h1.value = S.bg1.replace(/^#/, "").toUpperCase();
   });
   bind("c2", (e) => {
     S.bg2 = (e as HTMLInputElement).value;
     const c2Val = document.getElementById("c2-val");
     if (c2Val) c2Val.textContent = S.bg2.toUpperCase();
+    const h2 = document.getElementById("hex-c2") as HTMLInputElement | null;
+    if (h2) h2.value = S.bg2.replace(/^#/, "").toUpperCase();
   });
-  bind("gr", (e) => { S.bgType = (e as HTMLInputElement).checked ? "grad" : "color"; }, "change");
+
+  const normalizeHex = (val: string): string | null => {
+    let clean = val.trim().replace(/^#/, "");
+    if (/^[0-9a-fA-F]{3}$/.test(clean)) {
+      clean = clean[0] + clean[0] + clean[1] + clean[1] + clean[2] + clean[2];
+    }
+    if (/^[0-9a-fA-F]{6}$/.test(clean)) {
+      return "#" + clean.toLowerCase();
+    }
+    return null;
+  };
+
+  const hexC1El = document.getElementById("hex-c1") as HTMLInputElement | null;
+  if (hexC1El) {
+    hexC1El.addEventListener("input", (e: Event) => {
+      const valid = normalizeHex((e.target as HTMLInputElement).value);
+      if (valid) {
+        S.bg1 = valid;
+        if (S.bgType === "img") S.bgType = "grad";
+        const c1 = document.getElementById("c1") as HTMLInputElement | null;
+        if (c1) c1.value = valid;
+        const c1Val = document.getElementById("c1-val");
+        if (c1Val) c1Val.textContent = valid.toUpperCase();
+        show();
+      }
+    });
+    hexC1El.addEventListener("blur", () => {
+      if (hexC1El) hexC1El.value = (S.bg1 || "#efeee7").replace(/^#/, "").toUpperCase();
+    });
+  }
+
+  const hexC2El = document.getElementById("hex-c2") as HTMLInputElement | null;
+  if (hexC2El) {
+    hexC2El.addEventListener("input", (e: Event) => {
+      const valid = normalizeHex((e.target as HTMLInputElement).value);
+      if (valid) {
+        S.bg2 = valid;
+        const c2 = document.getElementById("c2") as HTMLInputElement | null;
+        if (c2) c2.value = valid;
+        const c2Val = document.getElementById("c2-val");
+        if (c2Val) c2Val.textContent = valid.toUpperCase();
+        show();
+      }
+    });
+    hexC2El.addEventListener("blur", () => {
+      if (hexC2El) hexC2El.value = (S.bg2 || "#e5e5df").replace(/^#/, "").toUpperCase();
+    });
+  }
+
+  bind("gr", (e) => {
+    S.bgType = (e as HTMLInputElement).checked ? "grad" : "color";
+    updateGradientVisibility();
+  }, "change");
 
   (window as unknown as Record<string, unknown>)["setFlipbookExportQ"] = (q: string) => {
     S.exportQ = q;
@@ -4439,12 +4850,15 @@ function initFlipbookApp() {
     if (lpStatus) lpStatus.classList.toggle("hidden", !S.logo);
   }
 
-  getEl("lp").onclick = (e: Event) => {
-    const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
-    if (!b) return;
-    Object.assign(S, { bg1: b.dataset.h, bg2: b.dataset.h, bgType: "color", bgImg: "" });
-    sync(); show();
-  };
+  const lpEl = document.getElementById("lp");
+  if (lpEl) {
+    lpEl.onclick = (e: Event) => {
+      const b = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
+      if (!b) return;
+      Object.assign(S, { bg1: b.dataset.h, bg2: b.dataset.h, bgType: "color", bgImg: "" });
+      sync(); show();
+    };
+  }
 
   // ── Backdrop Scenic Photo ──────────────────────────────────────────────────
   getEl("bi").addEventListener("change", async (e: Event) => {
@@ -4607,8 +5021,16 @@ function initFlipbookApp() {
         try {
           var AudioCtx = window.AudioContext || window.webkitAudioContext;
           if (!globalAudioCtx) globalAudioCtx = new AudioCtx();
-          if (globalAudioCtx.state === "suspended") globalAudioCtx.resume();
-          playSnd(globalAudioCtx, kind || "paper", vol == null ? 1 : vol);
+          var doPlay = function() {
+            try {
+              if (globalAudioCtx) playSnd(globalAudioCtx, kind || "realistic", vol == null ? 1 : vol);
+            } catch (_) {}
+          };
+          if (globalAudioCtx.state === "suspended") {
+            globalAudioCtx.resume().then(doPlay).catch(doPlay);
+          } else {
+            doPlay();
+          }
         } catch (_) {}
       }
 
