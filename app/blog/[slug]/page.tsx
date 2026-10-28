@@ -293,8 +293,8 @@ export default async function BlogPostPage({
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
 
-              {/* FAQ SECTION */}
-              {post.faqs && post.faqs.length > 0 && (
+              {/* FAQ SECTION (Only rendered if not already embedded in post.content) */}
+              {post.faqs && post.faqs.length > 0 && !post.content.includes('id="faq"') && (
                 <section id="faq" style={{ border: "1px solid #e5e5df" }} className="mt-12 rounded-2xl bg-[#faf9f6] p-6 shadow-2xs sm:p-8">
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className="flex h-2.5 w-2.5 rounded-full bg-[#3158d5]" />
