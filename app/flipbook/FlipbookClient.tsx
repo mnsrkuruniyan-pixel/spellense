@@ -646,6 +646,7 @@ const FAQ_ITEMS = [
 const ALT_MODES = ["glide", "deck", "arc", "single", "scroll", "wall", "fan", "carousel", "calendar", "fade"];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) => string): void {
+  var savedPage = typeof root._curPage === "number" ? root._curPage : 0;
   if (root._off) root._off();
   if (root._pf && typeof root._pf.destroy === "function") {
     try { root._pf.destroy(); } catch (e) {}
@@ -656,7 +657,8 @@ function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) =
   var mode: string = c.disp;
   var ratio: number = c.ratio > 0 ? c.ratio : 0.714;
   var img = c.bgType === "img" && c.bgImg;
-  var cur = 0, z = 1, au: any = 0, thOpen = false, lb = -1;
+  var cur = Math.max(0, Math.min(Math.max(0, N - 1), savedPage)), z = 1, au: any = 0, thOpen = false, lb = -1;
+  root._curPage = cur;
   var timers: any[] = [];
 
   function lumOf(h: string): number {
@@ -815,6 +817,7 @@ function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) =
     if (!N) return;
     i = Math.max(0, Math.min(N - 1, i));
     cur = i;
+    root._curPage = i;
     if (freeMode) { if (!fromScroll) scrollTo(i, true); }
     else step();
     ui();
@@ -923,8 +926,10 @@ function altViewer(root: any, c: any, ic: (k: string) => string, esc: (s: any) =
   };
 
   function key(e: KeyboardEvent) {
-    if (e.key === "ArrowRight" || e.key === "ArrowDown" && !freeMode) { if (lb >= 0) openLb(lb + 1); else next(); }
-    else if (e.key === "ArrowLeft" || e.key === "ArrowUp" && !freeMode) { if (lb >= 0) openLb(lb - 1); else prev(); }
+    const active = typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
+    if (active && /INPUT|TEXTAREA|SELECT/i.test(active.tagName)) return;
+    if (e.key === "ArrowRight" || (e.key === "ArrowDown" && !freeMode)) { if (lb >= 0) openLb(lb + 1); else next(); }
+    else if (e.key === "ArrowLeft" || (e.key === "ArrowUp" && !freeMode)) { if (lb >= 0) openLb(lb - 1); else prev(); }
     else if (e.key === "Escape" && lb >= 0) closeLb();
   }
   var rt: any = 0;
@@ -1560,7 +1565,7 @@ export default function FlipbookClient() {
                     setIsXqOpen((prev) => !prev);
                   }}
                   style={{ borderColor: "#e5e5df", backgroundColor: "#ffffff", color: "#1c201a" }}
-                  className="inline-flex items-center justify-between gap-3 rounded-xl border px-3.5 py-2 text-xs font-semibold shadow-2xs hover:bg-[#faf9f6] transition cursor-pointer min-w-[175px]"
+                  className="inline-flex items-center justify-between gap-3 rounded-xl border px-4 py-2 text-xs font-semibold shadow-2xs hover:bg-[#faf9f6] transition cursor-pointer min-w-[195px] sm:min-w-[205px]"
                 >
                   <span id="xq-btn-label" className="truncate text-[#1c201a]">
                     {exportQ === "small" && "Small file (email & WhatsApp)"}
@@ -2700,6 +2705,8 @@ function initFlipbookApp() {
   // ── Global Audio Context for Page Turns ────────────────────────────────────
   let globalAudioCtx: AudioContext | null = null;
   const playPageSound = (kind?: string, vol?: number) => {
+    const active = typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
+    if (active && /INPUT|TEXTAREA|SELECT/i.test(active.tagName)) return;
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!globalAudioCtx) globalAudioCtx = new AudioCtx();
@@ -2766,7 +2773,19 @@ function initFlipbookApp() {
   const IC: Record<string, string> = {p2:"<path d=\"M9 5L4 10l5 5\"/><path d=\"M4 10h10a6 6 0 010 11h-3\"/>",n2:"<path d=\"M15 5l5 5-5 5\"/><path d=\"M20 10H10a6 6 0 000 11h3\"/>",p:"<path d=\"M15 5l-7 7 7 7\"/>",n:"<path d=\"M9 5l7 7-7 7\"/>",t:"<rect x=\"4\" y=\"4\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"13\" y=\"4\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"4\" y=\"13\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"13\" y=\"13\" width=\"7\" height=\"7\" rx=\"1\"/>",z:"<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"M20 20l-4.2-4.2M11 8v6M8 11h6\"/>",s1:"<path d=\"M4 9.5v5h4l5 4v-13l-5 4z\"/><path d=\"M16.5 9a4 4 0 010 6M19 6.5a8 8 0 010 11\"/>",s0:"<path d=\"M4 9.5v5h4l5 4v-13l-5 4z\"/><path d=\"M17 9.5l4.5 5M21.5 9.5l-4.5 5\"/>",a0:"<path d=\"M8 5.5v13l10.5-6.5z\" fill=\"currentColor\"/>",a1:"<rect x=\"6.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\"/><rect x=\"13.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\"/>",v:"<rect x=\"3\" y=\"5\" width=\"8\" height=\"14\" rx=\"1\"/><rect x=\"13\" y=\"5\" width=\"8\" height=\"14\" rx=\"1\"/>",f:"<path d=\"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5\"/>"};
   const ic = (k: string) => "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + IC[k] + "</svg>";
 
-  function Viewer(root: HTMLElement & { _off?: () => void; _pf?: any }, c: Record<string, unknown>) {
+  function Viewer(root: HTMLElement & { _off?: () => void; _pf?: any; _curPage?: number }, c: Record<string, unknown>) {
+    let savedPage = 0;
+    if (root._pf && typeof root._pf.getCurrentPageIndex === "function") {
+      try {
+        savedPage = Math.max(0, root._pf.getCurrentPageIndex());
+      } catch (_) {}
+    } else if (typeof root._curPage === "number") {
+      savedPage = Math.max(0, root._curPage);
+    } else if (typeof c.startPage === "number") {
+      savedPage = Math.max(0, c.startPage);
+    }
+    root._curPage = savedPage;
+
     if (root._off) root._off();
     if (root._pf && typeof root._pf.destroy === "function") {
       try { root._pf.destroy(); } catch (_) {}
@@ -2817,14 +2836,14 @@ function initFlipbookApp() {
     }
 
     let hHtml = img ? '<div class="ov" style="background:rgba(0,0,0,' + (c.dim || 0) + ')"></div>' : "";
-    if (c.logo || c.desc) {
-      hHtml +=
-        '<div class="fbh' +
-        (c.logoRight ? " rv" : "") +
-        '">' +
-        (c.logo ? '<img src="' + c.logo + '" alt="Logo">' : "<span></span>") +
-        "<p>" + esc(c.desc) + "</p></div>";
-    }
+    hHtml +=
+      '<div class="fbh' +
+      (c.logoRight ? " rv" : "") +
+      '" style="' +
+      ((!c.logo && !c.desc) ? "display:none;" : "") +
+      '">' +
+      (c.logo ? '<img src="' + c.logo + '" alt="Logo">' : "<span></span>") +
+      "<p>" + esc(c.desc as string || "") + "</p></div>";
 
     hHtml +=
       '<div class="stage" id="stage">' +
@@ -2980,7 +2999,9 @@ function initFlipbookApp() {
     };
 
     const build = async () => {
-      const keepIdx = flip ? Math.max(0, flip.getCurrentPageIndex()) : 0;
+      const keepIdx = flip
+        ? Math.max(0, flip.getCurrentPageIndex())
+        : (typeof root._curPage === "number" ? root._curPage : savedPage);
       if (!c.full) stageEl.style.height = "";
       const clientW = stageEl.clientWidth || stageEl.parentElement?.clientWidth || (typeof window !== "undefined" ? window.innerWidth - 440 : 800);
       const isFull = !!c.full || (typeof document !== "undefined" && !!document.fullscreenElement);
@@ -3052,22 +3073,46 @@ function initFlipbookApp() {
           autoSize: true,
         });
 
+        let restoring = keepIdx > 0;
+        let restoreTimer: any = null;
+        if (keepIdx > 0) {
+          restoreTimer = setTimeout(() => { restoring = false; }, 1400);
+        }
         root._pf = flip;
         flip.loadFromHTML(els);
         if (keepIdx > 0) {
           try { flip.turnToPage(Math.min(keepIdx, els.length - 1)); } catch (_) {}
         }
 
-        flip.on("flip", () => {
-          if (snd) playPageSound(c.sndKind as string, c.sndVol as number);
+        flip.on("flip", (e: any) => {
+          try {
+            const idx = typeof e?.data === "number" ? e.data : flip.getCurrentPageIndex();
+            root._curPage = idx;
+          } catch (_) {}
+          const active = typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
+          const isTyping = active && /INPUT|TEXTAREA|SELECT/i.test(active.tagName);
+          if (!restoring && !isTyping && snd) {
+            playPageSound(c.sndKind as string, c.sndVol as number);
+          }
           setTimeout(fit, 80);
         });
 
         flip.on("changeState", (e: any) => {
-          if (e.data === "read") setTimeout(fit, 40);
+          try {
+            root._curPage = flip.getCurrentPageIndex();
+          } catch (_) {}
+          if (e.data === "read") {
+            setTimeout(() => { restoring = false; }, 300);
+            setTimeout(fit, 40);
+          }
         });
 
         flip.on("init", () => {
+          if (keepIdx > 0) {
+            try { flip.turnToPage(Math.min(keepIdx, els.length - 1)); } catch (_) {}
+          }
+          if (restoreTimer) clearTimeout(restoreTimer);
+          restoreTimer = setTimeout(() => { restoring = false; }, 1200);
           setTimeout(fit, 50);
         });
 
@@ -3081,16 +3126,22 @@ function initFlipbookApp() {
 
     build();
 
+    let lastStageW = 0;
     const ro = new ResizeObserver(() => {
       clearTimeout(rt);
       rt = setTimeout(() => {
+        const active = typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
+        if (active && /INPUT|TEXTAREA|SELECT/i.test(active.tagName)) return;
         if (P.length && stageEl.clientWidth > 50) {
+          const newW = stageEl.clientWidth;
+          if (lastStageW > 0 && Math.abs(newW - lastStageW) < 16) return;
+          lastStageW = newW;
           const fullNow = !!c.full || !!document.fullscreenElement;
-          const wantPort = vm === "single" ? true : vm === "spread" ? false : Math.max(280, stageEl.clientWidth - (fullNow ? 24 : 32)) < 520;
+          const wantPort = vm === "single" ? true : vm === "spread" ? false : Math.max(280, newW - (fullNow ? 24 : 32)) < 520;
           if (wantPort !== port) build();
           else fit();
         }
-      }, 100);
+      }, 150);
     });
     ro.observe(stageEl);
 
@@ -3355,6 +3406,8 @@ function initFlipbookApp() {
     } else {
       if (pBox) pBox.style.display = "none";
       if (dBox) dBox.style.display = "block";
+      if (pTitle) pTitle.textContent = "Generating 3D Flipbook...";
+      if (pDesc) pDesc.textContent = "Converting pages with crisp vector precision...";
       if (pFill) pFill.style.width = "0%";
       if (pPct) pPct.textContent = "0%";
     }
@@ -3496,6 +3549,8 @@ function initFlipbookApp() {
       percent: 5,
     });
     RAW = [];
+    const pvReset = document.getElementById("pv") as HTMLElement & { _curPage?: number } | null;
+    if (pvReset) pvReset._curPage = 0;
     try {
       await extractPages(Array.from(files), RAW, true);
       if (!RAW.length) throw new Error("Could not extract pages from file");
@@ -3517,6 +3572,7 @@ function initFlipbookApp() {
         status("Ready. " + pages.length + (pages.length === 1 ? " page" : " pages") + " loaded.");
         window.scrollTo({ top: 0, behavior: "smooth" });
         show();
+        setProgress({ show: false });
       }
     } catch (err) {
       console.error("Flipbook loadFiles error:", err);
@@ -3593,6 +3649,7 @@ function initFlipbookApp() {
       status("Demo catalog loaded. Click styles below to customize!");
       window.scrollTo({ top: 0, behavior: "smooth" });
       show();
+      setProgress({ show: false });
     }
   }
   (window as unknown as Record<string, unknown>)["loadSampleCatalog"] = loadSampleCatalog;
@@ -4110,8 +4167,49 @@ function initFlipbookApp() {
     if (el) el.addEventListener(ev, () => { fn(el); show(); });
   };
 
-  bind("bt", (e) => { S.title = (e as HTMLInputElement).value; });
-  bind("ds", (e) => { S.desc = (e as HTMLTextAreaElement).value; });
+  const updateTitleAndDesc = () => {
+    const pvTitle = document.getElementById("pv-title-bar");
+    if (pvTitle) pvTitle.textContent = S.title || "3D Flipbook Studio";
+
+    const covTitles = document.querySelectorAll("#pv .cov-f .ttl h2");
+    covTitles.forEach((el) => {
+      el.textContent = S.title || "";
+    });
+
+    const fbh = document.querySelector("#pv .fbh") as HTMLElement | null;
+    if (fbh) {
+      const descEl = fbh.querySelector("p");
+      if (descEl) descEl.textContent = S.desc || "";
+      if (!S.desc && !S.logo) {
+        fbh.style.display = "none";
+      } else {
+        fbh.style.display = "";
+      }
+    }
+
+    try {
+      const KEEP = ["theme", "disp", "clean", "sound", "sndKind", "sndVol", "exportQ", "mode", "credit", "logoRight", "bg1", "bg2", "dim"];
+      const slim: Record<string, unknown> = { v: 2, bgType: S.bgType === "img" ? "grad" : S.bgType };
+      KEEP.forEach((k) => { slim[k] = S[k]; });
+      localStorage.spFbKit = JSON.stringify(slim);
+    } catch (_) {}
+  };
+
+  const btInput = getEl("bt");
+  if (btInput) {
+    btInput.addEventListener("input", (e: Event) => {
+      S.title = (e.target as HTMLInputElement).value;
+      updateTitleAndDesc();
+    });
+  }
+
+  const dsInput = getEl("ds");
+  if (dsInput) {
+    dsInput.addEventListener("input", (e: Event) => {
+      S.desc = (e.target as HTMLTextAreaElement).value;
+      updateTitleAndDesc();
+    });
+  }
   bind("lr", (e) => { S.logoRight = (e as HTMLInputElement).checked; }, "change");
   bind("cr", (e) => { S.credit = (e as HTMLInputElement).checked; }, "change");
   bind("sn", (e) => { S.sound = (e as HTMLInputElement).checked; }, "change");
@@ -4880,15 +4978,27 @@ function initFlipbookApp() {
 
   getEl("nw").onclick = () => {
     RAW = [];
+    const pvReset = document.getElementById("pv") as HTMLElement & { _curPage?: number } | null;
+    if (pvReset) pvReset._curPage = 0;
     pages = [];
     items = []; hist = []; hi = 0; edited = false; sel.clear(); renderPM();
+    setProgress({ show: false });
     const upStage = document.getElementById("upload-stage");
     if (upStage) upStage.hidden = false;
     const tb = document.getElementById("fb-topbar");
     if (tb) tb.hidden = true;
+    const askEl = document.getElementById("ask");
+    if (askEl) askEl.hidden = true;
     getEl("ed").hidden = true;
     getEl("ex").hidden = true;
-    getEl("pv").innerHTML = "";
+    const pvEl = getEl("pv") as HTMLElement & { _off?: () => void; _curPage?: number };
+    if (pvEl) {
+      pvEl._curPage = 0;
+      if (pvEl._off) {
+        try { pvEl._off(); } catch (_) {}
+      }
+      pvEl.innerHTML = "";
+    }
     const stEl = document.getElementById("st");
     if (stEl) stEl.textContent = "";
     (getEl("fi") as HTMLInputElement).value = "";
