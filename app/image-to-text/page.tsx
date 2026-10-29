@@ -2,9 +2,17 @@ import type { Metadata } from "next";
 import ImageToTextClient from "./ImageToTextClient";
 
 export const metadata: Metadata = {
-  title: "Free Image to Text Converter — Extract Text Online",
+  title: "Free Image to Text Converter — Photo to Text OCR Online",
   description:
-    "Extract clean, copyable text from photos, screenshots, and scanned PDFs instantly with our free online OCR tool. No signup required, up to 25MB, 100% private.",
+    "Extract clean, copyable text from photos, screenshots, and scanned PDFs instantly with free online OCR. No sign-up required, up to 25MB, 100% private.",
+  keywords: [
+    "image to text converter free",
+    "photo to text",
+    "extract text from image online",
+    "convert picture to text",
+    "screenshot to text ocr",
+    "free online ocr converter",
+  ],
   alternates: { canonical: "/image-to-text" },
   openGraph: {
     siteName: "Spellense",

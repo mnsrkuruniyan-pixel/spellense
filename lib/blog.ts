@@ -79,7 +79,7 @@ export const BLOG_POSTS: BlogPost[] = [
     ],
     ctaTool: {
       title: "Turn Your PDF into an Interactive 3D Book Right Now",
-      description: "Upload your PDF or image pages to Spellense. Enjoy tactile page flips, 14 visual themes, and zero watermarks with 100% client-side privacy.",
+      description: "Upload your PDF or image pages to Spellense. Enjoy tactile page flips, 14 3D display styles, 12 book editions, and zero watermarks with 100% client-side privacy.",
       buttonText: "Create Free 3D Flipbook",
       href: "/flipbook",
     },
@@ -129,7 +129,7 @@ When people search for ways to <strong>make a PDF flip like a book</strong>, wha
 </ol>
 
 <p>
-Then take one minute to customize your presentation. You can choose from 14 realistic visual themes, toggle acoustic page-turn audio, and select your reading mode.
+Then take one minute to customize your presentation. You can choose from 14 distinct 3D display styles (including Spread, Folio, Hardback, and dynamic 3D Carousel), 12 authentic hardcover editions, toggle acoustic page-turn audio, and select your reading mode.
 </p>
 
 <figure class="my-8">
@@ -158,13 +158,13 @@ Then take one minute to customize your presentation. You can choose from 14 real
 <h2 id="customize-your-book" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">Customize your book: Hardcovers, gloss &amp; flip sounds</h2>
 
 <p>
-Not every document is meant to look the same. A business pitch deck requires a sleek, modern finish, while a photo album looks best with warm bookbinding. Spellense offers 14 distinct visual themes and tactile controls:
+Not every document is meant to look the same. A business pitch deck requires a sleek, modern finish, while a photo album looks best with warm bookbinding. Spellense offers 14 interactive 3D display styles and 12 authentic hardcover editions:
 </p>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
   <div style="border: 1px solid #e5e5df;" class="p-4 sm:p-5 rounded-2xl bg-[#faf9f6]">
-    <p class="font-bold text-[#1c201a] text-sm sm:text-base mb-1">Cover Styles &amp; Materials</p>
-    <p class="text-xs sm:text-sm text-slate-700 leading-relaxed">Choose from Hardcover binding, softback magazine sheen, minimalist white studio, or dark leather to match the mood of your content.</p>
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base mb-1">14 Display Styles &amp; 12 Book Editions</p>
+    <p class="text-xs sm:text-sm text-slate-700 leading-relaxed">Choose from 14 interactive modes (Spread, Folio, Hardback, Carousel, Fan, etc.) and 12 hardcover editions featuring cloth, antique leather, luxury gold foil, and your own bespoke custom photo cover.</p>
   </div>
   <div style="border: 1px solid #e5e5df;" class="p-4 sm:p-5 rounded-2xl bg-[#faf9f6]">
     <p class="font-bold text-[#1c201a] text-sm sm:text-base mb-1">Realistic Page-Turn Audio</p>
@@ -745,10 +745,10 @@ To ensure the highest accuracy when scanning physical documents for proofreading
   },
   {
     slug: "how-to-check-spelling-in-canva-before-publishing",
-    title: "How to Check Spelling in Canva (Does Canva Have Spell Check?)",
-    metaTitle: "How to Check Spelling in Canva",
-    subtitle: "Where to find Canva's spell check option, how to enable it, why typos still slip through in designs, and how to proofread Canva PDFs and graphics before publishing.",
-    description: "Looking for spell check in Canva? Learn where Canva's spell check option is located, how to turn it on, and how to thoroughly check Canva PDFs and posters for typos before printing.",
+    title: "How to Check Spelling in Canva (Turn On Spell Check in 2026)",
+    metaTitle: "Canva Spell Check: How to Turn It On & Catch Hidden Typos (2026)",
+    subtitle: "Where to find Canva's spell check button, how to turn it on, why typos still slip through in designs, and how to proofread Canva PDFs and graphics before publishing.",
+    description: "Need spell check in Canva? Here is exactly where Canva's spell check button is located, how to turn it on in 2 clicks, and how to catch typos Canva misses before printing.",
     publishedAt: "2026-09-24",
     updatedAt: "2026-10-02",
     author: {

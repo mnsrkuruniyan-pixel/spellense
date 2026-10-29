@@ -44,3 +44,6 @@ next-env.d.ts
 test-results/
 flipbook-bundle.txt
 pdf-studio-bundle.txt
+*credentials*.json
+*service-account*.json
+gsc-*.json

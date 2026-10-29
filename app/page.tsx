@@ -4428,18 +4428,18 @@ export default function Home() {
                     3D Digital Flipbook Maker
                   </h3>
                   <p className="mt-2.5 text-sm sm:text-[15px] leading-relaxed text-slate-600 max-w-2xl">
-                    Convert PDFs and images into realistic, page-turning 3D digital flipbooks with sound effects, customizable hardcover styles, and zero install. Don’t just send a PDF — send an experience.
+                    Convert PDFs and images into realistic, page-turning 3D digital flipbooks with 14 display styles, 12 authentic hardcover editions, acoustic sound effects, and zero install. Don’t just send a PDF — send an experience.
                   </p>
 
                   <div className="mt-6 flex flex-wrap gap-2">
                     <span style={{ borderColor: "#e5e5df" }} className="rounded-xl border bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs">
+                      14 3D Styles · 12 Editions
+                    </span>
+                    <span style={{ borderColor: "#e5e5df" }} className="rounded-xl border bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs">
                       Page Turn Sound Effects
                     </span>
                     <span style={{ borderColor: "#e5e5df" }} className="rounded-xl border bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs">
-                      Hardcover &amp; Softcover Styles
-                    </span>
-                    <span style={{ borderColor: "#e5e5df" }} className="rounded-xl border bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs">
-                      Shareable Reading Link
+                      Zero Watermarks · Offline HTML
                     </span>
                     <span style={{ borderColor: "#e5e5df", backgroundColor: "#efeee7", color: "#3158d5" }} className="rounded-xl border px-3 py-1 text-xs font-bold shadow-2xs">
                       100% Free · No Signup

@@ -1994,6 +1994,14 @@ export default function FlipbookClient() {
                 </div>
 
                 {/* 12 Authentic Book Styles Grouped */}
+                <div className="flex items-center gap-1.5 pt-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                    <path d="M6 6h10"/>
+                    <path d="M6 10h7"/>
+                  </svg>
+                  <span className="text-xs font-semibold text-slate-700">Hardcover Editions (12 Options)</span>
+                </div>
                 <div id="tg" className="flex flex-col gap-3"></div>
               </div>
 
@@ -2525,10 +2533,10 @@ export default function FlipbookClient() {
                   02
                 </span>
                 <h4 className="mt-4 text-base font-bold text-slate-900">
-                  Pick a 3D Style &amp; Custom Cover
+                  Pick 3D Style &amp; Hardcover Edition
                 </h4>
                 <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500">
-                  Choose from 14 display styles, leather, cloth, or your bespoke hardcover with ribbon bookmarks and realistic paper sound.
+                  Choose from 14 interactive 3D display styles (Spread, Folio, Carousel, etc.) and 12 authentic hardcover editions with leather, cloth, luxury foil, and realistic paper sound.
                 </p>
               </div>
             </ScrollReveal>
