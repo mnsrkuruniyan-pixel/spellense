@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Spellense — Visual English Spell Checker",
+    name: "Spellense — Free Spell Checker, Compressor, QR & PDF Tools",
     short_name: "Spellense",
     description:
-      "Check English spelling in images, PDFs, DOCX, PPTX and XLSX files online. Private in-memory OCR spell checking.",
+      "Free tools for designers & creators: spell check images and PDFs, compress photos, create QR codes, build flipbooks and print sheets.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

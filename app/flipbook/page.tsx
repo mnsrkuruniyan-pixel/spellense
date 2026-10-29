@@ -109,7 +109,15 @@ const faqJsonLd = {
       name: "How do I share my flipbook?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Download the offline HTML and send it by email, WhatsApp or Drive, show it with Preview in New Tab, or upload the file to a free host such as Netlify Drop or GitHub Pages and share the link. Choose “Small file” in the export quality menu for books with many pages.",
+        text: "Download the offline HTML and send it by email, WhatsApp or Drive, show it with Preview in New Tab, or upload the file to a free host such as Netlify Drop or GitHub Pages and share the link. Choose 'Small file' in the export quality menu for books with many pages. Read our complete guide: 'How to Convert PDF to 3D Flipbook' for step-by-step instructions on offline sharing and web embedding.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What if my PDF catalog or image file size is too large?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "If your source PDF has high-resolution print assets making the file too heavy, you can easily optimize and reduce its file size using our Free Image & PDF Compressor before generating your 3D flipbook.",
       },
     },
     {

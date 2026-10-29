@@ -60,11 +60,11 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://spellense.com"
   ),
   title: {
-    default: "Spellense — Free English Spell Checker & Visual Proofreader",
+    default: "Spellense — Free Spell Checker, Compressor, QR & PDF Tools",
     template: "%s | Spellense",
   },
   description:
-    "Check English spelling in images, PDFs, DOCX, PPTX and XLSX files online. Free in-memory OCR proofreading with zero sign-up.",
+    "Free tools for designers & creators: spell check images and PDFs, compress photos, create QR codes, build flipbooks and print sheets.",
   alternates: {
     canonical: "/",
   },
@@ -90,24 +90,24 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Spellense",
-    title: "Spellense — Free English Spell Checker & Visual Proofreader",
+    title: "Spellense — Free Spell Checker, Compressor, QR & PDF Tools",
     description:
-      "Check English spelling in images, PDFs, DOCX, PPTX and XLSX files online with in-memory OCR. 100% private and free.",
+      "Free tools for designers & creators: spell check images and PDFs, compress photos, create QR codes, build flipbooks and print sheets.",
     url: "/",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Spellense — Free English Spell Checker for Visual Content",
+        alt: "Spellense — Free Spell Checker, Compressor, QR & PDF Tools",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Spellense — Free English Spell Checker & Visual Proofreader",
+    title: "Spellense — Free Spell Checker, Compressor, QR & PDF Tools",
     description:
-      "Check English spelling in images, PDFs, DOCX, PPTX and XLSX files online with in-memory OCR.",
+      "Free tools for designers & creators: spell check images and PDFs, compress photos, create QR codes, build flipbooks and print sheets.",
     images: ["/og-image.png"],
   },
 };
@@ -121,7 +121,7 @@ const jsonLd = {
   operatingSystem: "All",
   browserRequirements: "Requires JavaScript. Requires HTML5.",
   datePublished: "2026-01-01",
-  dateModified: "2026-09-24",
+  dateModified: "2026-10-29",
   author: {
     "@type": "Organization",
     name: "Spellense Team",
@@ -133,7 +133,7 @@ const jsonLd = {
     priceCurrency: "USD",
   },
   description:
-    "Free online English spell checker for images, PDFs, DOCX, PPTX, and XLSX files using in-memory OCR.",
+    "Free tools for designers & creators: spell check images and PDFs, compress photos, create QR codes, build flipbooks and print sheets.",
   featureList: [
     "Image OCR spell check",
     "PDF multi-page spell check",

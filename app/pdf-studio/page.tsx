@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   title: "Free PDF Studio — Visual PDF Fixer, Whiteout & Redact",
   description:
     "Organize pages, whiteout typos, patch text, sign documents, and permanently redact confidential data. 100% private in-browser PDF editor with zero server uploads.",
+  robots: {
+    index: false,
+    follow: false,
+  },
   alternates: {
     canonical: "/pdf-studio",
   },

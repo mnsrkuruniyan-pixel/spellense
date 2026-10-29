@@ -672,7 +672,7 @@ const APP_CSS = `
 #xq::-ms-expand{display:none}
 `;
 
-const FAQ_ITEMS = [
+const FAQ_ITEMS: { q: string; a: React.ReactNode }[] = [
   {
     q: "Is the flipbook maker really free, and do I need to sign up?",
     a: "Yes, it is 100% free with no sign-up, no watermark, and no hidden subscriptions. You can create and export as many flipbooks as you want.",
@@ -695,7 +695,26 @@ const FAQ_ITEMS = [
   },
   {
     q: "How do I share my flipbook?",
-    a: "Download the offline HTML and send it by email, WhatsApp or Drive, show it with Preview in New Tab, or upload the file to a free host such as Netlify Drop or GitHub Pages and share the link. Choose “Small file” in the export quality menu for books with many pages.",
+    a: (
+      <>
+        Download the offline HTML and send it by email, WhatsApp or Drive, show it with Preview in New Tab, or upload the file to a free host such as Netlify Drop or GitHub Pages and share the link. Choose &ldquo;Small file&rdquo; in the export quality menu for books with many pages. For step-by-step instructions on offline sharing and web embedding, read our complete guide:{" "}
+        <Link href="/blog/how-to-convert-pdf-to-3d-flipbook" className="font-bold text-[#3158d5] hover:underline">
+          How to Convert PDF to 3D Flipbook
+        </Link>.
+      </>
+    ),
+  },
+  {
+    q: "What if my PDF catalog or image file size is too large?",
+    a: (
+      <>
+        If your source PDF has high-resolution print assets making the file too heavy, you can easily optimize and reduce its file size using our{" "}
+        <Link href="/image-compressor" className="font-bold text-[#3158d5] hover:underline">
+          Free Image &amp; PDF Compressor
+        </Link>{" "}
+        before generating your 3D flipbook.
+      </>
+    ),
   },
 ];
 
@@ -2643,7 +2662,7 @@ export default function FlipbookClient() {
                 <div className="mt-5 flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-slate-400">OCR &amp; AI Proofreading</span>
                   <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
-                    <span>Use tool</span>
+                    <span>Proofread Artwork Free</span>
                     <span className="transition-transform group-hover:translate-x-0.5">→</span>
                   </span>
                 </div>
@@ -2676,7 +2695,7 @@ export default function FlipbookClient() {
                 <div className="mt-5 flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-slate-400">Lossless &amp; Lossy</span>
                   <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
-                    <span>Use tool</span>
+                    <span>Compress Images &amp; PDFs Free</span>
                     <span className="transition-transform group-hover:translate-x-0.5">→</span>
                   </span>
                 </div>
@@ -2711,7 +2730,7 @@ export default function FlipbookClient() {
                 <div className="mt-5 flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-slate-400">Vector SVG &amp; PNG</span>
                   <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
-                    <span>Use tool</span>
+                    <span>Generate Custom QR Code</span>
                     <span className="transition-transform group-hover:translate-x-0.5">→</span>
                   </span>
                 </div>

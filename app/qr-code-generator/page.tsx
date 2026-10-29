@@ -162,7 +162,7 @@ const faqJsonLd = {
       name: "How can I make sure my QR code scans after printing?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Always maintain high color contrast, avoid placing large logos that block more than 20% of the center, choose high error correction (Level H), and run the built-in scannability test before sending files to the print shop.",
+        text: "Always maintain high color contrast, avoid placing large logos that block more than 20% of the center, choose high error correction (Level H), and run the built-in scannability test before printing. You can also proofread your brochure copy using our Visual Spell Checker or optimize embedded graphic assets with our Free Image Compressor.",
       },
     },
     {

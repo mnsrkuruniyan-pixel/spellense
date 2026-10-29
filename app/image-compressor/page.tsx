@@ -100,7 +100,7 @@ const faqJsonLd = {
       name: "Can I compress multiple images or multi-page PDF catalogs at once?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes! You can drop 10, 20, or more images at once, or drop a multi-page PDF catalog. Spellense automatically processes all pages and lets you download individual files or download everything in a single, organized ZIP archive.",
+        text: "Yes! You can drop 10, 20, or more images at once, or drop a multi-page PDF catalog. Spellense automatically processes all pages and lets you download individual files or download everything in a single, organized ZIP archive. You can also turn compressed catalogs into interactive publications with our Free 3D Flipbook Maker.",
       },
     },
     {
@@ -124,7 +124,7 @@ const faqJsonLd = {
       name: "Is Spellense Image Compressor a free alternative to Squoosh and TinyPNG?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Spellense is a 100% free, private alternative to Squoosh and TinyPNG with zero subscription paywalls, no daily file limits, no 5MB file caps, and built-in batch ZIP download.",
+        text: "Yes. Spellense is a 100% free, private alternative to Squoosh and TinyPNG with zero subscription paywalls, no daily file limits, no 5MB file caps, and built-in batch ZIP download. Read our complete guide: 'How to Compress Images Without Losing Quality' for web performance benchmarks.",
       },
     },
   ],

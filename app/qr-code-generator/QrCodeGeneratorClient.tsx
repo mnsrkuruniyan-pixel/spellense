@@ -27,7 +27,7 @@ interface StressTestResultItem {
   passed: boolean;
 }
 
-const FAQ_ITEMS = [
+const FAQ_ITEMS: { q: string; a: React.ReactNode }[] = [
   {
     q: "What is a QR code generator?",
     a: "A QR code generator is an online tool that converts data—such as website URLs, text, Wi-Fi credentials, contact cards, emails, or phone numbers—into a two-dimensional scannable barcode matrix.",
@@ -66,7 +66,18 @@ const FAQ_ITEMS = [
   },
   {
     q: "How can I make sure my QR code scans after printing?",
-    a: "Always maintain high color contrast, avoid placing large logos that block more than 20% of the center, choose high error correction (Level H), and run the built-in scannability test before sending files to the print shop.",
+    a: (
+      <>
+        Always maintain high color contrast, avoid placing large logos that block more than 20% of the center, choose high error correction (Level H), and run the built-in scannability test before printing. You can also proofread your brochure copy using our{" "}
+        <Link href="/" className="font-bold text-[#3158d5] hover:underline">
+          Visual Spell Checker
+        </Link>{" "}
+        or optimize embedded graphic assets with our{" "}
+        <Link href="/image-compressor" className="font-bold text-[#3158d5] hover:underline">
+          Free Image Compressor
+        </Link>.
+      </>
+    ),
   },
   {
     q: "Why is scannability testing recommended before printing?",
@@ -2709,6 +2720,125 @@ export default function QrCodeGeneratorClient() {
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* RELATED CREATIVE TOOLS SECTION */}
+      <div style={{ borderTop: "1px solid #e5e5df", marginTop: "48px", paddingTop: "48px", paddingBottom: "64px" }} className="w-full">
+        <ScrollReveal className="text-center max-w-2xl mx-auto">
+          <div style={{ borderColor: "#e5e5df" }} className="inline-flex items-center gap-1.5 rounded-full border bg-[#faf9f6] px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#3158d5] shadow-2xs backdrop-blur-md">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#3158d5] animate-pulse" />
+            The Spellense Suite
+          </div>
+          <h3 className="mt-3 text-2xl font-black tracking-tight text-[#1c201a] sm:text-3xl">
+            Explore More Free Creative Tools
+          </h3>
+          <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#70746d]">
+            Crafted for designers, founders, and marketers who require print-ready precision and client deliverables.
+          </p>
+        </ScrollReveal>
+
+        <div className="mt-10 grid gap-5 sm:grid-cols-3">
+          <ScrollReveal delay={0} className="h-full">
+            <Link
+              href="/flipbook"
+              style={{ borderColor: "#e5e5df" }}
+              className="group relative flex h-full flex-col justify-between rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md cursor-pointer"
+            >
+              <div>
+                <div style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df", color: "#3158d5" }} className="flex h-11 w-11 items-center justify-center rounded-2xl">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                    <path d="M6 6h10" />
+                    <path d="M6 10h10" />
+                  </svg>
+                </div>
+                <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                  3D Publishing
+                </div>
+                <h4 className="mt-1 text-xl font-black text-[#1c201a] group-hover:text-[#3158d5] transition">
+                  3D Digital Flipbook
+                </h4>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+                  Turn PDF catalogs, portfolios, and magazines into interactive 3D books with realistic page turns.
+                </p>
+              </div>
+              <div className="mt-5 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-400">Offline HTML &amp; Embed</span>
+                <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
+                  <span>Create 3D Flipbook Free</span>
+                  <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                </span>
+              </div>
+            </Link>
+          </ScrollReveal>
+
+          <ScrollReveal delay={80} className="h-full">
+            <Link
+              href="/image-compressor"
+              style={{ borderColor: "#e5e5df" }}
+              className="group relative flex h-full flex-col justify-between rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md cursor-pointer"
+            >
+              <div>
+                <div style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df", color: "#3158d5" }} className="flex h-11 w-11 items-center justify-center rounded-2xl">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 14h6m0 0v6m0-6L3 21" />
+                    <path d="M20 10h-6m0 0V4m0 6 7-7" />
+                  </svg>
+                </div>
+                <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                  Image Optimizer
+                </div>
+                <h4 className="mt-1 text-xl font-black text-[#1c201a] group-hover:text-[#3158d5] transition">
+                  Image Compressor
+                </h4>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+                  Compress logos, PNG graphics, and WebP assets before embedding in your QR codes and print collateral.
+                </p>
+              </div>
+              <div className="mt-5 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-400">Lossless &amp; Lossy</span>
+                <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
+                  <span>Compress Images Free</span>
+                  <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                </span>
+              </div>
+            </Link>
+          </ScrollReveal>
+
+          <ScrollReveal delay={160} className="h-full">
+            <Link
+              href="/"
+              style={{ borderColor: "#e5e5df" }}
+              className="group relative flex h-full flex-col justify-between rounded-3xl border bg-white p-7 shadow-xs backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-md cursor-pointer"
+            >
+              <div>
+                <div style={{ backgroundColor: "#f6f5f3", border: "1px solid #e5e5df", color: "#3158d5" }} className="flex h-11 w-11 items-center justify-center rounded-2xl">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                    <line x1="12" y1="17" x2="12" y2="21"/>
+                  </svg>
+                </div>
+                <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                  Visual Quality Assurance
+                </div>
+                <h4 className="mt-1 text-xl font-black text-[#1c201a] group-hover:text-[#3158d5] transition">
+                  Visual Spell Checker
+                </h4>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#575a53]">
+                  Detect typos and text errors directly inside print posters, marketing banners, and flyers before printing.
+                </p>
+              </div>
+              <div className="mt-5 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-400">OCR &amp; AI Proofreading</span>
+                <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
+                  <span>Proofread Artwork Free</span>
+                  <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                </span>
+              </div>
+            </Link>
+          </ScrollReveal>
         </div>
       </div>
 

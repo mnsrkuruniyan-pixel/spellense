@@ -70,6 +70,11 @@ const faqItems = [
     answer:
       "Yes! Right after extracting your text, click 'Found a typo? Run spellcheck on this text →' to seamlessly carry the text directly into the Spellense proofreading engine without having to re-upload or retype anything.",
   },
+  {
+    question: "How can I improve OCR accuracy on blurry photos or mobile snapshots?",
+    answer:
+      "Ensure good lighting, avoid heavy motion blur, and crop tightly to the text area. Read our full step-by-step tutorial: 'How to Convert Photo to Text (Free, No Retyping)' for phone camera shortcuts and fixes.",
+  },
 ];
 
 export default function ImageToTextPage() {

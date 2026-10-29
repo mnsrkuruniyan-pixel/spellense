@@ -313,7 +313,7 @@ To get the most professional, high-end presentation from your 3D flipbook, keep 
     <div class="flex-1">
       <p class="font-bold text-[#1c201a] text-sm sm:text-base">3. Double-Check Text Before Converting</p>
       <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
-        Once your flipbook is live, typos and formatting slips stand out on high-resolution displays. You can run your document through the free <a href="/" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">Spellense OCR spell checker</a> or patch mistakes with our free <a href="/pdf-studio" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">PDF Studio</a> before generating your book.
+        Once your flipbook is live, typos and formatting slips stand out on high-resolution displays. You can run your document through the free <a href="/" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">Spellense OCR spell checker</a> before generating your book.
       </p>
     </div>
   </div>

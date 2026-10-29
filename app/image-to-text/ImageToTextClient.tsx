@@ -82,7 +82,7 @@ async function optimizeImageForOcr(imageFile: File): Promise<File> {
   });
 }
 
-const FAQ_ITEMS = [
+const FAQ_ITEMS: { q: string; a: React.ReactNode }[] = [
   {
     q: "What image formats and file types are supported?",
     a: "Spellense supports JPG, JPEG, PNG, and WebP raster images, as well as multi-page PDF documents and Office files (DOCX, PPTX, XLSX). You can upload high-resolution screenshots, smartphone photos, scanned documents, and infographics with no registration required.",
@@ -105,7 +105,27 @@ const FAQ_ITEMS = [
   },
   {
     q: "Can I check the extracted text for typos and spelling mistakes?",
-    a: "Yes! Right after extracting your text, click 'Found a typo? Run spellcheck on this text →' to seamlessly carry the text directly into the Spellense proofreading engine without having to re-upload or retype anything.",
+    a: (
+      <>
+        Yes! Right after extracting your text, click &lsquo;Found a typo? Run spellcheck on this text →&rsquo; to seamlessly carry the text directly into the{" "}
+        <Link href="/" className="font-bold text-[#3158d5] hover:underline">
+          Spellense Proofreading Engine
+        </Link>{" "}
+        without having to re-upload or retype anything.
+      </>
+    ),
+  },
+  {
+    q: "How can I improve OCR accuracy on blurry photos or mobile snapshots?",
+    a: (
+      <>
+        Ensure good lighting, avoid heavy motion blur, and crop tightly to the text area. Read our full step-by-step tutorial:{" "}
+        <Link href="/blog/how-to-convert-photo-to-text" className="font-bold text-[#3158d5] hover:underline">
+          How to Convert Photo to Text (Free, No Retyping)
+        </Link>{" "}
+        for phone camera shortcuts and fixes.
+      </>
+    ),
   },
 ];
 

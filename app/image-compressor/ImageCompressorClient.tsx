@@ -83,7 +83,7 @@ const PRESETS = [
   { name: "Ultra Fidelity (~400 KB)", quality: 92, format: "jpeg" as OutputFormat },
 ];
 
-const FAQ_ITEMS = [
+const FAQ_ITEMS: { q: string; a: React.ReactNode }[] = [
   {
     q: "Does compressing an image change its dimensions (width & height)?",
     a: "No. Spellense strictly locks and preserves your exact pixel dimensions. For example, a 1200×1200 image remains 1200×1200 after compression. We apply perceptual compression and remove bloat so your layout remains sharp without shrinking resolution.",
@@ -94,7 +94,14 @@ const FAQ_ITEMS = [
   },
   {
     q: "Can I compress multiple images or multi-page PDF catalogs at once?",
-    a: "Yes! You can drop 10, 20, or more images at once, or drop a multi-page PDF catalog. Spellense automatically processes all pages and lets you download individual files or download everything in a single, organized ZIP archive.",
+    a: (
+      <>
+        Yes! You can drop 10, 20, or more images at once, or drop a multi-page PDF catalog. Spellense automatically processes all pages and lets you download individual files or download everything in a single, organized ZIP archive. If you want to transform your compressed catalog into an interactive digital publication, try our{" "}
+        <Link href="/flipbook" className="font-bold text-[#3158d5] hover:underline">
+          Free 3D Flipbook Maker
+        </Link>.
+      </>
+    ),
   },
   {
     q: "Are my confidential design files or client images uploaded to any server?",
@@ -106,7 +113,14 @@ const FAQ_ITEMS = [
   },
   {
     q: "Is Spellense Image Compressor a free alternative to Squoosh and TinyPNG?",
-    a: "Yes. Spellense is a 100% free, private alternative to Squoosh and TinyPNG with zero subscription paywalls, no daily file limits, no 5MB file caps, and built-in batch ZIP download.",
+    a: (
+      <>
+        Yes. Spellense is a 100% free, private alternative to Squoosh and TinyPNG with zero subscription paywalls, no daily file limits, no 5MB file caps, and built-in batch ZIP download. For a detailed guide on WebP vs PNG compression algorithms and Core Web Vitals optimization, read our full guide:{" "}
+        <Link href="/blog/how-to-compress-images-without-losing-quality" className="font-bold text-[#3158d5] hover:underline">
+          How to Compress Images Without Losing Quality
+        </Link>.
+      </>
+    ),
   },
 ];
 
@@ -3036,7 +3050,7 @@ export default function ImageCompressorClient() {
                 <div className="mt-5 flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-slate-400">OCR &amp; AI Proofreading</span>
                   <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
-                    <span>Use tool</span>
+                    <span>Proofread Artwork Free</span>
                     <span className="transition-transform group-hover:translate-x-0.5">→</span>
                   </span>
                 </div>
@@ -3070,7 +3084,7 @@ export default function ImageCompressorClient() {
                 <div className="mt-5 flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-slate-400">Offline HTML &amp; Embed</span>
                   <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
-                    <span>Use tool</span>
+                    <span>Create 3D Flipbook Free</span>
                     <span className="transition-transform group-hover:translate-x-0.5">→</span>
                   </span>
                 </div>
@@ -3105,7 +3119,7 @@ export default function ImageCompressorClient() {
                 <div className="mt-5 flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-slate-400">Vector SVG &amp; PNG</span>
                   <span className="text-xs font-bold text-[#3158d5] group-hover:underline inline-flex items-center gap-1">
-                    <span>Use tool</span>
+                    <span>Generate Custom QR Code</span>
                     <span className="transition-transform group-hover:translate-x-0.5">→</span>
                   </span>
                 </div>

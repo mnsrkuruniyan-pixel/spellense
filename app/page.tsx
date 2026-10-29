@@ -3504,10 +3504,18 @@ export default function Home() {
       },
       {
         "@type": "Question",
+        name: "Can I check spelling on Canva designs, flyers, or slides before publishing?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes. Download your design from Canva, Photoshop, or Figma as a PNG, JPG, or PDF and drop it directly into Spellense. Our OCR engine highlights suspected typos with visual bounding boxes on top of your artwork. For a step-by-step tutorial, read our guide: How to Check Spelling in Canva Designs Before Publishing.",
+        },
+      },
+      {
+        "@type": "Question",
         name: "Does Spellense support both American and British English spelling?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Yes. You can switch effortlessly between American English (en-US) and British English (en-GB) dictionaries to ensure accurate suggestions for regional variations like color/colour, organize/organise, and center/centre.",
+          text: "Yes. You can switch effortlessly between American English (en-US) and British English (en-GB) dictionaries to ensure accurate suggestions for regional variations like color/colour, organize/organise, and center/centre. You can also use our dedicated US ⇄ UK Dialect Converter to adapt entire articles or marketing campaigns instantly.",
         },
       },
       {
@@ -4506,7 +4514,7 @@ export default function Home() {
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-slate-400">WebP, MozJPEG, AVIF, PDF</span>
                     <Link href="/image-compressor" className="text-xs font-bold text-[#3158d5] hover:underline">
-                      Use tool →
+                      Compress Images Free →
                     </Link>
                   </div>
                 </div>
@@ -4539,7 +4547,7 @@ export default function Home() {
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-slate-400">JPG, PNG, WebP, PDF</span>
                     <Link href="/image-to-text" className="text-xs font-bold text-[#3158d5] hover:underline">
-                      Use tool →
+                      Extract Text from Images →
                     </Link>
                   </div>
                 </div>
@@ -4572,7 +4580,7 @@ export default function Home() {
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-slate-400">color ⇄ colour, organize ⇄ organise</span>
                     <Link href="/us-uk-converter" className="text-xs font-bold text-[#3158d5] hover:underline">
-                      Use tool →
+                      Convert US/UK Spelling →
                     </Link>
                   </div>
                 </div>
@@ -4604,7 +4612,7 @@ export default function Home() {
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-slate-400">AP, Chicago, Title, camelCase</span>
                     <Link href="/case-converter" className="text-xs font-bold text-[#3158d5] hover:underline">
-                      Use tool →
+                      Format Text Cases →
                     </Link>
                   </div>
                 </div>
@@ -4699,7 +4707,7 @@ export default function Home() {
                       style={{ backgroundColor: "#3158d5", color: "#ffffff" }}
                       className="inline-flex items-center gap-2 rounded-lg px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-bold shadow-md shadow-[#3158d5]/20 transition-all hover:opacity-90 active:scale-95 whitespace-nowrap cursor-pointer"
                     >
-                      <span>Use tool</span>
+                      <span>Generate Free QR Code</span>
                       <span>→</span>
                     </Link>
                   </div>
@@ -4889,34 +4897,9 @@ export default function Home() {
                 </Link>
               </ScrollReveal>
 
-              <div className="mt-8 grid gap-6 sm:grid-cols-3">
-                {/* GUIDE 1 */}
+              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {/* GUIDE 1: CANVA SPELL CHECK */}
                 <ScrollReveal delay={0} className="h-full">
-                  <Link
-                    href="/blog/why-normal-spell-checkers-miss-typos-in-images"
-                    style={{ borderColor: "#e5e5df" }}
-                    className="group flex h-full flex-col justify-between rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-lg hover:shadow-[#3158d5]/5"
-                  >
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
-                        Visual Design Guide
-                      </span>
-                      <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-[#3158d5] transition">
-                        Why Normal Spell Checkers Miss Typos in Images (and How OCR Fixes It)
-                      </h4>
-                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                        Learn how optical recognition pinpoints errors inside rasterized Canva banners, Figma artboards, and marketing flyers in seconds.
-                      </p>
-                    </div>
-                    <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#3158d5]">
-                      <span>Read guide</span>
-                      <span className="transition-transform group-hover:translate-x-1">→</span>
-                    </div>
-                  </Link>
-                </ScrollReveal>
-
-                {/* GUIDE 2 */}
-                <ScrollReveal delay={120} className="h-full">
                   <Link
                     href="/blog/how-to-check-spelling-in-canva-before-publishing"
                     style={{ borderColor: "#e5e5df" }}
@@ -4934,14 +4917,114 @@ export default function Home() {
                       </p>
                     </div>
                     <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#3158d5]">
-                      <span>Read guide</span>
+                      <span>Read Canva Guide</span>
                       <span className="transition-transform group-hover:translate-x-1">→</span>
                     </div>
                   </Link>
                 </ScrollReveal>
 
-                {/* GUIDE 3 */}
+                {/* GUIDE 2: 3D FLIPBOOK */}
+                <ScrollReveal delay={60} className="h-full">
+                  <Link
+                    href="/blog/how-to-convert-pdf-to-3d-flipbook"
+                    style={{ borderColor: "#e5e5df" }}
+                    className="group flex h-full flex-col justify-between rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-lg hover:shadow-[#3158d5]/5"
+                  >
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                        3D Digital Publishing
+                      </span>
+                      <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-[#3158d5] transition">
+                        How to Convert PDF to 3D Flipbook (Free, No Watermark)
+                      </h4>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                        Turn flat PDFs into interactive 3D page-turning flipbooks with realistic sound, 14 display styles, and zero watermarks.
+                      </p>
+                    </div>
+                    <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#3158d5]">
+                      <span>Read Flipbook Guide</span>
+                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                    </div>
+                  </Link>
+                </ScrollReveal>
+
+                {/* GUIDE 3: IMAGE COMPRESSOR */}
+                <ScrollReveal delay={120} className="h-full">
+                  <Link
+                    href="/blog/how-to-compress-images-without-losing-quality"
+                    style={{ borderColor: "#e5e5df" }}
+                    className="group flex h-full flex-col justify-between rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-lg hover:shadow-[#3158d5]/5"
+                  >
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                        Image Optimization &amp; Web Vitals
+                      </span>
+                      <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-[#3158d5] transition">
+                        How to Compress Images for Web Without Losing Quality
+                      </h4>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                        Reduce PNG, JPEG, and WebP file sizes by up to 85% with in-browser Squoosh-style split preview and locked resolution.
+                      </p>
+                    </div>
+                    <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#3158d5]">
+                      <span>Read Compression Guide</span>
+                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                    </div>
+                  </Link>
+                </ScrollReveal>
+
+                {/* GUIDE 4: PHOTO TO TEXT */}
+                <ScrollReveal delay={180} className="h-full">
+                  <Link
+                    href="/blog/how-to-convert-photo-to-text"
+                    style={{ borderColor: "#e5e5df" }}
+                    className="group flex h-full flex-col justify-between rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-lg hover:shadow-[#3158d5]/5"
+                  >
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                        OCR &amp; Text Extraction
+                      </span>
+                      <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-[#3158d5] transition">
+                        How to Convert a Photo to Text (Free Online OCR)
+                      </h4>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                        Convert photos, screenshots, and scanned documents into clean, copyable text in seconds without retyping.
+                      </p>
+                    </div>
+                    <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#3158d5]">
+                      <span>Read Photo to Text Guide</span>
+                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                    </div>
+                  </Link>
+                </ScrollReveal>
+
+                {/* GUIDE 5: VISUAL DESIGN GUIDE */}
                 <ScrollReveal delay={240} className="h-full">
+                  <Link
+                    href="/blog/why-normal-spell-checkers-miss-typos-in-images"
+                    style={{ borderColor: "#e5e5df" }}
+                    className="group flex h-full flex-col justify-between rounded-3xl border bg-white p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:border-[#3158d5]/40 hover:shadow-lg hover:shadow-[#3158d5]/5"
+                  >
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#3158d5]">
+                        Visual Design Guide
+                      </span>
+                      <h4 className="mt-2 text-base font-bold text-slate-900 group-hover:text-[#3158d5] transition">
+                        Why Normal Spell Checkers Miss Typos in Images (and How OCR Fixes It)
+                      </h4>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                        Learn how optical recognition pinpoints errors inside rasterized Canva banners, Figma artboards, and marketing flyers in seconds.
+                      </p>
+                    </div>
+                    <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#3158d5]">
+                      <span>Read Visual QA Guide</span>
+                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                    </div>
+                  </Link>
+                </ScrollReveal>
+
+                {/* GUIDE 6: SCANNED PDF GUIDE */}
+                <ScrollReveal delay={300} className="h-full">
                   <Link
                     href="/blog/how-to-find-spelling-mistakes-in-scanned-pdf"
                     style={{ borderColor: "#e5e5df" }}
@@ -4959,7 +5042,7 @@ export default function Home() {
                       </p>
                     </div>
                     <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#3158d5]">
-                      <span>Read guide</span>
+                      <span>Read Scanned PDF Guide</span>
                       <span className="transition-transform group-hover:translate-x-1">→</span>
                     </div>
                   </Link>
@@ -5031,13 +5114,34 @@ export default function Home() {
                   <ScrollReveal delay={180}>
                     <details style={{ borderColor: "#e5e5df" }} className="group rounded-2xl border bg-white p-5 shadow-2xs backdrop-blur-md transition-all open:border-[#3158d5]/40 open:shadow-xs">
                       <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
+                        <span>Can I check spelling on Canva designs, flyers, or slides before publishing?</span>
+                        <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f6f5f3] text-slate-600 transition-transform duration-200 group-open:rotate-180 group-open:bg-[#f6f5f3] group-open:text-[#3158d5]">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </span>
+                      </summary>
+                      <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
+                        Yes. Download your design from Canva, Photoshop, or Figma as a PNG, JPG, or PDF and drop it directly into Spellense. Our OCR engine highlights suspected typos with visual bounding boxes on top of your artwork. For a step-by-step tutorial, read our guide:{" "}
+                        <Link href="/blog/how-to-check-spelling-in-canva-before-publishing" className="font-bold text-[#3158d5] hover:underline">
+                          How to Check Spelling in Canva Designs Before Publishing
+                        </Link>.
+                      </p>
+                    </details>
+                  </ScrollReveal>
+
+                  <ScrollReveal delay={210}>
+                    <details style={{ borderColor: "#e5e5df" }} className="group rounded-2xl border bg-white p-5 shadow-2xs backdrop-blur-md transition-all open:border-[#3158d5]/40 open:shadow-xs">
+                      <summary className="flex cursor-pointer items-center justify-between font-bold text-slate-900 text-sm sm:text-base list-none">
                         <span>Does Spellense support both American and British English spelling?</span>
                         <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f6f5f3] text-slate-600 transition-transform duration-200 group-open:rotate-180 group-open:bg-[#f6f5f3] group-open:text-[#3158d5]">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                         </span>
                       </summary>
                       <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600">
-                        Yes. You can switch effortlessly between American English (en-US) and British English (en-GB) dictionaries to ensure accurate suggestions for regional variations like color/colour, organize/organise, and center/centre.
+                        Yes. You can switch effortlessly between American English (en-US) and British English (en-GB) dictionaries to ensure accurate suggestions for regional variations like color/colour, organize/organise, and center/centre. You can also use our dedicated{" "}
+                        <Link href="/us-uk-converter" className="font-bold text-[#3158d5] hover:underline">
+                          US ⇄ UK Dialect Converter
+                        </Link>{" "}
+                        to adapt entire articles or marketing campaigns instantly.
                       </p>
                     </details>
                   </ScrollReveal>

@@ -13,7 +13,7 @@ export function getAllSiteUrls(): string[] {
   const staticRoutes = [
     "",
     "/flipbook",
-    "/pdf-studio",
+    // "/pdf-studio",
     "/image-compressor",
     "/print-sheet-maker",
     "/qr-code-generator",
