@@ -17,7 +17,7 @@ export interface BlogPost {
     avatar?: string;
   };
   readingTime: string;
-  category: "OCR Spell Checking" | "Document Proofreading" | "US vs UK Dialect" | "Design Pre-Flight" | "OCR & Text Extraction" | "Document Presentation";
+  category: "OCR Spell Checking" | "Document Proofreading" | "US vs UK Dialect" | "Design Pre-Flight" | "OCR & Text Extraction" | "Document Presentation" | "Image Optimization";
   cluster: string;
   tags: string[];
   image?: string;
@@ -414,11 +414,243 @@ Ready to transform your flat PDF into an interactive 3D book that clients and re
     ],
   },
   {
+    slug: "how-to-compress-images-without-losing-quality",
+    title: "How to Compress Images for Web Without Losing Quality (Free in 2026)",
+    metaTitle: "How to Compress Images Without Losing Quality (Free Squoosh Alternative)",
+    subtitle: "A practical guide to reducing PNG, JPEG, and WebP file sizes by up to 85% while keeping razor-sharp clarity, locked pixel dimensions, and zero server storage.",
+    description: "Learn how to compress images without losing quality for websites, SEO, and email. Free in-browser WebP conversion, batch compression, and Squoosh-style split preview.",
+    publishedAt: "2026-10-29",
+    updatedAt: "2026-10-29",
+    author: {
+      name: "Spellense Editorial Team",
+      role: "Web Performance & Image QA Specialists",
+    },
+    readingTime: "6 min read",
+    category: "Image Optimization",
+    cluster: "Cluster C — Image Optimization & Web Performance",
+    tags: [
+      "Compress Image Without Losing Quality",
+      "Squoosh Alternative",
+      "Reduce Image File Size",
+      "WebP Image Compressor",
+      "Compress PNG Free",
+      "Image Optimization for Web",
+      "Batch Image Compressor",
+    ],
+    tableOfContents: [
+      { id: "why-compress-images", title: "Why Image Compression is Critical for Web Speed & SEO" },
+      { id: "lossy-vs-lossless", title: "Lossy vs. Lossless: What Actually Happens to Image Pixels?" },
+      { id: "how-to-compress-in-3-steps", title: "How to Compress Images in 3 Steps with Spellense" },
+      { id: "format-guide", title: "WebP vs. MozJPEG vs. PNG: Which Format Should You Choose?" },
+      { id: "squoosh-alternative", title: "Why Spellense is the Modern Free Alternative to Squoosh & TinyPNG" },
+      { id: "core-web-vitals-tips", title: "5 Pro Tips for Faster Images and Higher Core Web Vitals" },
+      { id: "faq", title: "Frequently Asked Questions (FAQ)" },
+    ],
+    ctaTool: {
+      title: "Compress Your Images with Live Split Comparison",
+      description: "Drop your JPG, PNG, or WebP images into Spellense. Compare original vs. compressed side-by-side with an interactive slider, preserve exact pixel dimensions, and batch download for free.",
+      buttonText: "Compress Images Free",
+      href: "/image-compressor",
+    },
+    relatedSlugs: [
+      "how-to-convert-photo-to-text",
+      "how-to-convert-pdf-to-3d-flipbook",
+    ],
+    faqs: [
+      {
+        question: "Does compressing an image change its dimensions (width and height)?",
+        answer: "No. High-quality image compression preserves your exact pixel dimensions. For example, a 1920×1080 banner remains exactly 1920×1080 after compression. Only redundant metadata, unseen color variations, and byte bloat are removed.",
+      },
+      {
+        question: "How much can I reduce an image's file size without visible quality loss?",
+        answer: "By converting heavy PNG or JPEG files into modern WebP format, you can typically reduce file weight by 60% to 85% with virtually zero perceptible difference to human eyes.",
+      },
+      {
+        question: "Is Spellense Image Compressor a free alternative to Squoosh and TinyPNG?",
+        answer: "Yes. Spellense offers an interactive split-screen comparison slider just like Google Squoosh, but adds batch multi-image compression, multi-page PDF catalog optimization, and single-click ZIP export with no 5MB limits or subscriptions.",
+      },
+      {
+        question: "Can I compress multi-page PDF catalogs or multiple images at once?",
+        answer: "Yes! You can drop multiple images at once (PNG, JPG, WebP) or drop a multi-page PDF catalog. Spellense processes all pages directly in your browser memory and lets you download individual files or a neat ZIP archive.",
+      },
+      {
+        question: "Are my personal or client images uploaded to any server?",
+        answer: "Never. All compression takes place 100% locally inside your web browser RAM using HTML5 Canvas and WebAssembly. Your files never touch external servers or cloud storage.",
+      },
+    ],
+    content: `
+<p class="lead text-lg text-slate-700 leading-relaxed font-medium">
+High-resolution images are the visual backbone of modern websites, online stores, digital magazines, and marketing campaigns. But unoptimized images are the single biggest cause of slow web pages. According to Google research, as page load time increases from 1 second to 3 seconds, the probability of a visitor bouncing jumps by 32%.
+</p>
+
+<p>
+The dilemma facing creators, web designers, and business owners has always been tricky: how do you drastically reduce image file sizes without making your photography look pixelated, blurry, or washed out?
+</p>
+
+<p>
+With modern perceptual compression algorithms and modern formats like WebP and AVIF, you no longer have to compromise. You can routinely slash file sizes by <strong>60% to 85%</strong> while preserving razor-sharp typography, vivid color fidelity, and exact pixel dimensions.
+</p>
+
+<hr style="border: 0; border-top: 1px solid #e5e5df;" class="my-8" />
+
+<h2 id="why-compress-images" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">Why Image Compression is Critical for Web Speed &amp; SEO</h2>
+
+<p>
+Images typically account for over <strong>60% of total web page weight</strong>. When an e-commerce catalog or portfolio loads multi-megabyte photos, visitors suffer through sluggish scrolling, mobile data drains, and delayed interactive elements.
+</p>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
+  <div style="border: 1px solid #e5e5df;" class="p-4 sm:p-5 rounded-2xl bg-[#faf9f6]">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base mb-1">Higher Google Rankings</p>
+    <p class="text-xs sm:text-sm text-slate-700 leading-relaxed">Google's Core Web Vitals algorithms directly penalize slow-loading sites. Compressing your Largest Contentful Paint (LCP) images helps boost search rank.</p>
+  </div>
+  <div style="border: 1px solid #e5e5df;" class="p-4 sm:p-5 rounded-2xl bg-[#faf9f6]">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base mb-1">Lower Bounce Rates</p>
+    <p class="text-xs sm:text-sm text-slate-700 leading-relaxed">Fast-loading landing pages keep visitors engaged. Every 100ms improvement in page speed measurably improves customer conversion rates.</p>
+  </div>
+  <div style="border: 1px solid #e5e5df;" class="p-4 sm:p-5 rounded-2xl bg-[#faf9f6]">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base mb-1">Bandwidth Savings</p>
+    <p class="text-xs sm:text-sm text-slate-700 leading-relaxed">Compressing asset sizes saves hosting CDN egress bandwidth costs and speeds up browsing for international mobile users on 4G/5G.</p>
+  </div>
+</div>
+
+<hr style="border: 0; border-top: 1px solid #e5e5df;" class="my-8" />
+
+<h2 id="lossy-vs-lossless" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">Lossy vs. Lossless: What Actually Happens to Image Pixels?</h2>
+
+<p>
+To compress an image intelligently, it helps to understand the difference between lossless and lossy optimization:
+</p>
+
+<ul class="list-disc pl-6 space-y-3 my-4 text-slate-700">
+  <li><strong>Lossless Compression:</strong> Removes redundant digital baggage—such as digital camera EXIF metadata (GPS coordinates, camera model, shutter speed), embedded color profile copies, and duplicate byte codes. The pixel grid remains 100% mathematically identical. This typically reduces file sizes by 10% to 25%.</li>
+  <li><strong>Perceptual Lossy Compression:</strong> Analyzes image areas where human vision is less sensitive to microscopic color gradations. By slightly grouping similar shades without softening sharp edges or text, lossy algorithms can drop file sizes by <strong>70% to 85%</strong> with zero perceptible difference to human readers.</li>
+</ul>
+
+<div style="border: 1px solid #e5e5df;" class="my-6 p-4 sm:p-5 rounded-2xl bg-[#faf9f6]">
+  <p class="font-bold text-[#1c201a] text-sm sm:text-base">Crucial Distinction: Dimensions vs. File Size</p>
+  <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+    Compressing an image does <strong>NOT</strong> shrink its display resolution. A 1920×1080 banner remains exactly 1920×1080 pixels after compression. You get the same physical canvas dimensions with a fraction of the download weight.
+  </p>
+</div>
+
+<hr style="border: 0; border-top: 1px solid #e5e5df;" class="my-8" />
+
+<h2 id="how-to-compress-in-3-steps" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">How to Compress Images in 3 Steps with Spellense</h2>
+
+<p>
+You don't need heavy desktop editing software like Photoshop to optimize web images. Here is the seamless 3-step routine:
+</p>
+
+<ol class="list-decimal pl-6 space-y-3 my-4 text-slate-700">
+  <li><strong>Open the tool:</strong> Head to the free <a href="/image-compressor" class="text-[#3158d5] font-semibold underline underline-offset-2 hover:text-[#1c201a]">Spellense Image Compressor</a>. There are no sign-ups, accounts, or file count caps.</li>
+  <li><strong>Drop your files:</strong> Upload single images, bulk folders of photos (JPG, PNG, WebP), or a multi-page PDF catalog. Everything processes instantly in your local browser memory.</li>
+  <li><strong>Inspect with the split slider &amp; download:</strong> Slide the interactive divider line left and right to inspect the before-and-after fidelity in real time. Choose from one-click presets like <em>Best for Web (~100 KB)</em> or <em>Balanced</em>, then download individual files or a single ZIP archive.</li>
+</ol>
+
+<hr style="border: 0; border-top: 1px solid #e5e5df;" class="my-8" />
+
+<h2 id="format-guide" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">WebP vs. MozJPEG vs. PNG: Which Format Should You Choose?</h2>
+
+<p>
+Choosing the right export format is just as important as setting the compression quality:
+</p>
+
+<div style="border: 1px solid #e5e5df;" class="overflow-x-auto my-6 rounded-2xl bg-[#faf9f6]">
+  <table class="w-full text-left border-collapse text-xs sm:text-sm">
+    <thead>
+      <tr class="border-b border-[#e5e5df] text-[#1c201a] font-bold">
+        <th class="py-3.5 px-4">Format</th>
+        <th class="py-3.5 px-4">Best Used For</th>
+        <th class="py-3.5 px-4">Typical Size Savings</th>
+        <th class="py-3.5 px-4">Alpha Transparency</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[#e5e5df] text-slate-700">
+      <tr>
+        <td class="py-3.5 px-4 font-bold text-[#3158d5]">WebP</td>
+        <td class="py-3.5 px-4">Websites, blog articles, e-commerce stores</td>
+        <td class="py-3.5 px-4 font-semibold text-emerald-700">75% – 85% smaller</td>
+        <td class="py-3.5 px-4">Full support</td>
+      </tr>
+      <tr>
+        <td class="py-3.5 px-4 font-bold text-[#1c201a]">MozJPEG</td>
+        <td class="py-3.5 px-4">Photography, print proofing, client gallery previews</td>
+        <td class="py-3.5 px-4 font-semibold text-emerald-700">50% – 70% smaller</td>
+        <td class="py-3.5 px-4 text-slate-400">No</td>
+      </tr>
+      <tr>
+        <td class="py-3.5 px-4 font-bold text-[#1c201a]">PNG</td>
+        <td class="py-3.5 px-4">Logos, screenshots with text, pixel-art icons</td>
+        <td class="py-3.5 px-4">25% – 50% smaller</td>
+        <td class="py-3.5 px-4">Full support</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<hr style="border: 0; border-top: 1px solid #e5e5df;" class="my-8" />
+
+<h2 id="squoosh-alternative" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">Why Spellense is the Modern Free Alternative to Squoosh &amp; TinyPNG</h2>
+
+<p>
+For years, web developers relied on Google's open-source Squoosh app or TinyPNG. While pioneering, both tools come with limitations:
+</p>
+
+<ul class="list-disc pl-6 space-y-3 my-4 text-slate-700">
+  <li><strong>TinyPNG:</strong> Restricts free users to 20 images at a time, caps file size at 5MB, forces recurring paid subscriptions, and uploads your images to external cloud servers.</li>
+  <li><strong>Google Squoosh:</strong> Excellent single-file comparison, but has no batch compression workflow, no ZIP export, and no multi-page PDF catalog handling.</li>
+  <li><strong>Spellense:</strong> Combines the interactive split-slider comparison of Squoosh with bulk image batching, multi-page PDF compression, and single-click ZIP export—all running 100% privately in your browser RAM with zero server uploads.</li>
+</ul>
+
+<hr style="border: 0; border-top: 1px solid #e5e5df;" class="my-8" />
+
+<h2 id="core-web-vitals-tips" class="text-2xl font-bold text-[#1c201a] mt-10 mb-4">5 Pro Tips for Faster Images and Higher Core Web Vitals</h2>
+
+<div class="space-y-4 my-6">
+  <div style="border: 1px solid #e5e5df;" class="rounded-2xl bg-[#faf9f6] p-4 sm:p-5">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base">1. Target ~100 KB to 200 KB for Hero Banners</p>
+    <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+      A full-width desktop hero banner rarely needs to exceed 200 KB. Setting quality to 80%–84% in WebP maintains crisp detail on Retina displays while loading in milliseconds.
+    </p>
+  </div>
+
+  <div style="border: 1px solid #e5e5df;" class="rounded-2xl bg-[#faf9f6] p-4 sm:p-5">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base">2. Always Set Width &amp; Height Attributes in HTML</p>
+    <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+      Always specify image dimensions in your HTML or CMS. This reserves layout space before the image downloads, preventing jarring content shifts (Cumulative Layout Shift - CLS).
+    </p>
+  </div>
+
+  <div style="border: 1px solid #e5e5df;" class="rounded-2xl bg-[#faf9f6] p-4 sm:p-5">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base">3. Use Native Lazy Loading for Below-the-Fold Images</p>
+    <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+      Add <code>loading="lazy"</code> to all images that appear below the initial screen fold. Browsers will only fetch them when the reader scrolls down.
+    </p>
+  </div>
+
+  <div style="border: 1px solid #e5e5df;" class="rounded-2xl bg-[#faf9f6] p-4 sm:p-5">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base">4. Test Before-and-After Sharpness at 2× Zoom</p>
+    <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+      Use an interactive split slider to zoom in on high-contrast regions—such as small product text, badges, and logo edges—to ensure compression artifacts remain invisible.
+    </p>
+  </div>
+
+  <div style="border: 1px solid #e5e5df;" class="rounded-2xl bg-[#faf9f6] p-4 sm:p-5">
+    <p class="font-bold text-[#1c201a] text-sm sm:text-base">5. Convert PNG Graphics to Modern WebP</p>
+    <p class="mt-1.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+      Screenshots and graphics saved as raw PNGs often weigh 3 MB to 6 MB. Converting them to WebP cuts up to 85% of that weight while retaining transparent backgrounds.
+    </p>
+  </div>
+</div>
+    `,
+  },
+  {
     slug: "how-to-convert-photo-to-text",
     title: "How to Convert a Photo to Text (Free, No Retyping)",
-    metaTitle: "Photo to Text: How to Convert an Image to Text Free",
+    metaTitle: "Photo to Text: How to Convert Any Image to Text (Free OCR 2026)",
     subtitle: "By the Spellense team · Updated October 2026",
-    description: "Convert a photo, image or picture to editable text in seconds. Simple steps, phone shortcuts and fixes for blurry or tilted photos.",
+    description: "Convert photos, screenshots, and scanned documents into clean, copyable text in seconds with free online OCR. No retyping, zero sign-up, and 100% private.",
     publishedAt: "2026-10-24",
     updatedAt: "2026-10-24",
     author: {
