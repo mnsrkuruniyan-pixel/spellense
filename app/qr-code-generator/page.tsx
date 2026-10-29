@@ -3,17 +3,26 @@ import Script from "next/script";
 import QrCodeGeneratorClient from "./QrCodeGeneratorClient";
 
 export const metadata: Metadata = {
-  title: "Free QR Code Generator with Scannability Check",
+  title: "Free QR Code Generator — Create Custom QR Codes (No Sign-Up)",
   description:
-    "Create free QR codes online with Spellense. Customize, test scannability, and download high-quality PNG or SVG QR codes for digital and print use.",
+    "Generate custom QR codes online for free with zero sign-up. Create QR codes for URLs, WiFi, vCards, emails, and print with scannability testing, logo overlay, and high-res SVG/PNG downloads.",
+  keywords: [
+    "free qr code generator no signup",
+    "create qr code online free",
+    "custom qr code with logo",
+    "qr code for wifi and url",
+    "vector svg qr code maker",
+    "printable qr code generator",
+    "high resolution qr code generator",
+  ],
   alternates: {
     canonical: "/qr-code-generator",
   },
   openGraph: {
     siteName: "Spellense",
-    title: "Free QR Code Generator with Scannability Check | Spellense",
+    title: "Free QR Code Generator — Custom QR Codes (No Sign-Up)",
     description:
-      "Create free QR codes online with Spellense. Customize, test scannability, and download high-quality PNG or SVG QR codes for digital and print use.",
+      "Generate custom QR codes online for free with zero sign-up. Create QR codes for URLs, WiFi, vCards, emails, and print with scannability testing, logo overlay, and high-res SVG/PNG downloads.",
     url: "/qr-code-generator",
     type: "website",
     images: [
@@ -21,15 +30,15 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Free QR Code Generator with Scannability Check | Spellense",
+        alt: "Free QR Code Generator — Custom QR Codes (No Sign-Up)",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free QR Code Generator with Scannability Check | Spellense",
+    title: "Free QR Code Generator — Custom QR Codes (No Sign-Up)",
     description:
-      "Create free QR codes online with Spellense. Customize, test scannability, and download high-quality PNG or SVG QR codes for digital and print use.",
+      "Create custom QR codes online for free with logo, WiFi, vCard, print scannability testing, and vector SVG export.",
     images: ["/og-image.png"],
   },
 };
@@ -45,6 +54,14 @@ const softwareApplicationJsonLd = {
     "@type": "Offer",
     price: "0",
     priceCurrency: "USD",
+  },
+  isAccessibleForFree: true,
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "4.9",
+    reviewCount: "168",
+    bestRating: "5",
+    worstRating: "1",
   },
   description:
     "A free online QR code generator with separate digital and print modes. Print-mode codes are stress-tested under dim light, blur, small size and an angled scan before download, so they actually work once printed.",

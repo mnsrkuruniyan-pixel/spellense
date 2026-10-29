@@ -104,6 +104,10 @@ const FAQ_ITEMS = [
     q: "Which format is best: WebP, JPEG, or PNG?",
     a: "WebP is recommended for websites and digital media because it achieves up to 90% size reduction with virtually no noticeable difference. JPEG is ideal for print documents and client submissions. PNG is best when transparent backgrounds or pixel-level text contrast must be retained.",
   },
+  {
+    q: "Is Spellense Image Compressor a free alternative to Squoosh and TinyPNG?",
+    a: "Yes. Spellense is a 100% free, private alternative to Squoosh and TinyPNG with zero subscription paywalls, no daily file limits, no 5MB file caps, and built-in batch ZIP download.",
+  },
 ];
 
 function formatBytes(bytes: number): string {
