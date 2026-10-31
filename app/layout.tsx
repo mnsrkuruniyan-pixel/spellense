@@ -148,6 +148,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${plusJakartaSans.variable} ${instrumentSerif.variable} ${itcModern216.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://mc.yandex.ru" />
+      </head>
       <body className="min-h-full flex flex-col bg-[#faf9f6]">
         <a
           href="#main-content"
@@ -176,7 +181,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </Script>
         <Script
           id="yandex-metrika"
-          strategy="beforeInteractive"
+          strategy="lazyOnload"
         >
           {`
             (function(m,e,t,r,i,k,a){

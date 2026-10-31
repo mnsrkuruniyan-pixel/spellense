@@ -4229,6 +4229,10 @@ export default function Home() {
                           <img
                             src="/botanical-invitation.webp"
                             alt="Sample Botanical Invitation with detected typos"
+                            decoding="async"
+                            loading="lazy"
+                            width={240}
+                            height={320}
                             className="w-full h-auto object-cover"
                           />
                         </div>
@@ -4296,6 +4300,10 @@ export default function Home() {
                             <img
                               src="/botanical-invitation.webp"
                               alt="Sample Botanical Invitation with detected typos"
+                              decoding="async"
+                              loading="lazy"
+                              width={160}
+                              height={214}
                               className="w-full h-auto object-cover block"
                             />
                           </div>

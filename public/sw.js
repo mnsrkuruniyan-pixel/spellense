@@ -1,5 +1,5 @@
 // Lightweight PWA Service Worker for Spellense
-const CACHE_NAME = "spellense-v10";
+const CACHE_NAME = "spellense-v11";
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
   "/icon-48.png",
@@ -55,7 +55,25 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-first for next static CSS and JS chunks to ensure layout is never stale
+  // Cache-first for immutable Next.js static assets (_next/static/ chunks, CSS, fonts)
+  // These files are content-hashed and immutable; serving from cache provides instant 0ms loads
+  if (event.request.url.includes("/_next/static/")) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return networkResponse;
+        });
+      })
+    );
+    return;
+  }
+
+  // Network-first for other _next requests
   if (event.request.url.includes("/_next/")) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
